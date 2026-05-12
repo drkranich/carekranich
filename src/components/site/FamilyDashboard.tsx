@@ -2,10 +2,10 @@ import handsImg from "@/assets/hands.jpg";
 
 export function FamilyDashboard() {
   const timeline = [
-    { time: "07:30", title: "Morning routine", note: "Slept 7h 42m · woke calm", tone: "moss" },
-    { time: "08:15", title: "Breakfast", note: "Ate 90% · porridge & berries", tone: "gold" },
-    { time: "09:00", title: "Medication", note: "Atorvastatin · Vitamin D", tone: "olive" },
-    { time: "10:30", title: "Walk in the garden", note: "1,240 steps · mood lifted", tone: "terracotta" },
+    { time: "07:30", title: "Morning routine", note: "Slept 7h 42m · woke calm", tone: "bg-moss" },
+    { time: "08:15", title: "Breakfast", note: "Ate 90% · porridge & berries", tone: "bg-gold" },
+    { time: "09:00", title: "Medication", note: "Atorvastatin · Vitamin D", tone: "bg-olive" },
+    { time: "10:30", title: "Walk in the garden", note: "1,240 steps · mood lifted", tone: "bg-terracotta" },
   ];
   return (
     <section id="family" className="relative overflow-hidden py-24 md:py-32">
@@ -27,7 +27,7 @@ export function FamilyDashboard() {
               {timeline.map((t) => (
                 <li key={t.time} className="flex gap-4">
                   <div className="text-xs tabular-nums text-muted-foreground pt-1 w-10">{t.time}</div>
-                  <div className={`mt-1.5 h-2 w-2 rounded-full bg-${t.tone}`} />
+                  <div className={`mt-1.5 h-2 w-2 rounded-full ${t.tone}`} />
                   <div className="flex-1">
                     <p className="text-sm text-foreground">{t.title}</p>
                     <p className="text-xs text-muted-foreground">{t.note}</p>
