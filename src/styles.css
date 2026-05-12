@@ -1,5 +1,16 @@
+@source "../src";
+@source inline("bg-olive bg-wine bg-moss bg-gold bg-terracotta bg-sand bg-cream bg-ivory bg-sage");
+@source inline("bg-olive/5 bg-olive/10 bg-olive/15 bg-olive/20 bg-olive/30 bg-olive/40");
+@source inline("bg-wine/5 bg-wine/10 bg-wine/15 bg-wine/20 bg-wine/30 bg-wine/40 bg-wine/60");
+@source inline("bg-moss/5 bg-moss/10 bg-moss/15 bg-moss/20 bg-moss/30");
+@source inline("bg-gold/10 bg-gold/15 bg-gold/20 bg-gold/30");
+@source inline("bg-terracotta/10 bg-terracotta/15 bg-terracotta/20 bg-terracotta/30");
+@source inline("text-olive text-wine text-moss text-gold text-terracotta text-sage text-ivory text-cream");
+@source inline("border-olive border-wine border-moss border-gold border-terracotta");
+@source inline("ring-wine/30 ring-olive/30 ring-moss/30 ring-card");
 @import "tailwindcss" source(none);
 @source "../src";
+@import "tw-animate-css";
 @import "tw-animate-css";
 
 @custom-variant dark (&:is(.dark *));
