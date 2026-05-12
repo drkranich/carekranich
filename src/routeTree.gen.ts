@@ -9,38 +9,192 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as AppRouteImport } from './routes/app'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AppIndexRouteImport } from './routes/app.index'
+import { Route as AppTimelineRouteImport } from './routes/app.timeline'
+import { Route as AppTelemedicineRouteImport } from './routes/app.telemedicine'
+import { Route as AppSmartHomeRouteImport } from './routes/app.smart-home'
+import { Route as AppMedicalRouteImport } from './routes/app.medical'
+import { Route as AppMarketplaceRouteImport } from './routes/app.marketplace'
+import { Route as AppLongevityRouteImport } from './routes/app.longevity'
+import { Route as AppEmergencyRouteImport } from './routes/app.emergency'
+import { Route as AppCaregiverRouteImport } from './routes/app.caregiver'
+import { Route as AppAiRouteImport } from './routes/app.ai'
+import { Route as AppAdminRouteImport } from './routes/app.admin'
 
+const AppRoute = AppRouteImport.update({
+  id: '/app',
+  path: '/app',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AppIndexRoute = AppIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppTimelineRoute = AppTimelineRouteImport.update({
+  id: '/timeline',
+  path: '/timeline',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppTelemedicineRoute = AppTelemedicineRouteImport.update({
+  id: '/telemedicine',
+  path: '/telemedicine',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppSmartHomeRoute = AppSmartHomeRouteImport.update({
+  id: '/smart-home',
+  path: '/smart-home',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppMedicalRoute = AppMedicalRouteImport.update({
+  id: '/medical',
+  path: '/medical',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppMarketplaceRoute = AppMarketplaceRouteImport.update({
+  id: '/marketplace',
+  path: '/marketplace',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppLongevityRoute = AppLongevityRouteImport.update({
+  id: '/longevity',
+  path: '/longevity',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppEmergencyRoute = AppEmergencyRouteImport.update({
+  id: '/emergency',
+  path: '/emergency',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppCaregiverRoute = AppCaregiverRouteImport.update({
+  id: '/caregiver',
+  path: '/caregiver',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppAiRoute = AppAiRouteImport.update({
+  id: '/ai',
+  path: '/ai',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppAdminRoute = AppAdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => AppRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/app': typeof AppRouteWithChildren
+  '/app/admin': typeof AppAdminRoute
+  '/app/ai': typeof AppAiRoute
+  '/app/caregiver': typeof AppCaregiverRoute
+  '/app/emergency': typeof AppEmergencyRoute
+  '/app/longevity': typeof AppLongevityRoute
+  '/app/marketplace': typeof AppMarketplaceRoute
+  '/app/medical': typeof AppMedicalRoute
+  '/app/smart-home': typeof AppSmartHomeRoute
+  '/app/telemedicine': typeof AppTelemedicineRoute
+  '/app/timeline': typeof AppTimelineRoute
+  '/app/': typeof AppIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/app/admin': typeof AppAdminRoute
+  '/app/ai': typeof AppAiRoute
+  '/app/caregiver': typeof AppCaregiverRoute
+  '/app/emergency': typeof AppEmergencyRoute
+  '/app/longevity': typeof AppLongevityRoute
+  '/app/marketplace': typeof AppMarketplaceRoute
+  '/app/medical': typeof AppMedicalRoute
+  '/app/smart-home': typeof AppSmartHomeRoute
+  '/app/telemedicine': typeof AppTelemedicineRoute
+  '/app/timeline': typeof AppTimelineRoute
+  '/app': typeof AppIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/app': typeof AppRouteWithChildren
+  '/app/admin': typeof AppAdminRoute
+  '/app/ai': typeof AppAiRoute
+  '/app/caregiver': typeof AppCaregiverRoute
+  '/app/emergency': typeof AppEmergencyRoute
+  '/app/longevity': typeof AppLongevityRoute
+  '/app/marketplace': typeof AppMarketplaceRoute
+  '/app/medical': typeof AppMedicalRoute
+  '/app/smart-home': typeof AppSmartHomeRoute
+  '/app/telemedicine': typeof AppTelemedicineRoute
+  '/app/timeline': typeof AppTimelineRoute
+  '/app/': typeof AppIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/app'
+    | '/app/admin'
+    | '/app/ai'
+    | '/app/caregiver'
+    | '/app/emergency'
+    | '/app/longevity'
+    | '/app/marketplace'
+    | '/app/medical'
+    | '/app/smart-home'
+    | '/app/telemedicine'
+    | '/app/timeline'
+    | '/app/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/app/admin'
+    | '/app/ai'
+    | '/app/caregiver'
+    | '/app/emergency'
+    | '/app/longevity'
+    | '/app/marketplace'
+    | '/app/medical'
+    | '/app/smart-home'
+    | '/app/telemedicine'
+    | '/app/timeline'
+    | '/app'
+  id:
+    | '__root__'
+    | '/'
+    | '/app'
+    | '/app/admin'
+    | '/app/ai'
+    | '/app/caregiver'
+    | '/app/emergency'
+    | '/app/longevity'
+    | '/app/marketplace'
+    | '/app/medical'
+    | '/app/smart-home'
+    | '/app/telemedicine'
+    | '/app/timeline'
+    | '/app/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AppRoute: typeof AppRouteWithChildren
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/app': {
+      id: '/app'
+      path: '/app'
+      fullPath: '/app'
+      preLoaderRoute: typeof AppRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -48,11 +202,119 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/app/': {
+      id: '/app/'
+      path: '/'
+      fullPath: '/app/'
+      preLoaderRoute: typeof AppIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/timeline': {
+      id: '/app/timeline'
+      path: '/timeline'
+      fullPath: '/app/timeline'
+      preLoaderRoute: typeof AppTimelineRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/telemedicine': {
+      id: '/app/telemedicine'
+      path: '/telemedicine'
+      fullPath: '/app/telemedicine'
+      preLoaderRoute: typeof AppTelemedicineRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/smart-home': {
+      id: '/app/smart-home'
+      path: '/smart-home'
+      fullPath: '/app/smart-home'
+      preLoaderRoute: typeof AppSmartHomeRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/medical': {
+      id: '/app/medical'
+      path: '/medical'
+      fullPath: '/app/medical'
+      preLoaderRoute: typeof AppMedicalRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/marketplace': {
+      id: '/app/marketplace'
+      path: '/marketplace'
+      fullPath: '/app/marketplace'
+      preLoaderRoute: typeof AppMarketplaceRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/longevity': {
+      id: '/app/longevity'
+      path: '/longevity'
+      fullPath: '/app/longevity'
+      preLoaderRoute: typeof AppLongevityRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/emergency': {
+      id: '/app/emergency'
+      path: '/emergency'
+      fullPath: '/app/emergency'
+      preLoaderRoute: typeof AppEmergencyRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/caregiver': {
+      id: '/app/caregiver'
+      path: '/caregiver'
+      fullPath: '/app/caregiver'
+      preLoaderRoute: typeof AppCaregiverRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/ai': {
+      id: '/app/ai'
+      path: '/ai'
+      fullPath: '/app/ai'
+      preLoaderRoute: typeof AppAiRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/admin': {
+      id: '/app/admin'
+      path: '/admin'
+      fullPath: '/app/admin'
+      preLoaderRoute: typeof AppAdminRouteImport
+      parentRoute: typeof AppRoute
+    }
   }
 }
 
+interface AppRouteChildren {
+  AppAdminRoute: typeof AppAdminRoute
+  AppAiRoute: typeof AppAiRoute
+  AppCaregiverRoute: typeof AppCaregiverRoute
+  AppEmergencyRoute: typeof AppEmergencyRoute
+  AppLongevityRoute: typeof AppLongevityRoute
+  AppMarketplaceRoute: typeof AppMarketplaceRoute
+  AppMedicalRoute: typeof AppMedicalRoute
+  AppSmartHomeRoute: typeof AppSmartHomeRoute
+  AppTelemedicineRoute: typeof AppTelemedicineRoute
+  AppTimelineRoute: typeof AppTimelineRoute
+  AppIndexRoute: typeof AppIndexRoute
+}
+
+const AppRouteChildren: AppRouteChildren = {
+  AppAdminRoute: AppAdminRoute,
+  AppAiRoute: AppAiRoute,
+  AppCaregiverRoute: AppCaregiverRoute,
+  AppEmergencyRoute: AppEmergencyRoute,
+  AppLongevityRoute: AppLongevityRoute,
+  AppMarketplaceRoute: AppMarketplaceRoute,
+  AppMedicalRoute: AppMedicalRoute,
+  AppSmartHomeRoute: AppSmartHomeRoute,
+  AppTelemedicineRoute: AppTelemedicineRoute,
+  AppTimelineRoute: AppTimelineRoute,
+  AppIndexRoute: AppIndexRoute,
+}
+
+const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AppRoute: AppRouteWithChildren,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
