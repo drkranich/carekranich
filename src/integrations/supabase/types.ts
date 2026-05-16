@@ -14,6 +14,63 @@ export type Database = {
   }
   public: {
     Tables: {
+      alerts: {
+        Row: {
+          acknowledged_at: string | null
+          acknowledged_by: string | null
+          assigned_to: string | null
+          category: string
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          resident_id: string | null
+          resolved_at: string | null
+          resolved_by: string | null
+          severity: string
+          status: string
+          tenant_id: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          acknowledged_at?: string | null
+          acknowledged_by?: string | null
+          assigned_to?: string | null
+          category?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          resident_id?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          severity?: string
+          status?: string
+          tenant_id: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          acknowledged_at?: string | null
+          acknowledged_by?: string | null
+          assigned_to?: string | null
+          category?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          resident_id?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          severity?: string
+          status?: string
+          tenant_id?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       care_plans: {
         Row: {
           created_at: string
@@ -123,6 +180,84 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      events: {
+        Row: {
+          actor_id: string | null
+          category: string
+          created_at: string
+          description: string | null
+          id: string
+          occurred_at: string
+          payload: Json
+          resident_id: string | null
+          severity: string
+          tenant_id: string
+          title: string
+        }
+        Insert: {
+          actor_id?: string | null
+          category?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          occurred_at?: string
+          payload?: Json
+          resident_id?: string | null
+          severity?: string
+          tenant_id: string
+          title: string
+        }
+        Update: {
+          actor_id?: string | null
+          category?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          occurred_at?: string
+          payload?: Json
+          resident_id?: string | null
+          severity?: string
+          tenant_id?: string
+          title?: string
+        }
+        Relationships: []
+      }
+      notifications: {
+        Row: {
+          body: string | null
+          created_at: string
+          id: string
+          link: string | null
+          read_at: string | null
+          severity: string
+          tenant_id: string
+          title: string
+          user_id: string
+        }
+        Insert: {
+          body?: string | null
+          created_at?: string
+          id?: string
+          link?: string | null
+          read_at?: string | null
+          severity?: string
+          tenant_id: string
+          title: string
+          user_id: string
+        }
+        Update: {
+          body?: string | null
+          created_at?: string
+          id?: string
+          link?: string | null
+          read_at?: string | null
+          severity?: string
+          tenant_id?: string
+          title?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       profiles: {
         Row: {
