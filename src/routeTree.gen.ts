@@ -14,6 +14,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppIndexRouteImport } from './routes/app.index'
 import { Route as AppWorkflowsRouteImport } from './routes/app.workflows'
 import { Route as AppTimelineRouteImport } from './routes/app.timeline'
+import { Route as AppTenantsRouteImport } from './routes/app.tenants'
 import { Route as AppTelemedicineRouteImport } from './routes/app.telemedicine'
 import { Route as AppSmartHomeRouteImport } from './routes/app.smart-home'
 import { Route as AppQualityRouteImport } from './routes/app.quality'
@@ -55,6 +56,11 @@ const AppWorkflowsRoute = AppWorkflowsRouteImport.update({
 const AppTimelineRoute = AppTimelineRouteImport.update({
   id: '/timeline',
   path: '/timeline',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppTenantsRoute = AppTenantsRouteImport.update({
+  id: '/tenants',
+  path: '/tenants',
   getParentRoute: () => AppRoute,
 } as any)
 const AppTelemedicineRoute = AppTelemedicineRouteImport.update({
@@ -163,6 +169,7 @@ export interface FileRoutesByFullPath {
   '/app/quality': typeof AppQualityRoute
   '/app/smart-home': typeof AppSmartHomeRoute
   '/app/telemedicine': typeof AppTelemedicineRoute
+  '/app/tenants': typeof AppTenantsRoute
   '/app/timeline': typeof AppTimelineRoute
   '/app/workflows': typeof AppWorkflowsRoute
   '/app/': typeof AppIndexRoute
@@ -186,6 +193,7 @@ export interface FileRoutesByTo {
   '/app/quality': typeof AppQualityRoute
   '/app/smart-home': typeof AppSmartHomeRoute
   '/app/telemedicine': typeof AppTelemedicineRoute
+  '/app/tenants': typeof AppTenantsRoute
   '/app/timeline': typeof AppTimelineRoute
   '/app/workflows': typeof AppWorkflowsRoute
   '/app': typeof AppIndexRoute
@@ -211,6 +219,7 @@ export interface FileRoutesById {
   '/app/quality': typeof AppQualityRoute
   '/app/smart-home': typeof AppSmartHomeRoute
   '/app/telemedicine': typeof AppTelemedicineRoute
+  '/app/tenants': typeof AppTenantsRoute
   '/app/timeline': typeof AppTimelineRoute
   '/app/workflows': typeof AppWorkflowsRoute
   '/app/': typeof AppIndexRoute
@@ -237,6 +246,7 @@ export interface FileRouteTypes {
     | '/app/quality'
     | '/app/smart-home'
     | '/app/telemedicine'
+    | '/app/tenants'
     | '/app/timeline'
     | '/app/workflows'
     | '/app/'
@@ -260,6 +270,7 @@ export interface FileRouteTypes {
     | '/app/quality'
     | '/app/smart-home'
     | '/app/telemedicine'
+    | '/app/tenants'
     | '/app/timeline'
     | '/app/workflows'
     | '/app'
@@ -284,6 +295,7 @@ export interface FileRouteTypes {
     | '/app/quality'
     | '/app/smart-home'
     | '/app/telemedicine'
+    | '/app/tenants'
     | '/app/timeline'
     | '/app/workflows'
     | '/app/'
@@ -329,6 +341,13 @@ declare module '@tanstack/react-router' {
       path: '/timeline'
       fullPath: '/app/timeline'
       preLoaderRoute: typeof AppTimelineRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/tenants': {
+      id: '/app/tenants'
+      path: '/tenants'
+      fullPath: '/app/tenants'
+      preLoaderRoute: typeof AppTenantsRouteImport
       parentRoute: typeof AppRoute
     }
     '/app/telemedicine': {
@@ -471,6 +490,7 @@ interface AppRouteChildren {
   AppQualityRoute: typeof AppQualityRoute
   AppSmartHomeRoute: typeof AppSmartHomeRoute
   AppTelemedicineRoute: typeof AppTelemedicineRoute
+  AppTenantsRoute: typeof AppTenantsRoute
   AppTimelineRoute: typeof AppTimelineRoute
   AppWorkflowsRoute: typeof AppWorkflowsRoute
   AppIndexRoute: typeof AppIndexRoute
@@ -494,6 +514,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppQualityRoute: AppQualityRoute,
   AppSmartHomeRoute: AppSmartHomeRoute,
   AppTelemedicineRoute: AppTelemedicineRoute,
+  AppTenantsRoute: AppTenantsRoute,
   AppTimelineRoute: AppTimelineRoute,
   AppWorkflowsRoute: AppWorkflowsRoute,
   AppIndexRoute: AppIndexRoute,
