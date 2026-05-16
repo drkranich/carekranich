@@ -74,7 +74,7 @@ function AlertsPage() {
   });
 
   const update = useMutation({
-    mutationFn: async ({ id, patch }: { id: string; patch: Record<string, string | null> }) => {
+    mutationFn: async ({ id, patch }: { id: string; patch: { status: string; acknowledged_by?: string; acknowledged_at?: string; resolved_by?: string; resolved_at?: string } }) => {
       const { error } = await supabase.from("alerts").update(patch).eq("id", id);
       if (error) throw error;
     },
