@@ -1,5 +1,7 @@
-import { Link, Outlet, createFileRoute, useRouterState } from "@tanstack/react-router";
+import { Link, Outlet, createFileRoute, useRouterState, useNavigate, Navigate } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
 import { Avatar } from "@/components/app/primitives";
+import { useAuth, type AppRole } from "@/hooks/use-auth";
 
 const sections = [
   {
