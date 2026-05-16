@@ -7,6 +7,9 @@ const sections = [
     items: [
       { to: "/app", label: "Overview", icon: "M3 12l9-9 9 9 M5 10v10h14V10" },
       { to: "/app/timeline", label: "Timeline", icon: "M12 6v6l4 2 M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0z" },
+      { to: "/app/care-plan", label: "Care plan", icon: "M9 11l3 3L22 4 M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" },
+      { to: "/app/profile", label: "Life profile", icon: "M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2 M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8" },
+      { to: "/app/memory", label: "Memory & legacy", icon: "M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" },
       { to: "/app/emergency", label: "Emergency", icon: "M12 2L1 21h22L12 2z M12 9v4 M12 17h.01" },
     ],
   },
@@ -14,6 +17,8 @@ const sections = [
     title: "People",
     items: [
       { to: "/app/caregiver", label: "Caregiver", icon: "M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2 M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8" },
+      { to: "/app/quality", label: "Quality & wellbeing", icon: "M22 11.08V12a10 10 0 1 1-5.93-9.14 M22 4L12 14.01l-3-3" },
+      { to: "/app/academy", label: "Academy", icon: "M22 10v6 M2 10l10-5 10 5-10 5z M6 12v5c0 1.5 3 3 6 3s6-1.5 6-3v-5" },
       { to: "/app/medical", label: "Medical", icon: "M19 14V6a2 2 0 0 0-2-2H7a2 2 0 0 0-2 2v8 M5 14h14v6H5z M12 8v4 M10 10h4" },
       { to: "/app/marketplace", label: "Marketplace", icon: "M3 9l1-5h16l1 5 M3 9h18v11H3z M9 13h6" },
     ],
@@ -22,6 +27,8 @@ const sections = [
     title: "Intelligence",
     items: [
       { to: "/app/ai", label: "AI Insights", icon: "M12 2v4 M12 18v4 M4.93 4.93l2.83 2.83 M2 12h4 M18 12h4" },
+      { to: "/app/alerts", label: "Alert center", icon: "M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9 M13.73 21a2 2 0 0 1-3.46 0" },
+      { to: "/app/workflows", label: "Workflows", icon: "M4 6h6 M4 12h10 M4 18h6 M14 18a2 2 0 1 0 4 0 2 2 0 0 0-4 0 M14 6a2 2 0 1 0 4 0 2 2 0 0 0-4 0" },
       { to: "/app/smart-home", label: "Smart Home", icon: "M3 12l9-9 9 9 M5 10v10h14V10 M9 20v-6h6v6" },
       { to: "/app/longevity", label: "Longevity", icon: "M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67 10.94 4.61a5.5 5.5 0 0 0-7.78 7.78l8.84 8.84 8.84-8.84a5.5 5.5 0 0 0 0-7.78z" },
       { to: "/app/telemedicine", label: "Telemedicine", icon: "M23 7l-7 5 7 5V7z M14 5H3a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2z" },
@@ -30,6 +37,10 @@ const sections = [
   {
     title: "Operations",
     items: [
+      { to: "/app/command", label: "Command center", icon: "M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z" },
+      { to: "/app/notifications", label: "Notifications", icon: "M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9 M13.73 21a2 2 0 0 1-3.46 0" },
+      { to: "/app/documents", label: "Documents", icon: "M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z M14 2v6h6 M16 13H8 M16 17H8" },
+      { to: "/app/tenants", label: "Tenants", icon: "M3 21h18 M5 21V7l8-4v18 M19 21V11l-6-4" },
       { to: "/app/admin", label: "Super Admin", icon: "M3 3h7v7H3z M14 3h7v7h-7z M14 14h7v7h-7z M3 14h7v7H3z" },
     ],
   },
