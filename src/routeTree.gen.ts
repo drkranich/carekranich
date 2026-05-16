@@ -12,16 +12,27 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as AppRouteImport } from './routes/app'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppIndexRouteImport } from './routes/app.index'
+import { Route as AppWorkflowsRouteImport } from './routes/app.workflows'
 import { Route as AppTimelineRouteImport } from './routes/app.timeline'
+import { Route as AppTenantsRouteImport } from './routes/app.tenants'
 import { Route as AppTelemedicineRouteImport } from './routes/app.telemedicine'
 import { Route as AppSmartHomeRouteImport } from './routes/app.smart-home'
+import { Route as AppQualityRouteImport } from './routes/app.quality'
+import { Route as AppProfileRouteImport } from './routes/app.profile'
+import { Route as AppNotificationsRouteImport } from './routes/app.notifications'
+import { Route as AppMemoryRouteImport } from './routes/app.memory'
 import { Route as AppMedicalRouteImport } from './routes/app.medical'
 import { Route as AppMarketplaceRouteImport } from './routes/app.marketplace'
 import { Route as AppLongevityRouteImport } from './routes/app.longevity'
 import { Route as AppEmergencyRouteImport } from './routes/app.emergency'
+import { Route as AppDocumentsRouteImport } from './routes/app.documents'
+import { Route as AppCommandRouteImport } from './routes/app.command'
 import { Route as AppCaregiverRouteImport } from './routes/app.caregiver'
+import { Route as AppCarePlanRouteImport } from './routes/app.care-plan'
+import { Route as AppAlertsRouteImport } from './routes/app.alerts'
 import { Route as AppAiRouteImport } from './routes/app.ai'
 import { Route as AppAdminRouteImport } from './routes/app.admin'
+import { Route as AppAcademyRouteImport } from './routes/app.academy'
 
 const AppRoute = AppRouteImport.update({
   id: '/app',
@@ -38,9 +49,19 @@ const AppIndexRoute = AppIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AppRoute,
 } as any)
+const AppWorkflowsRoute = AppWorkflowsRouteImport.update({
+  id: '/workflows',
+  path: '/workflows',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppTimelineRoute = AppTimelineRouteImport.update({
   id: '/timeline',
   path: '/timeline',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppTenantsRoute = AppTenantsRouteImport.update({
+  id: '/tenants',
+  path: '/tenants',
   getParentRoute: () => AppRoute,
 } as any)
 const AppTelemedicineRoute = AppTelemedicineRouteImport.update({
@@ -51,6 +72,26 @@ const AppTelemedicineRoute = AppTelemedicineRouteImport.update({
 const AppSmartHomeRoute = AppSmartHomeRouteImport.update({
   id: '/smart-home',
   path: '/smart-home',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppQualityRoute = AppQualityRouteImport.update({
+  id: '/quality',
+  path: '/quality',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppProfileRoute = AppProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppNotificationsRoute = AppNotificationsRouteImport.update({
+  id: '/notifications',
+  path: '/notifications',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppMemoryRoute = AppMemoryRouteImport.update({
+  id: '/memory',
+  path: '/memory',
   getParentRoute: () => AppRoute,
 } as any)
 const AppMedicalRoute = AppMedicalRouteImport.update({
@@ -73,9 +114,29 @@ const AppEmergencyRoute = AppEmergencyRouteImport.update({
   path: '/emergency',
   getParentRoute: () => AppRoute,
 } as any)
+const AppDocumentsRoute = AppDocumentsRouteImport.update({
+  id: '/documents',
+  path: '/documents',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppCommandRoute = AppCommandRouteImport.update({
+  id: '/command',
+  path: '/command',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppCaregiverRoute = AppCaregiverRouteImport.update({
   id: '/caregiver',
   path: '/caregiver',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppCarePlanRoute = AppCarePlanRouteImport.update({
+  id: '/care-plan',
+  path: '/care-plan',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppAlertsRoute = AppAlertsRouteImport.update({
+  id: '/alerts',
+  path: '/alerts',
   getParentRoute: () => AppRoute,
 } as any)
 const AppAiRoute = AppAiRouteImport.update({
@@ -88,50 +149,88 @@ const AppAdminRoute = AppAdminRouteImport.update({
   path: '/admin',
   getParentRoute: () => AppRoute,
 } as any)
+const AppAcademyRoute = AppAcademyRouteImport.update({
+  id: '/academy',
+  path: '/academy',
+  getParentRoute: () => AppRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/app': typeof AppRouteWithChildren
+  '/app/academy': typeof AppAcademyRoute
   '/app/admin': typeof AppAdminRoute
   '/app/ai': typeof AppAiRoute
+  '/app/alerts': typeof AppAlertsRoute
+  '/app/care-plan': typeof AppCarePlanRoute
   '/app/caregiver': typeof AppCaregiverRoute
+  '/app/command': typeof AppCommandRoute
+  '/app/documents': typeof AppDocumentsRoute
   '/app/emergency': typeof AppEmergencyRoute
   '/app/longevity': typeof AppLongevityRoute
   '/app/marketplace': typeof AppMarketplaceRoute
   '/app/medical': typeof AppMedicalRoute
+  '/app/memory': typeof AppMemoryRoute
+  '/app/notifications': typeof AppNotificationsRoute
+  '/app/profile': typeof AppProfileRoute
+  '/app/quality': typeof AppQualityRoute
   '/app/smart-home': typeof AppSmartHomeRoute
   '/app/telemedicine': typeof AppTelemedicineRoute
+  '/app/tenants': typeof AppTenantsRoute
   '/app/timeline': typeof AppTimelineRoute
+  '/app/workflows': typeof AppWorkflowsRoute
   '/app/': typeof AppIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/app/academy': typeof AppAcademyRoute
   '/app/admin': typeof AppAdminRoute
   '/app/ai': typeof AppAiRoute
+  '/app/alerts': typeof AppAlertsRoute
+  '/app/care-plan': typeof AppCarePlanRoute
   '/app/caregiver': typeof AppCaregiverRoute
+  '/app/command': typeof AppCommandRoute
+  '/app/documents': typeof AppDocumentsRoute
   '/app/emergency': typeof AppEmergencyRoute
   '/app/longevity': typeof AppLongevityRoute
   '/app/marketplace': typeof AppMarketplaceRoute
   '/app/medical': typeof AppMedicalRoute
+  '/app/memory': typeof AppMemoryRoute
+  '/app/notifications': typeof AppNotificationsRoute
+  '/app/profile': typeof AppProfileRoute
+  '/app/quality': typeof AppQualityRoute
   '/app/smart-home': typeof AppSmartHomeRoute
   '/app/telemedicine': typeof AppTelemedicineRoute
+  '/app/tenants': typeof AppTenantsRoute
   '/app/timeline': typeof AppTimelineRoute
+  '/app/workflows': typeof AppWorkflowsRoute
   '/app': typeof AppIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/app': typeof AppRouteWithChildren
+  '/app/academy': typeof AppAcademyRoute
   '/app/admin': typeof AppAdminRoute
   '/app/ai': typeof AppAiRoute
+  '/app/alerts': typeof AppAlertsRoute
+  '/app/care-plan': typeof AppCarePlanRoute
   '/app/caregiver': typeof AppCaregiverRoute
+  '/app/command': typeof AppCommandRoute
+  '/app/documents': typeof AppDocumentsRoute
   '/app/emergency': typeof AppEmergencyRoute
   '/app/longevity': typeof AppLongevityRoute
   '/app/marketplace': typeof AppMarketplaceRoute
   '/app/medical': typeof AppMedicalRoute
+  '/app/memory': typeof AppMemoryRoute
+  '/app/notifications': typeof AppNotificationsRoute
+  '/app/profile': typeof AppProfileRoute
+  '/app/quality': typeof AppQualityRoute
   '/app/smart-home': typeof AppSmartHomeRoute
   '/app/telemedicine': typeof AppTelemedicineRoute
+  '/app/tenants': typeof AppTenantsRoute
   '/app/timeline': typeof AppTimelineRoute
+  '/app/workflows': typeof AppWorkflowsRoute
   '/app/': typeof AppIndexRoute
 }
 export interface FileRouteTypes {
@@ -139,45 +238,78 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/app'
+    | '/app/academy'
     | '/app/admin'
     | '/app/ai'
+    | '/app/alerts'
+    | '/app/care-plan'
     | '/app/caregiver'
+    | '/app/command'
+    | '/app/documents'
     | '/app/emergency'
     | '/app/longevity'
     | '/app/marketplace'
     | '/app/medical'
+    | '/app/memory'
+    | '/app/notifications'
+    | '/app/profile'
+    | '/app/quality'
     | '/app/smart-home'
     | '/app/telemedicine'
+    | '/app/tenants'
     | '/app/timeline'
+    | '/app/workflows'
     | '/app/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/app/academy'
     | '/app/admin'
     | '/app/ai'
+    | '/app/alerts'
+    | '/app/care-plan'
     | '/app/caregiver'
+    | '/app/command'
+    | '/app/documents'
     | '/app/emergency'
     | '/app/longevity'
     | '/app/marketplace'
     | '/app/medical'
+    | '/app/memory'
+    | '/app/notifications'
+    | '/app/profile'
+    | '/app/quality'
     | '/app/smart-home'
     | '/app/telemedicine'
+    | '/app/tenants'
     | '/app/timeline'
+    | '/app/workflows'
     | '/app'
   id:
     | '__root__'
     | '/'
     | '/app'
+    | '/app/academy'
     | '/app/admin'
     | '/app/ai'
+    | '/app/alerts'
+    | '/app/care-plan'
     | '/app/caregiver'
+    | '/app/command'
+    | '/app/documents'
     | '/app/emergency'
     | '/app/longevity'
     | '/app/marketplace'
     | '/app/medical'
+    | '/app/memory'
+    | '/app/notifications'
+    | '/app/profile'
+    | '/app/quality'
     | '/app/smart-home'
     | '/app/telemedicine'
+    | '/app/tenants'
     | '/app/timeline'
+    | '/app/workflows'
     | '/app/'
   fileRoutesById: FileRoutesById
 }
@@ -209,11 +341,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppIndexRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/workflows': {
+      id: '/app/workflows'
+      path: '/workflows'
+      fullPath: '/app/workflows'
+      preLoaderRoute: typeof AppWorkflowsRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/app/timeline': {
       id: '/app/timeline'
       path: '/timeline'
       fullPath: '/app/timeline'
       preLoaderRoute: typeof AppTimelineRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/tenants': {
+      id: '/app/tenants'
+      path: '/tenants'
+      fullPath: '/app/tenants'
+      preLoaderRoute: typeof AppTenantsRouteImport
       parentRoute: typeof AppRoute
     }
     '/app/telemedicine': {
@@ -228,6 +374,34 @@ declare module '@tanstack/react-router' {
       path: '/smart-home'
       fullPath: '/app/smart-home'
       preLoaderRoute: typeof AppSmartHomeRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/quality': {
+      id: '/app/quality'
+      path: '/quality'
+      fullPath: '/app/quality'
+      preLoaderRoute: typeof AppQualityRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/profile': {
+      id: '/app/profile'
+      path: '/profile'
+      fullPath: '/app/profile'
+      preLoaderRoute: typeof AppProfileRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/notifications': {
+      id: '/app/notifications'
+      path: '/notifications'
+      fullPath: '/app/notifications'
+      preLoaderRoute: typeof AppNotificationsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/memory': {
+      id: '/app/memory'
+      path: '/memory'
+      fullPath: '/app/memory'
+      preLoaderRoute: typeof AppMemoryRouteImport
       parentRoute: typeof AppRoute
     }
     '/app/medical': {
@@ -258,11 +432,39 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppEmergencyRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/documents': {
+      id: '/app/documents'
+      path: '/documents'
+      fullPath: '/app/documents'
+      preLoaderRoute: typeof AppDocumentsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/command': {
+      id: '/app/command'
+      path: '/command'
+      fullPath: '/app/command'
+      preLoaderRoute: typeof AppCommandRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/app/caregiver': {
       id: '/app/caregiver'
       path: '/caregiver'
       fullPath: '/app/caregiver'
       preLoaderRoute: typeof AppCaregiverRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/care-plan': {
+      id: '/app/care-plan'
+      path: '/care-plan'
+      fullPath: '/app/care-plan'
+      preLoaderRoute: typeof AppCarePlanRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/alerts': {
+      id: '/app/alerts'
+      path: '/alerts'
+      fullPath: '/app/alerts'
+      preLoaderRoute: typeof AppAlertsRouteImport
       parentRoute: typeof AppRoute
     }
     '/app/ai': {
@@ -279,34 +481,63 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppAdminRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/academy': {
+      id: '/app/academy'
+      path: '/academy'
+      fullPath: '/app/academy'
+      preLoaderRoute: typeof AppAcademyRouteImport
+      parentRoute: typeof AppRoute
+    }
   }
 }
 
 interface AppRouteChildren {
+  AppAcademyRoute: typeof AppAcademyRoute
   AppAdminRoute: typeof AppAdminRoute
   AppAiRoute: typeof AppAiRoute
+  AppAlertsRoute: typeof AppAlertsRoute
+  AppCarePlanRoute: typeof AppCarePlanRoute
   AppCaregiverRoute: typeof AppCaregiverRoute
+  AppCommandRoute: typeof AppCommandRoute
+  AppDocumentsRoute: typeof AppDocumentsRoute
   AppEmergencyRoute: typeof AppEmergencyRoute
   AppLongevityRoute: typeof AppLongevityRoute
   AppMarketplaceRoute: typeof AppMarketplaceRoute
   AppMedicalRoute: typeof AppMedicalRoute
+  AppMemoryRoute: typeof AppMemoryRoute
+  AppNotificationsRoute: typeof AppNotificationsRoute
+  AppProfileRoute: typeof AppProfileRoute
+  AppQualityRoute: typeof AppQualityRoute
   AppSmartHomeRoute: typeof AppSmartHomeRoute
   AppTelemedicineRoute: typeof AppTelemedicineRoute
+  AppTenantsRoute: typeof AppTenantsRoute
   AppTimelineRoute: typeof AppTimelineRoute
+  AppWorkflowsRoute: typeof AppWorkflowsRoute
   AppIndexRoute: typeof AppIndexRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
+  AppAcademyRoute: AppAcademyRoute,
   AppAdminRoute: AppAdminRoute,
   AppAiRoute: AppAiRoute,
+  AppAlertsRoute: AppAlertsRoute,
+  AppCarePlanRoute: AppCarePlanRoute,
   AppCaregiverRoute: AppCaregiverRoute,
+  AppCommandRoute: AppCommandRoute,
+  AppDocumentsRoute: AppDocumentsRoute,
   AppEmergencyRoute: AppEmergencyRoute,
   AppLongevityRoute: AppLongevityRoute,
   AppMarketplaceRoute: AppMarketplaceRoute,
   AppMedicalRoute: AppMedicalRoute,
+  AppMemoryRoute: AppMemoryRoute,
+  AppNotificationsRoute: AppNotificationsRoute,
+  AppProfileRoute: AppProfileRoute,
+  AppQualityRoute: AppQualityRoute,
   AppSmartHomeRoute: AppSmartHomeRoute,
   AppTelemedicineRoute: AppTelemedicineRoute,
+  AppTenantsRoute: AppTenantsRoute,
   AppTimelineRoute: AppTimelineRoute,
+  AppWorkflowsRoute: AppWorkflowsRoute,
   AppIndexRoute: AppIndexRoute,
 }
 
