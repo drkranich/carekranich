@@ -14,6 +14,116 @@ export type Database = {
   }
   public: {
     Tables: {
+      care_plans: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          description: string | null
+          end_date: string | null
+          id: string
+          priority: string
+          resident_id: string
+          start_date: string | null
+          status: string
+          tenant_id: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          end_date?: string | null
+          id?: string
+          priority?: string
+          resident_id: string
+          start_date?: string | null
+          status?: string
+          tenant_id: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          end_date?: string | null
+          id?: string
+          priority?: string
+          resident_id?: string
+          start_date?: string | null
+          status?: string
+          tenant_id?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      care_tasks: {
+        Row: {
+          assigned_to: string | null
+          care_plan_id: string | null
+          category: string
+          completed_at: string | null
+          completed_by: string | null
+          created_at: string
+          created_by: string | null
+          due_at: string | null
+          id: string
+          notes: string | null
+          priority: string
+          resident_id: string
+          status: string
+          tenant_id: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          assigned_to?: string | null
+          care_plan_id?: string | null
+          category?: string
+          completed_at?: string | null
+          completed_by?: string | null
+          created_at?: string
+          created_by?: string | null
+          due_at?: string | null
+          id?: string
+          notes?: string | null
+          priority?: string
+          resident_id: string
+          status?: string
+          tenant_id: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          assigned_to?: string | null
+          care_plan_id?: string | null
+          category?: string
+          completed_at?: string | null
+          completed_by?: string | null
+          created_at?: string
+          created_by?: string | null
+          due_at?: string | null
+          id?: string
+          notes?: string | null
+          priority?: string
+          resident_id?: string
+          status?: string
+          tenant_id?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "care_tasks_care_plan_id_fkey"
+            columns: ["care_plan_id"]
+            isOneToOne: false
+            referencedRelation: "care_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -113,6 +223,7 @@ export type Database = {
           branding: Json
           created_at: string
           id: string
+          invite_code: string | null
           name: string
           slug: string
         }
@@ -120,6 +231,7 @@ export type Database = {
           branding?: Json
           created_at?: string
           id?: string
+          invite_code?: string | null
           name: string
           slug: string
         }
@@ -127,6 +239,7 @@ export type Database = {
           branding?: Json
           created_at?: string
           id?: string
+          invite_code?: string | null
           name?: string
           slug?: string
         }
