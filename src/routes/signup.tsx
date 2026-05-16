@@ -7,6 +7,7 @@ export const Route = createFileRoute("/signup")({ component: Signup });
 function Signup() {
   const navigate = useNavigate();
   const [fullName, setFullName] = useState("");
+  const [preferredName, setPreferredName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -17,12 +18,14 @@ function Signup() {
     e.preventDefault();
     setError(null); setInfo(null);
     setLoading(true);
+    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    const preferred = preferredName.trim() || fullName.trim().split(" ")[0];
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
         emailRedirectTo: `${window.location.origin}/app`,
-        data: { full_name: fullName },
+        data: { full_name: fullName, preferred_name: preferred, time_zone: tz },
       },
     });
     setLoading(false);
@@ -32,7 +35,7 @@ function Signup() {
   };
 
   return (
-    <div className="min-h-screen grid place-items-center bg-background px-4">
+    <div className="min-h-screen grid place-items-center bg-background px-4 py-10">
       <div className="w-full max-w-md rounded-3xl border border-border bg-card p-8 shadow-soft">
         <Link to="/" className="flex items-center gap-2">
           <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-olive text-ivory">
@@ -41,12 +44,16 @@ function Signup() {
           <span className="font-display text-xl text-olive">Olia</span>
         </Link>
         <h1 className="mt-6 font-display text-2xl text-foreground">Create your account</h1>
-        <p className="mt-1 text-sm text-muted-foreground">Start caring with calm intelligence.</p>
+        <p className="mt-1 text-sm text-muted-foreground">Tell us how you'd like to be greeted.</p>
 
         <form onSubmit={onSubmit} className="mt-6 space-y-4">
           <label className="block text-sm">
             <span className="text-foreground/80">Full name</span>
             <input required value={fullName} onChange={(e) => setFullName(e.target.value)} className="mt-1 w-full rounded-xl border border-border bg-ivory px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-olive/40" />
+          </label>
+          <label className="block text-sm">
+            <span className="text-foreground/80">Preferred name <span className="text-muted-foreground">(how we'll greet you)</span></span>
+            <input value={preferredName} onChange={(e) => setPreferredName(e.target.value)} placeholder={fullName.trim().split(" ")[0] || "e.g. Inês"} className="mt-1 w-full rounded-xl border border-border bg-ivory px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-olive/40" />
           </label>
           <label className="block text-sm">
             <span className="text-foreground/80">Email</span>
