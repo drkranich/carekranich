@@ -20,7 +20,7 @@ export function SectionHeader({ eyebrow, title, action }: { eyebrow?: string; ti
   );
 }
 
-export function PageHeader({ title, subtitle, action }: { title: string; subtitle?: string; action?: ReactNode }) {
+export function PageHeader({ title, subtitle, action }: { title: string; subtitle?: string | ReactNode; action?: ReactNode }) {
   return (
     <header className="mb-8 flex flex-wrap items-end justify-between gap-4">
       <div>
@@ -32,13 +32,9 @@ export function PageHeader({ title, subtitle, action }: { title: string; subtitl
   );
 }
 
-export function Stat({ label, value, sub, tone = "olive" }: { label: string; value: string; sub?: string; tone?: "olive" | "wine" | "moss" | "terracotta" | "gold" }) {
+export function Stat({ label, value, sub, tone = "olive" }: { label: string; value: string | number; sub?: string; tone?: "olive" | "wine" | "moss" | "terracotta" | "gold" }) {
   const toneMap: Record<string, string> = {
-    olive: "text-olive",
-    wine: "text-wine",
-    moss: "text-moss",
-    terracotta: "text-terracotta",
-    gold: "text-gold",
+    olive: "text-olive", wine: "text-wine", moss: "text-moss", terracotta: "text-terracotta", gold: "text-gold",
   };
   return (
     <Card>
@@ -112,8 +108,8 @@ export function Ring({ value, max = 100, label, sub, color = "var(--olive)", siz
   );
 }
 
-export function Avatar({ name, tone = "olive", size = 36 }: { name: string; tone?: string; size?: number }) {
-  const initials = name.split(" ").map((p) => p[0]).slice(0, 2).join("");
+export function Avatar({ name, src, tone = "olive", size = 36 }: { name: string; src?: string | null; tone?: string; size?: number }) {
+  const initials = (name || "?").split(" ").map((p) => p[0]).filter(Boolean).slice(0, 2).join("").toUpperCase();
   const tones: Record<string, string> = {
     olive: "bg-olive/15 text-olive",
     wine: "bg-wine/15 text-wine",
@@ -121,9 +117,32 @@ export function Avatar({ name, tone = "olive", size = 36 }: { name: string; tone
     terracotta: "bg-terracotta/15 text-terracotta",
     moss: "bg-moss/15 text-moss",
   };
+  if (src) {
+    return (
+      <img
+        src={src}
+        alt={name}
+        className="flex-none rounded-full object-cover ring-1 ring-border"
+        style={{ width: size, height: size }}
+      />
+    );
+  }
   return (
     <div className={`flex flex-none items-center justify-center rounded-full font-display ${tones[tone] || tones.olive}`} style={{ width: size, height: size, fontSize: size * 0.38 }}>
       {initials}
     </div>
+  );
+}
+
+export function EmptyState({ title, hint, action }: { title: string; hint?: string; action?: ReactNode }) {
+  return (
+    <Card className="text-center">
+      <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-gradient-olive text-ivory">
+        <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 5v14 M5 12h14"/></svg>
+      </div>
+      <p className="mt-4 font-display text-lg text-foreground">{title}</p>
+      {hint && <p className="mt-1 text-sm text-muted-foreground">{hint}</p>}
+      {action && <div className="mt-4 flex justify-center">{action}</div>}
+    </Card>
   );
 }
