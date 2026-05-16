@@ -23,6 +23,7 @@ import { Route as AppMedicalRouteImport } from './routes/app.medical'
 import { Route as AppMarketplaceRouteImport } from './routes/app.marketplace'
 import { Route as AppLongevityRouteImport } from './routes/app.longevity'
 import { Route as AppEmergencyRouteImport } from './routes/app.emergency'
+import { Route as AppDocumentsRouteImport } from './routes/app.documents'
 import { Route as AppCommandRouteImport } from './routes/app.command'
 import { Route as AppCaregiverRouteImport } from './routes/app.caregiver'
 import { Route as AppCarePlanRouteImport } from './routes/app.care-plan'
@@ -101,6 +102,11 @@ const AppEmergencyRoute = AppEmergencyRouteImport.update({
   path: '/emergency',
   getParentRoute: () => AppRoute,
 } as any)
+const AppDocumentsRoute = AppDocumentsRouteImport.update({
+  id: '/documents',
+  path: '/documents',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppCommandRoute = AppCommandRouteImport.update({
   id: '/command',
   path: '/command',
@@ -147,6 +153,7 @@ export interface FileRoutesByFullPath {
   '/app/care-plan': typeof AppCarePlanRoute
   '/app/caregiver': typeof AppCaregiverRoute
   '/app/command': typeof AppCommandRoute
+  '/app/documents': typeof AppDocumentsRoute
   '/app/emergency': typeof AppEmergencyRoute
   '/app/longevity': typeof AppLongevityRoute
   '/app/marketplace': typeof AppMarketplaceRoute
@@ -169,6 +176,7 @@ export interface FileRoutesByTo {
   '/app/care-plan': typeof AppCarePlanRoute
   '/app/caregiver': typeof AppCaregiverRoute
   '/app/command': typeof AppCommandRoute
+  '/app/documents': typeof AppDocumentsRoute
   '/app/emergency': typeof AppEmergencyRoute
   '/app/longevity': typeof AppLongevityRoute
   '/app/marketplace': typeof AppMarketplaceRoute
@@ -193,6 +201,7 @@ export interface FileRoutesById {
   '/app/care-plan': typeof AppCarePlanRoute
   '/app/caregiver': typeof AppCaregiverRoute
   '/app/command': typeof AppCommandRoute
+  '/app/documents': typeof AppDocumentsRoute
   '/app/emergency': typeof AppEmergencyRoute
   '/app/longevity': typeof AppLongevityRoute
   '/app/marketplace': typeof AppMarketplaceRoute
@@ -218,6 +227,7 @@ export interface FileRouteTypes {
     | '/app/care-plan'
     | '/app/caregiver'
     | '/app/command'
+    | '/app/documents'
     | '/app/emergency'
     | '/app/longevity'
     | '/app/marketplace'
@@ -240,6 +250,7 @@ export interface FileRouteTypes {
     | '/app/care-plan'
     | '/app/caregiver'
     | '/app/command'
+    | '/app/documents'
     | '/app/emergency'
     | '/app/longevity'
     | '/app/marketplace'
@@ -263,6 +274,7 @@ export interface FileRouteTypes {
     | '/app/care-plan'
     | '/app/caregiver'
     | '/app/command'
+    | '/app/documents'
     | '/app/emergency'
     | '/app/longevity'
     | '/app/marketplace'
@@ -382,6 +394,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppEmergencyRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/documents': {
+      id: '/app/documents'
+      path: '/documents'
+      fullPath: '/app/documents'
+      preLoaderRoute: typeof AppDocumentsRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/app/command': {
       id: '/app/command'
       path: '/command'
@@ -442,6 +461,7 @@ interface AppRouteChildren {
   AppCarePlanRoute: typeof AppCarePlanRoute
   AppCaregiverRoute: typeof AppCaregiverRoute
   AppCommandRoute: typeof AppCommandRoute
+  AppDocumentsRoute: typeof AppDocumentsRoute
   AppEmergencyRoute: typeof AppEmergencyRoute
   AppLongevityRoute: typeof AppLongevityRoute
   AppMarketplaceRoute: typeof AppMarketplaceRoute
@@ -464,6 +484,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppCarePlanRoute: AppCarePlanRoute,
   AppCaregiverRoute: AppCaregiverRoute,
   AppCommandRoute: AppCommandRoute,
+  AppDocumentsRoute: AppDocumentsRoute,
   AppEmergencyRoute: AppEmergencyRoute,
   AppLongevityRoute: AppLongevityRoute,
   AppMarketplaceRoute: AppMarketplaceRoute,
