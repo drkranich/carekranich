@@ -9,6 +9,8 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as SignupRouteImport } from './routes/signup'
+import { Route as LoginRouteImport } from './routes/login'
 import { Route as AppRouteImport } from './routes/app'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppIndexRouteImport } from './routes/app.index'
@@ -17,6 +19,7 @@ import { Route as AppTimelineRouteImport } from './routes/app.timeline'
 import { Route as AppTenantsRouteImport } from './routes/app.tenants'
 import { Route as AppTelemedicineRouteImport } from './routes/app.telemedicine'
 import { Route as AppSmartHomeRouteImport } from './routes/app.smart-home'
+import { Route as AppResidentsRouteImport } from './routes/app.residents'
 import { Route as AppQualityRouteImport } from './routes/app.quality'
 import { Route as AppProfileRouteImport } from './routes/app.profile'
 import { Route as AppNotificationsRouteImport } from './routes/app.notifications'
@@ -34,6 +37,16 @@ import { Route as AppAiRouteImport } from './routes/app.ai'
 import { Route as AppAdminRouteImport } from './routes/app.admin'
 import { Route as AppAcademyRouteImport } from './routes/app.academy'
 
+const SignupRoute = SignupRouteImport.update({
+  id: '/signup',
+  path: '/signup',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AppRoute = AppRouteImport.update({
   id: '/app',
   path: '/app',
@@ -72,6 +85,11 @@ const AppTelemedicineRoute = AppTelemedicineRouteImport.update({
 const AppSmartHomeRoute = AppSmartHomeRouteImport.update({
   id: '/smart-home',
   path: '/smart-home',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppResidentsRoute = AppResidentsRouteImport.update({
+  id: '/residents',
+  path: '/residents',
   getParentRoute: () => AppRoute,
 } as any)
 const AppQualityRoute = AppQualityRouteImport.update({
@@ -158,6 +176,8 @@ const AppAcademyRoute = AppAcademyRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/app': typeof AppRouteWithChildren
+  '/login': typeof LoginRoute
+  '/signup': typeof SignupRoute
   '/app/academy': typeof AppAcademyRoute
   '/app/admin': typeof AppAdminRoute
   '/app/ai': typeof AppAiRoute
@@ -174,6 +194,7 @@ export interface FileRoutesByFullPath {
   '/app/notifications': typeof AppNotificationsRoute
   '/app/profile': typeof AppProfileRoute
   '/app/quality': typeof AppQualityRoute
+  '/app/residents': typeof AppResidentsRoute
   '/app/smart-home': typeof AppSmartHomeRoute
   '/app/telemedicine': typeof AppTelemedicineRoute
   '/app/tenants': typeof AppTenantsRoute
@@ -183,6 +204,8 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/login': typeof LoginRoute
+  '/signup': typeof SignupRoute
   '/app/academy': typeof AppAcademyRoute
   '/app/admin': typeof AppAdminRoute
   '/app/ai': typeof AppAiRoute
@@ -199,6 +222,7 @@ export interface FileRoutesByTo {
   '/app/notifications': typeof AppNotificationsRoute
   '/app/profile': typeof AppProfileRoute
   '/app/quality': typeof AppQualityRoute
+  '/app/residents': typeof AppResidentsRoute
   '/app/smart-home': typeof AppSmartHomeRoute
   '/app/telemedicine': typeof AppTelemedicineRoute
   '/app/tenants': typeof AppTenantsRoute
@@ -210,6 +234,8 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/app': typeof AppRouteWithChildren
+  '/login': typeof LoginRoute
+  '/signup': typeof SignupRoute
   '/app/academy': typeof AppAcademyRoute
   '/app/admin': typeof AppAdminRoute
   '/app/ai': typeof AppAiRoute
@@ -226,6 +252,7 @@ export interface FileRoutesById {
   '/app/notifications': typeof AppNotificationsRoute
   '/app/profile': typeof AppProfileRoute
   '/app/quality': typeof AppQualityRoute
+  '/app/residents': typeof AppResidentsRoute
   '/app/smart-home': typeof AppSmartHomeRoute
   '/app/telemedicine': typeof AppTelemedicineRoute
   '/app/tenants': typeof AppTenantsRoute
@@ -238,6 +265,8 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/app'
+    | '/login'
+    | '/signup'
     | '/app/academy'
     | '/app/admin'
     | '/app/ai'
@@ -254,6 +283,7 @@ export interface FileRouteTypes {
     | '/app/notifications'
     | '/app/profile'
     | '/app/quality'
+    | '/app/residents'
     | '/app/smart-home'
     | '/app/telemedicine'
     | '/app/tenants'
@@ -263,6 +293,8 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/login'
+    | '/signup'
     | '/app/academy'
     | '/app/admin'
     | '/app/ai'
@@ -279,6 +311,7 @@ export interface FileRouteTypes {
     | '/app/notifications'
     | '/app/profile'
     | '/app/quality'
+    | '/app/residents'
     | '/app/smart-home'
     | '/app/telemedicine'
     | '/app/tenants'
@@ -289,6 +322,8 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/app'
+    | '/login'
+    | '/signup'
     | '/app/academy'
     | '/app/admin'
     | '/app/ai'
@@ -305,6 +340,7 @@ export interface FileRouteTypes {
     | '/app/notifications'
     | '/app/profile'
     | '/app/quality'
+    | '/app/residents'
     | '/app/smart-home'
     | '/app/telemedicine'
     | '/app/tenants'
@@ -316,10 +352,26 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AppRoute: typeof AppRouteWithChildren
+  LoginRoute: typeof LoginRoute
+  SignupRoute: typeof SignupRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/signup': {
+      id: '/signup'
+      path: '/signup'
+      fullPath: '/signup'
+      preLoaderRoute: typeof SignupRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/app': {
       id: '/app'
       path: '/app'
@@ -374,6 +426,13 @@ declare module '@tanstack/react-router' {
       path: '/smart-home'
       fullPath: '/app/smart-home'
       preLoaderRoute: typeof AppSmartHomeRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/residents': {
+      id: '/app/residents'
+      path: '/residents'
+      fullPath: '/app/residents'
+      preLoaderRoute: typeof AppResidentsRouteImport
       parentRoute: typeof AppRoute
     }
     '/app/quality': {
@@ -508,6 +567,7 @@ interface AppRouteChildren {
   AppNotificationsRoute: typeof AppNotificationsRoute
   AppProfileRoute: typeof AppProfileRoute
   AppQualityRoute: typeof AppQualityRoute
+  AppResidentsRoute: typeof AppResidentsRoute
   AppSmartHomeRoute: typeof AppSmartHomeRoute
   AppTelemedicineRoute: typeof AppTelemedicineRoute
   AppTenantsRoute: typeof AppTenantsRoute
@@ -533,6 +593,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppNotificationsRoute: AppNotificationsRoute,
   AppProfileRoute: AppProfileRoute,
   AppQualityRoute: AppQualityRoute,
+  AppResidentsRoute: AppResidentsRoute,
   AppSmartHomeRoute: AppSmartHomeRoute,
   AppTelemedicineRoute: AppTelemedicineRoute,
   AppTenantsRoute: AppTenantsRoute,
@@ -546,6 +607,8 @@ const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AppRoute: AppRouteWithChildren,
+  LoginRoute: LoginRoute,
+  SignupRoute: SignupRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
