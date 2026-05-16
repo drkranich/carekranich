@@ -21,6 +21,7 @@ import { Route as AppLongevityRouteImport } from './routes/app.longevity'
 import { Route as AppEmergencyRouteImport } from './routes/app.emergency'
 import { Route as AppCommandRouteImport } from './routes/app.command'
 import { Route as AppCaregiverRouteImport } from './routes/app.caregiver'
+import { Route as AppAlertsRouteImport } from './routes/app.alerts'
 import { Route as AppAiRouteImport } from './routes/app.ai'
 import { Route as AppAdminRouteImport } from './routes/app.admin'
 
@@ -84,6 +85,11 @@ const AppCaregiverRoute = AppCaregiverRouteImport.update({
   path: '/caregiver',
   getParentRoute: () => AppRoute,
 } as any)
+const AppAlertsRoute = AppAlertsRouteImport.update({
+  id: '/alerts',
+  path: '/alerts',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppAiRoute = AppAiRouteImport.update({
   id: '/ai',
   path: '/ai',
@@ -100,6 +106,7 @@ export interface FileRoutesByFullPath {
   '/app': typeof AppRouteWithChildren
   '/app/admin': typeof AppAdminRoute
   '/app/ai': typeof AppAiRoute
+  '/app/alerts': typeof AppAlertsRoute
   '/app/caregiver': typeof AppCaregiverRoute
   '/app/command': typeof AppCommandRoute
   '/app/emergency': typeof AppEmergencyRoute
@@ -115,6 +122,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/app/admin': typeof AppAdminRoute
   '/app/ai': typeof AppAiRoute
+  '/app/alerts': typeof AppAlertsRoute
   '/app/caregiver': typeof AppCaregiverRoute
   '/app/command': typeof AppCommandRoute
   '/app/emergency': typeof AppEmergencyRoute
@@ -132,6 +140,7 @@ export interface FileRoutesById {
   '/app': typeof AppRouteWithChildren
   '/app/admin': typeof AppAdminRoute
   '/app/ai': typeof AppAiRoute
+  '/app/alerts': typeof AppAlertsRoute
   '/app/caregiver': typeof AppCaregiverRoute
   '/app/command': typeof AppCommandRoute
   '/app/emergency': typeof AppEmergencyRoute
@@ -150,6 +159,7 @@ export interface FileRouteTypes {
     | '/app'
     | '/app/admin'
     | '/app/ai'
+    | '/app/alerts'
     | '/app/caregiver'
     | '/app/command'
     | '/app/emergency'
@@ -165,6 +175,7 @@ export interface FileRouteTypes {
     | '/'
     | '/app/admin'
     | '/app/ai'
+    | '/app/alerts'
     | '/app/caregiver'
     | '/app/command'
     | '/app/emergency'
@@ -181,6 +192,7 @@ export interface FileRouteTypes {
     | '/app'
     | '/app/admin'
     | '/app/ai'
+    | '/app/alerts'
     | '/app/caregiver'
     | '/app/command'
     | '/app/emergency'
@@ -284,6 +296,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppCaregiverRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/alerts': {
+      id: '/app/alerts'
+      path: '/alerts'
+      fullPath: '/app/alerts'
+      preLoaderRoute: typeof AppAlertsRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/app/ai': {
       id: '/app/ai'
       path: '/ai'
@@ -304,6 +323,7 @@ declare module '@tanstack/react-router' {
 interface AppRouteChildren {
   AppAdminRoute: typeof AppAdminRoute
   AppAiRoute: typeof AppAiRoute
+  AppAlertsRoute: typeof AppAlertsRoute
   AppCaregiverRoute: typeof AppCaregiverRoute
   AppCommandRoute: typeof AppCommandRoute
   AppEmergencyRoute: typeof AppEmergencyRoute
@@ -319,6 +339,7 @@ interface AppRouteChildren {
 const AppRouteChildren: AppRouteChildren = {
   AppAdminRoute: AppAdminRoute,
   AppAiRoute: AppAiRoute,
+  AppAlertsRoute: AppAlertsRoute,
   AppCaregiverRoute: AppCaregiverRoute,
   AppCommandRoute: AppCommandRoute,
   AppEmergencyRoute: AppEmergencyRoute,
