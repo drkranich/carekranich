@@ -54,6 +54,14 @@ export const Route = createFileRoute("/app")({
 
 function AppLayout() {
   const path = useRouterState({ select: (s) => s.location.pathname });
+  const { user, loading, profile, roles, signOut, hasAnyRole } = useAuth();
+  const navigate = useNavigate();
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  if (loading) {
+    return <div className="min-h-screen grid place-items-center text-muted-foreground text-sm">Loading…</div>;
+  }
+  if (!user) return <Navigate to="/login" />;
 
   return (
     <div className="flex min-h-screen bg-background">
