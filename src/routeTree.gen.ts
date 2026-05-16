@@ -29,6 +29,7 @@ import { Route as AppCarePlanRouteImport } from './routes/app.care-plan'
 import { Route as AppAlertsRouteImport } from './routes/app.alerts'
 import { Route as AppAiRouteImport } from './routes/app.ai'
 import { Route as AppAdminRouteImport } from './routes/app.admin'
+import { Route as AppAcademyRouteImport } from './routes/app.academy'
 
 const AppRoute = AppRouteImport.update({
   id: '/app',
@@ -130,10 +131,16 @@ const AppAdminRoute = AppAdminRouteImport.update({
   path: '/admin',
   getParentRoute: () => AppRoute,
 } as any)
+const AppAcademyRoute = AppAcademyRouteImport.update({
+  id: '/academy',
+  path: '/academy',
+  getParentRoute: () => AppRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/app': typeof AppRouteWithChildren
+  '/app/academy': typeof AppAcademyRoute
   '/app/admin': typeof AppAdminRoute
   '/app/ai': typeof AppAiRoute
   '/app/alerts': typeof AppAlertsRoute
@@ -155,6 +162,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/app/academy': typeof AppAcademyRoute
   '/app/admin': typeof AppAdminRoute
   '/app/ai': typeof AppAiRoute
   '/app/alerts': typeof AppAlertsRoute
@@ -178,6 +186,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/app': typeof AppRouteWithChildren
+  '/app/academy': typeof AppAcademyRoute
   '/app/admin': typeof AppAdminRoute
   '/app/ai': typeof AppAiRoute
   '/app/alerts': typeof AppAlertsRoute
@@ -202,6 +211,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/app'
+    | '/app/academy'
     | '/app/admin'
     | '/app/ai'
     | '/app/alerts'
@@ -223,6 +233,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/app/academy'
     | '/app/admin'
     | '/app/ai'
     | '/app/alerts'
@@ -245,6 +256,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/app'
+    | '/app/academy'
     | '/app/admin'
     | '/app/ai'
     | '/app/alerts'
@@ -412,10 +424,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppAdminRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/academy': {
+      id: '/app/academy'
+      path: '/academy'
+      fullPath: '/app/academy'
+      preLoaderRoute: typeof AppAcademyRouteImport
+      parentRoute: typeof AppRoute
+    }
   }
 }
 
 interface AppRouteChildren {
+  AppAcademyRoute: typeof AppAcademyRoute
   AppAdminRoute: typeof AppAdminRoute
   AppAiRoute: typeof AppAiRoute
   AppAlertsRoute: typeof AppAlertsRoute
@@ -437,6 +457,7 @@ interface AppRouteChildren {
 }
 
 const AppRouteChildren: AppRouteChildren = {
+  AppAcademyRoute: AppAcademyRoute,
   AppAdminRoute: AppAdminRoute,
   AppAiRoute: AppAiRoute,
   AppAlertsRoute: AppAlertsRoute,
