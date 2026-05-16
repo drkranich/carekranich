@@ -1,7 +1,9 @@
 import { Link, Outlet, createFileRoute, useRouterState, useNavigate, Navigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { Avatar } from "@/components/app/primitives";
+import { NotificationBell } from "@/components/app/NotificationBell";
 import { useAuth } from "@/hooks/use-auth";
+import { useTenantRealtime } from "@/hooks/use-realtime";
 
 const sections = [
   {
