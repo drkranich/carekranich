@@ -74,7 +74,7 @@ function AlertsPage() {
   });
 
   const update = useMutation({
-    mutationFn: async ({ id, patch }: { id: string; patch: Partial<Alert> }) => {
+    mutationFn: async ({ id, patch }: { id: string; patch: Record<string, string | null> }) => {
       const { error } = await supabase.from("alerts").update(patch).eq("id", id);
       if (error) throw error;
     },
@@ -83,7 +83,7 @@ function AlertsPage() {
       await qc.cancelQueries({ queryKey: ["alerts"] });
       const prev = qc.getQueriesData<Alert[]>({ queryKey: ["alerts"] });
       qc.setQueriesData<Alert[]>({ queryKey: ["alerts"] }, (old) =>
-        old?.map((a) => (a.id === id ? { ...a, ...patch } : a))
+        old?.map((a) => (a.id === id ? { ...a, ...(patch as Partial<Alert>) } : a))
       );
       return { prev };
     },
@@ -97,12 +97,12 @@ function AlertsPage() {
   const acknowledge = (a: Alert) =>
     update.mutate({
       id: a.id,
-      patch: { status: "acknowledged", acknowledged_by: user!.id, acknowledged_at: new Date().toISOString() } as Partial<Alert>,
+      patch: { status: "acknowledged", acknowledged_by: user!.id, acknowledged_at: new Date().toISOString() },
     });
   const resolve = (a: Alert) =>
     update.mutate({
       id: a.id,
-      patch: { status: "resolved", resolved_by: user!.id, resolved_at: new Date().toISOString() } as Partial<Alert>,
+      patch: { status: "resolved", resolved_by: user!.id, resolved_at: new Date().toISOString() },
     });
 
   return (
