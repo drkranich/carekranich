@@ -265,7 +265,10 @@ export type Database = {
           created_at: string
           full_name: string | null
           id: string
+          phone: string | null
+          preferred_name: string | null
           tenant_id: string | null
+          time_zone: string | null
           updated_at: string
         }
         Insert: {
@@ -273,7 +276,10 @@ export type Database = {
           created_at?: string
           full_name?: string | null
           id: string
+          phone?: string | null
+          preferred_name?: string | null
           tenant_id?: string | null
+          time_zone?: string | null
           updated_at?: string
         }
         Update: {
@@ -281,7 +287,10 @@ export type Database = {
           created_at?: string
           full_name?: string | null
           id?: string
+          phone?: string | null
+          preferred_name?: string | null
           tenant_id?: string | null
+          time_zone?: string | null
           updated_at?: string
         }
         Relationships: [
