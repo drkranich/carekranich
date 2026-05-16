@@ -1,11 +1,15 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Navigate } from "@tanstack/react-router";
 import { Card, PageHeader, Pill, Spark, Bars, Stat } from "@/components/app/primitives";
+import { useAuth } from "@/hooks/use-auth";
 
 export const Route = createFileRoute("/app/admin")({
   component: Admin,
 });
 
 function Admin() {
+  const { isSuperAdmin, loading } = useAuth();
+  if (loading) return <p className="text-sm text-muted-foreground">Loading…</p>;
+  if (!isSuperAdmin) return <Navigate to="/app" />;
   return (
     <>
       <PageHeader
