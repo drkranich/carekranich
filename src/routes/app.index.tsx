@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { Card, PageHeader, Pill, Stat, EmptyState, Avatar } from "@/components/app/primitives";
+import { Card, PageHeader, Pill, Stat, EmptyState } from "@/components/app/primitives";
 import { useAuth, ROLE_LABELS } from "@/hooks/use-auth";
 import { useGreeting } from "@/hooks/use-greeting";
 import { supabase } from "@/integrations/supabase/client";
