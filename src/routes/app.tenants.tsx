@@ -1,91 +1,108 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { Card, PageHeader, Pill, Stat, Avatar } from "@/components/app/primitives";
+import { createFileRoute, Navigate } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
+import { Card, PageHeader, Pill, Avatar, Stat } from "@/components/app/primitives";
+import { useAuth, ROLE_LABELS } from "@/hooks/use-auth";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/app/tenants")({ component: Tenants });
 
-const tenants = [
-  { n: "Familia Lopes", type: "Family", plan: "Family Pro", seats: 6, mrr: "€89", health: 100, brand: "olive" },
-  { n: "Casa Serena · Lisboa", type: "Clinic", plan: "Clinic Suite", seats: 84, mrr: "€2,450", health: 98, brand: "wine" },
-  { n: "Vida Plena Network", type: "Enterprise", plan: "Enterprise · white-label", seats: 1284, mrr: "€38,200", health: 97, brand: "gold" },
-  { n: "Hospital São João", type: "Healthcare group", plan: "Enterprise · custom", seats: 420, mrr: "€12,800", health: 99, brand: "terracotta" },
-  { n: "Lar do Sol · Porto", type: "Clinic", plan: "Clinic Suite", seats: 56, mrr: "€1,680", health: 92, brand: "moss" },
-];
-
 function Tenants() {
+  const { profile, isAdmin, isSuperAdmin, loading } = useAuth();
+  const tenantId = profile?.tenant_id ?? null;
+
+  const tenant = useQuery({
+    queryKey: ["tenant", tenantId],
+    enabled: !!tenantId,
+    queryFn: async () => {
+      const { data } = await supabase.from("tenants").select("id,name,slug,invite_code,branding,created_at").eq("id", tenantId!).maybeSingle();
+      return data;
+    },
+  });
+
+  const members = useQuery({
+    queryKey: ["tenant-members", tenantId],
+    enabled: !!tenantId,
+    queryFn: async () => {
+      const [{ data: profiles }, { data: roles }] = await Promise.all([
+        supabase.from("profiles").select("id,full_name,preferred_name,avatar_url").eq("tenant_id", tenantId!),
+        supabase.from("user_roles").select("user_id,role"),
+      ]);
+      const rolesByUser = new Map<string, string[]>();
+      (roles ?? []).forEach((r: any) => {
+        const arr = rolesByUser.get(r.user_id) ?? [];
+        arr.push(r.role); rolesByUser.set(r.user_id, arr);
+      });
+      return (profiles ?? []).map((p: any) => ({ ...p, roles: rolesByUser.get(p.id) ?? [] }));
+    },
+  });
+
+  const residents = useQuery({
+    queryKey: ["tenant-residents-count", tenantId],
+    enabled: !!tenantId,
+    queryFn: async () => {
+      const { count } = await supabase.from("residents").select("id", { count: "exact", head: true });
+      return count ?? 0;
+    },
+  });
+
+  if (loading) return <p className="text-sm text-muted-foreground">Loading…</p>;
+  if (!isAdmin && !isSuperAdmin) return <Navigate to="/app" />;
+
+  const copy = () => {
+    if (!tenant.data?.invite_code) return;
+    navigator.clipboard.writeText(tenant.data.invite_code);
+    toast.success("Invite code copied");
+  };
+
   return (
     <>
-      <PageHeader title="Tenants & organizations" subtitle="Families, clinics, networks and enterprise groups — fully isolated, optionally white-labeled." action={<button className="rounded-full bg-olive px-4 py-2 text-sm text-ivory">+ New tenant</button>} />
+      <PageHeader
+        title={tenant.data?.name || "Organization"}
+        subtitle="Manage your organization, invite members, configure access."
+        action={<Pill tone="olive">Organization admin</Pill>}
+      />
 
       <div className="grid gap-4 md:grid-cols-4">
-        <Stat label="Active tenants" value="284" sub="+12 this month" tone="olive" />
-        <Stat label="Enterprise accounts" value="14" sub="incl. 4 white-label" tone="gold" />
-        <Stat label="Total seats" value="12,840" sub="across all tiers" tone="moss" />
-        <Stat label="Net retention" value="118%" sub="trailing 12mo" tone="wine" />
+        <Stat label="Members" value={members.data?.length ?? "—"} sub="Across all roles" tone="olive" />
+        <Stat label="Residents" value={residents.data ?? "—"} sub="In care" tone="wine" />
+        <Stat label="Plan" value="Pro" sub="Trial · 30 days" tone="gold" />
+        <Stat label="Status" value="Active" sub="All systems healthy" tone="moss" />
       </div>
 
       <div className="mt-6 grid gap-6 lg:grid-cols-3">
-        <Card className="lg:col-span-2 p-0">
-          <div className="border-b border-border/60 px-6 py-4">
-            <p className="text-xs uppercase tracking-widest text-muted-foreground">Tenant directory</p>
+        <Card className="lg:col-span-1">
+          <p className="text-xs uppercase tracking-widest text-muted-foreground">Invite members</p>
+          <p className="mt-2 text-sm text-foreground/80">Share this code so families and caregivers can join your organization.</p>
+          <div className="mt-4 rounded-2xl bg-cream/60 p-4">
+            <p className="text-[10px] uppercase tracking-widest text-muted-foreground">Invite code</p>
+            <p className="mt-1 font-mono text-2xl text-olive">{tenant.data?.invite_code ?? "—"}</p>
+            <button onClick={copy} className="mt-3 w-full rounded-full bg-olive px-4 py-2 text-xs text-ivory hover:opacity-90">Copy code</button>
           </div>
-          <ul className="divide-y divide-border/60">
-            {tenants.map((t) => (
-              <li key={t.n} className="flex items-center gap-4 px-6 py-4 hover:bg-cream/40">
-                <Avatar name={t.n} tone={t.brand} size={44} />
-                <div className="flex-1 min-w-0">
-                  <p className="font-medium text-foreground truncate">{t.n}</p>
-                  <p className="text-xs text-muted-foreground">{t.type} · {t.plan}</p>
-                </div>
-                <div className="hidden md:block w-24 text-center"><p className="font-display text-lg">{t.seats}</p><p className="text-[10px] text-muted-foreground uppercase tracking-widest">seats</p></div>
-                <div className="hidden md:block w-24 text-center"><p className="font-display text-lg">{t.mrr}</p><p className="text-[10px] text-muted-foreground uppercase tracking-widest">mrr</p></div>
-                <Pill tone={t.health > 95 ? "moss" : "gold"}>{t.health}%</Pill>
-                <button className="text-xs text-olive hover:underline">Switch →</button>
-              </li>
-            ))}
-          </ul>
+          <p className="mt-3 text-[11px] text-muted-foreground">New members join as Family. Admins can elevate roles below.</p>
         </Card>
 
-        <div className="space-y-6">
-          <Card>
-            <p className="text-xs uppercase tracking-widest text-muted-foreground">Active context</p>
-            <div className="mt-3 rounded-2xl bg-gradient-olive p-4 text-ivory">
-              <p className="text-xs text-ivory/70">Currently viewing</p>
-              <p className="mt-1 font-display text-xl">Familia Lopes</p>
-              <p className="text-xs text-ivory/80">Family · 6 seats · Pro</p>
-              <button className="mt-3 rounded-full bg-ivory px-3 py-1.5 text-xs text-olive">Switch tenant</button>
-            </div>
-          </Card>
-
-          <Card>
-            <p className="text-xs uppercase tracking-widest text-muted-foreground">White-label</p>
-            <ul className="mt-3 space-y-2 text-sm">
-              {[
-                { o: "Vida Plena", d: "vidaplena.olia.app · custom palette" },
-                { o: "Hospital São João", d: "saojoao.olia.app · custom domain" },
-              ].map((w) => (
-                <li key={w.o} className="rounded-xl border border-border/60 bg-cream/40 p-3">
-                  <p className="font-medium text-foreground">{w.o}</p>
-                  <p className="text-xs text-muted-foreground">{w.d}</p>
-                </li>
-              ))}
-            </ul>
-          </Card>
-
-          <Card>
-            <p className="text-xs uppercase tracking-widest text-muted-foreground">Permissions matrix</p>
-            <ul className="mt-3 space-y-1.5 text-xs">
-              {[
-                ["Owner", "Full access · billing · branding"],
-                ["Admin", "Org settings · staff · reports"],
-                ["Clinician", "Medical · care plans · alerts"],
-                ["Caregiver", "Shifts · tasks · timeline"],
-                ["Family", "Read · emotional · timeline"],
-              ].map(([r, d]) => (
-                <li key={r} className="flex gap-2"><span className="w-20 font-medium text-foreground">{r}</span><span className="text-muted-foreground">{d}</span></li>
-              ))}
-            </ul>
-          </Card>
-        </div>
+        <Card className="lg:col-span-2">
+          <div className="flex items-center justify-between">
+            <p className="text-xs uppercase tracking-widest text-muted-foreground">Members</p>
+            <Pill tone="moss">{members.data?.length ?? 0} active</Pill>
+          </div>
+          <ul className="mt-4 divide-y divide-border/60">
+            {members.data?.map((m: any) => (
+              <li key={m.id} className="flex items-center gap-3 py-3">
+                <Avatar name={m.full_name ?? "?"} src={m.avatar_url} tone="olive" />
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm text-foreground">{m.preferred_name || m.full_name || "Unnamed"}</p>
+                  <div className="mt-0.5 flex flex-wrap gap-1">
+                    {m.roles.length === 0 && <span className="text-[10px] text-muted-foreground">no role</span>}
+                    {m.roles.map((r: string) => <Pill key={r} tone="muted">{ROLE_LABELS[r as keyof typeof ROLE_LABELS] ?? r}</Pill>)}
+                  </div>
+                </div>
+              </li>
+            ))}
+            {members.data?.length === 0 && <li className="py-4 text-sm text-muted-foreground">No members yet.</li>}
+          </ul>
+        </Card>
       </div>
     </>
   );
