@@ -106,17 +106,18 @@ function AppLayout() {
 
         <div className="border-t border-border/60 p-4">
           <div className="flex items-center gap-3 rounded-2xl bg-ivory p-3">
-            <Avatar name="Maria Lopes" tone="wine" />
+            <Avatar name={profile?.full_name ?? user.email ?? "U"} tone="olive" />
             <div className="min-w-0 flex-1">
-              <p className="truncate text-sm text-foreground">Maria Lopes</p>
-              <p className="truncate text-xs text-muted-foreground">Care recipient</p>
+              <p className="truncate text-sm text-foreground">{profile?.full_name ?? user.email}</p>
+              <p className="truncate text-xs text-muted-foreground capitalize">{roles[0]?.replace("_", " ") ?? "member"}</p>
             </div>
-            <button className="text-muted-foreground hover:text-olive">
-              <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2"><path d="M6 9l6 6 6-6"/></svg>
+            <button onClick={() => signOut().then(() => navigate({ to: "/login" }))} title="Sign out" className="text-muted-foreground hover:text-wine">
+              <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4 M16 17l5-5-5-5 M21 12H9"/></svg>
             </button>
           </div>
         </div>
       </aside>
+
 
       {/* Main */}
       <div className="flex-1">
@@ -134,13 +135,28 @@ function AppLayout() {
               <kbd className="rounded bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">⌘K</kbd>
             </div>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="relative flex items-center gap-3">
             <button className="relative rounded-full border border-border bg-ivory p-2 text-muted-foreground hover:text-olive">
               <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9 M13.73 21a2 2 0 0 1-3.46 0"/></svg>
               <span className="absolute right-1.5 top-1.5 h-2 w-2 animate-pulse-soft rounded-full bg-wine" />
             </button>
-            <button className="rounded-full bg-wine px-4 py-2 text-xs text-ivory shadow-soft hover:opacity-90">SOS</button>
-            <Avatar name="Inês Ribeiro" tone="olive" size={32} />
+            {hasAnyRole(["family", "caregiver", "nurse", "doctor", "clinic_admin", "super_admin"]) && (
+              <button onClick={() => navigate({ to: "/app/emergency" })} className="rounded-full bg-wine px-4 py-2 text-xs text-ivory shadow-soft hover:opacity-90">SOS</button>
+            )}
+            <button onClick={() => setMenuOpen((v) => !v)} className="rounded-full">
+              <Avatar name={profile?.full_name ?? user.email ?? "U"} tone="olive" size={32} />
+            </button>
+            {menuOpen && (
+              <div className="absolute right-0 top-12 z-40 w-56 rounded-2xl border border-border bg-card p-2 shadow-elevated">
+                <div className="px-3 py-2 border-b border-border/60">
+                  <p className="truncate text-sm text-foreground">{profile?.full_name ?? user.email}</p>
+                  <p className="truncate text-xs text-muted-foreground">{user.email}</p>
+                </div>
+                <button onClick={() => { setMenuOpen(false); navigate({ to: "/app/profile" }); }} className="block w-full rounded-xl px-3 py-2 text-left text-sm hover:bg-cream">Life profile</button>
+                <button onClick={() => { setMenuOpen(false); navigate({ to: "/app/tenants" }); }} className="block w-full rounded-xl px-3 py-2 text-left text-sm hover:bg-cream">Organization</button>
+                <button onClick={async () => { setMenuOpen(false); await signOut(); navigate({ to: "/login" }); }} className="block w-full rounded-xl px-3 py-2 text-left text-sm text-wine hover:bg-wine/5">Sign out</button>
+              </div>
+            )}
           </div>
         </header>
         <main className="px-6 py-8 md:px-10 md:py-10">
