@@ -61,12 +61,16 @@ function CarePlanPage() {
   });
 
   const createPlan = useMutation({
-    mutationFn: async (v: Record<string, string | null>) => {
+    mutationFn: async (v: { title: string; description: string | null; priority: string; start_date: string | null; end_date: string | null }) => {
       const { error } = await supabase.from("care_plans").insert({
         tenant_id: profile!.tenant_id!,
         resident_id: residentId,
         created_by: user!.id,
-        ...v,
+        title: v.title,
+        description: v.description,
+        priority: v.priority,
+        start_date: v.start_date,
+        end_date: v.end_date,
       });
       if (error) throw error;
     },
@@ -79,12 +83,17 @@ function CarePlanPage() {
   });
 
   const createTask = useMutation({
-    mutationFn: async (v: Record<string, string | null>) => {
+    mutationFn: async (v: { title: string; notes: string | null; category: string; priority: string; due_at: string | null; care_plan_id: string | null }) => {
       const { error } = await supabase.from("care_tasks").insert({
         tenant_id: profile!.tenant_id!,
         resident_id: residentId,
         created_by: user!.id,
-        ...v,
+        title: v.title,
+        notes: v.notes,
+        category: v.category,
+        priority: v.priority,
+        due_at: v.due_at,
+        care_plan_id: v.care_plan_id,
       });
       if (error) throw error;
     },
