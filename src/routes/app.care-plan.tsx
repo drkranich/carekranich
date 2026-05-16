@@ -1,103 +1,274 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Card, PageHeader, Pill, Ring, Avatar } from "@/components/app/primitives";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/use-auth";
+import { Card, PageHeader, Pill } from "@/components/app/primitives";
 
-export const Route = createFileRoute("/app/care-plan")({ component: CarePlan });
+export const Route = createFileRoute("/app/care-plan")({ component: CarePlanPage });
 
-const routines = [
-  { time: "07:30", task: "Hydration · 250ml water", cat: "Hydration", done: true, owner: "Sofia" },
-  { time: "08:00", task: "Breakfast · low-sodium plan", cat: "Nutrition", done: true, owner: "Sofia" },
-  { time: "09:00", task: "Blood pressure reading", cat: "Vitals", done: true, owner: "Sofia" },
-  { time: "09:15", task: "Metformin 500mg", cat: "Medication", done: true, owner: "Auto-dispenser" },
-  { time: "10:30", task: "Cognitive exercise · memory grid", cat: "Cognition", done: true, owner: "Maria" },
-  { time: "11:00", task: "Gentle walk · garden · 15 min", cat: "Mobility", done: false, owner: "Sofia" },
-  { time: "13:00", task: "Lunch · Mediterranean plan", cat: "Nutrition", done: false, owner: "Sofia" },
-  { time: "16:00", task: "Metformin 500mg", cat: "Medication", done: false, owner: "Auto-dispenser" },
-  { time: "17:30", task: "Family video call · Inês", cat: "Emotional", done: false, owner: "Maria" },
-  { time: "20:00", task: "Evening medication · 3 items", cat: "Medication", done: false, owner: "Sofia" },
-  { time: "21:30", task: "Wind-down · breathing", cat: "Wellness", done: false, owner: "Olia AI" },
-];
-
-const catTone: Record<string, string> = {
-  Hydration: "olive", Nutrition: "moss", Vitals: "wine", Medication: "wine",
-  Cognition: "gold", Mobility: "terracotta", Emotional: "wine", Wellness: "moss",
+type Resident = { id: string; full_name: string; preferred_name: string | null };
+type Plan = {
+  id: string; resident_id: string; title: string; description: string | null;
+  status: string; priority: string; start_date: string | null; end_date: string | null;
+};
+type Task = {
+  id: string; resident_id: string; care_plan_id: string | null; title: string; notes: string | null;
+  category: string; status: string; priority: string; due_at: string | null; completed_at: string | null;
 };
 
-function CarePlan() {
+const CATEGORIES = ["general", "medication", "vitals", "nutrition", "hydration", "mobility", "cognition", "emotional"];
+const PRIORITIES = ["low", "normal", "high", "critical"];
+
+function CarePlanPage() {
+  const { user, profile, hasAnyRole } = useAuth();
+  const canEditPlans = hasAnyRole(["nurse", "doctor", "clinic_admin", "super_admin"]);
+  const canEditTasks = hasAnyRole(["caregiver", "nurse", "doctor", "clinic_admin", "super_admin"]);
+
+  const [residents, setResidents] = useState<Resident[]>([]);
+  const [residentId, setResidentId] = useState<string>("");
+  const [plans, setPlans] = useState<Plan[]>([]);
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [err, setErr] = useState<string | null>(null);
+
+  const [showPlanForm, setShowPlanForm] = useState(false);
+  const [showTaskForm, setShowTaskForm] = useState(false);
+
+  useEffect(() => {
+    (async () => {
+      const { data } = await supabase.from("residents").select("id,full_name,preferred_name").order("full_name");
+      const r = (data ?? []) as Resident[];
+      setResidents(r);
+      if (r[0]) setResidentId(r[0].id);
+      setLoading(false);
+    })();
+  }, []);
+
+  useEffect(() => {
+    if (!residentId) { setPlans([]); setTasks([]); return; }
+    (async () => {
+      const [{ data: p }, { data: t }] = await Promise.all([
+        supabase.from("care_plans").select("*").eq("resident_id", residentId).order("created_at", { ascending: false }),
+        supabase.from("care_tasks").select("*").eq("resident_id", residentId).order("due_at", { ascending: true, nullsFirst: false }),
+      ]);
+      setPlans((p ?? []) as Plan[]);
+      setTasks((t ?? []) as Task[]);
+    })();
+  }, [residentId]);
+
+  const refresh = async () => {
+    const [{ data: p }, { data: t }] = await Promise.all([
+      supabase.from("care_plans").select("*").eq("resident_id", residentId).order("created_at", { ascending: false }),
+      supabase.from("care_tasks").select("*").eq("resident_id", residentId).order("due_at", { ascending: true, nullsFirst: false }),
+    ]);
+    setPlans((p ?? []) as Plan[]);
+    setTasks((t ?? []) as Task[]);
+  };
+
+  const createPlan = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const f = new FormData(e.currentTarget);
+    setErr(null);
+    const { error } = await supabase.from("care_plans").insert({
+      tenant_id: profile!.tenant_id!,
+      resident_id: residentId,
+      created_by: user!.id,
+      title: String(f.get("title")),
+      description: String(f.get("description") || "") || null,
+      priority: String(f.get("priority") || "normal"),
+      start_date: (f.get("start_date") as string) || null,
+      end_date: (f.get("end_date") as string) || null,
+    });
+    if (error) return setErr(error.message);
+    setShowPlanForm(false);
+    (e.target as HTMLFormElement).reset();
+    refresh();
+  };
+
+  const createTask = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const f = new FormData(e.currentTarget);
+    setErr(null);
+    const due = f.get("due_at") as string;
+    const { error } = await supabase.from("care_tasks").insert({
+      tenant_id: profile!.tenant_id!,
+      resident_id: residentId,
+      care_plan_id: (f.get("care_plan_id") as string) || null,
+      created_by: user!.id,
+      title: String(f.get("title")),
+      notes: String(f.get("notes") || "") || null,
+      category: String(f.get("category") || "general"),
+      priority: String(f.get("priority") || "normal"),
+      due_at: due ? new Date(due).toISOString() : null,
+    });
+    if (error) return setErr(error.message);
+    setShowTaskForm(false);
+    (e.target as HTMLFormElement).reset();
+    refresh();
+  };
+
+  const toggleTask = async (t: Task) => {
+    const done = t.status === "completed";
+    const { error } = await supabase.from("care_tasks").update({
+      status: done ? "pending" : "completed",
+      completed_at: done ? null : new Date().toISOString(),
+      completed_by: done ? null : user!.id,
+    }).eq("id", t.id);
+    if (!error) refresh();
+  };
+
+  const deletePlan = async (id: string) => {
+    if (!confirm("Delete this care plan?")) return;
+    await supabase.from("care_plans").delete().eq("id", id);
+    refresh();
+  };
+  const deleteTask = async (id: string) => {
+    await supabase.from("care_tasks").delete().eq("id", id);
+    refresh();
+  };
+
+  const stats = useMemo(() => {
+    const total = tasks.length;
+    const done = tasks.filter((t) => t.status === "completed").length;
+    const overdue = tasks.filter((t) => t.status !== "completed" && t.due_at && new Date(t.due_at) < new Date()).length;
+    return { total, done, overdue, pct: total ? Math.round((done / total) * 100) : 0 };
+  }, [tasks]);
+
+  if (loading) return <p className="text-sm text-muted-foreground">Loading care plan…</p>;
+
   return (
     <>
-      <PageHeader
-        title="Care plan · Maria Lopes"
-        subtitle="Individualized · revised by Dr. Costa on May 02 · co-designed with family"
-        action={<div className="flex gap-2"><Pill tone="moss">Adherence 92%</Pill><button className="rounded-full bg-olive px-4 py-2 text-xs text-ivory">Edit plan</button></div>}
-      />
+      <PageHeader title="Care plan" subtitle="Individualized plans and daily tasks · synced across the care team" />
 
-      <div className="grid gap-6 lg:grid-cols-3">
-        <Card><Ring value={92} label="Adherence" sub="Last 7 days" color="var(--olive)" /></Card>
-        <Card><Ring value={86} label="Hydration goal" sub="1.6L of 1.8L" color="var(--moss)" /></Card>
-        <Card><Ring value={74} label="Cognitive minutes" sub="148 / 200 weekly" color="var(--gold)" /></Card>
-
-        <Card className="lg:col-span-2 p-0">
-          <div className="flex items-center justify-between border-b border-border/60 px-6 py-4">
-            <p className="text-xs uppercase tracking-widest text-muted-foreground">Today · routine</p>
-            <span className="text-xs text-muted-foreground">5 of 11 complete</span>
-          </div>
-          <ul className="divide-y divide-border/60">
-            {routines.map((r) => (
-              <li key={r.time} className="flex items-center gap-4 px-6 py-3">
-                <span className="w-14 font-display text-sm text-muted-foreground tabular-nums">{r.time}</span>
-                <button className={`flex h-6 w-6 flex-none items-center justify-center rounded-full border-2 ${r.done ? "bg-olive border-olive text-ivory" : "border-border bg-card"}`}>
-                  {r.done && <svg viewBox="0 0 24 24" className="h-3 w-3" fill="none" stroke="currentColor" strokeWidth="3"><path d="M5 12l5 5L20 7"/></svg>}
-                </button>
-                <div className="flex-1 min-w-0">
-                  <p className={`text-sm ${r.done ? "text-muted-foreground line-through" : "text-foreground"}`}>{r.task}</p>
-                  <p className="text-xs text-muted-foreground">{r.owner}</p>
-                </div>
-                <Pill tone={catTone[r.cat] as any}>{r.cat}</Pill>
-              </li>
-            ))}
-          </ul>
+      {residents.length === 0 ? (
+        <Card className="p-6">
+          <p className="text-sm text-muted-foreground">Add a resident first to start building care plans.</p>
         </Card>
+      ) : (
+        <>
+          <div className="mb-6 flex flex-wrap items-center gap-3">
+            <label className="text-xs uppercase tracking-wider text-muted-foreground">Resident</label>
+            <select value={residentId} onChange={(e) => setResidentId(e.target.value)} className="rounded-xl border border-border bg-ivory px-3 py-2 text-sm">
+              {residents.map((r) => <option key={r.id} value={r.id}>{r.preferred_name ?? r.full_name}</option>)}
+            </select>
+            <div className="ml-auto flex items-center gap-2">
+              <Pill>{stats.done}/{stats.total} done</Pill>
+              {stats.overdue > 0 && <Pill tone="wine">{stats.overdue} overdue</Pill>}
+              <Pill tone="moss">{stats.pct}%</Pill>
+            </div>
+          </div>
 
-        <div className="space-y-6">
-          <Card>
-            <p className="text-xs uppercase tracking-widest text-muted-foreground">Active protocols</p>
-            <ul className="mt-3 space-y-2 text-sm">
-              {[
-                { n: "Cardiac stability — Tier 2", t: "wine" },
-                { n: "Diabetes type II — managed", t: "gold" },
-                { n: "Cognitive maintenance plan", t: "moss" },
-                { n: "Mobility — gentle restoration", t: "terracotta" },
-              ].map((p) => (
-                <li key={p.n} className="flex items-center justify-between rounded-xl border border-border/60 bg-cream/40 p-3">
-                  <span className="text-foreground">{p.n}</span>
-                  <Pill tone={p.t as any}>Active</Pill>
-                </li>
-              ))}
-            </ul>
-          </Card>
-          <Card className="bg-gradient-olive text-ivory border-none">
-            <p className="text-xs uppercase tracking-widest text-ivory/70">AI optimization</p>
-            <p className="mt-2 text-sm text-ivory/90">Shifting the cognitive exercise to 10:30 increased completion by 18%. Consider moving the evening walk to 18:00 — earlier light correlates with calmer sleep.</p>
-            <button className="mt-3 rounded-full bg-ivory px-3 py-1.5 text-xs text-olive">Apply suggestion</button>
-          </Card>
-          <Card>
-            <p className="text-xs uppercase tracking-widest text-muted-foreground">Care team</p>
-            <ul className="mt-3 space-y-2 text-sm">
-              {[
-                { n: "Sofia Mendes", r: "Lead caregiver", t: "terracotta" },
-                { n: "Dr. Joana Costa", r: "Cardiologist", t: "wine" },
-                { n: "Inês Ribeiro", r: "Family · daughter", t: "olive" },
-                { n: "Olia Companion", r: "AI assistant", t: "gold" },
-              ].map((m) => (
-                <li key={m.n} className="flex items-center gap-3">
-                  <Avatar name={m.n} tone={m.t} size={32} />
-                  <div className="min-w-0"><p className="text-foreground truncate">{m.n}</p><p className="text-xs text-muted-foreground">{m.r}</p></div>
-                </li>
-              ))}
-            </ul>
-          </Card>
-        </div>
-      </div>
+          {err && <p className="mb-4 rounded-xl bg-wine/10 px-3 py-2 text-xs text-wine">{err}</p>}
+
+          <div className="grid gap-6 lg:grid-cols-3">
+            {/* Plans */}
+            <Card className="p-6 lg:col-span-1">
+              <div className="mb-4 flex items-center justify-between">
+                <h3 className="font-display text-lg text-foreground">Plans</h3>
+                {canEditPlans && (
+                  <button onClick={() => setShowPlanForm((v) => !v)} className="rounded-full bg-olive px-3 py-1 text-xs text-ivory hover:opacity-90">
+                    {showPlanForm ? "Cancel" : "+ New"}
+                  </button>
+                )}
+              </div>
+              {showPlanForm && canEditPlans && (
+                <form onSubmit={createPlan} className="mb-4 space-y-2 rounded-2xl border border-border bg-ivory p-3">
+                  <input name="title" required placeholder="Plan title" className="w-full rounded-lg border border-border bg-card px-2 py-1.5 text-sm" />
+                  <textarea name="description" placeholder="Description / goals" className="w-full rounded-lg border border-border bg-card px-2 py-1.5 text-sm" rows={2} />
+                  <div className="flex gap-2">
+                    <select name="priority" className="flex-1 rounded-lg border border-border bg-card px-2 py-1.5 text-sm">
+                      {PRIORITIES.map((p) => <option key={p}>{p}</option>)}
+                    </select>
+                    <input type="date" name="start_date" className="rounded-lg border border-border bg-card px-2 py-1.5 text-sm" />
+                    <input type="date" name="end_date" className="rounded-lg border border-border bg-card px-2 py-1.5 text-sm" />
+                  </div>
+                  <button className="w-full rounded-lg bg-olive py-1.5 text-xs text-ivory hover:opacity-90">Create plan</button>
+                </form>
+              )}
+              <div className="space-y-2">
+                {plans.length === 0 && <p className="text-xs text-muted-foreground">No plans yet.</p>}
+                {plans.map((p) => (
+                  <div key={p.id} className="rounded-xl border border-border bg-ivory/60 p-3">
+                    <div className="flex items-start justify-between gap-2">
+                      <p className="text-sm font-medium text-foreground">{p.title}</p>
+                      <Pill tone={p.priority === "critical" || p.priority === "high" ? "wine" : "moss"}>{p.priority}</Pill>
+                    </div>
+                    {p.description && <p className="mt-1 text-xs text-muted-foreground">{p.description}</p>}
+                    <div className="mt-2 flex items-center justify-between text-[11px] text-muted-foreground">
+                      <span>{p.start_date ?? "—"} → {p.end_date ?? "ongoing"}</span>
+                      {hasAnyRole(["clinic_admin", "super_admin"]) && (
+                        <button onClick={() => deletePlan(p.id)} className="text-wine hover:underline">Delete</button>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </Card>
+
+            {/* Tasks */}
+            <Card className="p-6 lg:col-span-2">
+              <div className="mb-4 flex items-center justify-between">
+                <h3 className="font-display text-lg text-foreground">Daily tasks</h3>
+                {canEditTasks && (
+                  <button onClick={() => setShowTaskForm((v) => !v)} className="rounded-full bg-olive px-3 py-1 text-xs text-ivory hover:opacity-90">
+                    {showTaskForm ? "Cancel" : "+ New task"}
+                  </button>
+                )}
+              </div>
+              {showTaskForm && canEditTasks && (
+                <form onSubmit={createTask} className="mb-4 grid grid-cols-1 gap-2 rounded-2xl border border-border bg-ivory p-3 md:grid-cols-2">
+                  <input name="title" required placeholder="Task title" className="rounded-lg border border-border bg-card px-2 py-1.5 text-sm md:col-span-2" />
+                  <select name="category" className="rounded-lg border border-border bg-card px-2 py-1.5 text-sm">
+                    {CATEGORIES.map((c) => <option key={c}>{c}</option>)}
+                  </select>
+                  <select name="priority" className="rounded-lg border border-border bg-card px-2 py-1.5 text-sm">
+                    {PRIORITIES.map((p) => <option key={p}>{p}</option>)}
+                  </select>
+                  <input type="datetime-local" name="due_at" className="rounded-lg border border-border bg-card px-2 py-1.5 text-sm" />
+                  <select name="care_plan_id" className="rounded-lg border border-border bg-card px-2 py-1.5 text-sm">
+                    <option value="">No plan</option>
+                    {plans.map((p) => <option key={p.id} value={p.id}>{p.title}</option>)}
+                  </select>
+                  <textarea name="notes" placeholder="Notes" className="rounded-lg border border-border bg-card px-2 py-1.5 text-sm md:col-span-2" rows={2} />
+                  <button className="rounded-lg bg-olive py-1.5 text-xs text-ivory hover:opacity-90 md:col-span-2">Create task</button>
+                </form>
+              )}
+              <div className="space-y-1.5">
+                {tasks.length === 0 && <p className="text-xs text-muted-foreground">No tasks yet.</p>}
+                {tasks.map((t) => {
+                  const done = t.status === "completed";
+                  const overdue = !done && t.due_at && new Date(t.due_at) < new Date();
+                  return (
+                    <div key={t.id} className={`flex items-center gap-3 rounded-xl border border-border p-3 ${done ? "bg-cream/40" : "bg-ivory"}`}>
+                      <button
+                        disabled={!canEditTasks}
+                        onClick={() => toggleTask(t)}
+                        className={`flex h-5 w-5 flex-none items-center justify-center rounded-full border-2 ${done ? "border-moss bg-moss text-ivory" : "border-border bg-card"} ${canEditTasks ? "hover:border-olive" : "cursor-not-allowed"}`}
+                      >
+                        {done && <svg viewBox="0 0 24 24" className="h-3 w-3" fill="none" stroke="currentColor" strokeWidth="3"><path d="M5 13l4 4L19 7" /></svg>}
+                      </button>
+                      <div className="min-w-0 flex-1">
+                        <p className={`truncate text-sm ${done ? "text-muted-foreground line-through" : "text-foreground"}`}>{t.title}</p>
+                        {t.notes && <p className="truncate text-xs text-muted-foreground">{t.notes}</p>}
+                      </div>
+                      <Pill>{t.category}</Pill>
+                      {t.due_at && (
+                        <span className={`text-xs ${overdue ? "text-wine" : "text-muted-foreground"}`}>
+                          {new Date(t.due_at).toLocaleString([], { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}
+                        </span>
+                      )}
+                      {t.priority !== "normal" && <Pill tone={t.priority === "critical" || t.priority === "high" ? "wine" : "moss"}>{t.priority}</Pill>}
+                      {hasAnyRole(["clinic_admin", "super_admin"]) && (
+                        <button onClick={() => deleteTask(t.id)} className="text-xs text-muted-foreground hover:text-wine">×</button>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </Card>
+          </div>
+        </>
+      )}
     </>
   );
 }
