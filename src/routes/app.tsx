@@ -63,6 +63,7 @@ function AppLayout() {
     return <div className="min-h-screen grid place-items-center text-muted-foreground text-sm">Loading…</div>;
   }
   if (!user) return <Navigate to="/login" />;
+  if (!profile?.tenant_id) return <Navigate to="/onboarding" />;
 
   return (
     <div className="flex min-h-screen bg-background">
