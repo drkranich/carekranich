@@ -19,6 +19,7 @@ import { Route as AppTelemedicineRouteImport } from './routes/app.telemedicine'
 import { Route as AppSmartHomeRouteImport } from './routes/app.smart-home'
 import { Route as AppQualityRouteImport } from './routes/app.quality'
 import { Route as AppProfileRouteImport } from './routes/app.profile'
+import { Route as AppNotificationsRouteImport } from './routes/app.notifications'
 import { Route as AppMemoryRouteImport } from './routes/app.memory'
 import { Route as AppMedicalRouteImport } from './routes/app.medical'
 import { Route as AppMarketplaceRouteImport } from './routes/app.marketplace'
@@ -81,6 +82,11 @@ const AppQualityRoute = AppQualityRouteImport.update({
 const AppProfileRoute = AppProfileRouteImport.update({
   id: '/profile',
   path: '/profile',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppNotificationsRoute = AppNotificationsRouteImport.update({
+  id: '/notifications',
+  path: '/notifications',
   getParentRoute: () => AppRoute,
 } as any)
 const AppMemoryRoute = AppMemoryRouteImport.update({
@@ -165,6 +171,7 @@ export interface FileRoutesByFullPath {
   '/app/marketplace': typeof AppMarketplaceRoute
   '/app/medical': typeof AppMedicalRoute
   '/app/memory': typeof AppMemoryRoute
+  '/app/notifications': typeof AppNotificationsRoute
   '/app/profile': typeof AppProfileRoute
   '/app/quality': typeof AppQualityRoute
   '/app/smart-home': typeof AppSmartHomeRoute
@@ -189,6 +196,7 @@ export interface FileRoutesByTo {
   '/app/marketplace': typeof AppMarketplaceRoute
   '/app/medical': typeof AppMedicalRoute
   '/app/memory': typeof AppMemoryRoute
+  '/app/notifications': typeof AppNotificationsRoute
   '/app/profile': typeof AppProfileRoute
   '/app/quality': typeof AppQualityRoute
   '/app/smart-home': typeof AppSmartHomeRoute
@@ -215,6 +223,7 @@ export interface FileRoutesById {
   '/app/marketplace': typeof AppMarketplaceRoute
   '/app/medical': typeof AppMedicalRoute
   '/app/memory': typeof AppMemoryRoute
+  '/app/notifications': typeof AppNotificationsRoute
   '/app/profile': typeof AppProfileRoute
   '/app/quality': typeof AppQualityRoute
   '/app/smart-home': typeof AppSmartHomeRoute
@@ -242,6 +251,7 @@ export interface FileRouteTypes {
     | '/app/marketplace'
     | '/app/medical'
     | '/app/memory'
+    | '/app/notifications'
     | '/app/profile'
     | '/app/quality'
     | '/app/smart-home'
@@ -266,6 +276,7 @@ export interface FileRouteTypes {
     | '/app/marketplace'
     | '/app/medical'
     | '/app/memory'
+    | '/app/notifications'
     | '/app/profile'
     | '/app/quality'
     | '/app/smart-home'
@@ -291,6 +302,7 @@ export interface FileRouteTypes {
     | '/app/marketplace'
     | '/app/medical'
     | '/app/memory'
+    | '/app/notifications'
     | '/app/profile'
     | '/app/quality'
     | '/app/smart-home'
@@ -376,6 +388,13 @@ declare module '@tanstack/react-router' {
       path: '/profile'
       fullPath: '/app/profile'
       preLoaderRoute: typeof AppProfileRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/notifications': {
+      id: '/app/notifications'
+      path: '/notifications'
+      fullPath: '/app/notifications'
+      preLoaderRoute: typeof AppNotificationsRouteImport
       parentRoute: typeof AppRoute
     }
     '/app/memory': {
@@ -486,6 +505,7 @@ interface AppRouteChildren {
   AppMarketplaceRoute: typeof AppMarketplaceRoute
   AppMedicalRoute: typeof AppMedicalRoute
   AppMemoryRoute: typeof AppMemoryRoute
+  AppNotificationsRoute: typeof AppNotificationsRoute
   AppProfileRoute: typeof AppProfileRoute
   AppQualityRoute: typeof AppQualityRoute
   AppSmartHomeRoute: typeof AppSmartHomeRoute
@@ -510,6 +530,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppMarketplaceRoute: AppMarketplaceRoute,
   AppMedicalRoute: AppMedicalRoute,
   AppMemoryRoute: AppMemoryRoute,
+  AppNotificationsRoute: AppNotificationsRoute,
   AppProfileRoute: AppProfileRoute,
   AppQualityRoute: AppQualityRoute,
   AppSmartHomeRoute: AppSmartHomeRoute,
