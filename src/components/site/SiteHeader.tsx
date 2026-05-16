@@ -20,10 +20,10 @@ export function SiteHeader() {
           <a href="#pricing" className="hover:text-olive">Pricing</a>
         </nav>
         <div className="flex items-center gap-3">
-          <a href="#login" className="hidden text-sm text-foreground/70 hover:text-olive sm:inline">Sign in</a>
-          <a href="#start" className="rounded-full bg-primary px-4 py-2 text-sm text-primary-foreground shadow-soft hover:opacity-90">
+          <Link to="/login" className="hidden text-sm text-foreground/70 hover:text-olive sm:inline">Sign in</Link>
+          <Link to="/signup" className="rounded-full bg-primary px-4 py-2 text-sm text-primary-foreground shadow-soft hover:opacity-90">
             Begin care
-          </a>
+          </Link>
         </div>
       </div>
     </header>
