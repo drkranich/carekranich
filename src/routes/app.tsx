@@ -61,6 +61,8 @@ function AppLayout() {
   const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
 
+  useTenantRealtime(profile?.tenant_id, user?.id);
+
   if (loading) {
     return <div className="min-h-screen grid place-items-center text-muted-foreground text-sm">Loading…</div>;
   }
