@@ -32,14 +32,22 @@ const ALL_SECTIONS: NavSection[] = [
     ],
   },
   {
+    title: "Digital Twin",
+    items: [
+      { to: "/app/twin", label: "Digital Twin", icon: "M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2z M12 6v6l4 2" },
+      { to: "/app/cognitive", label: "Cognitive Twin", icon: "M12 2a5 5 0 0 0-5 5v1a4 4 0 0 0-2 7 4 4 0 0 0 7 3 4 4 0 0 0 7-3 4 4 0 0 0-2-7V7a5 5 0 0 0-5-5z" },
+      { to: "/app/longevity", label: "Longevity Engine", icon: "M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67 10.94 4.61a5.5 5.5 0 0 0-7.78 7.78l8.84 8.84 8.84-8.84a5.5 5.5 0 0 0 0-7.78z" },
+    ],
+  },
+  {
     title: "Intelligence",
     items: [
       { to: "/app/ai", label: "AI Insights", icon: "M12 2v4 M12 18v4 M4.93 4.93l2.83 2.83 M2 12h4 M18 12h4" },
       { to: "/app/alerts", label: "Alert center", icon: "M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9 M13.73 21a2 2 0 0 1-3.46 0" },
       { to: "/app/workflows", label: "Workflows", icon: "M4 6h6 M4 12h10 M4 18h6 M14 18a2 2 0 1 0 4 0 2 2 0 0 0-4 0 M14 6a2 2 0 1 0 4 0 2 2 0 0 0-4 0", roles: ["clinic_admin", "super_admin"] },
       { to: "/app/smart-home", label: "Smart Home", icon: "M3 12l9-9 9 9 M5 10v10h14V10 M9 20v-6h6v6", roles: ["family", "caregiver", "nurse", "clinic_admin", "super_admin"] },
-      { to: "/app/longevity", label: "Longevity", icon: "M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67 10.94 4.61a5.5 5.5 0 0 0-7.78 7.78l8.84 8.84 8.84-8.84a5.5 5.5 0 0 0 0-7.78z" },
       { to: "/app/telemedicine", label: "Telemedicine", icon: "M23 7l-7 5 7 5V7z M14 5H3a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2z" },
+
     ],
   },
   {
