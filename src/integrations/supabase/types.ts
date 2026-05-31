@@ -14,6 +14,54 @@ export type Database = {
   }
   public: {
     Tables: {
+      ai_insights: {
+        Row: {
+          confidence: number | null
+          created_at: string
+          evidence: Json
+          generated_by: string
+          id: string
+          module: string
+          reasoning: string | null
+          recommendations: Json
+          resident_id: string | null
+          severity: string
+          summary: string
+          tenant_id: string
+          title: string
+        }
+        Insert: {
+          confidence?: number | null
+          created_at?: string
+          evidence?: Json
+          generated_by?: string
+          id?: string
+          module: string
+          reasoning?: string | null
+          recommendations?: Json
+          resident_id?: string | null
+          severity?: string
+          summary: string
+          tenant_id: string
+          title: string
+        }
+        Update: {
+          confidence?: number | null
+          created_at?: string
+          evidence?: Json
+          generated_by?: string
+          id?: string
+          module?: string
+          reasoning?: string | null
+          recommendations?: Json
+          resident_id?: string | null
+          severity?: string
+          summary?: string
+          tenant_id?: string
+          title?: string
+        }
+        Relationships: []
+      }
       alerts: {
         Row: {
           acknowledged_at: string | null
@@ -181,6 +229,66 @@ export type Database = {
           },
         ]
       }
+      cognitive_assessments: {
+        Row: {
+          assessed_at: string
+          assessor_role: string
+          attention_score: number | null
+          created_at: string
+          created_by: string | null
+          emotional_stability_score: number | null
+          executive_score: number | null
+          id: string
+          language_score: number | null
+          memory_score: number | null
+          notes: string | null
+          reasoning_score: number | null
+          resident_id: string
+          source: string
+          tenant_id: string
+          updated_at: string
+          vitality_score: number | null
+        }
+        Insert: {
+          assessed_at?: string
+          assessor_role?: string
+          attention_score?: number | null
+          created_at?: string
+          created_by?: string | null
+          emotional_stability_score?: number | null
+          executive_score?: number | null
+          id?: string
+          language_score?: number | null
+          memory_score?: number | null
+          notes?: string | null
+          reasoning_score?: number | null
+          resident_id: string
+          source?: string
+          tenant_id: string
+          updated_at?: string
+          vitality_score?: number | null
+        }
+        Update: {
+          assessed_at?: string
+          assessor_role?: string
+          attention_score?: number | null
+          created_at?: string
+          created_by?: string | null
+          emotional_stability_score?: number | null
+          executive_score?: number | null
+          id?: string
+          language_score?: number | null
+          memory_score?: number | null
+          notes?: string | null
+          reasoning_score?: number | null
+          resident_id?: string
+          source?: string
+          tenant_id?: string
+          updated_at?: string
+          vitality_score?: number | null
+        }
+        Relationships: []
+      }
       events: {
         Row: {
           actor_id: string | null
@@ -220,6 +328,60 @@ export type Database = {
           severity?: string
           tenant_id?: string
           title?: string
+        }
+        Relationships: []
+      }
+      longevity_scores: {
+        Row: {
+          cognitive_score: number | null
+          computed_at: string
+          created_at: string
+          emotional_score: number | null
+          health_score: number | null
+          id: string
+          longevity_score: number | null
+          methodology: Json
+          mobility_score: number | null
+          protective_factors: Json
+          resident_id: string
+          resilience_score: number | null
+          risk_factors: Json
+          social_score: number | null
+          tenant_id: string
+        }
+        Insert: {
+          cognitive_score?: number | null
+          computed_at?: string
+          created_at?: string
+          emotional_score?: number | null
+          health_score?: number | null
+          id?: string
+          longevity_score?: number | null
+          methodology?: Json
+          mobility_score?: number | null
+          protective_factors?: Json
+          resident_id: string
+          resilience_score?: number | null
+          risk_factors?: Json
+          social_score?: number | null
+          tenant_id: string
+        }
+        Update: {
+          cognitive_score?: number | null
+          computed_at?: string
+          created_at?: string
+          emotional_score?: number | null
+          health_score?: number | null
+          id?: string
+          longevity_score?: number | null
+          methodology?: Json
+          mobility_score?: number | null
+          protective_factors?: Json
+          resident_id?: string
+          resilience_score?: number | null
+          risk_factors?: Json
+          social_score?: number | null
+          tenant_id?: string
         }
         Relationships: []
       }
@@ -386,6 +548,60 @@ export type Database = {
           invite_code?: string | null
           name?: string
           slug?: string
+        }
+        Relationships: []
+      }
+      twin_observations: {
+        Row: {
+          confidence: number | null
+          created_at: string
+          created_by: string | null
+          domain: string
+          id: string
+          metric: string
+          notes: string | null
+          observed_at: string
+          resident_id: string
+          source: string
+          tenant_id: string
+          unit: string | null
+          updated_at: string
+          value_numeric: number | null
+          value_text: string | null
+        }
+        Insert: {
+          confidence?: number | null
+          created_at?: string
+          created_by?: string | null
+          domain: string
+          id?: string
+          metric: string
+          notes?: string | null
+          observed_at?: string
+          resident_id: string
+          source?: string
+          tenant_id: string
+          unit?: string | null
+          updated_at?: string
+          value_numeric?: number | null
+          value_text?: string | null
+        }
+        Update: {
+          confidence?: number | null
+          created_at?: string
+          created_by?: string | null
+          domain?: string
+          id?: string
+          metric?: string
+          notes?: string | null
+          observed_at?: string
+          resident_id?: string
+          source?: string
+          tenant_id?: string
+          unit?: string | null
+          updated_at?: string
+          value_numeric?: number | null
+          value_text?: string | null
         }
         Relationships: []
       }

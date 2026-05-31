@@ -36,6 +36,7 @@ import { Route as SolutionsHospitalsRouteImport } from './routes/solutions.hospi
 import { Route as SolutionsHomeCareRouteImport } from './routes/solutions.home-care'
 import { Route as SolutionsClinicsRouteImport } from './routes/solutions.clinics'
 import { Route as AppWorkflowsRouteImport } from './routes/app.workflows'
+import { Route as AppTwinRouteImport } from './routes/app.twin'
 import { Route as AppTimelineRouteImport } from './routes/app.timeline'
 import { Route as AppTenantsRouteImport } from './routes/app.tenants'
 import { Route as AppTelemedicineRouteImport } from './routes/app.telemedicine'
@@ -51,6 +52,7 @@ import { Route as AppLongevityRouteImport } from './routes/app.longevity'
 import { Route as AppEmergencyRouteImport } from './routes/app.emergency'
 import { Route as AppDocumentsRouteImport } from './routes/app.documents'
 import { Route as AppCommandRouteImport } from './routes/app.command'
+import { Route as AppCognitiveRouteImport } from './routes/app.cognitive'
 import { Route as AppCaregiverRouteImport } from './routes/app.caregiver'
 import { Route as AppCarePlanRouteImport } from './routes/app.care-plan'
 import { Route as AppAlertsRouteImport } from './routes/app.alerts'
@@ -193,6 +195,11 @@ const AppWorkflowsRoute = AppWorkflowsRouteImport.update({
   path: '/workflows',
   getParentRoute: () => AppRoute,
 } as any)
+const AppTwinRoute = AppTwinRouteImport.update({
+  id: '/twin',
+  path: '/twin',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppTimelineRoute = AppTimelineRouteImport.update({
   id: '/timeline',
   path: '/timeline',
@@ -268,6 +275,11 @@ const AppCommandRoute = AppCommandRouteImport.update({
   path: '/command',
   getParentRoute: () => AppRoute,
 } as any)
+const AppCognitiveRoute = AppCognitiveRouteImport.update({
+  id: '/cognitive',
+  path: '/cognitive',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppCaregiverRoute = AppCaregiverRouteImport.update({
   id: '/caregiver',
   path: '/caregiver',
@@ -326,6 +338,7 @@ export interface FileRoutesByFullPath {
   '/app/alerts': typeof AppAlertsRoute
   '/app/care-plan': typeof AppCarePlanRoute
   '/app/caregiver': typeof AppCaregiverRoute
+  '/app/cognitive': typeof AppCognitiveRoute
   '/app/command': typeof AppCommandRoute
   '/app/documents': typeof AppDocumentsRoute
   '/app/emergency': typeof AppEmergencyRoute
@@ -341,6 +354,7 @@ export interface FileRoutesByFullPath {
   '/app/telemedicine': typeof AppTelemedicineRoute
   '/app/tenants': typeof AppTenantsRoute
   '/app/timeline': typeof AppTimelineRoute
+  '/app/twin': typeof AppTwinRoute
   '/app/workflows': typeof AppWorkflowsRoute
   '/solutions/clinics': typeof SolutionsClinicsRoute
   '/solutions/home-care': typeof SolutionsHomeCareRoute
@@ -375,6 +389,7 @@ export interface FileRoutesByTo {
   '/app/alerts': typeof AppAlertsRoute
   '/app/care-plan': typeof AppCarePlanRoute
   '/app/caregiver': typeof AppCaregiverRoute
+  '/app/cognitive': typeof AppCognitiveRoute
   '/app/command': typeof AppCommandRoute
   '/app/documents': typeof AppDocumentsRoute
   '/app/emergency': typeof AppEmergencyRoute
@@ -390,6 +405,7 @@ export interface FileRoutesByTo {
   '/app/telemedicine': typeof AppTelemedicineRoute
   '/app/tenants': typeof AppTenantsRoute
   '/app/timeline': typeof AppTimelineRoute
+  '/app/twin': typeof AppTwinRoute
   '/app/workflows': typeof AppWorkflowsRoute
   '/solutions/clinics': typeof SolutionsClinicsRoute
   '/solutions/home-care': typeof SolutionsHomeCareRoute
@@ -426,6 +442,7 @@ export interface FileRoutesById {
   '/app/alerts': typeof AppAlertsRoute
   '/app/care-plan': typeof AppCarePlanRoute
   '/app/caregiver': typeof AppCaregiverRoute
+  '/app/cognitive': typeof AppCognitiveRoute
   '/app/command': typeof AppCommandRoute
   '/app/documents': typeof AppDocumentsRoute
   '/app/emergency': typeof AppEmergencyRoute
@@ -441,6 +458,7 @@ export interface FileRoutesById {
   '/app/telemedicine': typeof AppTelemedicineRoute
   '/app/tenants': typeof AppTenantsRoute
   '/app/timeline': typeof AppTimelineRoute
+  '/app/twin': typeof AppTwinRoute
   '/app/workflows': typeof AppWorkflowsRoute
   '/solutions/clinics': typeof SolutionsClinicsRoute
   '/solutions/home-care': typeof SolutionsHomeCareRoute
@@ -478,6 +496,7 @@ export interface FileRouteTypes {
     | '/app/alerts'
     | '/app/care-plan'
     | '/app/caregiver'
+    | '/app/cognitive'
     | '/app/command'
     | '/app/documents'
     | '/app/emergency'
@@ -493,6 +512,7 @@ export interface FileRouteTypes {
     | '/app/telemedicine'
     | '/app/tenants'
     | '/app/timeline'
+    | '/app/twin'
     | '/app/workflows'
     | '/solutions/clinics'
     | '/solutions/home-care'
@@ -527,6 +547,7 @@ export interface FileRouteTypes {
     | '/app/alerts'
     | '/app/care-plan'
     | '/app/caregiver'
+    | '/app/cognitive'
     | '/app/command'
     | '/app/documents'
     | '/app/emergency'
@@ -542,6 +563,7 @@ export interface FileRouteTypes {
     | '/app/telemedicine'
     | '/app/tenants'
     | '/app/timeline'
+    | '/app/twin'
     | '/app/workflows'
     | '/solutions/clinics'
     | '/solutions/home-care'
@@ -577,6 +599,7 @@ export interface FileRouteTypes {
     | '/app/alerts'
     | '/app/care-plan'
     | '/app/caregiver'
+    | '/app/cognitive'
     | '/app/command'
     | '/app/documents'
     | '/app/emergency'
@@ -592,6 +615,7 @@ export interface FileRouteTypes {
     | '/app/telemedicine'
     | '/app/tenants'
     | '/app/timeline'
+    | '/app/twin'
     | '/app/workflows'
     | '/solutions/clinics'
     | '/solutions/home-care'
@@ -820,6 +844,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppWorkflowsRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/twin': {
+      id: '/app/twin'
+      path: '/twin'
+      fullPath: '/app/twin'
+      preLoaderRoute: typeof AppTwinRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/app/timeline': {
       id: '/app/timeline'
       path: '/timeline'
@@ -925,6 +956,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppCommandRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/cognitive': {
+      id: '/app/cognitive'
+      path: '/cognitive'
+      fullPath: '/app/cognitive'
+      preLoaderRoute: typeof AppCognitiveRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/app/caregiver': {
       id: '/app/caregiver'
       path: '/caregiver'
@@ -977,6 +1015,7 @@ interface AppRouteChildren {
   AppAlertsRoute: typeof AppAlertsRoute
   AppCarePlanRoute: typeof AppCarePlanRoute
   AppCaregiverRoute: typeof AppCaregiverRoute
+  AppCognitiveRoute: typeof AppCognitiveRoute
   AppCommandRoute: typeof AppCommandRoute
   AppDocumentsRoute: typeof AppDocumentsRoute
   AppEmergencyRoute: typeof AppEmergencyRoute
@@ -992,6 +1031,7 @@ interface AppRouteChildren {
   AppTelemedicineRoute: typeof AppTelemedicineRoute
   AppTenantsRoute: typeof AppTenantsRoute
   AppTimelineRoute: typeof AppTimelineRoute
+  AppTwinRoute: typeof AppTwinRoute
   AppWorkflowsRoute: typeof AppWorkflowsRoute
   AppIndexRoute: typeof AppIndexRoute
 }
@@ -1003,6 +1043,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppAlertsRoute: AppAlertsRoute,
   AppCarePlanRoute: AppCarePlanRoute,
   AppCaregiverRoute: AppCaregiverRoute,
+  AppCognitiveRoute: AppCognitiveRoute,
   AppCommandRoute: AppCommandRoute,
   AppDocumentsRoute: AppDocumentsRoute,
   AppEmergencyRoute: AppEmergencyRoute,
@@ -1018,6 +1059,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppTelemedicineRoute: AppTelemedicineRoute,
   AppTenantsRoute: AppTenantsRoute,
   AppTimelineRoute: AppTimelineRoute,
+  AppTwinRoute: AppTwinRoute,
   AppWorkflowsRoute: AppWorkflowsRoute,
   AppIndexRoute: AppIndexRoute,
 }
