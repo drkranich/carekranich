@@ -34,10 +34,12 @@ function AgentWorkspace() {
 
   useEffect(() => {
     if (!agent || !profile?.tenant_id) return;
+    const tenantId = profile.tenant_id;
+    const userId = profile.id;
     (async () => {
       const [{ data: r }, { data: c }] = await Promise.all([
-        supabase.from("residents").select("id,full_name,preferred_name").eq("tenant_id", profile.tenant_id).order("full_name"),
-        supabase.from("agent_conversations").select("id,title,updated_at,resident_id").eq("user_id", profile.id).eq("agent_key", agent.key).order("updated_at", { ascending: false }).limit(20),
+        supabase.from("residents").select("id,full_name,preferred_name").eq("tenant_id", tenantId).order("full_name"),
+        supabase.from("agent_conversations").select("id,title,updated_at,resident_id").eq("user_id", userId).eq("agent_key", agent.key).order("updated_at", { ascending: false }).limit(20),
       ]);
       setResidents((r as Resident[]) ?? []);
       setConvs((c as Conv[]) ?? []);
