@@ -32,6 +32,13 @@ const ALL_SECTIONS: NavSection[] = [
     ],
   },
   {
+    title: "AI Agents",
+    items: [
+      { to: "/app/agents", label: "Agent Center", icon: "M12 2a5 5 0 0 1 5 5v2a5 5 0 0 1-10 0V7a5 5 0 0 1 5-5z M5 21v-2a4 4 0 0 1 4-4h6a4 4 0 0 1 4 4v2" },
+      { to: "/app/agents/recommendations", label: "Recommendations", icon: "M9 11l3 3L22 4 M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" },
+    ],
+  },
+  {
     title: "Digital Twin",
     items: [
       { to: "/app/twin", label: "Digital Twin", icon: "M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2z M12 6v6l4 2" },
