@@ -14,6 +14,179 @@ export type Database = {
   }
   public: {
     Tables: {
+      agent_conversations: {
+        Row: {
+          agent_key: string
+          created_at: string
+          id: string
+          resident_id: string | null
+          tenant_id: string
+          title: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          agent_key: string
+          created_at?: string
+          id?: string
+          resident_id?: string | null
+          tenant_id: string
+          title?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          agent_key?: string
+          created_at?: string
+          id?: string
+          resident_id?: string | null
+          tenant_id?: string
+          title?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      agent_memory: {
+        Row: {
+          agent_key: string
+          created_at: string
+          id: string
+          key: string
+          resident_id: string | null
+          tenant_id: string
+          updated_at: string
+          user_id: string
+          value: Json
+        }
+        Insert: {
+          agent_key: string
+          created_at?: string
+          id?: string
+          key: string
+          resident_id?: string | null
+          tenant_id: string
+          updated_at?: string
+          user_id: string
+          value?: Json
+        }
+        Update: {
+          agent_key?: string
+          created_at?: string
+          id?: string
+          key?: string
+          resident_id?: string | null
+          tenant_id?: string
+          updated_at?: string
+          user_id?: string
+          value?: Json
+        }
+        Relationships: []
+      }
+      agent_messages: {
+        Row: {
+          confidence: number | null
+          content: string
+          conversation_id: string
+          created_at: string
+          evidence: Json
+          id: string
+          reasoning: string | null
+          role: string
+          tenant_id: string
+        }
+        Insert: {
+          confidence?: number | null
+          content: string
+          conversation_id: string
+          created_at?: string
+          evidence?: Json
+          id?: string
+          reasoning?: string | null
+          role: string
+          tenant_id: string
+        }
+        Update: {
+          confidence?: number | null
+          content?: string
+          conversation_id?: string
+          created_at?: string
+          evidence?: Json
+          id?: string
+          reasoning?: string | null
+          role?: string
+          tenant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agent_messages_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "agent_conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      agent_recommendations: {
+        Row: {
+          acted_at: string | null
+          acted_by: string | null
+          agent_key: string
+          category: string
+          confidence: number | null
+          created_at: string
+          created_by: string | null
+          evidence: Json
+          id: string
+          reasoning: string | null
+          resident_id: string | null
+          status: string
+          summary: string
+          tenant_id: string
+          title: string
+          updated_at: string
+          urgency: string
+        }
+        Insert: {
+          acted_at?: string | null
+          acted_by?: string | null
+          agent_key: string
+          category?: string
+          confidence?: number | null
+          created_at?: string
+          created_by?: string | null
+          evidence?: Json
+          id?: string
+          reasoning?: string | null
+          resident_id?: string | null
+          status?: string
+          summary: string
+          tenant_id: string
+          title: string
+          updated_at?: string
+          urgency?: string
+        }
+        Update: {
+          acted_at?: string | null
+          acted_by?: string | null
+          agent_key?: string
+          category?: string
+          confidence?: number | null
+          created_at?: string
+          created_by?: string | null
+          evidence?: Json
+          id?: string
+          reasoning?: string | null
+          resident_id?: string | null
+          status?: string
+          summary?: string
+          tenant_id?: string
+          title?: string
+          updated_at?: string
+          urgency?: string
+        }
+        Relationships: []
+      }
       ai_insights: {
         Row: {
           confidence: number | null
