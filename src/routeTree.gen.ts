@@ -57,8 +57,11 @@ import { Route as AppCaregiverRouteImport } from './routes/app.caregiver'
 import { Route as AppCarePlanRouteImport } from './routes/app.care-plan'
 import { Route as AppAlertsRouteImport } from './routes/app.alerts'
 import { Route as AppAiRouteImport } from './routes/app.ai'
+import { Route as AppAgentsRouteImport } from './routes/app.agents'
 import { Route as AppAdminRouteImport } from './routes/app.admin'
 import { Route as AppAcademyRouteImport } from './routes/app.academy'
+import { Route as AppAgentsRecommendationsRouteImport } from './routes/app.agents.recommendations'
+import { Route as AppAgentsAgentKeyRouteImport } from './routes/app.agents.$agentKey'
 
 const TermsRoute = TermsRouteImport.update({
   id: '/terms',
@@ -300,6 +303,11 @@ const AppAiRoute = AppAiRouteImport.update({
   path: '/ai',
   getParentRoute: () => AppRoute,
 } as any)
+const AppAgentsRoute = AppAgentsRouteImport.update({
+  id: '/agents',
+  path: '/agents',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppAdminRoute = AppAdminRouteImport.update({
   id: '/admin',
   path: '/admin',
@@ -309,6 +317,17 @@ const AppAcademyRoute = AppAcademyRouteImport.update({
   id: '/academy',
   path: '/academy',
   getParentRoute: () => AppRoute,
+} as any)
+const AppAgentsRecommendationsRoute =
+  AppAgentsRecommendationsRouteImport.update({
+    id: '/recommendations',
+    path: '/recommendations',
+    getParentRoute: () => AppAgentsRoute,
+  } as any)
+const AppAgentsAgentKeyRoute = AppAgentsAgentKeyRouteImport.update({
+  id: '/$agentKey',
+  path: '/$agentKey',
+  getParentRoute: () => AppAgentsRoute,
 } as any)
 
 export interface FileRoutesByFullPath {
@@ -334,6 +353,7 @@ export interface FileRoutesByFullPath {
   '/terms': typeof TermsRoute
   '/app/academy': typeof AppAcademyRoute
   '/app/admin': typeof AppAdminRoute
+  '/app/agents': typeof AppAgentsRouteWithChildren
   '/app/ai': typeof AppAiRoute
   '/app/alerts': typeof AppAlertsRoute
   '/app/care-plan': typeof AppCarePlanRoute
@@ -362,6 +382,8 @@ export interface FileRoutesByFullPath {
   '/solutions/insurance': typeof SolutionsInsuranceRoute
   '/solutions/senior-living': typeof SolutionsSeniorLivingRoute
   '/app/': typeof AppIndexRoute
+  '/app/agents/$agentKey': typeof AppAgentsAgentKeyRoute
+  '/app/agents/recommendations': typeof AppAgentsRecommendationsRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -385,6 +407,7 @@ export interface FileRoutesByTo {
   '/terms': typeof TermsRoute
   '/app/academy': typeof AppAcademyRoute
   '/app/admin': typeof AppAdminRoute
+  '/app/agents': typeof AppAgentsRouteWithChildren
   '/app/ai': typeof AppAiRoute
   '/app/alerts': typeof AppAlertsRoute
   '/app/care-plan': typeof AppCarePlanRoute
@@ -413,6 +436,8 @@ export interface FileRoutesByTo {
   '/solutions/insurance': typeof SolutionsInsuranceRoute
   '/solutions/senior-living': typeof SolutionsSeniorLivingRoute
   '/app': typeof AppIndexRoute
+  '/app/agents/$agentKey': typeof AppAgentsAgentKeyRoute
+  '/app/agents/recommendations': typeof AppAgentsRecommendationsRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -438,6 +463,7 @@ export interface FileRoutesById {
   '/terms': typeof TermsRoute
   '/app/academy': typeof AppAcademyRoute
   '/app/admin': typeof AppAdminRoute
+  '/app/agents': typeof AppAgentsRouteWithChildren
   '/app/ai': typeof AppAiRoute
   '/app/alerts': typeof AppAlertsRoute
   '/app/care-plan': typeof AppCarePlanRoute
@@ -466,6 +492,8 @@ export interface FileRoutesById {
   '/solutions/insurance': typeof SolutionsInsuranceRoute
   '/solutions/senior-living': typeof SolutionsSeniorLivingRoute
   '/app/': typeof AppIndexRoute
+  '/app/agents/$agentKey': typeof AppAgentsAgentKeyRoute
+  '/app/agents/recommendations': typeof AppAgentsRecommendationsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -492,6 +520,7 @@ export interface FileRouteTypes {
     | '/terms'
     | '/app/academy'
     | '/app/admin'
+    | '/app/agents'
     | '/app/ai'
     | '/app/alerts'
     | '/app/care-plan'
@@ -520,6 +549,8 @@ export interface FileRouteTypes {
     | '/solutions/insurance'
     | '/solutions/senior-living'
     | '/app/'
+    | '/app/agents/$agentKey'
+    | '/app/agents/recommendations'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -543,6 +574,7 @@ export interface FileRouteTypes {
     | '/terms'
     | '/app/academy'
     | '/app/admin'
+    | '/app/agents'
     | '/app/ai'
     | '/app/alerts'
     | '/app/care-plan'
@@ -571,6 +603,8 @@ export interface FileRouteTypes {
     | '/solutions/insurance'
     | '/solutions/senior-living'
     | '/app'
+    | '/app/agents/$agentKey'
+    | '/app/agents/recommendations'
   id:
     | '__root__'
     | '/'
@@ -595,6 +629,7 @@ export interface FileRouteTypes {
     | '/terms'
     | '/app/academy'
     | '/app/admin'
+    | '/app/agents'
     | '/app/ai'
     | '/app/alerts'
     | '/app/care-plan'
@@ -623,6 +658,8 @@ export interface FileRouteTypes {
     | '/solutions/insurance'
     | '/solutions/senior-living'
     | '/app/'
+    | '/app/agents/$agentKey'
+    | '/app/agents/recommendations'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -991,6 +1028,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppAiRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/agents': {
+      id: '/app/agents'
+      path: '/agents'
+      fullPath: '/app/agents'
+      preLoaderRoute: typeof AppAgentsRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/app/admin': {
       id: '/app/admin'
       path: '/admin'
@@ -1005,12 +1049,41 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppAcademyRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/agents/recommendations': {
+      id: '/app/agents/recommendations'
+      path: '/recommendations'
+      fullPath: '/app/agents/recommendations'
+      preLoaderRoute: typeof AppAgentsRecommendationsRouteImport
+      parentRoute: typeof AppAgentsRoute
+    }
+    '/app/agents/$agentKey': {
+      id: '/app/agents/$agentKey'
+      path: '/$agentKey'
+      fullPath: '/app/agents/$agentKey'
+      preLoaderRoute: typeof AppAgentsAgentKeyRouteImport
+      parentRoute: typeof AppAgentsRoute
+    }
   }
 }
+
+interface AppAgentsRouteChildren {
+  AppAgentsAgentKeyRoute: typeof AppAgentsAgentKeyRoute
+  AppAgentsRecommendationsRoute: typeof AppAgentsRecommendationsRoute
+}
+
+const AppAgentsRouteChildren: AppAgentsRouteChildren = {
+  AppAgentsAgentKeyRoute: AppAgentsAgentKeyRoute,
+  AppAgentsRecommendationsRoute: AppAgentsRecommendationsRoute,
+}
+
+const AppAgentsRouteWithChildren = AppAgentsRoute._addFileChildren(
+  AppAgentsRouteChildren,
+)
 
 interface AppRouteChildren {
   AppAcademyRoute: typeof AppAcademyRoute
   AppAdminRoute: typeof AppAdminRoute
+  AppAgentsRoute: typeof AppAgentsRouteWithChildren
   AppAiRoute: typeof AppAiRoute
   AppAlertsRoute: typeof AppAlertsRoute
   AppCarePlanRoute: typeof AppCarePlanRoute
@@ -1039,6 +1112,7 @@ interface AppRouteChildren {
 const AppRouteChildren: AppRouteChildren = {
   AppAcademyRoute: AppAcademyRoute,
   AppAdminRoute: AppAdminRoute,
+  AppAgentsRoute: AppAgentsRouteWithChildren,
   AppAiRoute: AppAiRoute,
   AppAlertsRoute: AppAlertsRoute,
   AppCarePlanRoute: AppCarePlanRoute,
