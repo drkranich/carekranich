@@ -45,6 +45,19 @@ type AuthCtx = {
 const Ctx = createContext<AuthCtx | null>(null);
 
 const RANK: AppRole[] = ["super_admin", "clinic_admin", "doctor", "nurse", "caregiver", "family"];
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+export function cleanDisplayNamePart(value: string | null | undefined) {
+  const trimmed = value?.trim() ?? "";
+  if (!trimmed || EMAIL_RE.test(trimmed)) return "";
+  return trimmed;
+}
+
+export function getDisplayName(profile: Profile | null, email?: string | null) {
+  const preferred = cleanDisplayNamePart(profile?.preferred_name);
+  const full = cleanDisplayNamePart(profile?.full_name);
+  return preferred || full.split(" ")[0] || email?.split("@")[0] || "";
+}
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
@@ -87,11 +100,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const value = useMemo<AuthCtx>(() => {
     const primaryRole = RANK.find((r) => roles.includes(r)) ?? null;
-    const displayName =
-      profile?.preferred_name?.trim() ||
-      profile?.full_name?.split(" ")[0] ||
-      session?.user?.email?.split("@")[0] ||
-      "";
+    const displayName = getDisplayName(profile, session?.user?.email);
     return {
       user: session?.user ?? null,
       session,

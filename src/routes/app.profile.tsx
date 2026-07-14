@@ -4,7 +4,7 @@ import { Camera, Globe2, Languages, Lock, MapPin, Search, UserRound } from "luci
 import { toast } from "sonner";
 import { Avatar, Card, PageHeader, Pill } from "@/components/app/primitives";
 import { GeoAddressField } from "@/components/app/GeoAddressField";
-import { useAuth, ROLE_LABELS } from "@/hooks/use-auth";
+import { cleanDisplayNamePart, getDisplayName, useAuth, ROLE_LABELS } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import type { GeoAddress } from "@/lib/geocoding";
 
@@ -69,7 +69,7 @@ function Profile() {
   useEffect(() => {
     if (!profile) return;
     setFullName(profile.full_name ?? "");
-    setPreferredName(profile.preferred_name ?? "");
+    setPreferredName(cleanDisplayNamePart(profile.preferred_name));
     setPhone(profile.phone ?? "");
     setTz(profile.time_zone ?? Intl.DateTimeFormat().resolvedOptions().timeZone);
     setLanguage(profile.preferred_language ?? "pt-BR");
@@ -96,12 +96,15 @@ function Profile() {
   if (!user || !profile) return <Navigate to="/login" />;
 
   const selectedCountry = countryOptions.find((item) => item.value === countryCode);
+  const displayName = getDisplayName(profile, user.email);
 
   const save = async () => {
     setSaving(true);
+    const cleanedFullName = fullName.trim();
+    const cleanedPreferredName = cleanDisplayNamePart(preferredName);
     const payload = {
-      full_name: fullName,
-      preferred_name: preferredName,
+      full_name: cleanedFullName || null,
+      preferred_name: cleanedPreferredName || null,
       phone,
       time_zone: tz,
       preferred_language: language,
@@ -184,7 +187,7 @@ function Profile() {
         <Card className="glass-panel">
           <div className="flex flex-col items-center text-center">
             <div className="relative">
-              <Avatar name={profile.full_name ?? user.email ?? "?"} src={profile.avatar_url} size={124} tone="olive" />
+              <Avatar name={displayName || user.email || "?"} src={profile.avatar_url} size={124} tone="olive" />
               <button
                 type="button"
                 onClick={() => fileRef.current?.click()}
@@ -195,7 +198,7 @@ function Profile() {
               </button>
               <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={onFile} />
             </div>
-            <h2 className="mt-5 text-2xl font-semibold">{profile.preferred_name || profile.full_name || user.email}</h2>
+            <h2 className="mt-5 text-2xl font-semibold">{displayName || user.email}</h2>
             <p className="text-sm text-muted-foreground">{user.email}</p>
             {uploading && <p className="mt-2 text-xs text-muted-foreground">Enviando...</p>}
             <div className="mt-5 flex flex-wrap justify-center gap-2">
