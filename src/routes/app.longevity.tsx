@@ -44,12 +44,12 @@ type Assess = {
 };
 
 function LongevityPage() {
-  const { user, profile, hasAnyRole } = useAuth();
+  const { user, profile, hasAnyRole, isSuperAdmin } = useAuth();
   const qc = useQueryClient();
   const canCompute = hasAnyRole(["caregiver", "nurse", "doctor", "clinic_admin", "super_admin"]);
   const [residentId, setResidentId] = useState("");
 
-  const { data: residents = [] } = useResidents(profile?.tenant_id);
+  const { data: residents = [] } = useResidents(profile?.tenant_id, isSuperAdmin);
 
   useEffect(() => {
     if (residents.length && !residentId) setResidentId(residents[0].id);
@@ -116,6 +116,8 @@ function LongevityPage() {
 
   const compute = useMutation({
     mutationFn: async () => {
+      const tenantId = profile?.tenant_id ?? residents.find((resident) => resident.id === residentId)?.tenant_id;
+      if (!tenantId) throw new Error("Select a resident with an organization before recomputing longevity.");
       const sub = computeScores(obs, assessments);
       const longevity = Math.round(
         (sub.health + sub.resilience + sub.mobility + sub.cognitive + sub.emotional + sub.social) /
@@ -131,7 +133,7 @@ function LongevityPage() {
       if (sub.health >= 70) protect.push("Consistent health observations");
 
       const { error } = await supabase.from("longevity_scores").insert({
-        tenant_id: profile!.tenant_id!,
+        tenant_id: tenantId,
         resident_id: residentId,
         longevity_score: longevity,
         resilience_score: sub.resilience,
@@ -146,7 +148,7 @@ function LongevityPage() {
       });
       if (error) throw error;
       await supabase.from("events").insert({
-        tenant_id: profile!.tenant_id!,
+        tenant_id: tenantId,
         resident_id: residentId,
         actor_id: user!.id,
         category: "longevity",

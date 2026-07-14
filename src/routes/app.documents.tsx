@@ -25,7 +25,7 @@ type DocumentRow = {
 
 function Documents() {
   const qc = useQueryClient();
-  const { profile, user } = useAuth();
+  const { profile, user, isSuperAdmin } = useAuth();
   const [query, setQuery] = useState("");
   const [tag, setTag] = useState("All");
   const [file, setFile] = useState<File | null>(null);
@@ -34,8 +34,8 @@ function Documents() {
   const [uploading, setUploading] = useState(false);
 
   const docs = useQuery({
-    queryKey: ["documents", profile?.tenant_id],
-    enabled: !!profile?.tenant_id,
+    queryKey: ["documents", profile?.tenant_id, isSuperAdmin],
+    enabled: !!profile?.tenant_id || isSuperAdmin,
     queryFn: async () => {
       const { data, error } = await (supabase as any)
         .from("documents")
@@ -177,7 +177,7 @@ function Documents() {
         </div>
       </Card>
 
-      {!profile?.tenant_id ? (
+      {!profile?.tenant_id && !isSuperAdmin ? (
         <EmptyState title="Join an approved organization first" hint="Private documents are scoped to a tenant." />
       ) : docs.isLoading ? (
         <p className="text-sm text-muted-foreground">Loading...</p>

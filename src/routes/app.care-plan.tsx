@@ -8,7 +8,7 @@ import { toast } from "sonner";
 
 export const Route = createFileRoute("/app/care-plan")({ component: CarePlanPage });
 
-type Resident = { id: string; full_name: string; preferred_name: string | null };
+type Resident = { id: string; tenant_id: string; full_name: string; preferred_name: string | null };
 type Plan = {
   id: string;
   resident_id: string;
@@ -45,7 +45,7 @@ const CATEGORIES = [
 const PRIORITIES = ["low", "normal", "high", "critical"];
 
 function CarePlanPage() {
-  const { user, profile, hasAnyRole } = useAuth();
+  const { user, profile, hasAnyRole, isSuperAdmin } = useAuth();
   const qc = useQueryClient();
   const canEditPlans = hasAnyRole(["nurse", "doctor", "clinic_admin", "super_admin"]);
   const canEditTasks = hasAnyRole(["caregiver", "nurse", "doctor", "clinic_admin", "super_admin"]);
@@ -55,12 +55,12 @@ function CarePlanPage() {
   const [showTaskForm, setShowTaskForm] = useState(false);
 
   const { data: residents = [], isLoading: residentsLoading } = useQuery({
-    queryKey: ["residents-list"],
-    enabled: !!profile?.tenant_id,
+    queryKey: ["residents-list", profile?.tenant_id, isSuperAdmin],
+    enabled: !!profile?.tenant_id || isSuperAdmin,
     queryFn: async () => {
       const { data } = await supabase
         .from("residents")
-        .select("id,full_name,preferred_name")
+        .select("id,tenant_id,full_name,preferred_name")
         .order("full_name");
       const r = (data ?? []) as Resident[];
       if (r[0] && !residentId) setResidentId(r[0].id);
@@ -102,8 +102,11 @@ function CarePlanPage() {
       start_date: string | null;
       end_date: string | null;
     }) => {
+      const selectedResident = residents.find((resident) => resident.id === residentId);
+      const tenantId = profile?.tenant_id ?? selectedResident?.tenant_id;
+      if (!tenantId) throw new Error("Select a resident with an organization before creating a care plan.");
       const { error } = await supabase.from("care_plans").insert({
-        tenant_id: profile!.tenant_id!,
+        tenant_id: tenantId,
         resident_id: residentId,
         created_by: user!.id,
         title: v.title,
@@ -131,8 +134,11 @@ function CarePlanPage() {
       due_at: string | null;
       care_plan_id: string | null;
     }) => {
+      const selectedResident = residents.find((resident) => resident.id === residentId);
+      const tenantId = profile?.tenant_id ?? selectedResident?.tenant_id;
+      if (!tenantId) throw new Error("Select a resident with an organization before creating a task.");
       const { error } = await supabase.from("care_tasks").insert({
-        tenant_id: profile!.tenant_id!,
+        tenant_id: tenantId,
         resident_id: residentId,
         created_by: user!.id,
         title: v.title,
@@ -165,7 +171,7 @@ function CarePlanPage() {
       // Emit event on completion (best-effort)
       if (!done) {
         await supabase.from("events").insert({
-          tenant_id: profile!.tenant_id!,
+          tenant_id: profile?.tenant_id ?? residents.find((resident) => resident.id === t.resident_id)?.tenant_id,
           actor_id: user!.id,
           resident_id: t.resident_id,
           title: `Task completed: ${t.title}`,

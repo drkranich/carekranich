@@ -13,8 +13,8 @@ function Overview() {
   const tenantId = profile?.tenant_id ?? null;
 
   const stats = useQuery({
-    queryKey: ["overview-stats", tenantId],
-    enabled: !!tenantId,
+    queryKey: ["overview-stats", tenantId, isSuperAdmin],
+    enabled: !!tenantId || isSuperAdmin,
     queryFn: async () => {
       const today = new Date();
       today.setHours(0, 0, 0, 0);
@@ -41,8 +41,8 @@ function Overview() {
   });
 
   const recent = useQuery({
-    queryKey: ["overview-recent", tenantId],
-    enabled: !!tenantId,
+    queryKey: ["overview-recent", tenantId, isSuperAdmin],
+    enabled: !!tenantId || isSuperAdmin,
     queryFn: async () => {
       const { data } = await supabase
         .from("events")
@@ -54,8 +54,12 @@ function Overview() {
   });
 
   const s = stats.data;
-  const summary = !s
-    ? "Loading your day..."
+  const summary = stats.isLoading
+    ? "Loading live platform records..."
+    : !s
+      ? isSuperAdmin
+        ? "No platform activity has been recorded yet."
+        : "Join an approved organization to start receiving live care records."
     : s.openAlerts > 0
       ? `${s.openAlerts} ${s.openAlerts === 1 ? "alert needs" : "alerts need"} attention.`
       : s.tasksToday > 0
@@ -84,19 +88,19 @@ function Overview() {
       <div className="grid gap-4 md:grid-cols-4">
         <Stat
           label="Residents"
-          value={s?.residents ?? "-"}
+          value={stats.isLoading ? "-" : (s?.residents ?? 0)}
           sub={primaryRole === "family" ? "Loved ones" : "In your care"}
           tone="olive"
         />
         <Stat
           label="Open alerts"
-          value={s?.openAlerts ?? "-"}
+          value={stats.isLoading ? "-" : (s?.openAlerts ?? 0)}
           sub="Needs attention"
           tone={s && s.openAlerts > 0 ? "wine" : "moss"}
         />
         <Stat
           label="Tasks today"
-          value={s?.tasksToday ?? "-"}
+          value={stats.isLoading ? "-" : (s?.tasksToday ?? 0)}
           sub={`${s?.tasksDone ?? 0} completed`}
           tone="gold"
         />
@@ -120,7 +124,7 @@ function Overview() {
             </Link>
           </div>
           <ul className="mt-5 space-y-3">
-            {recent.isLoading && <li className="text-sm text-muted-foreground">Loading...</li>}
+            {recent.isLoading && <li className="text-sm text-muted-foreground">Loading live activity...</li>}
             {recent.data?.length === 0 && (
               <li>
                 <EmptyState

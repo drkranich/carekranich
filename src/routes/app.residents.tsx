@@ -27,7 +27,7 @@ type Resident = {
 
 function Residents() {
   const qc = useQueryClient();
-  const { profile, hasAnyRole } = useAuth();
+  const { profile, hasAnyRole, isSuperAdmin } = useAuth();
   const [editing, setEditing] = useState<Resident | null>(null);
   const [creating, setCreating] = useState(false);
 
@@ -67,7 +67,7 @@ function Residents() {
             <button
               onClick={() => setCreating(true)}
               disabled={!profile?.tenant_id}
-              title={!profile?.tenant_id ? "Join or create an organization first" : ""}
+              title={!profile?.tenant_id ? "Create or select an organization before adding residents" : ""}
               className="rounded-full bg-olive px-4 py-2 text-xs text-ivory shadow-soft hover:opacity-90 disabled:opacity-50"
             >
               + Add resident
@@ -76,12 +76,21 @@ function Residents() {
         }
       />
 
-      {!profile?.tenant_id && (
+      {!profile?.tenant_id && !isSuperAdmin && (
         <Card className="mb-6 border-gold/30 bg-gold/5">
           <p className="text-sm text-foreground">
             You're not part of an organization yet. Visit{" "}
             <span className="font-medium text-olive">Tenants</span> to create or join one before
             adding residents.
+          </p>
+        </Card>
+      )}
+
+      {!profile?.tenant_id && isSuperAdmin && (
+        <Card className="mb-6 border-olive/25 bg-olive/5">
+          <p className="text-sm text-foreground">
+            Super admin global view. Residents from approved organizations appear here; creating a
+            resident still requires a tenant context.
           </p>
         </Card>
       )}
@@ -133,7 +142,7 @@ function Residents() {
         </div>
       )}
 
-      {(creating || editing) && (
+      {(creating || editing) && profile?.tenant_id && (
         <ResidentDialog
           resident={editing}
           tenantId={profile!.tenant_id!}

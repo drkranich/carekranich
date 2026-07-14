@@ -50,7 +50,7 @@ function dayLabel(key: string) {
 }
 
 function TimelinePage() {
-  const { profile, user, hasAnyRole } = useAuth();
+  const { profile, user, hasAnyRole, isSuperAdmin } = useAuth();
   const qc = useQueryClient();
   const canLog = hasAnyRole(["caregiver", "nurse", "doctor", "clinic_admin", "super_admin"]);
 
@@ -60,8 +60,8 @@ function TimelinePage() {
   const [showForm, setShowForm] = useState(false);
 
   const { data: events = [], isLoading } = useQuery({
-    queryKey: ["events", { date, category, severity }],
-    enabled: !!profile?.tenant_id,
+    queryKey: ["events", { date, category, severity, tenantId: profile?.tenant_id, isSuperAdmin }],
+    enabled: !!profile?.tenant_id || isSuperAdmin,
     queryFn: async () => {
       const start = new Date(date + "T00:00:00").toISOString();
       const end = new Date(date + "T23:59:59.999").toISOString();
@@ -126,7 +126,7 @@ function TimelinePage() {
         title="Timeline"
         subtitle="A unified, realtime stream of every meaningful care moment."
         action={
-          canLog && (
+          canLog && profile?.tenant_id && (
             <button
               onClick={() => setShowForm((v) => !v)}
               className="rounded-full bg-olive px-4 py-2 text-xs text-ivory hover:opacity-90"

@@ -138,6 +138,27 @@
     line-height: 1.65;
     -webkit-font-smoothing: antialiased;
   }
+  select,
+  input,
+  textarea {
+    color: var(--foreground);
+  }
+  select {
+    color-scheme: light;
+    background:
+      linear-gradient(135deg, oklch(1 0 0 / 0.72), oklch(1 0 0 / 0.44)) !important;
+    border-color: oklch(1 0 0 / 0.72) !important;
+    box-shadow: var(--shadow-soft);
+    backdrop-filter: blur(18px) saturate(145%);
+  }
+  select option {
+    background: var(--ivory);
+    color: var(--foreground);
+  }
+  select option:checked {
+    background: oklch(0.86 0.055 215 / 0.32);
+    color: var(--olive);
+  }
   h1, h2, h3, h4, .font-display {
     font-family: var(--font-display);
     font-weight: 600;

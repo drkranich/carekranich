@@ -1,190 +1,139 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { Card, PageHeader, Pill, Avatar } from "@/components/app/primitives";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { Bell, CheckCircle2 } from "lucide-react";
+import { toast } from "sonner";
+import { Card, EmptyState, PageHeader, Pill } from "@/components/app/primitives";
+import { useAuth } from "@/hooks/use-auth";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/app/notifications")({ component: Notifications });
 
-const groups = [
-  {
-    label: "Today",
-    items: [
-      {
-        who: "Sofia Mendes",
-        what: "completed morning routine",
-        when: "9:24",
-        tone: "moss",
-        k: "Care",
-      },
-      {
-        who: "Care Kranich AI",
-        what: "summarized last night: peaceful, 7h sleep",
-        when: "8:02",
-        tone: "gold",
-        k: "AI",
-      },
-      {
-        who: "Dr. Costa",
-        what: "approved prescription renewal",
-        when: "11:18",
-        tone: "wine",
-        k: "Medical",
-      },
-      {
-        who: "Smart home",
-        what: "stove guard armed automatically",
-        when: "13:40",
-        tone: "olive",
-        k: "Home",
-      },
-    ],
-  },
-  {
-    label: "Yesterday",
-    items: [
-      {
-        who: "Tomas",
-        what: "video call answered by Maria - 14 min",
-        when: "18:22",
-        tone: "wine",
-        k: "Family",
-      },
-      {
-        who: "Pharmacy",
-        what: "delivery confirmed - 3 items",
-        when: "10:11",
-        tone: "terracotta",
-        k: "Ops",
-      },
-    ],
-  },
-];
+type NotificationRow = {
+  id: string;
+  title: string;
+  body: string | null;
+  severity: string;
+  link: string | null;
+  read_at: string | null;
+  created_at: string;
+};
 
 function Notifications() {
-  const [filter, setFilter] = useState("All");
-  const [channels, setChannels] = useState([
-    { c: "In-app", on: true },
-    { c: "Push (mobile)", on: true },
-    { c: "Email - daily digest", on: true },
-    { c: "SMS - emergency only", on: true },
-    { c: "WhatsApp", on: false },
-    { c: "Phone call - escalation", on: true },
-  ]);
-  const visibleGroups = useMemo(() => {
-    if (filter === "All") return groups;
-    return groups.map((group) => ({
-      ...group,
-      items: group.items.filter((item) =>
-        filter === "Mentions" ? item.k === "Family" || item.k === "Medical" : item.k !== "Care",
-      ),
-    }));
-  }, [filter]);
+  const qc = useQueryClient();
+  const { user } = useAuth();
+  const [filter, setFilter] = useState<"all" | "unread" | "critical">("all");
+
+  const notifications = useQuery({
+    queryKey: ["notifications-page", user?.id],
+    enabled: !!user,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("notifications")
+        .select("id,title,body,severity,link,read_at,created_at")
+        .order("created_at", { ascending: false })
+        .limit(200);
+      if (error) throw error;
+      return (data ?? []) as NotificationRow[];
+    },
+  });
+
+  const rows = useMemo(() => {
+    const all = notifications.data ?? [];
+    if (filter === "unread") return all.filter((item) => !item.read_at);
+    if (filter === "critical") return all.filter((item) => ["critical", "emergency", "warning"].includes(item.severity));
+    return all;
+  }, [filter, notifications.data]);
+
+  const markRead = async (id: string) => {
+    const { error } = await supabase
+      .from("notifications")
+      .update({ read_at: new Date().toISOString() })
+      .eq("id", id);
+    if (error) return toast.error(error.message);
+    qc.invalidateQueries({ queryKey: ["notifications-page"] });
+  };
 
   return (
     <>
       <PageHeader
         title="Notifications"
-        subtitle="Quiet hours respected - emergency overrides on - grouped by intelligence"
-        action={<Pill tone="moss">All channels healthy</Pill>}
+        subtitle="Real notification records for the signed-in user. Channel preferences will appear only after a persisted preferences table exists."
+        action={<Pill tone="olive">{rows.length} visible</Pill>}
       />
 
-      <div className="grid gap-6 lg:grid-cols-3">
-        <Card className="lg:col-span-2 p-0">
-          <div className="border-b border-border/60 px-6 py-4 flex items-center justify-between">
-            <p className="text-xs uppercase text-muted-foreground">Inbox</p>
-            <div className="flex gap-2 text-xs">
-              {["All", "Unread", "Mentions"].map((item) => (
-                <button
-                  key={item}
-                  onClick={() => setFilter(item)}
-                  className={`rounded-full px-3 py-1 ${
-                    filter === item
-                      ? "bg-olive text-ivory"
-                      : "border border-border text-muted-foreground"
-                  }`}
-                >
-                  {item}
-                </button>
-              ))}
+      <Card className="mb-6">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-olive/10 text-olive">
+              <Bell className="h-5 w-5" />
+            </span>
+            <div>
+              <h2 className="text-xl font-semibold text-foreground">Notification inbox</h2>
+              <p className="text-xs text-muted-foreground">Loaded from Supabase notifications table.</p>
             </div>
           </div>
-          {visibleGroups.map((g) => (
-            <div key={g.label}>
-              <p className="px-6 pt-4 pb-2 text-[10px] uppercase text-muted-foreground">
-                {g.label}
-              </p>
-              <ul>
-                {g.items.length === 0 && (
-                  <li className="px-6 py-5 text-sm text-muted-foreground">
-                    No items in this group.
-                  </li>
-                )}
-                {g.items.map((n, i) => (
-                  <li
-                    key={i}
-                    className="flex items-start gap-4 px-6 py-3 hover:bg-cream/40 border-b border-border/60 last:border-b-0"
-                  >
-                    <Avatar name={n.who} tone={n.tone} size={36} />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm text-foreground">
-                        <span className="font-medium">{n.who}</span> {n.what}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {n.k} - {n.when}
-                      </p>
-                    </div>
-                    <Pill tone={n.tone as any}>{n.k}</Pill>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))}
-        </Card>
-
-        <div className="space-y-6">
-          <Card>
-            <p className="text-xs uppercase text-muted-foreground">Channels</p>
-            <ul className="mt-3 space-y-3 text-sm">
-              {[...channels].map((c) => (
-                <li
-                  key={c.c}
-                  onClick={() =>
-                    setChannels((current) =>
-                      current.map((item) => (item.c === c.c ? { ...item, on: !item.on } : item)),
-                    )
-                  }
-                  className="flex items-center justify-between rounded-xl border border-border/60 bg-cream/40 p-3"
-                >
-                  <span className="text-foreground">{c.c}</span>
-                  <span
-                    className={`relative inline-flex h-5 w-9 items-center rounded-full transition ${c.on ? "bg-olive" : "bg-border"}`}
-                  >
-                    <span
-                      className={`inline-block h-4 w-4 transform rounded-full bg-ivory transition ${c.on ? "translate-x-4" : "translate-x-0.5"}`}
-                    />
-                  </span>
-                </li>
-              ))}
-            </ul>
-          </Card>
-
-          <Card className="bg-gradient-olive text-ivory border-none">
-            <p className="text-xs uppercase text-ivory/70">Quiet hours</p>
-            <p className="mt-2 text-xl font-semibold">22:00 to 07:30</p>
-            <p className="mt-1 text-sm text-ivory/85">
-              Only Critical and Emergency notifications break through. Family voice messages saved
-              until morning.
-            </p>
-          </Card>
-
-          <Card>
-            <p className="text-xs uppercase text-muted-foreground">Smart grouping</p>
-            <p className="mt-2 text-sm text-foreground/85">
-              14 routine events from Sofia today were grouped into one summary card. Care Kranich
-              learns your attention pattern.
-            </p>
-          </Card>
+          <div className="flex gap-2 text-xs">
+            {(["all", "unread", "critical"] as const).map((item) => (
+              <button
+                key={item}
+                onClick={() => setFilter(item)}
+                className={`rounded-full px-3 py-1.5 ${
+                  filter === item ? "bg-olive text-ivory" : "border border-border bg-white/50 text-muted-foreground"
+                }`}
+              >
+                {item}
+              </button>
+            ))}
+          </div>
         </div>
-      </div>
+      </Card>
+
+      {notifications.isLoading ? (
+        <p className="text-sm text-muted-foreground">Loading notifications...</p>
+      ) : notifications.isError ? (
+        <Card className="border-wine/25 bg-wine/5">
+          <p className="font-medium text-wine">Could not load notifications.</p>
+          <p className="mt-2 text-sm text-muted-foreground">{(notifications.error as Error).message}</p>
+        </Card>
+      ) : rows.length === 0 ? (
+        <EmptyState title="No notifications" hint="System events, alerts and messages will appear here when generated." />
+      ) : (
+        <Card padded={false}>
+          <ul className="divide-y divide-border/60">
+            {rows.map((item) => (
+              <li key={item.id} className="flex items-start gap-4 px-6 py-4">
+                <span className={`mt-1 h-2.5 w-2.5 rounded-full ${item.read_at ? "bg-border" : "bg-olive"}`} />
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <p className="font-medium text-foreground">{item.title}</p>
+                    <Pill tone={tone(item.severity)}>{item.severity}</Pill>
+                  </div>
+                  {item.body && <p className="mt-1 text-sm leading-6 text-muted-foreground">{item.body}</p>}
+                  <p className="mt-1 text-xs text-muted-foreground">{new Date(item.created_at).toLocaleString()}</p>
+                </div>
+                {!item.read_at && (
+                  <button
+                    onClick={() => markRead(item.id)}
+                    className="inline-flex items-center gap-1 rounded-full border border-border px-3 py-1.5 text-xs"
+                  >
+                    <CheckCircle2 className="h-3.5 w-3.5" />
+                    Read
+                  </button>
+                )}
+              </li>
+            ))}
+          </ul>
+        </Card>
+      )}
     </>
   );
+}
+
+function tone(value: string): "moss" | "wine" | "gold" | "muted" {
+  const severity = value.toLowerCase();
+  if (["critical", "emergency"].includes(severity)) return "wine";
+  if (["warning", "high"].includes(severity)) return "gold";
+  if (["info", "success"].includes(severity)) return "moss";
+  return "muted";
 }

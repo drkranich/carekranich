@@ -1,251 +1,189 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
-import { PageHeader, Pill, Avatar } from "@/components/app/primitives";
+import { useMemo } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { CheckCircle2, Clock, MapPin, UserCheck } from "lucide-react";
+import { toast } from "sonner";
+import { Avatar, Card, EmptyState, PageHeader, Pill, Stat } from "@/components/app/primitives";
+import { useAuth } from "@/hooks/use-auth";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/app/caregiver")({
   component: CaregiverApp,
 });
 
 function CaregiverApp() {
-  const [tasks, setTasks] = useState(shiftTasks);
-  const [lastAction, setLastAction] = useState("Checked in 09:14");
-  const [sosArmed, setSosArmed] = useState(false);
-  const [vitalsSubmitted, setVitalsSubmitted] = useState(false);
-  const completedTasks = tasks.filter((task) => task.done).length;
+  const qc = useQueryClient();
+  const { profile, user, isSuperAdmin } = useAuth();
 
-  const toggleTask = (taskTitle: string) => {
-    setTasks((items) =>
-      items.map((task) =>
-        task.t === taskTitle ? { ...task, done: !task.done, next: false } : task,
-      ),
-    );
-    setLastAction(`Updated task: ${taskTitle}`);
+  const workspace = useQuery({
+    queryKey: ["caregiver-workspace", profile?.tenant_id, user?.id, isSuperAdmin],
+    enabled: (!!profile?.tenant_id || isSuperAdmin) && !!user,
+    queryFn: async () => {
+      const db = supabase as any;
+      const [tasks, residents, alerts, locations] = await Promise.all([
+        db.from("care_tasks").select("id,resident_id,title,status,priority,due_at,notes,assigned_to,created_at").order("due_at", { ascending: true, nullsFirst: false }).limit(200),
+        db.from("residents").select("id,full_name,preferred_name,photo_url").order("full_name", { ascending: true }).limit(200),
+        db.from("alerts").select("id,resident_id,title,severity,status,created_at").order("created_at", { ascending: false }).limit(100),
+        db.from("address_locations").select("id,entity_type,entity_id,label,address,city,state,country,latitude,longitude").eq("entity_type", "resident").limit(200),
+      ]);
+      const errors = [tasks, residents, alerts, locations].map((item) => item.error?.message).filter(Boolean);
+      if (errors.length) throw new Error(errors.join(" | "));
+      return {
+        tasks: tasks.data ?? [],
+        residents: residents.data ?? [],
+        alerts: alerts.data ?? [],
+        locations: locations.data ?? [],
+      };
+    },
+  });
+
+  const residentMap = useMemo(() => {
+    const map = new Map<string, any>();
+    (workspace.data?.residents ?? []).forEach((resident: any) => map.set(resident.id, resident));
+    return map;
+  }, [workspace.data?.residents]);
+
+  const openTasks = (workspace.data?.tasks ?? []).filter((task: any) => !["completed", "cancelled"].includes(task.status));
+  const myTasks = openTasks.filter((task: any) => !task.assigned_to || task.assigned_to === user?.id);
+  const completedToday = (workspace.data?.tasks ?? []).filter((task: any) => task.status === "completed").length;
+  const openAlerts = (workspace.data?.alerts ?? []).filter((alert: any) => !["resolved", "closed"].includes(alert.status));
+
+  const completeTask = async (task: any) => {
+    const { error } = await (supabase as any)
+      .from("care_tasks")
+      .update({ status: "completed", completed_at: new Date().toISOString(), completed_by: user?.id ?? null })
+      .eq("id", task.id);
+    if (error) return toast.error(error.message);
+    toast.success("Task completed");
+    qc.invalidateQueries({ queryKey: ["caregiver-workspace"] });
   };
 
   return (
     <>
       <PageHeader
-        title="Caregiver app preview"
-        subtitle="The mobile workspace caregivers actually love."
+        title="Caregiver app"
+        subtitle="Field workspace backed by real care tasks, residents, alerts and geocoded addresses."
+        action={<Pill tone={workspace.isError ? "wine" : "olive"}>{workspace.isError ? "Read error" : "Live care queue"}</Pill>}
       />
 
-      <div className="grid gap-10 lg:grid-cols-3">
-        {/* Phone 1 - Shift */}
-        <Phone title="Today's shift">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-[10px] uppercase text-ivory/60">Tuesday - May 12</p>
-              <p className="text-xl font-semibold text-ivory">8h shift</p>
-            </div>
-            <Pill tone="moss">On site</Pill>
+      {workspace.isLoading ? (
+        <p className="text-sm text-muted-foreground">Loading caregiver workspace...</p>
+      ) : workspace.isError ? (
+        <Card className="border-wine/25 bg-wine/5">
+          <p className="font-medium text-wine">Could not load caregiver data.</p>
+          <p className="mt-2 text-sm text-muted-foreground">{(workspace.error as Error).message}</p>
+        </Card>
+      ) : (
+        <>
+          <div className="grid gap-4 md:grid-cols-4">
+            <Stat label="Open tasks" value={myTasks.length} sub="Assigned to you or unassigned" tone="olive" />
+            <Stat label="Completed" value={completedToday} sub="Completed records visible" tone="moss" />
+            <Stat label="Open alerts" value={openAlerts.length} sub="Resident-linked alerts" tone="wine" />
+            <Stat label="Residents" value={workspace.data?.residents.length ?? 0} sub="Tenant scope" tone="gold" />
           </div>
-          <div className="mt-4 rounded-2xl bg-ivory/10 p-4">
-            <div className="flex items-center gap-3">
-              <Avatar name="Maria Lopes" tone="wine" size={44} />
-              <div>
-                <p className="text-sm text-ivory">Maria Lopes</p>
-                <p className="text-[11px] text-ivory/60">82 - Cardiac care</p>
-              </div>
-            </div>
-            <div className="mt-3 flex justify-between text-[11px] text-ivory/70">
-              <span>{lastAction}</span>
-              <span>4h 12m elapsed</span>
-            </div>
-          </div>
-          <div className="mt-4 grid grid-cols-2 gap-2">
-            <ActionBtn
-              icon="M9 11l3 3 8-8"
-              label="Check task"
-              onClick={() => setLastAction("Task checklist opened")}
-            />
-            <ActionBtn
-              icon="M12 5v14 M5 12h14"
-              label="Add note"
-              onClick={() => setLastAction("Draft note started")}
-            />
-            <ActionBtn
-              icon="M23 7l-7 5 7 5V7z"
-              label="Voice note"
-              onClick={() => setLastAction("Voice note recording")}
-            />
-            <ActionBtn
-              icon="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4 M7 10l5 5 5-5 M12 15V3"
-              label="Photo"
-              onClick={() => setLastAction("Photo attached to visit")}
-            />
-          </div>
-          <button
-            onClick={() => {
-              setSosArmed((armed) => !armed);
-              setLastAction(sosArmed ? "SOS cancelled" : "SOS armed - awaiting confirmation");
-            }}
-            className={`mt-5 w-full rounded-2xl px-4 py-3 text-sm text-ivory ${
-              sosArmed ? "bg-gold text-foreground" : "bg-wine"
-            }`}
-          >
-            {sosArmed ? "SOS armed - tap to cancel" : "SOS - escalate"}
-          </button>
-        </Phone>
 
-        {/* Phone 2 - Tasks */}
-        <Phone title={`Tasks - ${completedTasks} of ${tasks.length}`}>
-          <ul className="space-y-2">
-            {tasks.map((t) => (
-              <li
-                key={t.t}
-                onClick={() => toggleTask(t.t)}
-                className={`flex cursor-pointer items-center gap-3 rounded-2xl p-3 transition ${
-                  t.next ? "bg-wine/15 ring-1 ring-wine/30" : "bg-ivory/10 hover:bg-ivory/15"
-                }`}
-              >
-                <div
-                  className={`flex h-6 w-6 items-center justify-center rounded-full ${t.done ? "bg-moss text-ivory" : "border border-ivory/30"}`}
-                >
-                  {t.done && (
-                    <svg
-                      viewBox="0 0 24 24"
-                      className="h-3.5 w-3.5"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="3"
-                    >
-                      <path d="M20 6L9 17l-5-5" />
-                    </svg>
+          <div className="mt-6 grid gap-6 lg:grid-cols-[1.2fr_.8fr]">
+            <Card>
+              <div className="flex items-center gap-3">
+                <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-olive/10 text-olive">
+                  <CheckCircle2 className="h-5 w-5" />
+                </span>
+                <div>
+                  <h2 className="text-xl font-semibold text-foreground">Task queue</h2>
+                  <p className="text-xs text-muted-foreground">Completing a task updates Supabase.</p>
+                </div>
+              </div>
+              {myTasks.length === 0 ? (
+                <div className="mt-5">
+                  <EmptyState title="No open tasks" hint="Create care tasks in Care plan to populate the caregiver app." />
+                </div>
+              ) : (
+                <div className="mt-5 space-y-3">
+                  {myTasks.map((task: any) => {
+                    const resident = task.resident_id ? residentMap.get(task.resident_id) : null;
+                    return (
+                      <div key={task.id} className="rounded-2xl border border-border/60 bg-white/50 p-4">
+                        <div className="flex flex-wrap items-start justify-between gap-3">
+                          <div className="flex min-w-0 items-center gap-3">
+                            <Avatar name={resident?.preferred_name || resident?.full_name || "Resident"} src={resident?.photo_url} />
+                            <div className="min-w-0">
+                              <p className="font-medium text-foreground">{task.title}</p>
+                              <p className="text-xs text-muted-foreground">
+                                {resident?.preferred_name || resident?.full_name || "No resident"} · {task.due_at ? new Date(task.due_at).toLocaleString() : "No due time"}
+                              </p>
+                            </div>
+                          </div>
+                          <Pill tone={priorityTone(task.priority)}>{task.priority}</Pill>
+                        </div>
+                        {task.notes && <p className="mt-3 text-sm leading-6 text-muted-foreground">{task.notes}</p>}
+                        <button onClick={() => completeTask(task)} className="mt-3 rounded-full bg-olive px-4 py-2 text-xs text-ivory">
+                          Mark completed
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </Card>
+
+            <div className="space-y-6">
+              <Card>
+                <div className="flex items-center gap-3">
+                  <Clock className="h-5 w-5 text-olive" />
+                  <h2 className="text-xl font-semibold text-foreground">Open alerts</h2>
+                </div>
+                <div className="mt-4 space-y-3">
+                  {openAlerts.slice(0, 6).map((alert: any) => (
+                    <div key={alert.id} className="rounded-2xl border border-border/60 bg-cream/40 p-3">
+                      <div className="flex items-center justify-between gap-2">
+                        <p className="text-sm font-medium text-foreground">{alert.title}</p>
+                        <Pill tone={priorityTone(alert.severity)}>{alert.severity}</Pill>
+                      </div>
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        {alert.resident_id ? residentMap.get(alert.resident_id)?.full_name ?? alert.resident_id : "No resident"}
+                      </p>
+                    </div>
+                  ))}
+                  {openAlerts.length === 0 && <p className="text-sm text-muted-foreground">No open alerts.</p>}
+                </div>
+              </Card>
+
+              <Card>
+                <div className="flex items-center gap-3">
+                  <MapPin className="h-5 w-5 text-olive" />
+                  <h2 className="text-xl font-semibold text-foreground">Known addresses</h2>
+                </div>
+                <div className="mt-4 space-y-3">
+                  {(workspace.data?.locations ?? []).slice(0, 6).map((location: any) => (
+                    <div key={location.id} className="rounded-2xl border border-border/60 bg-cream/40 p-3">
+                      <p className="text-sm text-foreground">{location.address}</p>
+                      <p className="text-xs text-muted-foreground">{[location.city, location.state, location.country].filter(Boolean).join(", ")}</p>
+                    </div>
+                  ))}
+                  {(workspace.data?.locations ?? []).length === 0 && (
+                    <p className="text-sm text-muted-foreground">No resident addresses saved yet.</p>
                   )}
                 </div>
-                <div className="flex-1">
-                  <p className={`text-sm ${t.done ? "text-ivory/50 line-through" : "text-ivory"}`}>
-                    {t.t}
-                  </p>
-                  <p className="text-[11px] text-ivory/50">{t.d}</p>
-                </div>
-                {t.next && <Pill tone="wine">next</Pill>}
-              </li>
-            ))}
-          </ul>
-        </Phone>
+              </Card>
 
-        {/* Phone 3 - Vitals */}
-        <Phone title="Log vitals">
-          <div className="space-y-3">
-            {[
-              { l: "Blood pressure", v: "118/76", u: "mmHg", c: "moss" },
-              { l: "Heart rate", v: "72", u: "bpm", c: "wine" },
-              { l: "Glucose", v: "104", u: "mg/dL", c: "gold" },
-              { l: "Oxygen", v: "97", u: "%", c: "moss" },
-              { l: "Temperature", v: "36.4", u: " deg C", c: "moss" },
-            ].map((v) => (
-              <div
-                key={v.l}
-                className="flex items-center justify-between rounded-2xl bg-ivory/10 p-3"
-              >
-                <div>
-                  <p className="text-[11px] uppercase text-ivory/50">{v.l}</p>
-                  <p className="mt-0.5 text-lg font-semibold text-ivory">
-                    {v.v} <span className="text-[11px] text-ivory/50">{v.u}</span>
-                  </p>
+              <Card>
+                <div className="flex items-center gap-3">
+                  <UserCheck className="h-5 w-5 text-olive" />
+                  <p className="text-sm text-muted-foreground">Offline mode, voice capture and mobile push require native/mobile infrastructure; this page only shows persisted web records.</p>
                 </div>
-                <Pill tone={v.c as "moss" | "wine" | "gold"}>normal</Pill>
-              </div>
-            ))}
-          </div>
-          <button
-            onClick={() => {
-              setVitalsSubmitted(true);
-              setLastAction("Vitals synced 1 min ago");
-            }}
-            className="mt-5 w-full rounded-2xl bg-gradient-wine px-4 py-3 text-sm text-ivory"
-          >
-            {vitalsSubmitted ? "Reading synced" : "Submit reading"}
-          </button>
-        </Phone>
-      </div>
-
-      <div className="mt-10 grid gap-6 md:grid-cols-3">
-        {[
-          {
-            t: "Geolocated check-in",
-            d: "Verified at the resident's address. Falsified shifts impossible.",
-            icon: "M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z",
-          },
-          {
-            t: "Voice-first workflows",
-            d: "Dictate notes hands-free. AI transcribes, structures, and saves.",
-            icon: "M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z M19 10v2a7 7 0 0 1-14 0v-2 M12 19v4",
-          },
-          {
-            t: "Offline first",
-            d: "Field-tested in dead zones - every action syncs the moment signal returns.",
-            icon: "M5 12.55a11 11 0 0 1 14.08 0 M1.42 9a16 16 0 0 1 21.16 0 M8.53 16.11a6 6 0 0 1 6.95 0",
-          },
-        ].map((f) => (
-          <div key={f.t} className="rounded-3xl border border-border bg-card p-6 shadow-soft">
-            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-olive text-ivory">
-              <svg
-                viewBox="0 0 24 24"
-                className="h-5 w-5"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-              >
-                <path d={f.icon} />
-              </svg>
+              </Card>
             </div>
-            <h3 className="mt-4 text-lg font-semibold text-foreground">{f.t}</h3>
-            <p className="mt-1 text-sm text-muted-foreground">{f.d}</p>
           </div>
-        ))}
-      </div>
+        </>
+      )}
     </>
   );
 }
 
-const shiftTasks = [
-  { t: "Morning medication", d: "09:00 - Atorvastatin, Vit D", done: true },
-  { t: "Breakfast support", d: "08:15 - Porridge & berries", done: true },
-  { t: "Garden walk - 20 min", d: "10:30 - 1,240 steps", done: true },
-  { t: "Hydration check", d: "11:30 - 6/8 glasses", done: true },
-  { t: "Afternoon medication", d: "16:00 - Losartan 50mg", done: false, next: true },
-  { t: "Cognitive exercise", d: "17:00 - Memory cards", done: false },
-  { t: "Dinner & evening hygiene", d: "19:00", done: false },
-];
-
-function Phone({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <div className="mx-auto w-full max-w-[300px]">
-      <div className="rounded-[2.5rem] border-[10px] border-foreground/90 bg-foreground/90 shadow-elevated">
-        <div className="rounded-[2rem] bg-gradient-olive p-5 text-ivory">
-          <div className="mb-4 flex items-center justify-between text-[11px] text-ivory/70">
-            <span>9:41</span>
-            <div className="flex gap-1.5">
-              <span>5G</span>
-              <span>---</span>
-            </div>
-          </div>
-          <p className="font-display text-sm text-ivory/70">{title}</p>
-          <div className="mt-4">{children}</div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function ActionBtn({ icon, label, onClick }: { icon: string; label: string; onClick: () => void }) {
-  return (
-    <button
-      onClick={onClick}
-      className="flex flex-col items-center gap-1 rounded-2xl bg-ivory/10 p-3 text-ivory transition hover:bg-ivory/15"
-    >
-      <svg
-        viewBox="0 0 24 24"
-        className="h-5 w-5"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-      >
-        <path d={icon} />
-      </svg>
-      <span className="text-[10px]">{label}</span>
-    </button>
-  );
+function priorityTone(value: string | null | undefined): "moss" | "wine" | "gold" | "muted" {
+  const priority = String(value ?? "").toLowerCase();
+  if (["critical", "high"].includes(priority)) return "wine";
+  if (["warning", "medium", "normal"].includes(priority)) return "gold";
+  if (["low", "info"].includes(priority)) return "moss";
+  return "muted";
 }

@@ -40,15 +40,15 @@ const SEVERITIES = ["info", "warning", "critical"];
 const sevTone = (s: string) => (s === "critical" ? "wine" : s === "warning" ? "gold" : "olive");
 
 function AlertsPage() {
-  const { profile, user, hasAnyRole } = useAuth();
+  const { profile, user, hasAnyRole, isSuperAdmin } = useAuth();
   const qc = useQueryClient();
   const canCreate = hasAnyRole(["caregiver", "nurse", "doctor", "clinic_admin", "super_admin"]);
   const [statusFilter, setStatusFilter] = useState<"open" | "all" | "resolved">("open");
   const [showForm, setShowForm] = useState(false);
 
   const { data: alerts = [], isLoading } = useQuery({
-    queryKey: ["alerts", statusFilter],
-    enabled: !!profile?.tenant_id,
+    queryKey: ["alerts", statusFilter, profile?.tenant_id, isSuperAdmin],
+    enabled: !!profile?.tenant_id || isSuperAdmin,
     queryFn: async () => {
       let q = supabase
         .from("alerts")
@@ -149,7 +149,7 @@ function AlertsPage() {
         title="Alert center"
         subtitle="Realtime healthcare alerts - acknowledge - escalate - resolve"
         action={
-          canCreate && (
+          canCreate && profile?.tenant_id && (
             <button
               onClick={() => setShowForm((v) => !v)}
               className="rounded-full bg-wine px-4 py-2 text-xs text-ivory hover:opacity-90"

@@ -61,13 +61,13 @@ const DIMENSIONS = [
 ] as const;
 
 function CognitivePage() {
-  const { user, profile, hasAnyRole, primaryRole } = useAuth();
+  const { user, profile, hasAnyRole, primaryRole, isSuperAdmin } = useAuth();
   const qc = useQueryClient();
   const canAssess = hasAnyRole(["caregiver", "nurse", "doctor", "clinic_admin", "super_admin"]);
   const [residentId, setResidentId] = useState("");
   const [showForm, setShowForm] = useState(false);
 
-  const { data: residents = [] } = useResidents(profile?.tenant_id);
+  const { data: residents = [] } = useResidents(profile?.tenant_id, isSuperAdmin);
   if (residents.length && !residentId) setResidentId(residents[0].id);
 
   const { data: assessments = [] } = useQuery({
@@ -117,13 +117,15 @@ function CognitivePage() {
 
   const addAssessment = useMutation({
     mutationFn: async (v: Record<string, string>) => {
+      const tenantId = profile?.tenant_id ?? residents.find((resident) => resident.id === residentId)?.tenant_id;
+      if (!tenantId) throw new Error("Select a resident with an organization before saving an assessment.");
       const score = (k: string) => (v[k] ? Math.max(0, Math.min(100, Number(v[k]))) : null);
       const dims = DIMENSIONS.map((d) => score(d.key)).filter((x): x is number => x != null);
       const vitality = dims.length
         ? Math.round(dims.reduce((a, b) => a + b, 0) / dims.length)
         : null;
       const { error } = await supabase.from("cognitive_assessments").insert({
-        tenant_id: profile!.tenant_id!,
+        tenant_id: tenantId,
         resident_id: residentId,
         memory_score: score("memory_score"),
         attention_score: score("attention_score"),
@@ -139,7 +141,7 @@ function CognitivePage() {
       });
       if (error) throw error;
       await supabase.from("events").insert({
-        tenant_id: profile!.tenant_id!,
+        tenant_id: tenantId,
         resident_id: residentId,
         actor_id: user!.id,
         category: "assessment",

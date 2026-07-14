@@ -1,271 +1,314 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
-import { Card, PageHeader, Pill, Stat, Spark } from "@/components/app/primitives";
+import { useMemo, useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { AlertTriangle, Building2, CheckCircle2, Clock, Inbox } from "lucide-react";
+import { toast } from "sonner";
+import { Card, EmptyState, PageHeader, Pill, Stat } from "@/components/app/primitives";
+import { useAuth } from "@/hooks/use-auth";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/app/command")({ component: Command });
 
+type CommandData = {
+  tenants: any[];
+  residents: any[];
+  alerts: any[];
+  tasks: any[];
+  threads: any[];
+  profiles: any[];
+};
+
 function Command() {
-  const [selectedCity, setSelectedCity] = useState(operationCities[0]);
-  const [selectedIncident, setSelectedIncident] = useState(activeIncidents[0]);
-  const [acknowledged, setAcknowledged] = useState<string[]>([]);
-  const [heatmapMode, setHeatmapMode] = useState<"risk" | "staffing">("risk");
+  const qc = useQueryClient();
+  const { profile, user, isSuperAdmin } = useAuth();
+  const [selectedAlertId, setSelectedAlertId] = useState<string | null>(null);
+
+  const command = useQuery({
+    queryKey: ["operations-command", profile?.tenant_id, isSuperAdmin],
+    enabled: !!profile?.tenant_id || isSuperAdmin,
+    queryFn: async () => {
+      const db = supabase as any;
+      const [tenants, residents, alerts, tasks, threads, profiles] = await Promise.all([
+        db.from("tenants").select("id,name,status,billing_status").order("created_at", { ascending: false }).limit(200),
+        db.from("residents").select("id,tenant_id,full_name,created_at").order("created_at", { ascending: false }).limit(500),
+        db.from("alerts").select("id,tenant_id,resident_id,title,description,severity,status,category,created_at,updated_at,acknowledged_at,resolved_at").order("created_at", { ascending: false }).limit(300),
+        db.from("care_tasks").select("id,tenant_id,resident_id,title,status,priority,due_at,assigned_to,completed_at,created_at").order("created_at", { ascending: false }).limit(500),
+        db.from("inbox_threads").select("id,tenant_id,subject,status,priority,last_message_at").order("last_message_at", { ascending: false }).limit(100),
+        db.from("profiles").select("id,tenant_id,full_name,account_status,user_kind,verification_status").order("created_at", { ascending: false }).limit(300),
+      ]);
+      const responses = [tenants, residents, alerts, tasks, threads, profiles];
+      const errors = responses.map((item) => item.error?.message).filter(Boolean);
+      if (errors.length) throw new Error(errors.join(" | "));
+      return {
+        tenants: tenants.data ?? [],
+        residents: residents.data ?? [],
+        alerts: alerts.data ?? [],
+        tasks: tasks.data ?? [],
+        threads: threads.data ?? [],
+        profiles: profiles.data ?? [],
+      } as CommandData;
+    },
+  });
+
+  const data = command.data;
+  const openAlerts = (data?.alerts ?? []).filter((alert) => !["resolved", "closed"].includes(alert.status));
+  const criticalAlerts = openAlerts.filter((alert) => ["critical", "high"].includes(alert.severity));
+  const openTasks = (data?.tasks ?? []).filter((task) => !["completed", "cancelled"].includes(task.status));
+  const overdueTasks = openTasks.filter((task) => task.due_at && new Date(task.due_at).getTime() < Date.now());
+  const openThreads = (data?.threads ?? []).filter((thread) => thread.status !== "closed");
+  const activeStaff = (data?.profiles ?? []).filter((item) =>
+    ["staff", "clinic", "service_provider"].includes(item.user_kind) && item.account_status === "active",
+  );
+  const selectedAlert = openAlerts.find((alert) => alert.id === selectedAlertId) ?? openAlerts[0] ?? null;
+
+  const residentName = useMemo(() => {
+    const map = new Map<string, string>();
+    (data?.residents ?? []).forEach((resident) => map.set(resident.id, resident.full_name));
+    return map;
+  }, [data?.residents]);
+
+  const tenantName = useMemo(() => {
+    const map = new Map<string, string>();
+    (data?.tenants ?? []).forEach((tenant) => map.set(tenant.id, tenant.name));
+    return map;
+  }, [data?.tenants]);
+
+  const coverage = useMemo(() => {
+    const tenantIds = new Set<string>();
+    [...(data?.tenants ?? []), ...(data?.residents ?? []), ...(data?.alerts ?? []), ...(data?.tasks ?? [])].forEach(
+      (item) => item.tenant_id && tenantIds.add(item.tenant_id),
+    );
+    return Array.from(tenantIds).map((tenantId) => ({
+      id: tenantId,
+      name: tenantName.get(tenantId) ?? tenantId,
+      residents: (data?.residents ?? []).filter((item) => item.tenant_id === tenantId).length,
+      openAlerts: openAlerts.filter((item) => item.tenant_id === tenantId).length,
+      openTasks: openTasks.filter((item) => item.tenant_id === tenantId).length,
+      inbox: openThreads.filter((item) => item.tenant_id === tenantId).length,
+    }));
+  }, [data, openAlerts, openTasks, openThreads, tenantName]);
+
+  const loadCells = useMemo(() => {
+    const cells = Array.from({ length: 24 }, (_, hour) => ({ hour, tasks: 0, alerts: 0 }));
+    openTasks.forEach((task) => {
+      if (!task.due_at) return;
+      const hour = new Date(task.due_at).getHours();
+      cells[hour].tasks += 1;
+    });
+    openAlerts.forEach((alert) => {
+      const hour = new Date(alert.created_at).getHours();
+      cells[hour].alerts += 1;
+    });
+    return cells;
+  }, [openAlerts, openTasks]);
+
+  const updateAlert = async (id: string, status: "acknowledged" | "resolved") => {
+    const patch =
+      status === "resolved"
+        ? { status, resolved_at: new Date().toISOString(), resolved_by: user?.id ?? null }
+        : { status, acknowledged_at: new Date().toISOString(), acknowledged_by: user?.id ?? null };
+    const { error } = await (supabase as any).from("alerts").update(patch).eq("id", id);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    toast.success(status === "resolved" ? "Alert resolved" : "Alert acknowledged");
+    qc.invalidateQueries({ queryKey: ["operations-command"] });
+  };
 
   return (
     <>
       <PageHeader
         title="Operations command center"
-        subtitle="Live mission control - 14 organizations - 1,284 residents - 312 caregivers on shift"
-        action={
-          <div className="flex items-center gap-2">
-            <Pill tone="moss">- Live</Pill>
-            <Pill tone="gold">3 active incidents</Pill>
-          </div>
-        }
+        subtitle="Live operational view from Supabase records across tenants, residents, alerts and care work."
+        action={<Pill tone={command.isError ? "wine" : "moss"}>{command.isError ? "Read error" : "Live data"}</Pill>}
       />
 
-      <div className="grid gap-4 md:grid-cols-4">
-        <Stat label="On shift" value="312" sub="up 4 vs forecast" tone="olive" />
-        <Stat label="Active alerts" value="17" sub="3 critical - 14 soft" tone="wine" />
-        <Stat label="Avg response" value="48s" sub="SLA 90s" tone="moss" />
-        <Stat label="System health" value="99.98%" sub="All regions nominal" tone="gold" />
-      </div>
-
-      <div className="mt-6 grid gap-6 lg:grid-cols-3">
-        <Card className="lg:col-span-2">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-xs uppercase text-muted-foreground">
-                Live operations map - Iberia
-              </p>
-              <h3 className="mt-1 text-xl font-semibold">
-                Caregiver distribution & active incidents
-              </h3>
-            </div>
-            <Pill tone="moss">Realtime - WebSocket</Pill>
-          </div>
-          <div className="relative mt-4 aspect-[16/9] overflow-hidden rounded-2xl bg-gradient-to-br from-cream via-ivory to-sage/20 border border-border">
-            <svg viewBox="0 0 400 225" className="absolute inset-0 h-full w-full">
-              <path
-                d="M80 40 L120 30 L160 50 L200 45 L240 70 L280 60 L320 90 L300 140 L260 170 L200 180 L140 170 L100 140 L70 100 Z"
-                fill="var(--sage)"
-                opacity="0.25"
-                stroke="var(--olive)"
-                strokeWidth="1"
-              />
-              {operationCities.map((c) => (
-                <g
-                  key={c.label}
-                  className="cursor-pointer"
-                  onClick={() => setSelectedCity(c)}
-                  onKeyDown={() => setSelectedCity(c)}
-                  tabIndex={0}
-                >
-                  {c.critical && (
-                    <circle cx={c.x} cy={c.y} r="14" fill="var(--wine)" opacity="0.18">
-                      <animate
-                        attributeName="r"
-                        values="10;20;10"
-                        dur="2.4s"
-                        repeatCount="indefinite"
-                      />
-                    </circle>
-                  )}
-                  <circle
-                    cx={c.x}
-                    cy={c.y}
-                    r={selectedCity.label === c.label ? "7" : "5"}
-                    fill={
-                      selectedCity.label === c.label
-                        ? "var(--gold)"
-                        : c.critical
-                          ? "var(--wine)"
-                          : "var(--olive)"
-                    }
-                  />
-                  <text
-                    x={c.x + 9}
-                    y={c.y + 4}
-                    fontSize="9"
-                    fill="var(--foreground)"
-                    className="font-medium"
-                  >
-                    {c.label} - {c.n}
-                  </text>
-                </g>
-              ))}
-            </svg>
-          </div>
-          <div className="mt-4 grid grid-cols-3 gap-3 text-xs">
-            <div className="rounded-xl border border-border bg-cream/40 p-3">
-              <p className="text-muted-foreground">{selectedCity.label} shifts</p>
-              <p className="mt-1 text-lg font-semibold">{selectedCity.n}</p>
-            </div>
-            <div className="rounded-xl border border-border bg-cream/40 p-3">
-              <p className="text-muted-foreground">Escalation state</p>
-              <p className="mt-1 text-lg font-semibold text-wine">
-                {selectedCity.critical ? "Active" : "Clear"}
-              </p>
-            </div>
-            <div className="rounded-xl border border-border bg-cream/40 p-3">
-              <p className="text-muted-foreground">Dispatch cue</p>
-              <p className="mt-1 text-lg font-semibold text-gold">{selectedCity.cue}</p>
-            </div>
-          </div>
+      {command.isLoading ? (
+        <p className="text-sm text-muted-foreground">Loading operations...</p>
+      ) : command.isError ? (
+        <Card className="border-wine/25 bg-wine/5">
+          <p className="font-medium text-wine">Could not load command data.</p>
+          <p className="mt-2 text-sm text-muted-foreground">{(command.error as Error).message}</p>
         </Card>
+      ) : (
+        <>
+          <div className="grid gap-4 md:grid-cols-4">
+            <Stat label="Residents" value={data?.residents.length ?? 0} sub="From residents table" tone="olive" />
+            <Stat label="Open alerts" value={openAlerts.length} sub={`${criticalAlerts.length} critical/high`} tone="wine" />
+            <Stat label="Open tasks" value={openTasks.length} sub={`${overdueTasks.length} overdue`} tone="gold" />
+            <Stat label="Open inbox" value={openThreads.length} sub="Conversations not closed" tone="moss" />
+          </div>
 
-        <Card>
-          <p className="text-xs uppercase text-muted-foreground">Active incidents</p>
-          <ul className="mt-4 space-y-3">
-            {activeIncidents.map((i) => {
-              const selected = selectedIncident.t === i.t;
-              const isAcknowledged = acknowledged.includes(i.t);
-              return (
-                <li
-                  key={i.t}
-                  onClick={() => setSelectedIncident(i)}
-                  className={`cursor-pointer rounded-2xl border p-3 transition ${
-                    selected
-                      ? "border-olive/50 bg-olive/10"
-                      : "border-border bg-card hover:bg-cream/40"
-                  }`}
-                >
-                  <div className="flex items-center justify-between">
-                    <p className="text-sm text-foreground">{i.t}</p>
-                    <Pill tone={isAcknowledged ? "moss" : (i.tone as any)}>
-                      {isAcknowledged ? "Ack" : i.lvl}
-                    </Pill>
+          <div className="mt-6 grid gap-6 xl:grid-cols-[1.4fr_.9fr]">
+            <Card>
+              <div className="flex items-center gap-3">
+                <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-olive/10 text-olive">
+                  <Building2 className="h-5 w-5" />
+                </span>
+                <div>
+                  <h2 className="text-xl font-semibold text-foreground">Coverage by organization</h2>
+                  <p className="text-xs text-muted-foreground">Grouped from tenants, residents, alerts, tasks and inbox.</p>
+                </div>
+              </div>
+              {coverage.length === 0 ? (
+                <div className="mt-5">
+                  <EmptyState title="No operational records yet" hint="Create residents, tasks or alerts to populate command center." />
+                </div>
+              ) : (
+                <div className="mt-5 overflow-x-auto app-scrollbar">
+                  <table className="w-full min-w-[680px] text-sm">
+                    <thead className="text-xs uppercase text-muted-foreground">
+                      <tr className="border-b border-border/60">
+                        <th className="py-2 text-left">Organization</th>
+                        <th className="py-2 text-left">Residents</th>
+                        <th className="py-2 text-left">Open alerts</th>
+                        <th className="py-2 text-left">Open tasks</th>
+                        <th className="py-2 text-left">Inbox</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {coverage.map((row) => (
+                        <tr key={row.id} className="border-b border-border/35 last:border-0">
+                          <td className="py-3 pr-4 font-medium text-foreground">{row.name}</td>
+                          <td className="py-3 pr-4">{row.residents}</td>
+                          <td className="py-3 pr-4">{row.openAlerts}</td>
+                          <td className="py-3 pr-4">{row.openTasks}</td>
+                          <td className="py-3 pr-4">{row.inbox}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </Card>
+
+            <Card>
+              <div className="flex items-center gap-3">
+                <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-wine/10 text-wine">
+                  <AlertTriangle className="h-5 w-5" />
+                </span>
+                <div>
+                  <h2 className="text-xl font-semibold text-foreground">Active alerts</h2>
+                  <p className="text-xs text-muted-foreground">Action buttons update Supabase.</p>
+                </div>
+              </div>
+              {openAlerts.length === 0 ? (
+                <div className="mt-5 rounded-2xl border border-border/60 bg-cream/40 p-4 text-sm text-muted-foreground">
+                  No open alerts.
+                </div>
+              ) : (
+                <div className="mt-4 space-y-3">
+                  {openAlerts.slice(0, 8).map((alert) => (
+                    <button
+                      key={alert.id}
+                      onClick={() => setSelectedAlertId(alert.id)}
+                      className={`w-full rounded-2xl border p-3 text-left transition ${
+                        selectedAlert?.id === alert.id ? "border-wine/40 bg-wine/5" : "border-border bg-white/45 hover:bg-white/70"
+                      }`}
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <p className="min-w-0 truncate text-sm font-medium text-foreground">{alert.title}</p>
+                        <Pill tone={severityTone(alert.severity)}>{alert.severity}</Pill>
+                      </div>
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        {alert.resident_id ? residentName.get(alert.resident_id) ?? alert.resident_id : "No resident"} · {alert.status}
+                      </p>
+                    </button>
+                  ))}
+                </div>
+              )}
+              {selectedAlert && (
+                <div className="mt-4 rounded-2xl border border-border/60 bg-cream/45 p-4">
+                  <p className="text-sm font-medium text-foreground">{selectedAlert.title}</p>
+                  <p className="mt-1 text-xs leading-5 text-muted-foreground">{selectedAlert.description ?? "No description."}</p>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    <button onClick={() => updateAlert(selectedAlert.id, "acknowledged")} className="rounded-full bg-olive px-3 py-1.5 text-xs text-ivory">
+                      Acknowledge
+                    </button>
+                    <button onClick={() => updateAlert(selectedAlert.id, "resolved")} className="rounded-full border border-border px-3 py-1.5 text-xs">
+                      Resolve
+                    </button>
                   </div>
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    {i.r} - open {i.time}
-                  </p>
-                </li>
-              );
-            })}
-          </ul>
-          <div className="mt-4 rounded-2xl border border-border/60 bg-cream/40 p-4">
-            <p className="text-xs uppercase text-muted-foreground">Dispatch focus</p>
-            <p className="mt-1 text-sm font-medium text-foreground">{selectedIncident.t}</p>
-            <p className="text-xs text-muted-foreground">{selectedIncident.next}</p>
-            <button
-              onClick={() =>
-                setAcknowledged((items) =>
-                  items.includes(selectedIncident.t)
-                    ? items.filter((item) => item !== selectedIncident.t)
-                    : [...items, selectedIncident.t],
-                )
-              }
-              className="mt-3 rounded-full bg-olive px-4 py-2 text-xs text-ivory"
-            >
-              {acknowledged.includes(selectedIncident.t) ? "Reopen incident" : "Acknowledge"}
-            </button>
+                </div>
+              )}
+            </Card>
           </div>
-        </Card>
 
-        <Card className="lg:col-span-2">
-          <div className="flex items-center justify-between">
-            <p className="text-xs uppercase text-muted-foreground">
-              AI {heatmapMode} heatmap - next 48h
-            </p>
-            <div className="flex rounded-full border border-border bg-cream/40 p-1 text-xs">
-              {(["risk", "staffing"] as const).map((mode) => (
-                <button
-                  key={mode}
-                  onClick={() => setHeatmapMode(mode)}
-                  className={`rounded-full px-3 py-1 ${
-                    heatmapMode === mode ? "bg-olive text-ivory" : "text-muted-foreground"
-                  }`}
-                >
-                  {mode}
-                </button>
-              ))}
-            </div>
-          </div>
-          <div className="mt-4 grid grid-cols-12 gap-1">
-            {Array.from({ length: 96 }).map((_, i) => {
-              const r =
-                heatmapMode === "risk"
-                  ? Math.sin(i * 0.7) * 0.5 + 0.5
-                  : Math.cos(i * 0.48) * 0.5 + 0.5;
-              const color =
-                r > 0.75
-                  ? "var(--wine)"
-                  : r > 0.5
-                    ? "var(--terracotta)"
-                    : r > 0.25
-                      ? "var(--gold)"
-                      : "var(--moss)";
-              return (
-                <div
-                  key={i}
-                  className="aspect-square rounded-sm"
-                  style={{ background: color, opacity: 0.25 + r * 0.6 }}
-                />
-              );
-            })}
-          </div>
-          <div className="mt-3 flex items-center justify-between text-[10px] uppercase text-muted-foreground">
-            <span>Now</span>
-            <span>+24h</span>
-            <span>+48h</span>
-          </div>
-        </Card>
+          <div className="mt-6 grid gap-6 xl:grid-cols-3">
+            <Card className="xl:col-span-2">
+              <div className="flex items-center gap-3">
+                <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gold/15 text-gold">
+                  <Clock className="h-5 w-5" />
+                </span>
+                <div>
+                  <h2 className="text-xl font-semibold text-foreground">Load by hour</h2>
+                  <p className="text-xs text-muted-foreground">Derived from open task due times and alert creation times.</p>
+                </div>
+              </div>
+              <div className="mt-5 grid grid-cols-12 gap-1">
+                {loadCells.map((cell) => {
+                  const load = cell.tasks + cell.alerts;
+                  return (
+                    <div
+                      key={cell.hour}
+                      title={`${cell.hour}:00 · ${cell.tasks} tasks · ${cell.alerts} alerts`}
+                      className="aspect-square rounded-md border border-white/40"
+                      style={{
+                        background: load === 0 ? "rgba(255,255,255,.42)" : cell.alerts > 0 ? "var(--wine)" : "var(--olive)",
+                        opacity: load === 0 ? 1 : Math.min(0.25 + load * 0.14, 0.9),
+                      }}
+                    />
+                  );
+                })}
+              </div>
+              <div className="mt-3 flex justify-between text-[10px] uppercase text-muted-foreground">
+                <span>00h</span>
+                <span>12h</span>
+                <span>23h</span>
+              </div>
+            </Card>
 
-        <Card>
-          <p className="text-xs uppercase text-muted-foreground">Response time - 24h</p>
-          <Spark
-            points={[48, 52, 41, 38, 44, 36, 42, 39, 35, 33, 40, 37]}
-            color="var(--olive)"
-            height={60}
-          />
-          <p className="mt-2 text-xs text-muted-foreground">
-            Avg <span className="font-display text-foreground">48s</span> - best{" "}
-            <span className="font-display text-moss">22s</span>
-          </p>
-        </Card>
-      </div>
+            <Card>
+              <div className="flex items-center gap-3">
+                <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-moss/10 text-moss">
+                  <CheckCircle2 className="h-5 w-5" />
+                </span>
+                <div>
+                  <h2 className="text-xl font-semibold text-foreground">Staff snapshot</h2>
+                  <p className="text-xs text-muted-foreground">Staffing metrics activate when shifts are recorded.</p>
+                </div>
+              </div>
+              <div className="mt-5 space-y-3 text-sm">
+                <Metric label="Active staff profiles" value={activeStaff.length} />
+                <Metric label="Assigned open tasks" value={openTasks.filter((task) => task.assigned_to).length} />
+                <Metric label="Unassigned open tasks" value={openTasks.filter((task) => !task.assigned_to).length} />
+                <Metric label="Unread/open conversations" value={openThreads.length} icon={<Inbox className="h-4 w-4" />} />
+              </div>
+            </Card>
+          </div>
+        </>
+      )}
     </>
   );
 }
 
-const operationCities = [
-  { x: 130, y: 90, label: "Lisboa", n: 84, critical: true, cue: "+2 surge" },
-  { x: 180, y: 60, label: "Porto", n: 52, cue: "stable" },
-  { x: 240, y: 110, label: "Madrid", n: 118, critical: true, cue: "+3 surge" },
-  { x: 290, y: 150, label: "Valencia", n: 31, cue: "stable" },
-  { x: 160, y: 150, label: "Sevilla", n: 27, critical: true, cue: "+1 surge" },
-];
+function Metric({ label, value, icon }: { label: string; value: number; icon?: React.ReactNode }) {
+  return (
+    <div className="flex items-center justify-between gap-4 rounded-2xl border border-border/60 bg-cream/40 px-4 py-3">
+      <span className="flex items-center gap-2 text-muted-foreground">
+        {icon}
+        {label}
+      </span>
+      <span className="text-lg font-semibold text-foreground">{value}</span>
+    </div>
+  );
+}
 
-const activeIncidents = [
-  {
-    t: "Fall detected",
-    r: "Madrid - M. Alves",
-    lvl: "Critical",
-    tone: "wine",
-    time: "0:42",
-    next: "Caregiver en route. Prepare telemedicine bridge and family notification.",
-  },
-  {
-    t: "BP spike",
-    r: "Lisboa - J. Santos",
-    lvl: "High",
-    tone: "terracotta",
-    time: "2:18",
-    next: "Request second reading and compare medication adherence for the last 72h.",
-  },
-  {
-    t: "Missed medication",
-    r: "Sevilla - A. Cruz",
-    lvl: "Med",
-    tone: "gold",
-    time: "4:05",
-    next: "Ask caregiver to confirm dose in person before 16:30.",
-  },
-  {
-    t: "Caregiver late",
-    r: "Porto - shift 14:00",
-    lvl: "Low",
-    tone: "moss",
-    time: "8:22",
-    next: "Offer backup shift if delay exceeds 12 minutes.",
-  },
-];
+function severityTone(severity: string | null | undefined): "moss" | "wine" | "gold" | "terracotta" | "muted" {
+  const value = String(severity ?? "").toLowerCase();
+  if (["critical", "high"].includes(value)) return "wine";
+  if (["medium", "med"].includes(value)) return "gold";
+  if (["low", "info"].includes(value)) return "moss";
+  return "muted";
+}

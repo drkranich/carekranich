@@ -101,7 +101,7 @@ const DOMAINS: {
 ];
 
 function TwinPage() {
-  const { user, profile, hasAnyRole } = useAuth();
+  const { user, profile, hasAnyRole, isSuperAdmin } = useAuth();
   const qc = useQueryClient();
   const canContribute = hasAnyRole(["caregiver", "nurse", "doctor", "clinic_admin", "super_admin"]);
   const canManage = hasAnyRole(["clinic_admin", "super_admin"]);
@@ -110,7 +110,7 @@ function TwinPage() {
   const [window, setWindow] = useState<7 | 30 | 90 | 365>(30);
   const [showForm, setShowForm] = useState(false);
 
-  const { data: residents = [] } = useResidents(profile?.tenant_id);
+  const { data: residents = [] } = useResidents(profile?.tenant_id, isSuperAdmin);
 
   useEffect(() => {
     if (residents.length && !residentId) setResidentId(residents[0].id);
@@ -168,8 +168,10 @@ function TwinPage() {
       notes: string;
       source: string;
     }) => {
+      const tenantId = profile?.tenant_id ?? residents.find((resident) => resident.id === residentId)?.tenant_id;
+      if (!tenantId) throw new Error("Select a resident with an organization before recording an observation.");
       const { error } = await supabase.from("twin_observations").insert({
-        tenant_id: profile!.tenant_id!,
+        tenant_id: tenantId,
         resident_id: residentId,
         domain: v.domain,
         metric: v.metric,
@@ -184,7 +186,7 @@ function TwinPage() {
 
       // also log to timeline
       await supabase.from("events").insert({
-        tenant_id: profile!.tenant_id!,
+        tenant_id: tenantId,
         resident_id: residentId,
         actor_id: user!.id,
         category: "twin",

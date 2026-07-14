@@ -12,6 +12,14 @@ export type Profile = {
   tenant_id: string | null;
   time_zone: string | null;
   phone: string | null;
+  preferred_language: string | null;
+  country: string | null;
+  country_code: string | null;
+  state: string | null;
+  city: string | null;
+  address: string | null;
+  latitude: number | null;
+  longitude: number | null;
   account_status: "pending" | "active" | "rejected" | "suspended";
   user_kind: "family" | "clinic" | "service_provider" | "staff";
   verification_status: "not_started" | "pending" | "verified" | "rejected";
@@ -48,7 +56,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const [{ data: p }, { data: r }] = await Promise.all([
       (supabase as any)
         .from("profiles")
-        .select("id,full_name,preferred_name,avatar_url,tenant_id,time_zone,phone,account_status,user_kind,verification_status")
+        .select("id,full_name,preferred_name,avatar_url,tenant_id,time_zone,phone,preferred_language,country,country_code,state,city,address,latitude,longitude,account_status,user_kind,verification_status")
         .eq("id", uid)
         .maybeSingle(),
       supabase.from("user_roles").select("role").eq("user_id", uid),

@@ -1,149 +1,113 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
-import { Card, PageHeader, Pill, Stat } from "@/components/app/primitives";
+import { useQuery } from "@tanstack/react-query";
+import { GraduationCap, ShieldCheck } from "lucide-react";
+import { Card, EmptyState, PageHeader, Pill, Stat } from "@/components/app/primitives";
+import { useAuth } from "@/hooks/use-auth";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/app/academy")({ component: Academy });
 
-const modules = [
-  { t: "Foundations of elderly care", lvl: "Core", time: "6h", prog: 100, badges: 3 },
-  { t: "Dementia & cognitive decline", lvl: "Specialty", time: "8h", prog: 72, badges: 2 },
-  { t: "Cardiac event response", lvl: "Critical", time: "4h", prog: 100, badges: 4 },
-  { t: "Emotional first aid", lvl: "Wellbeing", time: "3h", prog: 60, badges: 1 },
-  { t: "Fall prevention & lifting", lvl: "Mobility", time: "5h", prog: 40, badges: 1 },
-  { t: "Care Kranich platform mastery", lvl: "Platform", time: "2h", prog: 100, badges: 2 },
-];
-
-const sims = [
-  { t: "Cardiac arrest simulation", grade: "A - 96", date: "May 10" },
-  { t: "Fall scenario - bathroom", grade: "A - 92", date: "Apr 28" },
-  { t: "Difficult family conversation", grade: "B+ - 85", date: "Apr 16" },
-];
-
 function Academy() {
-  const [activeModule, setActiveModule] = useState(modules.find((m) => m.prog < 100) ?? modules[0]);
-  const [lessonStarted, setLessonStarted] = useState(false);
-  const nextAction = useMemo(() => {
-    if (activeModule.prog === 100) return "Review certificate";
-    if (lessonStarted) return "Resume lesson";
-    return "Start lesson";
-  }, [activeModule, lessonStarted]);
+  const { profile, isSuperAdmin } = useAuth();
+
+  const academy = useQuery({
+    queryKey: ["academy-real-records", profile?.tenant_id, isSuperAdmin],
+    enabled: !!profile?.tenant_id || isSuperAdmin,
+    queryFn: async () => {
+      const db = supabase as any;
+      const [documents, identities, roles] = await Promise.all([
+        db.from("documents").select("id,title,document_type,status,file_size,created_at").in("document_type", ["certification", "training", "license"]).order("created_at", { ascending: false }).limit(200),
+        db.from("identity_verifications").select("id,user_id,status,required,created_at,reviewed_at").order("created_at", { ascending: false }).limit(200),
+        db.from("user_roles").select("id,user_id,role,tenant_id").in("role", ["caregiver", "nurse", "doctor"]).limit(400),
+      ]);
+      const errors = [documents, identities, roles].map((item) => item.error?.message).filter(Boolean);
+      if (errors.length) throw new Error(errors.join(" | "));
+      return {
+        documents: documents.data ?? [],
+        identities: identities.data ?? [],
+        roles: roles.data ?? [],
+      };
+    },
+  });
+
+  const certificates = academy.data?.documents ?? [];
+  const verified = (academy.data?.identities ?? []).filter((item: any) => item.status === "verified").length;
 
   return (
     <>
       <PageHeader
         title="Caregiver academy"
-        subtitle="Microlearning, simulations, certifications - continuous mastery."
-        action={<Pill tone="gold">Level 4 - Specialist</Pill>}
+        subtitle="Certification and training records from uploaded documents, identity checks and future learning modules."
+        action={<Pill tone={academy.isError ? "wine" : "olive"}>{academy.isError ? "Read error" : "Real records"}</Pill>}
       />
 
-      <div className="grid gap-4 md:grid-cols-4">
-        <Stat label="Modules completed" value="14 / 22" tone="olive" />
-        <Stat label="Certifications" value="6" sub="3 due within 90d" tone="gold" />
-        <Stat label="Simulation avg" value="91" sub="grade A" tone="moss" />
-        <Stat label="Hours - year" value="84h" sub="+ 12h this month" tone="wine" />
-      </div>
-
-      <div className="mt-6 grid gap-6 lg:grid-cols-3">
-        <Card className="lg:col-span-2">
-          <div className="flex items-center justify-between gap-3">
-            <p className="text-xs uppercase text-muted-foreground">Learning paths</p>
-            <Pill tone="moss">{modules.filter((m) => m.prog === 100).length} certified</Pill>
-          </div>
-          <div className="mt-4 space-y-3">
-            {modules.map((m) => (
-              <button
-                key={m.t}
-                onClick={() => {
-                  setActiveModule(m);
-                  setLessonStarted(false);
-                }}
-                className={`w-full rounded-2xl border p-4 text-left transition-all ${
-                  activeModule.t === m.t
-                    ? "border-olive/35 bg-white/70 shadow-soft"
-                    : "border-border bg-cream/40 hover:border-olive/25 hover:bg-white/55"
-                }`}
-              >
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <div>
-                    <p className="font-medium text-foreground">{m.t}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {m.lvl} - {m.time} - {m.badges} badges
-                    </p>
-                  </div>
-                  <Pill tone={m.prog === 100 ? "moss" : "gold"}>
-                    {m.prog === 100 ? "Complete" : `${m.prog}%`}
-                  </Pill>
-                </div>
-                <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-border">
-                  <div
-                    className="h-full rounded-full bg-olive transition-all"
-                    style={{ width: `${m.prog}%` }}
-                  />
-                </div>
-              </button>
-            ))}
-          </div>
+      {academy.isLoading ? (
+        <p className="text-sm text-muted-foreground">Loading academy records...</p>
+      ) : academy.isError ? (
+        <Card className="border-wine/25 bg-wine/5">
+          <p className="font-medium text-wine">Could not load academy records.</p>
+          <p className="mt-2 text-sm text-muted-foreground">{(academy.error as Error).message}</p>
         </Card>
+      ) : (
+        <>
+          <div className="grid gap-4 md:grid-cols-4">
+            <Stat label="Care staff roles" value={academy.data?.roles.length ?? 0} sub="Caregiver/nurse/doctor" tone="olive" />
+            <Stat label="Certificates" value={certificates.length} sub="Uploaded documents" tone="gold" />
+            <Stat label="Verified identities" value={verified} sub="Identity table" tone="moss" />
+            <Stat label="LMS modules" value="0" sub="Ready for learning schema" tone="wine" />
+          </div>
 
-        <div className="space-y-6">
-          <Card className="bg-gradient-olive text-ivory border-none">
-            <p className="text-xs uppercase text-ivory/70">AI training assistant</p>
-            <p className="mt-2 text-lg font-semibold">
-              "{activeModule.t} is queued. The assistant will adapt the next drill to your last
-              simulation score."
-            </p>
-            <div className="mt-3 rounded-2xl bg-white/12 p-3 text-sm text-ivory/85">
-              <p>{activeModule.lvl} track</p>
-              <p>{activeModule.time} expected time</p>
-              <p>{activeModule.badges} badges available</p>
-            </div>
-            <button
-              onClick={() => setLessonStarted(true)}
-              className="mt-3 rounded-full bg-ivory px-3 py-1.5 text-xs text-olive"
-            >
-              {nextAction}
-            </button>
-            {lessonStarted && (
-              <p className="mt-2 text-xs text-ivory/75">Lesson live in focus mode.</p>
-            )}
-          </Card>
-
-          <Card>
-            <p className="text-xs uppercase text-muted-foreground">Recent simulations</p>
-            <ul className="mt-3 space-y-2 text-sm">
-              {sims.map((s) => (
-                <li key={s.t} className="rounded-xl border border-border/60 bg-cream/40 p-3">
-                  <p className="font-medium text-foreground">{s.t}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {s.date} - <span className="text-moss">{s.grade}</span>
-                  </p>
-                </li>
-              ))}
-            </ul>
-          </Card>
-
-          <Card>
-            <p className="text-xs uppercase text-muted-foreground">Earned badges</p>
-            <div className="mt-3 flex flex-wrap gap-2">
-              {[
-                "First Responder",
-                "Dementia Care",
-                "Family Whisperer",
-                "Night Shift",
-                "Cardiac",
-                "100h Club",
-              ].map((b) => (
-                <span
-                  key={b}
-                  className="rounded-full border border-gold/30 bg-gold/10 px-3 py-1 text-xs text-gold"
-                >
-                  star {b}
+          <div className="mt-6 grid gap-6 lg:grid-cols-[1.2fr_.8fr]">
+            <Card>
+              <div className="flex items-center gap-3">
+                <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-olive/10 text-olive">
+                  <GraduationCap className="h-5 w-5" />
                 </span>
-              ))}
-            </div>
-          </Card>
-        </div>
-      </div>
+                <div>
+                  <h2 className="text-xl font-semibold text-foreground">Certification vault</h2>
+                  <p className="text-xs text-muted-foreground">Only uploaded certification/training/license files appear here.</p>
+                </div>
+              </div>
+              {certificates.length === 0 ? (
+                <div className="mt-5">
+                  <EmptyState title="No certifications uploaded" hint="Upload certification documents in Documents to populate Academy." />
+                </div>
+              ) : (
+                <div className="mt-5 space-y-3">
+                  {certificates.map((doc: any) => (
+                    <div key={doc.id} className="rounded-2xl border border-border/60 bg-cream/40 p-4">
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <p className="font-medium text-foreground">{doc.title}</p>
+                        <Pill tone="olive">{doc.document_type}</Pill>
+                      </div>
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        {doc.status} · {new Date(doc.created_at).toLocaleDateString()}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </Card>
+
+            <Card>
+              <div className="flex items-center gap-3">
+                <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-moss/10 text-moss">
+                  <ShieldCheck className="h-5 w-5" />
+                </span>
+                <div>
+                  <h2 className="text-xl font-semibold text-foreground">What is still needed</h2>
+                  <p className="text-xs text-muted-foreground">Learning depth expands with module, attempt and certificate records.</p>
+                </div>
+              </div>
+              <div className="mt-5 space-y-2 text-sm text-muted-foreground">
+                <p className="rounded-2xl border border-border/60 bg-cream/40 p-3">Create LMS tables for modules, lessons, attempts and certificates.</p>
+                <p className="rounded-2xl border border-border/60 bg-cream/40 p-3">Attach certificate expiration dates to uploaded documents.</p>
+                <p className="rounded-2xl border border-border/60 bg-cream/40 p-3">Require verified identity before certifications unlock platform badges.</p>
+              </div>
+            </Card>
+          </div>
+        </>
+      )}
     </>
   );
 }

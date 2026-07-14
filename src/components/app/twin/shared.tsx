@@ -3,16 +3,16 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, Spark, Pill } from "@/components/app/primitives";
 import type { ReactNode } from "react";
 
-export type Resident = { id: string; full_name: string; preferred_name: string | null };
+export type Resident = { id: string; tenant_id: string; full_name: string; preferred_name: string | null };
 
-export function useResidents(tenantId: string | null | undefined) {
+export function useResidents(tenantId: string | null | undefined, global = false) {
   return useQuery({
-    queryKey: ["residents-list", tenantId],
-    enabled: !!tenantId,
+    queryKey: ["residents-list", tenantId, global],
+    enabled: !!tenantId || global,
     queryFn: async () => {
       const { data } = await supabase
         .from("residents")
-        .select("id,full_name,preferred_name")
+        .select("id,tenant_id,full_name,preferred_name")
         .order("full_name");
       return (data ?? []) as Resident[];
     },
