@@ -6,7 +6,7 @@ import {
   useNavigate,
   Navigate,
 } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Avatar } from "@/components/app/primitives";
 import { NotificationBell } from "@/components/app/NotificationBell";
 import { useAuth, ROLE_LABELS, type AppRole } from "@/hooks/use-auth";
@@ -197,6 +197,15 @@ function AppLayout() {
   useTenantRealtime(profile?.tenant_id, user?.id);
   const isPlatformUser = roles.includes("super_admin");
 
+  useEffect(() => {
+    document.documentElement.classList.add("saas-scrollbar");
+    document.body.classList.add("saas-scrollbar");
+    return () => {
+      document.documentElement.classList.remove("saas-scrollbar");
+      document.body.classList.remove("saas-scrollbar");
+    };
+  }, []);
+
   const sections = useMemo(() => {
     return ALL_SECTIONS.map((s) => ({
       ...s,
@@ -214,7 +223,7 @@ function AppLayout() {
   if (!profile?.tenant_id && !isPlatformUser) return <Navigate to="/onboarding" />;
 
   return (
-    <div className="flex min-h-screen bg-[linear-gradient(135deg,var(--ivory)_0%,var(--cream)_42%,oklch(0.93_0.035_155)_100%)] text-foreground">
+    <div className="app-shell flex min-h-screen bg-[linear-gradient(135deg,var(--ivory)_0%,var(--cream)_42%,oklch(0.93_0.035_155)_100%)] text-foreground">
       <aside className="sticky top-0 hidden h-screen w-72 flex-none flex-col border-r border-white/70 bg-white/45 shadow-soft ring-1 ring-white/35 backdrop-blur-2xl lg:flex">
         <Link to="/" className="flex items-center gap-3 border-b border-white/55 px-6 py-5">
           <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-gradient-olive text-ivory shadow-soft">
@@ -244,7 +253,7 @@ function AppLayout() {
           )}
         </Link>
 
-        <div className="flex-1 overflow-y-auto px-4 py-5">
+        <div className="app-scrollbar flex-1 overflow-y-auto px-4 py-5">
           {sections.map((sec) => (
             <div key={sec.title} className="mb-6">
               <p className="mb-2 px-3 text-[10px] font-semibold uppercase text-muted-foreground">
