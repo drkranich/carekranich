@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Send } from "lucide-react";
 import { toast } from "sonner";
 import { Card, EmptyState, PageHeader, Pill } from "@/components/app/primitives";
@@ -30,6 +30,20 @@ function Inbox() {
   });
 
   const selected = useMemo(() => (threads.data ?? []).find((item: any) => item.id === selectedId) ?? (threads.data ?? [])[0], [threads.data, selectedId]);
+
+  useEffect(() => {
+    const threadId = new URLSearchParams(window.location.search).get("thread");
+    if (threadId && (threads.data ?? []).some((item: any) => item.id === threadId)) {
+      setSelectedId(threadId);
+    }
+  }, [threads.data]);
+
+  const selectThread = (threadId: string) => {
+    setSelectedId(threadId);
+    const url = new URL(window.location.href);
+    url.searchParams.set("thread", threadId);
+    window.history.replaceState(null, "", `${url.pathname}${url.search}`);
+  };
 
   const messages = useQuery({
     queryKey: ["inbox-messages", selected?.id],
@@ -73,7 +87,7 @@ function Inbox() {
       toast.success("Thread created");
       setSubject("");
       setBody("");
-      setSelectedId(id);
+      selectThread(id);
       qc.invalidateQueries({ queryKey: ["inbox-threads", profile?.tenant_id, isSuperAdmin] });
     },
     onError: (error: any) => toast.error(error.message ?? "Could not create thread"),
@@ -111,7 +125,7 @@ function Inbox() {
           <h2 className="text-lg font-semibold text-foreground">Threads</h2>
           <div className="mt-4 space-y-2">
             {(threads.data ?? []).map((thread: any) => (
-              <button key={thread.id} onClick={() => setSelectedId(thread.id)} className={`block w-full rounded-2xl border p-3 text-left ${selected?.id === thread.id ? "border-olive/30 bg-olive/10" : "border-white/70 bg-white/50"}`}>
+              <button key={thread.id} onClick={() => selectThread(thread.id)} className={`block w-full rounded-2xl border p-3 text-left ${selected?.id === thread.id ? "border-olive/30 bg-olive/10" : "border-white/70 bg-white/50"}`}>
                 <p className="font-medium text-foreground">{thread.subject}</p>
                 <p className="mt-1 text-xs text-muted-foreground">{thread.source} · {thread.status} · {thread.priority}</p>
               </button>

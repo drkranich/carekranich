@@ -1,6 +1,6 @@
 import { createFileRoute, Navigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Check, Shield, Trash2, X } from "lucide-react";
+import { Check, Save, Shield, Trash2, X } from "lucide-react";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Card, PageHeader, Pill, Stat } from "@/components/app/primitives";
@@ -20,11 +20,48 @@ const userKindLabels: Record<string, string> = {
   staff: "Funcionario",
 };
 
+const accessRoutes = [
+  { route: "/app", label: "Visao geral", group: "Base" },
+  { route: "/app/profile", label: "Perfil", group: "Base" },
+  { route: "/app/notifications", label: "Notificacoes", group: "Base" },
+  { route: "/app/residents", label: "Residentes", group: "Cuidado" },
+  { route: "/app/timeline", label: "Timeline", group: "Cuidado" },
+  { route: "/app/care-plan", label: "Plano de cuidado", group: "Cuidado" },
+  { route: "/app/memory", label: "Memoria e legado", group: "Cuidado" },
+  { route: "/app/emergency", label: "SOS", group: "Cuidado" },
+  { route: "/app/caregiver", label: "App cuidador", group: "Equipe" },
+  { route: "/app/quality", label: "Qualidade", group: "Equipe" },
+  { route: "/app/academy", label: "Academia", group: "Equipe" },
+  { route: "/app/medical", label: "Medical", group: "Equipe" },
+  { route: "/app/marketplace", label: "Marketplace", group: "Rede" },
+  { route: "/app/agents", label: "Agentes", group: "IA" },
+  { route: "/app/agents/recommendations", label: "Recomendacoes", group: "IA" },
+  { route: "/app/twin", label: "Digital twin", group: "IA" },
+  { route: "/app/cognitive", label: "Cognitive twin", group: "IA" },
+  { route: "/app/longevity", label: "Longevity", group: "IA" },
+  { route: "/app/ai", label: "AI insights", group: "IA" },
+  { route: "/app/alerts", label: "Alertas", group: "Operacao" },
+  { route: "/app/workflows", label: "Workflows", group: "Operacao" },
+  { route: "/app/smart-home", label: "Casa inteligente", group: "Operacao" },
+  { route: "/app/telemedicine", label: "Telemedicina", group: "Operacao" },
+  { route: "/app/command", label: "Command center", group: "Admin" },
+  { route: "/app/documents", label: "Documentos", group: "Admin" },
+  { route: "/app/tenants", label: "Organizacao", group: "Admin" },
+  { route: "/app/contracts", label: "Contratos", group: "Admin" },
+  { route: "/app/billing", label: "Planos e cobranca", group: "Admin" },
+  { route: "/app/inbox", label: "Inbox", group: "Admin" },
+  { route: "/app/email-marketing", label: "Email marketing", group: "Admin" },
+  { route: "/app/identity", label: "Reconhecimento facial", group: "Admin" },
+  { route: "/app/admin", label: "Super admin", group: "Plataforma" },
+  { route: "/app/approvals", label: "Aprovacoes e acessos", group: "Plataforma" },
+] as const;
+
 function Approvals() {
   const { isSuperAdmin } = useAuth();
   const qc = useQueryClient();
   const [statusFilter, setStatusFilter] = useState("all");
   const [kindFilter, setKindFilter] = useState("all");
+  const [view, setView] = useState<"people" | "roles">("people");
   if (!isSuperAdmin) return <Navigate to="/app" />;
 
   const approvals = useQuery({
@@ -55,6 +92,18 @@ function Approvals() {
         roleMap.set(role.user_id, list);
       });
       return (profiles ?? []).map((profile: any) => ({ ...profile, roles: roleMap.get(profile.id) ?? [] }));
+    },
+  });
+
+  const accessProfiles = useQuery({
+    queryKey: ["platform-staff-access-profiles-admin"],
+    queryFn: async () => {
+      const { data, error } = await (supabase as any)
+        .from("platform_staff_access_profiles")
+        .select("*")
+        .order("label");
+      if (error) throw error;
+      return data ?? [];
     },
   });
 
@@ -105,6 +154,27 @@ function Approvals() {
       ),
   });
 
+  const saveAccessProfile = useMutation({
+    mutationFn: async (profile: any) => {
+      const { error } = await (supabase as any)
+        .from("platform_staff_access_profiles")
+        .update({
+          label: profile.label,
+          description: profile.description,
+          allowed_routes: profile.allowed_routes,
+          active: profile.active,
+        })
+        .eq("id", profile.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Cargo e acessos atualizados");
+      qc.invalidateQueries({ queryKey: ["platform-staff-access-profiles-admin"] });
+      qc.invalidateQueries({ queryKey: ["platform-staff-access-profiles"] });
+    },
+    onError: (error: any) => toast.error(error.message ?? "Nao foi possivel salvar os acessos"),
+  });
+
   const addRole = async (userId: string, tenantId: string | null, role: AppRole) => {
     const { error } = await supabase.from("user_roles").insert({ user_id: userId, tenant_id: tenantId, role });
     if (error) toast.error(error.message);
@@ -146,6 +216,30 @@ function Approvals() {
         <Stat label="Approved" value={(members.data ?? []).filter((m: any) => m.account_status === "active").length} sub="Active accounts" tone="moss" />
         <Stat label="Rejected" value={(members.data ?? []).filter((m: any) => m.account_status === "rejected").length} sub="Blocked accounts" tone="wine" />
       </div>
+
+      <div className="mt-6 inline-flex rounded-2xl border border-white/70 bg-white/45 p-1 shadow-soft backdrop-blur-xl">
+        <button
+          onClick={() => setView("people")}
+          className={`rounded-xl px-4 py-2 text-xs font-medium ${view === "people" ? "bg-olive text-ivory" : "text-foreground/70 hover:bg-white/60"}`}
+        >
+          Pessoas e aprovacoes
+        </button>
+        <button
+          onClick={() => setView("roles")}
+          className={`rounded-xl px-4 py-2 text-xs font-medium ${view === "roles" ? "bg-olive text-ivory" : "text-foreground/70 hover:bg-white/60"}`}
+        >
+          Cargos e acessos
+        </button>
+      </div>
+
+      {view === "roles" ? (
+        <AccessProfileMatrix
+          profiles={accessProfiles.data ?? []}
+          loading={accessProfiles.isLoading}
+          saving={saveAccessProfile.isPending}
+          onSave={(profile) => saveAccessProfile.mutate(profile)}
+        />
+      ) : (
 
       <div className="mt-6 grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
         <Card>
@@ -268,7 +362,128 @@ function Approvals() {
           </div>
         </Card>
       </div>
+      )}
     </>
+  );
+}
+
+function AccessProfileMatrix({
+  profiles,
+  loading,
+  saving,
+  onSave,
+}: {
+  profiles: any[];
+  loading: boolean;
+  saving: boolean;
+  onSave: (profile: any) => void;
+}) {
+  const groupedRoutes = useMemo(() => {
+    return accessRoutes.reduce<Record<string, typeof accessRoutes[number][]>>((acc, item) => {
+      acc[item.group] = acc[item.group] ?? [];
+      acc[item.group].push(item);
+      return acc;
+    }, {});
+  }, []);
+  const [drafts, setDrafts] = useState<Record<string, any>>({});
+
+  const currentFor = (profile: any) => drafts[profile.id] ?? profile;
+  const updateDraft = (profile: any, patch: Record<string, any>) => {
+    setDrafts((current) => ({
+      ...current,
+      [profile.id]: { ...currentFor(profile), ...patch },
+    }));
+  };
+  const toggleRoute = (profile: any, route: string) => {
+    const current = currentFor(profile);
+    const routes = new Set<string>(current.allowed_routes ?? []);
+    if (routes.has(route)) routes.delete(route);
+    else routes.add(route);
+    updateDraft(profile, { allowed_routes: Array.from(routes) });
+  };
+
+  if (loading) return <p className="mt-6 text-sm text-muted-foreground">Carregando cargos...</p>;
+
+  return (
+    <div className="mt-6 space-y-5">
+      {profiles.map((profile) => {
+        const draft = currentFor(profile);
+        const changed = !!drafts[profile.id];
+        return (
+          <Card key={profile.id}>
+            <div className="flex flex-wrap items-start justify-between gap-4">
+              <div className="min-w-0 flex-1">
+                <div className="grid gap-3 md:grid-cols-[260px_1fr]">
+                  <input
+                    value={draft.label ?? ""}
+                    onChange={(event) => updateDraft(profile, { label: event.target.value })}
+                    className="rounded-xl border border-white/70 bg-white/60 px-3 py-2 text-sm font-medium shadow-soft backdrop-blur-xl"
+                  />
+                  <input
+                    value={draft.description ?? ""}
+                    onChange={(event) => updateDraft(profile, { description: event.target.value })}
+                    className="rounded-xl border border-white/70 bg-white/60 px-3 py-2 text-sm shadow-soft backdrop-blur-xl"
+                  />
+                </div>
+                <p className="mt-2 text-xs text-muted-foreground">Chave: {profile.role_key}</p>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => updateDraft(profile, { active: !draft.active })}
+                  className={`rounded-full px-3 py-1.5 text-xs ${draft.active ? "bg-olive text-ivory" : "border border-border bg-white/50 text-muted-foreground"}`}
+                >
+                  {draft.active ? "Ativo" : "Inativo"}
+                </button>
+                <button
+                  onClick={() => {
+                    onSave(draft);
+                    setDrafts((current) => {
+                      const next = { ...current };
+                      delete next[profile.id];
+                      return next;
+                    });
+                  }}
+                  disabled={!changed || saving}
+                  className="inline-flex items-center gap-1 rounded-full bg-olive px-3 py-1.5 text-xs text-ivory disabled:cursor-not-allowed disabled:opacity-45"
+                >
+                  <Save className="h-3.5 w-3.5" />
+                  Salvar
+                </button>
+              </div>
+            </div>
+
+            <div className="mt-5 grid gap-4 lg:grid-cols-3">
+              {Object.entries(groupedRoutes).map(([group, routes]) => (
+                <div key={group} className="rounded-2xl border border-white/70 bg-white/45 p-4">
+                  <p className="text-xs font-semibold uppercase text-muted-foreground">{group}</p>
+                  <div className="mt-3 space-y-2">
+                    {routes.map((item) => {
+                      const checked = (draft.allowed_routes ?? []).includes(item.route);
+                      return (
+                        <label key={item.route} className="flex cursor-pointer items-center gap-2 text-sm text-foreground/80">
+                          <input
+                            type="checkbox"
+                            checked={checked}
+                            onChange={() => toggleRoute(profile, item.route)}
+                            className="h-4 w-4 accent-olive"
+                          />
+                          <span>{item.label}</span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </Card>
+        );
+      })}
+      {profiles.length === 0 && (
+        <Card>
+          <p className="text-sm text-muted-foreground">Nenhum cargo configurado ainda.</p>
+        </Card>
+      )}
+    </div>
   );
 }
 

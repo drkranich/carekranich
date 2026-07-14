@@ -18,6 +18,7 @@ import { supabase } from "@/integrations/supabase/client";
 type UserKind = Profile["user_kind"];
 type NavItem = { to: string; label: string; icon: string; roles?: AppRole[]; userKinds?: UserKind[] };
 type NavSection = { title: string; items: NavItem[] };
+type AccessProfile = { role_key: string; allowed_routes: string[]; active: boolean };
 
 const ALL_SECTIONS: NavSection[] = [
   {
@@ -266,6 +267,30 @@ function AppLayout() {
     },
   });
 
+  const accessProfiles = useQuery({
+    queryKey: ["platform-staff-access-profiles"],
+    enabled: !!user && !isPlatformUser,
+    queryFn: async () => {
+      const { data, error } = await (supabase as any)
+        .from("platform_staff_access_profiles")
+        .select("role_key,allowed_routes,active")
+        .eq("active", true);
+      if (error) throw error;
+      return (data ?? []) as AccessProfile[];
+    },
+  });
+
+  const accessKey = useMemo(
+    () => resolveAccessKey(primaryRole, profile?.user_kind),
+    [primaryRole, profile?.user_kind],
+  );
+
+  const accessMap = useMemo(() => {
+    const map = new Map<string, string[]>();
+    (accessProfiles.data ?? []).forEach((item) => map.set(item.role_key, item.allowed_routes ?? []));
+    return map;
+  }, [accessProfiles.data]);
+
   useEffect(() => {
     document.documentElement.classList.add("saas-scrollbar");
     document.body.classList.add("saas-scrollbar");
@@ -279,10 +304,10 @@ function AppLayout() {
     return ALL_SECTIONS.map((s) => ({
       ...s,
       items: s.items.filter((i) => {
-        return canAccessNavItem(i, roles, profile?.user_kind);
+        return canAccessNavItem(i, roles, profile?.user_kind, accessMap, accessKey);
       }),
     })).filter((s) => s.items.length > 0);
-  }, [profile?.user_kind, roles]);
+  }, [accessKey, accessMap, profile?.user_kind, roles]);
 
   const currentNavItem = useMemo(() => {
     const allItems = ALL_SECTIONS.flatMap((section) => section.items);
@@ -293,7 +318,7 @@ function AppLayout() {
       .sort((a, b) => b.to.length - a.to.length)[0] ?? null;
   }, [path]);
 
-  const canAccessCurrentRoute = !currentNavItem || canAccessNavItem(currentNavItem, roles, profile?.user_kind);
+  const canAccessCurrentRoute = !currentNavItem || canAccessNavItem(currentNavItem, roles, profile?.user_kind, accessMap, accessKey);
 
   const quickLinks = useMemo(() => {
     return sections.flatMap((section) =>
@@ -642,11 +667,24 @@ function canAccessNavItem(
   item: NavItem,
   roles: AppRole[],
   userKind: UserKind | null | undefined,
+  accessMap?: Map<string, string[]>,
+  accessKey?: string | null,
 ) {
   if (roles.includes("super_admin")) return true;
   const roleAllowed = !item.roles || item.roles.some((role) => roles.includes(role));
   const kindAllowed = !item.userKinds || (!!userKind && item.userKinds.includes(userKind));
-  return roleAllowed && kindAllowed;
+  const profileAllowed =
+    !accessMap ||
+    !accessKey ||
+    !accessMap.has(accessKey) ||
+    accessMap.get(accessKey)?.includes(item.to);
+  return roleAllowed && kindAllowed && profileAllowed;
+}
+
+function resolveAccessKey(primaryRole: AppRole | null, userKind: UserKind | null | undefined) {
+  if (userKind === "service_provider") return "service_provider";
+  if (userKind === "staff" && !primaryRole) return "staff";
+  return primaryRole ?? userKind ?? null;
 }
 
 function AccessDenied({

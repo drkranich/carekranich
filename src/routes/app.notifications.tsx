@@ -112,15 +112,25 @@ function Notifications() {
                   {item.body && <p className="mt-1 text-sm leading-6 text-muted-foreground">{item.body}</p>}
                   <p className="mt-1 text-xs text-muted-foreground">{new Date(item.created_at).toLocaleString()}</p>
                 </div>
-                {!item.read_at && (
-                  <button
-                    onClick={() => markRead(item.id)}
-                    className="inline-flex items-center gap-1 rounded-full border border-border px-3 py-1.5 text-xs"
-                  >
-                    <CheckCircle2 className="h-3.5 w-3.5" />
-                    Read
-                  </button>
-                )}
+                <div className="flex flex-col gap-2 sm:flex-row">
+                  {item.link && (
+                    <a
+                      href={item.link}
+                      className="inline-flex items-center justify-center rounded-full bg-olive px-3 py-1.5 text-xs text-ivory"
+                    >
+                      Abrir
+                    </a>
+                  )}
+                  {!item.read_at && (
+                    <button
+                      onClick={() => markRead(item.id)}
+                      className="inline-flex items-center gap-1 rounded-full border border-border px-3 py-1.5 text-xs"
+                    >
+                      <CheckCircle2 className="h-3.5 w-3.5" />
+                      Read
+                    </button>
+                  )}
+                </div>
               </li>
             ))}
           </ul>

@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -108,14 +107,14 @@ export function NotificationBell() {
                 </div>
               );
               return n.link ? (
-                <Link
+                <a
                   key={n.id}
-                  to={n.link}
+                  href={n.link}
                   className="block hover:bg-cream/40"
                   onClick={() => setOpen(false)}
                 >
                   {inner}
-                </Link>
+                </a>
               ) : (
                 <div key={n.id}>{inner}</div>
               );

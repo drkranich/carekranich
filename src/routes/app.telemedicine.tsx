@@ -91,6 +91,12 @@ function Telemedicine() {
               <button onClick={createRequest} disabled={!profile?.tenant_id} className="w-full rounded-xl bg-olive px-4 py-2 text-sm text-ivory disabled:opacity-50">Create inbox request</button>
             </div>
             <p className="mt-4 text-xs text-muted-foreground">{telemed.data?.doctors.length ?? 0} doctor role records visible.</p>
+            <div className="mt-4 rounded-2xl border border-baby/45 bg-baby/18 p-4">
+              <Pill tone="gold">Google Meet planned</Pill>
+              <p className="mt-3 text-sm leading-6 text-muted-foreground">
+                Future integration: create Google Meet links automatically for approved telemedicine requests.
+              </p>
+            </div>
           </Card>
 
           <Card>
