@@ -1,127 +1,169 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { Card, PageHeader, Pill } from "@/components/app/primitives";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { Download, FileText, Upload } from "lucide-react";
+import { toast } from "sonner";
+import { Card, EmptyState, PageHeader, Pill } from "@/components/app/primitives";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/use-auth";
+import { downloadPdf } from "@/lib/pdf";
 
 export const Route = createFileRoute("/app/documents")({ component: Documents });
 
-const docs = [
-  {
-    n: "Cardiology consultation - Dr. Costa",
-    t: "PDF",
-    tag: "Medical",
-    date: "May 12",
-    size: "1.2 MB",
-    ai: "BP improving; continue Bisoprolol 2.5mg; review in 90d.",
-  },
-  {
-    n: "Prescription - Metformin 500mg",
-    t: "PDF",
-    tag: "Prescription",
-    date: "May 02",
-    size: "240 KB",
-    ai: "Renewed for 6 months - valid until Nov 2026",
-  },
-  {
-    n: "Caregiver contract - Sofia Mendes",
-    t: "PDF",
-    tag: "Contract",
-    date: "Apr 22",
-    size: "880 KB",
-    ai: "Active - 32h/week - auto-renews Jun 30",
-  },
-  {
-    n: "Health insurance card - Medis",
-    t: "PNG",
-    tag: "Insurance",
-    date: "Mar 10",
-    size: "1.8 MB",
-    ai: "Plan: Senior Complete - covers in-home care up to EUR 800/mo",
-  },
-  {
-    n: "Dementia screening MMSE 2024",
-    t: "PDF",
-    tag: "Medical",
-    date: "Dec 14",
-    size: "560 KB",
-    ai: "Score 26/30 - mild concerns in recall, otherwise stable",
-  },
-  {
-    n: "Certification - Sofia - CPR renewal",
-    t: "PDF",
-    tag: "Certification",
-    date: "Feb 04",
-    size: "320 KB",
-    ai: "Valid until Feb 2027",
-  },
-];
-
-const tagTone: Record<string, string> = {
-  Medical: "wine",
-  Prescription: "terracotta",
-  Contract: "olive",
-  Insurance: "gold",
-  Certification: "moss",
+type DocumentRow = {
+  id: string;
+  title: string;
+  document_type: string;
+  bucket: string;
+  storage_path: string;
+  mime_type: string | null;
+  file_size: number | null;
+  ai_summary: string | null;
+  status: string;
+  created_at: string;
 };
 
 function Documents() {
+  const qc = useQueryClient();
+  const { profile, user } = useAuth();
   const [query, setQuery] = useState("");
   const [tag, setTag] = useState("All");
-  const [selected, setSelected] = useState(docs[0]);
-  const [uploadOpen, setUploadOpen] = useState(false);
+  const [file, setFile] = useState<File | null>(null);
+  const [title, setTitle] = useState("");
+  const [documentType, setDocumentType] = useState("medical");
+  const [uploading, setUploading] = useState(false);
+
+  const docs = useQuery({
+    queryKey: ["documents", profile?.tenant_id],
+    enabled: !!profile?.tenant_id,
+    queryFn: async () => {
+      const { data, error } = await (supabase as any)
+        .from("documents")
+        .select("id,title,document_type,bucket,storage_path,mime_type,file_size,ai_summary,status,created_at")
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return (data ?? []) as DocumentRow[];
+    },
+  });
+
   const filteredDocs = useMemo(() => {
     const q = query.trim().toLowerCase();
-    return docs.filter((doc) => {
-      const tagMatch = tag === "All" || doc.tag === tag;
-      const queryMatch = !q || `${doc.n} ${doc.tag} ${doc.ai}`.toLowerCase().includes(q);
+    return (docs.data ?? []).filter((doc) => {
+      const tagMatch = tag === "All" || doc.document_type === tag;
+      const queryMatch = !q || `${doc.title} ${doc.document_type} ${doc.ai_summary ?? ""}`.toLowerCase().includes(q);
       return tagMatch && queryMatch;
     });
-  }, [query, tag]);
+  }, [docs.data, query, tag]);
+
+  const uploadDocument = async () => {
+    if (!file || !profile?.tenant_id || !user) return;
+    setUploading(true);
+    try {
+      const safeName = file.name.replace(/[^a-zA-Z0-9._-]+/g, "-").slice(0, 120);
+      const path = `${profile.tenant_id}/${user.id}/${Date.now()}-${safeName}`;
+      const { error: uploadError } = await supabase.storage
+        .from("documents")
+        .upload(path, file, { contentType: file.type, upsert: false });
+      if (uploadError) throw uploadError;
+
+      const { error: rowError } = await (supabase as any).from("documents").insert({
+        tenant_id: profile.tenant_id,
+        owner_id: user.id,
+        uploaded_by: user.id,
+        title: title.trim() || file.name,
+        document_type: documentType,
+        bucket: "documents",
+        storage_path: path,
+        mime_type: file.type || "application/octet-stream",
+        file_size: file.size,
+        ai_summary: "Uploaded securely. OCR and AI extraction can run from a server job after provider setup.",
+      });
+      if (rowError) throw rowError;
+      setFile(null);
+      setTitle("");
+      toast.success("Document uploaded to private storage");
+      qc.invalidateQueries({ queryKey: ["documents", profile.tenant_id] });
+    } catch (err: any) {
+      toast.error(err.message ?? "Upload failed");
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const openDocument = async (doc: DocumentRow) => {
+    const { data, error } = await supabase.storage
+      .from(doc.bucket)
+      .createSignedUrl(doc.storage_path, 60 * 5);
+    if (error || !data?.signedUrl) return toast.error(error?.message ?? "Could not open document");
+    window.open(data.signedUrl, "_blank", "noopener,noreferrer");
+  };
+
+  const exportSummary = (doc: DocumentRow) => {
+    downloadPdf(`${doc.title}-summary.pdf`, doc.title, [
+      `Type: ${doc.document_type}`,
+      `Status: ${doc.status}`,
+      `Uploaded: ${new Date(doc.created_at).toLocaleString()}`,
+      `Summary: ${doc.ai_summary ?? "No summary available yet."}`,
+      `Storage path: ${doc.storage_path}`,
+    ]);
+  };
 
   return (
     <>
       <PageHeader
         title="Document intelligence"
-        subtitle="OCR - search - AI summaries - secure sharing - version history"
-        action={
-          <button
-            onClick={() => setUploadOpen((v) => !v)}
-            className="rounded-full bg-olive px-4 py-2 text-sm text-ivory"
-          >
-            {uploadOpen ? "Close upload" : "Upload"}
-          </button>
-        }
+        subtitle="Private uploads, signed access, PDF generation and audit-ready document metadata."
+        action={<Pill tone="olive">Private Supabase Storage</Pill>}
       />
 
       <Card className="mb-6">
-        {uploadOpen && (
-          <div className="mb-4 rounded-2xl border border-baby/45 bg-baby/20 p-4">
-            <p className="text-sm font-medium text-foreground">Drop a document into the vault</p>
-            <p className="mt-1 text-xs text-muted-foreground">
-              OCR, semantic tags and family-safe summaries are prepared after upload.
-            </p>
-          </div>
-        )}
-        <div className="flex items-center gap-3 rounded-2xl border border-border bg-cream/40 px-4 py-3">
-          <svg
-            viewBox="0 0 24 24"
-            className="h-5 w-5 text-muted-foreground"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
+        <div className="grid gap-3 lg:grid-cols-[1fr_180px_180px_auto]">
+          <input
+            placeholder="Document title"
+            value={title}
+            onChange={(event) => setTitle(event.target.value)}
+            className="rounded-xl border border-border bg-ivory px-3 py-2 text-sm"
+          />
+          <select
+            value={documentType}
+            onChange={(event) => setDocumentType(event.target.value)}
+            className="rounded-xl border border-border bg-ivory px-3 py-2 text-sm"
           >
-            <circle cx="11" cy="11" r="7" />
-            <path d="M21 21l-4.35-4.35" />
-          </svg>
+            <option value="medical">Medical</option>
+            <option value="prescription">Prescription</option>
+            <option value="contract">Contract</option>
+            <option value="insurance">Insurance</option>
+            <option value="certification">Certification</option>
+            <option value="identity">Identity</option>
+          </select>
+          <label className="flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-border bg-ivory px-3 py-2 text-sm">
+            <Upload className="h-4 w-4" />
+            {file ? file.name.slice(0, 22) : "Choose file"}
+            <input type="file" className="hidden" onChange={(event) => setFile(event.target.files?.[0] ?? null)} />
+          </label>
+          <button
+            onClick={uploadDocument}
+            disabled={!file || !profile?.tenant_id || uploading}
+            className="rounded-xl bg-olive px-4 py-2 text-sm text-ivory disabled:opacity-50"
+          >
+            {uploading ? "Uploading..." : "Upload"}
+          </button>
+        </div>
+      </Card>
+
+      <Card className="mb-6">
+        <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-border bg-cream/40 px-4 py-3">
+          <FileText className="h-5 w-5 text-muted-foreground" />
           <input
             placeholder="Search prescriptions, contracts, lab results, dates..."
             value={query}
             onChange={(event) => setQuery(event.target.value)}
-            className="flex-1 bg-transparent text-sm focus:outline-none"
+            className="min-w-52 flex-1 bg-transparent text-sm focus:outline-none"
           />
-          <Pill tone="gold">AI semantic search</Pill>
+          <Pill tone="gold">Real files only</Pill>
         </div>
         <div className="mt-3 flex flex-wrap gap-2 text-xs">
-          {["All", "Medical", "Prescription", "Contract", "Insurance", "Certification"].map((t) => (
+          {["All", "medical", "prescription", "contract", "insurance", "certification", "identity"].map((t) => (
             <button
               key={t}
               onClick={() => setTag(t)}
@@ -135,52 +177,53 @@ function Documents() {
         </div>
       </Card>
 
-      <div className="grid gap-4 lg:grid-cols-[1fr_360px]">
+      {!profile?.tenant_id ? (
+        <EmptyState title="Join an approved organization first" hint="Private documents are scoped to a tenant." />
+      ) : docs.isLoading ? (
+        <p className="text-sm text-muted-foreground">Loading...</p>
+      ) : filteredDocs.length === 0 ? (
+        <EmptyState title="No documents yet" hint="Upload the first real file to create the vault." />
+      ) : (
         <div className="grid gap-4 lg:grid-cols-2">
-          {filteredDocs.map((d) => (
-            <Card key={d.n} className={selected.n === d.n ? "ring-2 ring-baby/45" : ""}>
+          {filteredDocs.map((doc) => (
+            <Card key={doc.id}>
               <div className="flex items-start gap-4">
-                <div className="flex h-12 w-12 flex-none items-center justify-center rounded-xl bg-gradient-olive text-ivory text-xs font-display">
-                  {d.t}
+                <div className="flex h-12 w-12 flex-none items-center justify-center rounded-xl bg-gradient-olive text-xs font-semibold text-ivory">
+                  {(doc.mime_type?.includes("pdf") ? "PDF" : doc.document_type.slice(0, 3)).toUpperCase()}
                 </div>
-                <div className="flex-1 min-w-0">
+                <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-2">
-                    <p className="text-sm font-medium text-foreground truncate">{d.n}</p>
-                    <Pill tone={tagTone[d.tag] as any}>{d.tag}</Pill>
+                    <p className="truncate text-sm font-medium text-foreground">{doc.title}</p>
+                    <Pill tone="muted">{doc.document_type}</Pill>
                   </div>
                   <p className="mt-1 text-xs text-muted-foreground">
-                    {d.date} - {d.size} - v3 - shared with Ines
+                    {new Date(doc.created_at).toLocaleDateString()} · {formatBytes(doc.file_size)} · {doc.status}
                   </p>
-                  <div className="mt-3 rounded-xl border border-border/60 bg-cream/40 p-3">
-                    <p className="text-[10px] uppercase text-moss">AI summary</p>
-                    <p className="mt-1 text-sm text-foreground/85">{d.ai}</p>
+                  <p className="mt-3 rounded-xl border border-border/60 bg-cream/40 p-3 text-sm leading-6 text-foreground/85">
+                    {doc.ai_summary ?? "No summary yet."}
+                  </p>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    <button onClick={() => openDocument(doc)} className="rounded-full bg-olive px-3 py-1.5 text-xs text-ivory">
+                      Open signed file
+                    </button>
+                    <button onClick={() => exportSummary(doc)} className="inline-flex items-center gap-1 rounded-full border border-border px-3 py-1.5 text-xs">
+                      <Download className="h-3 w-3" />
+                      Export PDF
+                    </button>
                   </div>
-                  <button
-                    onClick={() => setSelected(d)}
-                    className="mt-3 rounded-full border border-olive/25 bg-white/50 px-3 py-1.5 text-xs text-olive hover:bg-baby/20"
-                  >
-                    Open intelligence panel
-                  </button>
                 </div>
               </div>
             </Card>
           ))}
         </div>
-        <Card className="h-fit">
-          <p className="text-xs uppercase text-muted-foreground">Document preview</p>
-          <h3 className="mt-2 text-lg font-semibold text-foreground">{selected.n}</h3>
-          <div className="mt-4 rounded-2xl border border-border/60 bg-cream/50 p-4">
-            <p className="text-[10px] uppercase text-moss">AI summary</p>
-            <p className="mt-2 text-sm leading-6 text-foreground/85">{selected.ai}</p>
-          </div>
-          <div className="mt-4 grid grid-cols-2 gap-3 text-xs">
-            <Pill tone={tagTone[selected.tag] as any}>{selected.tag}</Pill>
-            <Pill tone="muted">{selected.t}</Pill>
-            <span className="text-muted-foreground">{selected.date}</span>
-            <span className="text-muted-foreground">{selected.size}</span>
-          </div>
-        </Card>
-      </div>
+      )}
     </>
   );
+}
+
+function formatBytes(value: number | null) {
+  if (!value) return "-";
+  if (value < 1024) return `${value} B`;
+  if (value < 1024 * 1024) return `${Math.round(value / 1024)} KB`;
+  return `${(value / (1024 * 1024)).toFixed(1)} MB`;
 }

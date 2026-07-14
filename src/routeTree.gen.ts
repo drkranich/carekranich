@@ -50,12 +50,18 @@ import { Route as AppMemoryRouteImport } from './routes/app.memory'
 import { Route as AppMedicalRouteImport } from './routes/app.medical'
 import { Route as AppMarketplaceRouteImport } from './routes/app.marketplace'
 import { Route as AppLongevityRouteImport } from './routes/app.longevity'
+import { Route as AppInboxRouteImport } from './routes/app.inbox'
+import { Route as AppIdentityRouteImport } from './routes/app.identity'
 import { Route as AppEmergencyRouteImport } from './routes/app.emergency'
+import { Route as AppEmailMarketingRouteImport } from './routes/app.email-marketing'
 import { Route as AppDocumentsRouteImport } from './routes/app.documents'
+import { Route as AppContractsRouteImport } from './routes/app.contracts'
 import { Route as AppCommandRouteImport } from './routes/app.command'
 import { Route as AppCognitiveRouteImport } from './routes/app.cognitive'
 import { Route as AppCaregiverRouteImport } from './routes/app.caregiver'
 import { Route as AppCarePlanRouteImport } from './routes/app.care-plan'
+import { Route as AppBillingRouteImport } from './routes/app.billing'
+import { Route as AppApprovalsRouteImport } from './routes/app.approvals'
 import { Route as AppAlertsRouteImport } from './routes/app.alerts'
 import { Route as AppAiRouteImport } from './routes/app.ai'
 import { Route as AppAgentsRouteImport } from './routes/app.agents'
@@ -269,14 +275,34 @@ const AppLongevityRoute = AppLongevityRouteImport.update({
   path: '/longevity',
   getParentRoute: () => AppRoute,
 } as any)
+const AppInboxRoute = AppInboxRouteImport.update({
+  id: '/inbox',
+  path: '/inbox',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppIdentityRoute = AppIdentityRouteImport.update({
+  id: '/identity',
+  path: '/identity',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppEmergencyRoute = AppEmergencyRouteImport.update({
   id: '/emergency',
   path: '/emergency',
   getParentRoute: () => AppRoute,
 } as any)
+const AppEmailMarketingRoute = AppEmailMarketingRouteImport.update({
+  id: '/email-marketing',
+  path: '/email-marketing',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppDocumentsRoute = AppDocumentsRouteImport.update({
   id: '/documents',
   path: '/documents',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppContractsRoute = AppContractsRouteImport.update({
+  id: '/contracts',
+  path: '/contracts',
   getParentRoute: () => AppRoute,
 } as any)
 const AppCommandRoute = AppCommandRouteImport.update({
@@ -297,6 +323,16 @@ const AppCaregiverRoute = AppCaregiverRouteImport.update({
 const AppCarePlanRoute = AppCarePlanRouteImport.update({
   id: '/care-plan',
   path: '/care-plan',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppBillingRoute = AppBillingRouteImport.update({
+  id: '/billing',
+  path: '/billing',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppApprovalsRoute = AppApprovalsRouteImport.update({
+  id: '/approvals',
+  path: '/approvals',
   getParentRoute: () => AppRoute,
 } as any)
 const AppAlertsRoute = AppAlertsRouteImport.update({
@@ -363,12 +399,18 @@ export interface FileRoutesByFullPath {
   '/app/agents': typeof AppAgentsRouteWithChildren
   '/app/ai': typeof AppAiRoute
   '/app/alerts': typeof AppAlertsRoute
+  '/app/approvals': typeof AppApprovalsRoute
+  '/app/billing': typeof AppBillingRoute
   '/app/care-plan': typeof AppCarePlanRoute
   '/app/caregiver': typeof AppCaregiverRoute
   '/app/cognitive': typeof AppCognitiveRoute
   '/app/command': typeof AppCommandRoute
+  '/app/contracts': typeof AppContractsRoute
   '/app/documents': typeof AppDocumentsRoute
+  '/app/email-marketing': typeof AppEmailMarketingRoute
   '/app/emergency': typeof AppEmergencyRoute
+  '/app/identity': typeof AppIdentityRoute
+  '/app/inbox': typeof AppInboxRoute
   '/app/longevity': typeof AppLongevityRoute
   '/app/marketplace': typeof AppMarketplaceRoute
   '/app/medical': typeof AppMedicalRoute
@@ -418,12 +460,18 @@ export interface FileRoutesByTo {
   '/app/agents': typeof AppAgentsRouteWithChildren
   '/app/ai': typeof AppAiRoute
   '/app/alerts': typeof AppAlertsRoute
+  '/app/approvals': typeof AppApprovalsRoute
+  '/app/billing': typeof AppBillingRoute
   '/app/care-plan': typeof AppCarePlanRoute
   '/app/caregiver': typeof AppCaregiverRoute
   '/app/cognitive': typeof AppCognitiveRoute
   '/app/command': typeof AppCommandRoute
+  '/app/contracts': typeof AppContractsRoute
   '/app/documents': typeof AppDocumentsRoute
+  '/app/email-marketing': typeof AppEmailMarketingRoute
   '/app/emergency': typeof AppEmergencyRoute
+  '/app/identity': typeof AppIdentityRoute
+  '/app/inbox': typeof AppInboxRoute
   '/app/longevity': typeof AppLongevityRoute
   '/app/marketplace': typeof AppMarketplaceRoute
   '/app/medical': typeof AppMedicalRoute
@@ -475,12 +523,18 @@ export interface FileRoutesById {
   '/app/agents': typeof AppAgentsRouteWithChildren
   '/app/ai': typeof AppAiRoute
   '/app/alerts': typeof AppAlertsRoute
+  '/app/approvals': typeof AppApprovalsRoute
+  '/app/billing': typeof AppBillingRoute
   '/app/care-plan': typeof AppCarePlanRoute
   '/app/caregiver': typeof AppCaregiverRoute
   '/app/cognitive': typeof AppCognitiveRoute
   '/app/command': typeof AppCommandRoute
+  '/app/contracts': typeof AppContractsRoute
   '/app/documents': typeof AppDocumentsRoute
+  '/app/email-marketing': typeof AppEmailMarketingRoute
   '/app/emergency': typeof AppEmergencyRoute
+  '/app/identity': typeof AppIdentityRoute
+  '/app/inbox': typeof AppInboxRoute
   '/app/longevity': typeof AppLongevityRoute
   '/app/marketplace': typeof AppMarketplaceRoute
   '/app/medical': typeof AppMedicalRoute
@@ -533,12 +587,18 @@ export interface FileRouteTypes {
     | '/app/agents'
     | '/app/ai'
     | '/app/alerts'
+    | '/app/approvals'
+    | '/app/billing'
     | '/app/care-plan'
     | '/app/caregiver'
     | '/app/cognitive'
     | '/app/command'
+    | '/app/contracts'
     | '/app/documents'
+    | '/app/email-marketing'
     | '/app/emergency'
+    | '/app/identity'
+    | '/app/inbox'
     | '/app/longevity'
     | '/app/marketplace'
     | '/app/medical'
@@ -588,12 +648,18 @@ export interface FileRouteTypes {
     | '/app/agents'
     | '/app/ai'
     | '/app/alerts'
+    | '/app/approvals'
+    | '/app/billing'
     | '/app/care-plan'
     | '/app/caregiver'
     | '/app/cognitive'
     | '/app/command'
+    | '/app/contracts'
     | '/app/documents'
+    | '/app/email-marketing'
     | '/app/emergency'
+    | '/app/identity'
+    | '/app/inbox'
     | '/app/longevity'
     | '/app/marketplace'
     | '/app/medical'
@@ -644,12 +710,18 @@ export interface FileRouteTypes {
     | '/app/agents'
     | '/app/ai'
     | '/app/alerts'
+    | '/app/approvals'
+    | '/app/billing'
     | '/app/care-plan'
     | '/app/caregiver'
     | '/app/cognitive'
     | '/app/command'
+    | '/app/contracts'
     | '/app/documents'
+    | '/app/email-marketing'
     | '/app/emergency'
+    | '/app/identity'
+    | '/app/inbox'
     | '/app/longevity'
     | '/app/marketplace'
     | '/app/medical'
@@ -987,6 +1059,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppLongevityRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/inbox': {
+      id: '/app/inbox'
+      path: '/inbox'
+      fullPath: '/app/inbox'
+      preLoaderRoute: typeof AppInboxRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/identity': {
+      id: '/app/identity'
+      path: '/identity'
+      fullPath: '/app/identity'
+      preLoaderRoute: typeof AppIdentityRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/app/emergency': {
       id: '/app/emergency'
       path: '/emergency'
@@ -994,11 +1080,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppEmergencyRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/email-marketing': {
+      id: '/app/email-marketing'
+      path: '/email-marketing'
+      fullPath: '/app/email-marketing'
+      preLoaderRoute: typeof AppEmailMarketingRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/app/documents': {
       id: '/app/documents'
       path: '/documents'
       fullPath: '/app/documents'
       preLoaderRoute: typeof AppDocumentsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/contracts': {
+      id: '/app/contracts'
+      path: '/contracts'
+      fullPath: '/app/contracts'
+      preLoaderRoute: typeof AppContractsRouteImport
       parentRoute: typeof AppRoute
     }
     '/app/command': {
@@ -1027,6 +1127,20 @@ declare module '@tanstack/react-router' {
       path: '/care-plan'
       fullPath: '/app/care-plan'
       preLoaderRoute: typeof AppCarePlanRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/billing': {
+      id: '/app/billing'
+      path: '/billing'
+      fullPath: '/app/billing'
+      preLoaderRoute: typeof AppBillingRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/approvals': {
+      id: '/app/approvals'
+      path: '/approvals'
+      fullPath: '/app/approvals'
+      preLoaderRoute: typeof AppApprovalsRouteImport
       parentRoute: typeof AppRoute
     }
     '/app/alerts': {
@@ -1101,12 +1215,18 @@ interface AppRouteChildren {
   AppAgentsRoute: typeof AppAgentsRouteWithChildren
   AppAiRoute: typeof AppAiRoute
   AppAlertsRoute: typeof AppAlertsRoute
+  AppApprovalsRoute: typeof AppApprovalsRoute
+  AppBillingRoute: typeof AppBillingRoute
   AppCarePlanRoute: typeof AppCarePlanRoute
   AppCaregiverRoute: typeof AppCaregiverRoute
   AppCognitiveRoute: typeof AppCognitiveRoute
   AppCommandRoute: typeof AppCommandRoute
+  AppContractsRoute: typeof AppContractsRoute
   AppDocumentsRoute: typeof AppDocumentsRoute
+  AppEmailMarketingRoute: typeof AppEmailMarketingRoute
   AppEmergencyRoute: typeof AppEmergencyRoute
+  AppIdentityRoute: typeof AppIdentityRoute
+  AppInboxRoute: typeof AppInboxRoute
   AppLongevityRoute: typeof AppLongevityRoute
   AppMarketplaceRoute: typeof AppMarketplaceRoute
   AppMedicalRoute: typeof AppMedicalRoute
@@ -1130,12 +1250,18 @@ const AppRouteChildren: AppRouteChildren = {
   AppAgentsRoute: AppAgentsRouteWithChildren,
   AppAiRoute: AppAiRoute,
   AppAlertsRoute: AppAlertsRoute,
+  AppApprovalsRoute: AppApprovalsRoute,
+  AppBillingRoute: AppBillingRoute,
   AppCarePlanRoute: AppCarePlanRoute,
   AppCaregiverRoute: AppCaregiverRoute,
   AppCognitiveRoute: AppCognitiveRoute,
   AppCommandRoute: AppCommandRoute,
+  AppContractsRoute: AppContractsRoute,
   AppDocumentsRoute: AppDocumentsRoute,
+  AppEmailMarketingRoute: AppEmailMarketingRoute,
   AppEmergencyRoute: AppEmergencyRoute,
+  AppIdentityRoute: AppIdentityRoute,
+  AppInboxRoute: AppInboxRoute,
   AppLongevityRoute: AppLongevityRoute,
   AppMarketplaceRoute: AppMarketplaceRoute,
   AppMedicalRoute: AppMedicalRoute,

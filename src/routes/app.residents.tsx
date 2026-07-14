@@ -5,6 +5,8 @@ import { Card, PageHeader, Pill, Avatar } from "@/components/app/primitives";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { Gate } from "@/components/app/Gate";
+import { GeoAddressField } from "@/components/app/GeoAddressField";
+import type { GeoAddress } from "@/lib/geocoding";
 
 export const Route = createFileRoute("/app/residents")({ component: Residents });
 
@@ -180,6 +182,7 @@ function ResidentDialog({
     story: resident?.story ?? "",
     hobbies: (resident?.hobbies ?? []).join(", "),
   });
+  const [address, setAddress] = useState<GeoAddress | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
@@ -202,11 +205,32 @@ function ResidentDialog({
         .filter(Boolean),
     };
     const op = resident
-      ? supabase.from("residents").update(payload).eq("id", resident.id)
-      : supabase.from("residents").insert(payload);
-    const { error } = await op;
+      ? supabase.from("residents").update(payload).eq("id", resident.id).select("id").single()
+      : supabase.from("residents").insert(payload).select("id").single();
+    const { data, error } = await op;
     setSaving(false);
     if (error) return setErr(error.message);
+    if (address && data?.id) {
+      const { error: locationError } = await (supabase as any).from("address_locations").upsert(
+        {
+          tenant_id: tenantId,
+          entity_type: "resident",
+          entity_id: data.id,
+          label: "primary",
+          address: address.address,
+          city: address.city,
+          state: address.state,
+          country: address.country,
+          country_code: address.country_code,
+          postal_code: address.postal_code,
+          latitude: address.latitude,
+          longitude: address.longitude,
+          raw: address.raw ?? {},
+        },
+        { onConflict: "entity_type,entity_id,label" },
+      );
+      if (locationError) return setErr(locationError.message);
+    }
     onSaved();
   };
 
@@ -266,6 +290,10 @@ function ResidentDialog({
             onChange={(v) => setForm({ ...form, hobbies: v })}
             placeholder="Gardening, Reading"
           />
+        </div>
+
+        <div className="mt-4">
+          <GeoAddressField label="Care address" value={address} onChange={setAddress} />
         </div>
 
         <label className="mt-4 block text-sm">

@@ -1,7 +1,9 @@
-import { createFileRoute, Navigate, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Navigate } from "@tanstack/react-router";
 import { useState, type FormEvent } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
+import { GeoAddressField } from "@/components/app/GeoAddressField";
+import type { GeoAddress } from "@/lib/geocoding";
 
 export const Route = createFileRoute("/onboarding")({ component: Onboarding });
 
@@ -11,32 +13,33 @@ function slugify(s: string) {
 
 function Onboarding() {
   const { user, profile, loading, refresh } = useAuth();
-  const navigate = useNavigate();
   const [mode, setMode] = useState<"create" | "join">("create");
   const [orgName, setOrgName] = useState("");
+  const [userKind, setUserKind] = useState<"clinic" | "family" | "service_provider">("clinic");
+  const [address, setAddress] = useState<GeoAddress | null>(null);
   const [code, setCode] = useState("");
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
   if (loading) return <div className="min-h-screen grid place-items-center text-sm text-muted-foreground">Loading...</div>;
   if (!user) return <Navigate to="/login" />;
-  if (profile?.tenant_id) return <Navigate to="/app" />;
+  if (profile?.tenant_id && profile.account_status === "active") return <Navigate to="/app" />;
 
   const create = async (e: FormEvent) => {
     e.preventDefault();
     setBusy(true); setErr(null);
     try {
       const slug = `${slugify(orgName)}-${Math.random().toString(36).slice(2, 6)}`;
-      const { data: t, error: te } = await supabase
-        .from("tenants").insert({ name: orgName, slug }).select("id").single();
-      if (te) throw te;
-      const { error: pe } = await supabase.from("profiles").update({ tenant_id: t.id }).eq("id", user.id);
-      if (pe) throw pe;
-      const { error: re } = await supabase.from("user_roles").insert({ user_id: user.id, role: "clinic_admin", tenant_id: t.id });
-      if (re) throw re;
+      const { error } = await (supabase as any).rpc("request_new_tenant", {
+        _name: orgName,
+        _slug: slug,
+        _user_kind: userKind,
+        _address: address ?? {},
+      });
+      if (error) throw error;
       await refresh();
-      navigate({ to: "/app" });
-    } catch (e: any) { setErr(e.message ?? "Failed to create organization"); }
+      setErr("Request sent. Care Kranich must approve this account before access is released.");
+    } catch (e: any) { setErr(e.message ?? "Failed to request organization approval"); }
     finally { setBusy(false); }
   };
 
@@ -44,17 +47,13 @@ function Onboarding() {
     e.preventDefault();
     setBusy(true); setErr(null);
     try {
-      const { data: t, error: te } = await supabase
-        .from("tenants").select("id,name").eq("invite_code", code.trim()).maybeSingle();
-      if (te) throw te;
-      if (!t) throw new Error("Invalid invite code");
-      const { error: pe } = await supabase.from("profiles").update({ tenant_id: t.id }).eq("id", user.id);
-      if (pe) throw pe;
-      const { error: re } = await supabase.from("user_roles").insert({ user_id: user.id, role: "family", tenant_id: t.id });
-      if (re) throw re;
+      const { error } = await (supabase as any).rpc("request_join_by_invite", {
+        _invite_code: code.trim(),
+      });
+      if (error) throw error;
       await refresh();
-      navigate({ to: "/app" });
-    } catch (e: any) { setErr(e.message ?? "Failed to join"); }
+      setErr("Request sent. A super admin must approve this user before access is released.");
+    } catch (e: any) { setErr(e.message ?? "Failed to request access"); }
     finally { setBusy(false); }
   };
 
@@ -70,6 +69,18 @@ function Onboarding() {
         <h1 className="mt-6 font-display text-2xl text-foreground">Welcome{profile?.full_name ? `, ${profile.full_name.split(" ")[0]}` : ""}</h1>
         <p className="mt-1 text-sm text-muted-foreground">Create your care organization or join one with an invite code.</p>
 
+        {profile?.account_status && profile.account_status !== "active" && profile.tenant_id && (
+          <div className={`mt-5 rounded-2xl border px-4 py-3 text-sm ${
+            profile.account_status === "rejected"
+              ? "border-wine/25 bg-wine/10 text-wine"
+              : "border-gold/25 bg-gold/10 text-foreground"
+          }`}>
+            {profile.account_status === "rejected"
+              ? "This access request was rejected. Contact Care Kranich support before trying again."
+              : "Your access request is pending super admin approval. You will enter the SaaS after approval."}
+          </div>
+        )}
+
         <div className="mt-6 inline-flex rounded-full border border-border bg-ivory p-1 text-sm">
           <button onClick={() => setMode("create")} className={`rounded-full px-4 py-1.5 ${mode === "create" ? "bg-olive text-ivory" : "text-foreground/70"}`}>Create organization</button>
           <button onClick={() => setMode("join")} className={`rounded-full px-4 py-1.5 ${mode === "join" ? "bg-olive text-ivory" : "text-foreground/70"}`}>Join with code</button>
@@ -78,13 +89,22 @@ function Onboarding() {
         {mode === "create" ? (
           <form onSubmit={create} className="mt-6 space-y-4">
             <label className="block text-sm">
+              <span className="text-foreground/80">Account type</span>
+              <select value={userKind} onChange={(e) => setUserKind(e.target.value as any)} className="mt-1 w-full rounded-xl border border-border bg-ivory px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-olive/40">
+                <option value="clinic">Clinic / care company</option>
+                <option value="service_provider">Health service provider / advertiser</option>
+                <option value="family">Family / individual client</option>
+              </select>
+            </label>
+            <label className="block text-sm">
               <span className="text-foreground/80">Organization name</span>
               <input required value={orgName} onChange={(e) => setOrgName(e.target.value)} placeholder="Lopes Family Care" className="mt-1 w-full rounded-xl border border-border bg-ivory px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-olive/40" />
             </label>
-            <p className="rounded-xl bg-cream/60 px-3 py-2 text-xs text-muted-foreground">You'll become the clinic admin. You can invite family and care staff afterward.</p>
+            <GeoAddressField label="Registered address" value={address} onChange={setAddress} />
+            <p className="rounded-xl bg-cream/60 px-3 py-2 text-xs text-muted-foreground">This creates an approval request. No admin access is released until the super admin approves it.</p>
             {err && <p className="rounded-lg bg-wine/10 px-3 py-2 text-xs text-wine">{err}</p>}
             <button disabled={busy} className="w-full rounded-full bg-olive px-4 py-2.5 text-sm text-ivory hover:opacity-90 disabled:opacity-50">
-              {busy ? "Creating..." : "Create organization"}
+              {busy ? "Sending..." : "Request approval"}
             </button>
           </form>
         ) : (
@@ -93,10 +113,10 @@ function Onboarding() {
               <span className="text-foreground/80">Invite code</span>
               <input required value={code} onChange={(e) => setCode(e.target.value)} placeholder="e.g. a1b2c3d4e5" className="mt-1 w-full rounded-xl border border-border bg-ivory px-3 py-2 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-olive/40" />
             </label>
-            <p className="rounded-xl bg-cream/60 px-3 py-2 text-xs text-muted-foreground">Ask your organization's admin for the invite code. You'll join as a family member by default; admins can elevate your role.</p>
+            <p className="rounded-xl bg-cream/60 px-3 py-2 text-xs text-muted-foreground">Ask your organization's admin for the invite code. The request still waits for super admin approval.</p>
             {err && <p className="rounded-lg bg-wine/10 px-3 py-2 text-xs text-wine">{err}</p>}
             <button disabled={busy} className="w-full rounded-full bg-olive px-4 py-2.5 text-sm text-ivory hover:opacity-90 disabled:opacity-50">
-              {busy ? "Joining..." : "Join organization"}
+              {busy ? "Sending..." : "Request access"}
             </button>
           </form>
         )}

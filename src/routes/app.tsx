@@ -183,6 +183,45 @@ const ALL_SECTIONS: NavSection[] = [
       },
     ],
   },
+  {
+    title: "Platform",
+    items: [
+      {
+        to: "/app/approvals",
+        label: "Approvals & access",
+        icon: "M9 12l2 2 4-4 M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0z",
+        roles: ["super_admin"],
+      },
+      {
+        to: "/app/contracts",
+        label: "Contracts",
+        icon: "M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z M14 2v6h6 M8 13h8 M8 17h5",
+        roles: ["clinic_admin", "super_admin"],
+      },
+      {
+        to: "/app/billing",
+        label: "Plans & billing",
+        icon: "M3 7h18v10H3z M7 15h.01 M11 15h4",
+        roles: ["clinic_admin", "super_admin"],
+      },
+      {
+        to: "/app/inbox",
+        label: "Inbox",
+        icon: "M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z",
+      },
+      {
+        to: "/app/email-marketing",
+        label: "Email marketing",
+        icon: "M4 4h16v16H4z M4 6l8 7 8-7",
+        roles: ["clinic_admin", "super_admin"],
+      },
+      {
+        to: "/app/identity",
+        label: "Facial verification",
+        icon: "M4 8V6a2 2 0 0 1 2-2h2 M16 4h2a2 2 0 0 1 2 2v2 M20 16v2a2 2 0 0 1-2 2h-2 M8 20H6a2 2 0 0 1-2-2v-2 M9 10h.01 M15 10h.01 M9 15c1.5 1 4.5 1 6 0",
+      },
+    ],
+  },
 ];
 
 export const Route = createFileRoute("/app")({ component: AppLayout });
@@ -261,6 +300,8 @@ function AppLayout() {
       </div>
     );
   if (!user) return <Navigate to="/login" />;
+  if (!isPlatformUser && profile?.account_status && profile.account_status !== "active")
+    return <Navigate to="/onboarding" />;
   if (!profile?.tenant_id && !isPlatformUser) return <Navigate to="/onboarding" />;
 
   return (
