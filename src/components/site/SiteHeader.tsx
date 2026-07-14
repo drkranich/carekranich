@@ -1,5 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { useAuth } from "@/hooks/use-auth";
+import { PlatformBrandLogo } from "@/components/PlatformBrand";
 
 export function SiteHeader() {
   const { user, loading } = useAuth();
@@ -15,12 +16,7 @@ export function SiteHeader() {
     <header className="sticky top-0 z-50 border-b border-white/60 bg-white/45 shadow-soft backdrop-blur-2xl">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-6">
         <Link to="/" className="flex items-center gap-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-olive text-ivory shadow-soft">
-            <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M12 2c3 4 5 7 5 11a5 5 0 1 1-10 0c0-4 2-7 5-11z" />
-            </svg>
-          </div>
-          <span className="font-display text-2xl text-olive">Care Kranich</span>
+          <PlatformBrandLogo />
         </Link>
         <nav className="hidden items-center gap-7 text-sm font-medium text-foreground/70 md:flex">
           {navItems.map((n) => (

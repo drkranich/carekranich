@@ -8,6 +8,7 @@ import {
   Scripts,
 } from "@tanstack/react-router";
 import { AuthProvider } from "@/hooks/use-auth";
+import { PlatformBrandRuntime } from "@/components/PlatformBrand";
 import { Toaster } from "sonner";
 
 import appCss from "../styles.css?url";
@@ -88,6 +89,7 @@ function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   return (
     <QueryClientProvider client={queryClient}>
+      <PlatformBrandRuntime />
       <AuthProvider>
         <Outlet />
         <Toaster position="top-right" richColors closeButton theme="light" />

@@ -1,6 +1,8 @@
 import { createFileRoute, Navigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useEffect, useState } from "react";
 import { Card, PageHeader, Pill, Avatar, Stat } from "@/components/app/primitives";
+import { PlatformBrandLogo, usePlatformBranding, type PlatformBranding } from "@/components/PlatformBrand";
 import { useAuth, ROLE_LABELS } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -11,6 +13,7 @@ function Tenants() {
   const { profile, isAdmin, isSuperAdmin, loading } = useAuth();
   const qc = useQueryClient();
   const tenantId = profile?.tenant_id ?? null;
+  const branding = usePlatformBranding();
 
   const tenants = useQuery({
     queryKey: ["tenant-directory", tenantId, isSuperAdmin],
@@ -105,6 +108,66 @@ function Tenants() {
       qc.invalidateQueries({ queryKey: ["super-admin-control-plane"] });
     },
     onError: (error: any) => toast.error(error.message ?? "Não foi possível atualizar a organização"),
+  });
+
+  const brandingUpdate = useMutation({
+    mutationFn: async ({
+      brandName,
+      logoUrl,
+      logoPath,
+      faviconUrl,
+      faviconPath,
+    }: {
+      brandName?: string;
+      logoUrl?: string;
+      logoPath?: string;
+      faviconUrl?: string;
+      faviconPath?: string;
+    }) => {
+      const { error } = await (supabase as any).rpc("set_platform_branding", {
+        _brand_name: brandName ?? null,
+        _logo_url: logoUrl ?? null,
+        _logo_path: logoPath ?? null,
+        _favicon_url: faviconUrl ?? null,
+        _favicon_path: faviconPath ?? null,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Marca atualizada");
+      qc.invalidateQueries({ queryKey: ["platform-branding"] });
+    },
+    onError: (error: any) => toast.error(error.message ?? "Nao foi possivel atualizar a marca"),
+  });
+
+  const uploadBrandAsset = useMutation({
+    mutationFn: async ({ kind, file }: { kind: "logo" | "favicon"; file: File }) => {
+      validateBrandAsset(kind, file);
+      const extension = assetExtension(file);
+      const path = `platform/${kind}-${Date.now()}.${extension}`;
+      const { error: uploadError } = await (supabase as any).storage
+        .from("branding")
+        .upload(path, file, {
+          cacheControl: "3600",
+          contentType: file.type || undefined,
+          upsert: true,
+        });
+      if (uploadError) throw uploadError;
+
+      const { data } = (supabase as any).storage.from("branding").getPublicUrl(path);
+      const publicUrl = data?.publicUrl;
+      if (!publicUrl) throw new Error("Nao foi possivel gerar a URL publica do arquivo.");
+
+      await brandingUpdate.mutateAsync(
+        kind === "logo"
+          ? { logoUrl: publicUrl, logoPath: path }
+          : { faviconUrl: publicUrl, faviconPath: path },
+      );
+    },
+    onSuccess: (_, variables) => {
+      toast.success(variables.kind === "logo" ? "Logo publicada" : "Favicon publicado");
+    },
+    onError: (error: any) => toast.error(error.message ?? "Upload nao concluido"),
   });
 
   if (loading) return <p className="text-sm text-muted-foreground">Loading...</p>;
@@ -213,6 +276,16 @@ function Tenants() {
       </div>
 
       {isSuperAdmin && (
+        <BrandingPanel
+          branding={branding.data}
+          loading={branding.isLoading}
+          busy={brandingUpdate.isPending || uploadBrandAsset.isPending}
+          onSaveName={(brandName) => brandingUpdate.mutate({ brandName })}
+          onUpload={(kind, file) => uploadBrandAsset.mutate({ kind, file })}
+        />
+      )}
+
+      {isSuperAdmin && (
         <Card className="mt-6">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
@@ -257,6 +330,165 @@ function Tenants() {
       )}
     </>
   );
+}
+
+function BrandingPanel({
+  branding,
+  loading,
+  busy,
+  onSaveName,
+  onUpload,
+}: {
+  branding: PlatformBranding | undefined;
+  loading: boolean;
+  busy: boolean;
+  onSaveName: (brandName: string) => void;
+  onUpload: (kind: "logo" | "favicon", file: File) => void;
+}) {
+  const [brandName, setBrandName] = useState(branding?.brand_name ?? "Care Kranich");
+
+  useEffect(() => {
+    if (branding?.brand_name) setBrandName(branding.brand_name);
+  }, [branding?.brand_name]);
+
+  const handleFile = (kind: "logo" | "favicon", files: FileList | null) => {
+    const file = files?.[0];
+    if (!file) return;
+    onUpload(kind, file);
+  };
+
+  return (
+    <Card className="mt-6">
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <p className="text-xs uppercase text-muted-foreground">Branding global</p>
+          <h2 className="mt-1 text-xl font-semibold text-foreground">Logo e favicon do projeto</h2>
+          <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
+            Esses arquivos renderizam no site publico, no SaaS e no icone da aba do navegador.
+          </p>
+        </div>
+        <Pill tone={branding?.logo_url || branding?.favicon_url ? "moss" : "gold"}>
+          {loading ? "Carregando" : branding?.logo_url || branding?.favicon_url ? "Publicado" : "Sem arquivos"}
+        </Pill>
+      </div>
+
+      <div className="mt-6 grid gap-4 xl:grid-cols-[1.1fr_1fr]">
+        <div className="rounded-2xl border border-white/70 bg-white/45 p-4">
+          <p className="text-xs font-semibold uppercase text-muted-foreground">Preview atual</p>
+          <div className="mt-4 flex flex-wrap items-center gap-5">
+            <PlatformBrandLogo
+              iconClassName="h-14 w-14 rounded-2xl"
+              textClassName="text-2xl font-semibold text-olive"
+            />
+            <div className="flex items-center gap-3 rounded-2xl border border-white/70 bg-cream/55 px-4 py-3">
+              {branding?.favicon_url ? (
+                <img src={branding.favicon_url} alt="Favicon" className="h-8 w-8 object-contain" />
+              ) : (
+                <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-olive/10 text-xs font-semibold text-olive">
+                  CK
+                </span>
+              )}
+              <span className="text-sm text-muted-foreground">Favicon</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="rounded-2xl border border-white/70 bg-white/45 p-4">
+          <p className="text-xs font-semibold uppercase text-muted-foreground">Nome da marca</p>
+          <div className="mt-3 flex gap-2">
+            <input
+              value={brandName}
+              onChange={(event) => setBrandName(event.target.value)}
+              className="min-w-0 flex-1 rounded-full border border-border bg-white/70 px-4 py-2 text-sm outline-none focus:border-olive"
+            />
+            <button
+              disabled={busy || brandName.trim().length < 2}
+              onClick={() => onSaveName(brandName.trim())}
+              className="rounded-full bg-olive px-4 py-2 text-xs font-semibold text-ivory disabled:opacity-45"
+            >
+              Salvar
+            </button>
+          </div>
+          <div className="mt-4 grid gap-3 sm:grid-cols-2">
+            <AssetUpload
+              label="Enviar logo"
+              hint="PNG, JPG, WebP ou SVG ate 5 MB."
+              accept="image/png,image/jpeg,image/webp,image/svg+xml"
+              disabled={busy}
+              onChange={(files) => handleFile("logo", files)}
+            />
+            <AssetUpload
+              label="Enviar favicon"
+              hint="ICO, PNG, SVG ou WebP ate 1 MB."
+              accept="image/x-icon,image/vnd.microsoft.icon,image/png,image/svg+xml,image/webp"
+              disabled={busy}
+              onChange={(files) => handleFile("favicon", files)}
+            />
+          </div>
+        </div>
+      </div>
+    </Card>
+  );
+}
+
+function AssetUpload({
+  label,
+  hint,
+  accept,
+  disabled,
+  onChange,
+}: {
+  label: string;
+  hint: string;
+  accept: string;
+  disabled: boolean;
+  onChange: (files: FileList | null) => void;
+}) {
+  return (
+    <label className="block rounded-2xl border border-dashed border-olive/30 bg-baby/10 p-4 transition hover:bg-baby/20">
+      <span className="block text-sm font-medium text-foreground">{label}</span>
+      <span className="mt-1 block text-xs leading-5 text-muted-foreground">{hint}</span>
+      <input
+        type="file"
+        accept={accept}
+        disabled={disabled}
+        onChange={(event) => {
+          onChange(event.target.files);
+          event.currentTarget.value = "";
+        }}
+        className="mt-3 block w-full text-xs text-muted-foreground file:mr-3 file:rounded-full file:border-0 file:bg-olive file:px-3 file:py-2 file:text-xs file:font-semibold file:text-ivory disabled:opacity-45"
+      />
+    </label>
+  );
+}
+
+function validateBrandAsset(kind: "logo" | "favicon", file: File) {
+  const allowed =
+    kind === "logo"
+      ? ["image/png", "image/jpeg", "image/webp", "image/svg+xml"]
+      : ["image/x-icon", "image/vnd.microsoft.icon", "image/png", "image/svg+xml", "image/webp"];
+  const maxSize = kind === "logo" ? 5 * 1024 * 1024 : 1024 * 1024;
+  const extension = assetExtension(file);
+  const extensionAllowed =
+    kind === "logo"
+      ? ["png", "jpg", "jpeg", "webp", "svg"].includes(extension)
+      : ["ico", "png", "webp", "svg"].includes(extension);
+  if (!allowed.includes(file.type) && !extensionAllowed) {
+    throw new Error(kind === "logo" ? "Use PNG, JPG, WebP ou SVG para a logo." : "Use ICO, PNG, SVG ou WebP para o favicon.");
+  }
+  if (file.size > maxSize) {
+    throw new Error(kind === "logo" ? "A logo deve ter ate 5 MB." : "O favicon deve ter ate 1 MB.");
+  }
+}
+
+function assetExtension(file: File) {
+  const fromName = file.name.split(".").pop()?.toLowerCase();
+  if (fromName && /^[a-z0-9]+$/.test(fromName)) return fromName === "jpeg" ? "jpg" : fromName;
+  if (file.type === "image/svg+xml") return "svg";
+  if (file.type === "image/png") return "png";
+  if (file.type === "image/webp") return "webp";
+  if (file.type === "image/jpeg") return "jpg";
+  return "ico";
 }
 
 function TenantStatusControls({

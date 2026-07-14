@@ -10,6 +10,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
 import { Avatar, Card, PageHeader, Pill } from "@/components/app/primitives";
 import { NotificationBell } from "@/components/app/NotificationBell";
+import { PlatformBrandLogo } from "@/components/PlatformBrand";
 import { useAuth, ROLE_LABELS, type AppRole, type Profile } from "@/hooks/use-auth";
 import { useTenantRealtime } from "@/hooks/use-realtime";
 import { supabase } from "@/integrations/supabase/client";
@@ -362,19 +363,11 @@ function AppLayout() {
     <div className="app-shell flex min-h-screen bg-[linear-gradient(135deg,var(--ivory)_0%,var(--cream)_42%,oklch(0.93_0.035_155)_100%)] text-foreground">
       <aside className="sticky top-0 hidden h-screen w-72 flex-none flex-col border-r border-white/70 bg-white/45 shadow-soft ring-1 ring-white/35 backdrop-blur-2xl lg:flex">
         <Link to="/" className="flex items-center gap-3 border-b border-white/55 px-6 py-5">
-          <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-gradient-olive text-ivory shadow-soft">
-            <svg
-              viewBox="0 0 24 24"
-              className="h-4 w-4"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-            >
-              <path d="M12 2c3 4 5 7 5 11a5 5 0 1 1-10 0c0-4 2-7 5-11z" />
-            </svg>
-          </div>
-          <div className="min-w-0">
-            <span className="block text-base font-semibold text-olive">Care Kranich</span>
+          <div className="min-w-0 flex-1">
+            <PlatformBrandLogo
+              iconClassName="h-9 w-9 rounded-2xl"
+              textClassName="block text-base font-semibold text-olive"
+            />
             <span className="block text-xs text-muted-foreground">Clinical operating system</span>
           </div>
           {primaryRole === "super_admin" && (
@@ -468,18 +461,10 @@ function AppLayout() {
         <header className="sticky top-0 z-30 flex h-18 items-center justify-between gap-4 border-b border-white/70 bg-white/48 px-5 shadow-soft backdrop-blur-2xl md:px-8">
           <div className="flex items-center gap-3">
             <Link to="/" className="lg:hidden flex items-center gap-2">
-              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-olive text-ivory shadow-soft">
-                <svg
-                  viewBox="0 0 24 24"
-                  className="h-3.5 w-3.5"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                >
-                  <path d="M12 2c3 4 5 7 5 11a5 5 0 1 1-10 0c0-4 2-7 5-11z" />
-                </svg>
-              </div>
-              <span className="text-base font-semibold text-olive">Care Kranich</span>
+              <PlatformBrandLogo
+                iconClassName="h-8 w-8 rounded-xl"
+                textClassName="text-base font-semibold text-olive"
+              />
             </Link>
             <div className="relative hidden items-center gap-2 rounded-2xl border border-white/70 bg-white/60 px-3 py-2 shadow-soft backdrop-blur-xl md:flex">
               <svg
