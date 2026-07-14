@@ -4,6 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Download, FileText, Upload } from "lucide-react";
 import { toast } from "sonner";
 import { Card, EmptyState, PageHeader, Pill } from "@/components/app/primitives";
+import { GlassSelect } from "@/components/app/GlassSelect";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { downloadPdf } from "@/lib/pdf";
@@ -22,6 +23,15 @@ type DocumentRow = {
   status: string;
   created_at: string;
 };
+
+const documentTypeOptions = [
+  { value: "medical", label: "Medico" },
+  { value: "prescription", label: "Prescricao" },
+  { value: "contract", label: "Contrato" },
+  { value: "insurance", label: "Seguro" },
+  { value: "certification", label: "Certificacao" },
+  { value: "identity", label: "Identidade" },
+];
 
 function Documents() {
   const qc = useQueryClient();
@@ -124,18 +134,11 @@ function Documents() {
             onChange={(event) => setTitle(event.target.value)}
             className="rounded-xl border border-border bg-ivory px-3 py-2 text-sm"
           />
-          <select
+          <GlassSelect
             value={documentType}
-            onChange={(event) => setDocumentType(event.target.value)}
-            className="rounded-xl border border-border bg-ivory px-3 py-2 text-sm"
-          >
-            <option value="medical">Medical</option>
-            <option value="prescription">Prescription</option>
-            <option value="contract">Contract</option>
-            <option value="insurance">Insurance</option>
-            <option value="certification">Certification</option>
-            <option value="identity">Identity</option>
-          </select>
+            onChange={setDocumentType}
+            options={documentTypeOptions}
+          />
           <label className="flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-border bg-ivory px-3 py-2 text-sm">
             <Upload className="h-4 w-4" />
             {file ? file.name.slice(0, 22) : "Choose file"}

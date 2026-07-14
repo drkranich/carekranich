@@ -3,10 +3,20 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Card, PageHeader, Pill, Stat } from "@/components/app/primitives";
+import { GlassSelect } from "@/components/app/GlassSelect";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 
 export const Route = createFileRoute("/app/billing")({ component: Billing });
+
+const audienceOptions = [
+  { value: "family", label: "Familia" },
+  { value: "clinic", label: "Clinica" },
+  { value: "service_provider", label: "Prestador de servicos" },
+];
+
+const audienceLabel = (value: string) =>
+  audienceOptions.find((option) => option.value === value)?.label ?? value.replaceAll("_", " ");
 
 function Billing() {
   const { isAdmin, isSuperAdmin, profile, user } = useAuth();
@@ -89,11 +99,11 @@ function Billing() {
           <h2 className="text-xl font-semibold text-foreground">Create plan</h2>
           <div className="mt-4 grid gap-3 md:grid-cols-4">
             <input value={plan.name} onChange={(e) => setPlan({ ...plan, name: e.target.value })} placeholder="Plan name" className="rounded-xl border border-border bg-ivory px-3 py-2 text-sm" />
-            <select value={plan.audience} onChange={(e) => setPlan({ ...plan, audience: e.target.value })} className="rounded-xl border border-border bg-ivory px-3 py-2 text-sm">
-              <option value="family">Family</option>
-              <option value="clinic">Clinic</option>
-              <option value="service_provider">Service provider</option>
-            </select>
+            <GlassSelect
+              value={plan.audience}
+              onChange={(value) => setPlan({ ...plan, audience: value })}
+              options={audienceOptions}
+            />
             <input value={plan.stripe_price_id} onChange={(e) => setPlan({ ...plan, stripe_price_id: e.target.value })} placeholder="price_..." className="rounded-xl border border-border bg-ivory px-3 py-2 text-sm" />
             <button onClick={() => createPlan.mutate()} disabled={!plan.name || !plan.stripe_price_id} className="rounded-xl bg-olive px-4 py-2 text-sm text-ivory disabled:opacity-50">Save plan</button>
           </div>
@@ -105,7 +115,7 @@ function Billing() {
             <div className="flex items-start justify-between gap-3">
               <div>
                 <h3 className="text-lg font-semibold text-foreground">{p.name}</h3>
-                <p className="mt-1 text-xs text-muted-foreground">{p.audience} · {p.stripe_price_id}</p>
+                <p className="mt-1 text-xs text-muted-foreground">{audienceLabel(p.audience)} - {p.stripe_price_id}</p>
               </div>
               <Pill tone={p.active ? "moss" : "muted"}>{p.active ? "active" : "inactive"}</Pill>
             </div>
@@ -120,7 +130,7 @@ function Billing() {
             <div key={s.id} className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-white/70 bg-white/50 p-4">
               <div>
                 <p className="font-medium text-foreground">{s.stripe_subscription_id ?? s.id}</p>
-                <p className="text-xs text-muted-foreground">{s.status} · {s.access_status} · {s.stripe_price_id ?? "no price"}</p>
+                <p className="text-xs text-muted-foreground">{s.status} - {s.access_status} - {s.stripe_price_id ?? "no price"}</p>
               </div>
               {isSuperAdmin && <button onClick={() => revoke(s)} className="rounded-full border border-wine/25 px-3 py-1.5 text-xs text-wine">{s.access_status === "revoked" ? "Restore access" : "Revoke access"}</button>}
             </div>

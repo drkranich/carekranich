@@ -4,6 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { AlertTriangle, Siren } from "lucide-react";
 import { toast } from "sonner";
 import { Card, EmptyState, PageHeader, Pill } from "@/components/app/primitives";
+import { GlassSelect } from "@/components/app/GlassSelect";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -92,12 +93,17 @@ function Emergency() {
               </div>
             </div>
             <div className="mt-5 space-y-3">
-              <select value={residentId} onChange={(event) => setResidentId(event.target.value)} className="w-full rounded-xl border border-border bg-ivory px-3 py-2 text-sm">
-                <option value="">No resident selected</option>
-                {(data.data?.residents ?? []).map((resident: any) => (
-                  <option key={resident.id} value={resident.id}>{resident.preferred_name || resident.full_name}</option>
-                ))}
-              </select>
+              <GlassSelect
+                value={residentId}
+                onChange={setResidentId}
+                options={[
+                  { value: "", label: "Nenhum residente selecionado" },
+                  ...(data.data?.residents ?? []).map((resident: any) => ({
+                    value: resident.id,
+                    label: resident.preferred_name || resident.full_name,
+                  })),
+                ]}
+              />
               <textarea value={description} onChange={(event) => setDescription(event.target.value)} rows={4} placeholder="What happened?" className="w-full rounded-xl border border-border bg-ivory px-3 py-2 text-sm" />
               <button onClick={createSOS} disabled={sending || (!profile?.tenant_id && !residentId)} className="w-full rounded-2xl bg-wine px-4 py-3 text-sm font-semibold text-ivory disabled:opacity-50">
                 {sending ? "Creating..." : "Create critical alert"}

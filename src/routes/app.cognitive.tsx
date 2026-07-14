@@ -11,6 +11,7 @@ import {
   Field,
   inputCls,
 } from "@/components/app/twin/shared";
+import { GlassSelect } from "@/components/app/GlassSelect";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/app/cognitive")({ component: CognitivePage });
@@ -59,6 +60,14 @@ const DIMENSIONS = [
   { key: "executive_score", label: "Executive function" },
   { key: "emotional_stability_score", label: "Emotional stability" },
 ] as const;
+const SOURCE_OPTIONS = [
+  { value: "manual", label: "Manual" },
+  { value: "caregiver", label: "Observacao do cuidador" },
+  { value: "nurse", label: "Observacao de enfermagem" },
+  { value: "doctor", label: "Avaliacao medica" },
+  { value: "assessment", label: "Avaliacao padronizada" },
+  { value: "ai", label: "IA" },
+];
 
 function CognitivePage() {
   const { user, profile, hasAnyRole, primaryRole, isSuperAdmin } = useAuth();
@@ -352,18 +361,11 @@ function AssessmentForm({
           </Field>
         ))}
         <Field label="Source">
-          <select
+          <GlassSelect
             value={state.source}
-            onChange={(e) => upd("source", e.target.value)}
-            className={inputCls()}
-          >
-            <option value="manual">Manual</option>
-            <option value="caregiver">Caregiver observation</option>
-            <option value="nurse">Nurse observation</option>
-            <option value="doctor">Doctor assessment</option>
-            <option value="assessment">Standardized assessment</option>
-            <option value="ai">AI</option>
-          </select>
+            onChange={(value) => upd("source", value)}
+            options={SOURCE_OPTIONS}
+          />
         </Field>
         <div className="md:col-span-3">
           <Field label="Notes">

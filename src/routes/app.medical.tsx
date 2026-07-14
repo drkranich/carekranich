@@ -4,6 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { FileText, Stethoscope } from "lucide-react";
 import { toast } from "sonner";
 import { Card, EmptyState, PageHeader, Pill, Stat } from "@/components/app/primitives";
+import { GlassSelect } from "@/components/app/GlassSelect";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -100,11 +101,15 @@ function Medical() {
                 <p className="text-xs font-semibold uppercase text-muted-foreground">Resident</p>
                 <h2 className="text-2xl font-semibold text-foreground">{selectedResident.preferred_name || selectedResident.full_name}</h2>
               </div>
-              <select value={selectedResident.id} onChange={(event) => setResidentId(event.target.value)} className="rounded-xl border border-border bg-ivory px-3 py-2 text-sm">
-                {(medical.data?.residents ?? []).map((resident: any) => (
-                  <option key={resident.id} value={resident.id}>{resident.preferred_name || resident.full_name}</option>
-                ))}
-              </select>
+              <GlassSelect
+                value={selectedResident.id}
+                onChange={setResidentId}
+                className="w-64"
+                options={(medical.data?.residents ?? []).map((resident: any) => ({
+                  value: resident.id,
+                  label: resident.preferred_name || resident.full_name,
+                }))}
+              />
             </div>
           </Card>
 

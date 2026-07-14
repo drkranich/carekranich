@@ -4,6 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Download, FileArchive, ImageIcon, Upload } from "lucide-react";
 import { toast } from "sonner";
 import { Card, EmptyState, PageHeader, Pill } from "@/components/app/primitives";
+import { GlassSelect } from "@/components/app/GlassSelect";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { downloadPdf } from "@/lib/pdf";
@@ -36,8 +37,19 @@ type MemoryRow = {
   created_at: string;
 };
 
-const memoryTypes = ["photo", "audio", "video", "journal", "letter", "document"];
-const visibilityOptions = ["private", "family", "tenant"];
+const memoryTypes = [
+  { value: "photo", label: "Foto" },
+  { value: "audio", label: "Audio" },
+  { value: "video", label: "Video" },
+  { value: "journal", label: "Jornal" },
+  { value: "letter", label: "Carta" },
+  { value: "document", label: "Documento" },
+];
+const visibilityOptions = [
+  { value: "private", label: "Privado" },
+  { value: "family", label: "Familia" },
+  { value: "tenant", label: "Organizacao" },
+];
 
 function Memory() {
   const qc = useQueryClient();
@@ -240,28 +252,16 @@ function Memory() {
             />
 
             <div className="grid gap-3 sm:grid-cols-2">
-              <select
+              <GlassSelect
                 value={draft.memory_type}
-                onChange={(event) => setDraft({ ...draft, memory_type: event.target.value })}
-                className="rounded-xl border border-border bg-ivory px-3 py-2 text-sm"
-              >
-                {memoryTypes.map((type) => (
-                  <option key={type} value={type}>
-                    {type}
-                  </option>
-                ))}
-              </select>
-              <select
+                onChange={(value) => setDraft({ ...draft, memory_type: value })}
+                options={memoryTypes}
+              />
+              <GlassSelect
                 value={draft.visibility}
-                onChange={(event) => setDraft({ ...draft, visibility: event.target.value })}
-                className="rounded-xl border border-border bg-ivory px-3 py-2 text-sm"
-              >
-                {visibilityOptions.map((option) => (
-                  <option key={option} value={option}>
-                    {option}
-                  </option>
-                ))}
-              </select>
+                onChange={(value) => setDraft({ ...draft, visibility: value })}
+                options={visibilityOptions}
+              />
             </div>
 
             <div className="grid gap-3 sm:grid-cols-2">
@@ -282,18 +282,17 @@ function Memory() {
               />
             </div>
 
-            <select
+            <GlassSelect
               value={draft.resident_id}
-              onChange={(event) => setDraft({ ...draft, resident_id: event.target.value })}
-              className="w-full rounded-xl border border-border bg-ivory px-3 py-2 text-sm"
-            >
-              <option value="">Not linked to a resident</option>
-              {(residents.data ?? []).map((resident) => (
-                <option key={resident.id} value={resident.id}>
-                  {resident.preferred_name || resident.full_name}
-                </option>
-              ))}
-            </select>
+              onChange={(value) => setDraft({ ...draft, resident_id: value })}
+              options={[
+                { value: "", label: "Nao vinculado a nenhum residente" },
+                ...(residents.data ?? []).map((resident) => ({
+                  value: resident.id,
+                  label: resident.preferred_name || resident.full_name,
+                })),
+              ]}
+            />
 
             <textarea
               value={draft.prompt}
@@ -344,17 +343,17 @@ function Memory() {
                 />
               </div>
               <div className="flex flex-wrap gap-2">
-                {["all", ...memoryTypes].map((type) => (
+                {[{ value: "all", label: "Todos" }, ...memoryTypes].map((type) => (
                   <button
-                    key={type}
-                    onClick={() => setTypeFilter(type)}
+                    key={type.value}
+                    onClick={() => setTypeFilter(type.value)}
                     className={`rounded-full px-3 py-1.5 text-xs ${
-                      typeFilter === type
+                      typeFilter === type.value
                         ? "bg-olive text-ivory"
                         : "border border-border bg-white/40 text-muted-foreground"
                     }`}
                   >
-                    {type}
+                    {type.label}
                   </button>
                 ))}
               </div>

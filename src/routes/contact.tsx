@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { MarketingPage, Section } from "@/components/site/MarketingPage";
+import { GlassSelect } from "@/components/app/GlassSelect";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -26,6 +27,7 @@ const CONTACT_EMAIL = "carekranich@gmail.com";
 
 function Page() {
   const [sending, setSending] = useState(false);
+  const [topic, setTopic] = useState("Family trial");
   return (
     <MarketingPage
       eyebrow="Contact"
@@ -54,6 +56,7 @@ function Page() {
             window.location.href = `mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent(`Care Kranich - ${topic}`)}&body=${encodeURIComponent(body)}`;
             setSending(false);
             toast.success("Opening your email client.");
+            setTopic("Family trial");
             form.reset();
           }}
         >
@@ -65,14 +68,20 @@ function Page() {
           </div>
           <div className="mt-4">
             <label className="text-xs font-semibold uppercase tracking-[0.12em] text-moss">I'm interested in</label>
-            <select name="topic" className="mt-2 w-full rounded-xl border border-border bg-ivory px-4 py-3 text-sm">
-              <option>Family trial</option>
-              <option>Home-care agency</option>
-              <option>Clinic or senior living</option>
-              <option>Hospital / Enterprise</option>
-              <option>Insurance partnership</option>
-              <option>Press & media</option>
-            </select>
+            <GlassSelect
+              name="topic"
+              value={topic}
+              onChange={setTopic}
+              className="mt-2"
+              options={[
+                { value: "Family trial", label: "Family trial" },
+                { value: "Home-care agency", label: "Home-care agency" },
+                { value: "Clinic or senior living", label: "Clinic or senior living" },
+                { value: "Hospital / Enterprise", label: "Hospital / Enterprise" },
+                { value: "Insurance partnership", label: "Insurance partnership" },
+                { value: "Press & media", label: "Press & media" },
+              ]}
+            />
           </div>
           <div className="mt-4">
             <label className="text-xs font-semibold uppercase tracking-[0.12em] text-moss">Message</label>

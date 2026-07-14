@@ -3,11 +3,19 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Card, EmptyState, PageHeader, Pill } from "@/components/app/primitives";
+import { GlassSelect } from "@/components/app/GlassSelect";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { downloadPdf } from "@/lib/pdf";
 
 export const Route = createFileRoute("/app/contracts")({ component: Contracts });
+
+const contractTypeOptions = [
+  { value: "subscription", label: "Assinatura" },
+  { value: "clinic", label: "Clinica" },
+  { value: "provider", label: "Prestador" },
+  { value: "employment", label: "Funcionario" },
+];
 
 function Contracts() {
   const { isAdmin, isSuperAdmin, profile, user } = useAuth();
@@ -57,12 +65,11 @@ function Contracts() {
         <h2 className="text-xl font-semibold text-foreground">New contract</h2>
         <div className="mt-4 grid gap-3 md:grid-cols-[1fr_180px]">
           <input value={draft.title} onChange={(e) => setDraft({ ...draft, title: e.target.value })} placeholder="Contract title" className="rounded-xl border border-border bg-ivory px-3 py-2 text-sm" />
-          <select value={draft.contract_type} onChange={(e) => setDraft({ ...draft, contract_type: e.target.value })} className="rounded-xl border border-border bg-ivory px-3 py-2 text-sm">
-            <option value="subscription">Subscription</option>
-            <option value="clinic">Clinic</option>
-            <option value="provider">Provider</option>
-            <option value="employment">Employee</option>
-          </select>
+          <GlassSelect
+            value={draft.contract_type}
+            onChange={(value) => setDraft({ ...draft, contract_type: value })}
+            options={contractTypeOptions}
+          />
         </div>
         <textarea value={draft.body} onChange={(e) => setDraft({ ...draft, body: e.target.value })} rows={5} placeholder="Contract terms..." className="mt-3 w-full rounded-xl border border-border bg-ivory px-3 py-2 text-sm" />
         <button onClick={() => save.mutate()} disabled={!draft.title || !draft.body} className="mt-3 rounded-full bg-olive px-4 py-2 text-sm text-ivory disabled:opacity-50">Save contract</button>

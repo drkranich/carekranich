@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { Card, PageHeader, Pill } from "@/components/app/primitives";
+import { GlassSelect } from "@/components/app/GlassSelect";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/app/alerts")({ component: AlertsPage });
@@ -24,18 +25,22 @@ type Alert = {
 };
 
 const CATEGORIES = [
-  "medication",
-  "vitals",
-  "mobility",
-  "hydration",
-  "emotional",
-  "inactivity",
-  "environmental",
-  "smart-home",
-  "caregiver",
-  "ai-predictive",
+  { value: "medication", label: "Medicamento" },
+  { value: "vitals", label: "Sinais vitais" },
+  { value: "mobility", label: "Mobilidade" },
+  { value: "hydration", label: "Hidratacao" },
+  { value: "emotional", label: "Emocional" },
+  { value: "inactivity", label: "Inatividade" },
+  { value: "environmental", label: "Ambiente" },
+  { value: "smart-home", label: "Casa inteligente" },
+  { value: "caregiver", label: "Cuidador" },
+  { value: "ai-predictive", label: "IA preditiva" },
 ];
-const SEVERITIES = ["info", "warning", "critical"];
+const SEVERITIES = [
+  { value: "info", label: "Informacoes" },
+  { value: "warning", label: "Aviso" },
+  { value: "critical", label: "Critico" },
+];
 
 const sevTone = (s: string) => (s === "critical" ? "wine" : s === "warning" ? "gold" : "olive");
 
@@ -44,6 +49,8 @@ function AlertsPage() {
   const qc = useQueryClient();
   const canCreate = hasAnyRole(["caregiver", "nurse", "doctor", "clinic_admin", "super_admin"]);
   const [statusFilter, setStatusFilter] = useState<"open" | "all" | "resolved">("open");
+  const [formCategory, setFormCategory] = useState("medication");
+  const [formSeverity, setFormSeverity] = useState("warning");
   const [showForm, setShowForm] = useState(false);
 
   const { data: alerts = [], isLoading } = useQuery({
@@ -192,6 +199,8 @@ function AlertsPage() {
                 severity: String(f.get("severity") || "warning"),
               });
               (e.target as HTMLFormElement).reset();
+              setFormCategory("medication");
+              setFormSeverity("warning");
             }}
             className="grid grid-cols-1 gap-2 md:grid-cols-4"
           >
@@ -201,23 +210,18 @@ function AlertsPage() {
               placeholder="Alert title"
               className="rounded-lg border border-border bg-card px-2 py-1.5 text-sm md:col-span-2"
             />
-            <select
+            <GlassSelect
               name="category"
-              className="rounded-lg border border-border bg-card px-2 py-1.5 text-sm capitalize"
-            >
-              {CATEGORIES.map((c) => (
-                <option key={c}>{c}</option>
-              ))}
-            </select>
-            <select
+              value={formCategory}
+              onChange={setFormCategory}
+              options={CATEGORIES}
+            />
+            <GlassSelect
               name="severity"
-              defaultValue="warning"
-              className="rounded-lg border border-border bg-card px-2 py-1.5 text-sm capitalize"
-            >
-              {SEVERITIES.map((s) => (
-                <option key={s}>{s}</option>
-              ))}
-            </select>
+              value={formSeverity}
+              onChange={setFormSeverity}
+              options={SEVERITIES}
+            />
             <textarea
               name="description"
               rows={2}

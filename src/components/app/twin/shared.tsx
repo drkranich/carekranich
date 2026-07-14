@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, Spark, Pill } from "@/components/app/primitives";
+import { GlassSelect } from "@/components/app/GlassSelect";
 import type { ReactNode } from "react";
 
 export type Resident = { id: string; tenant_id: string; full_name: string; preferred_name: string | null };
@@ -39,18 +40,19 @@ export function ResidentPicker({
       >
         <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2 M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8" />
       </svg>
-      <select
+      <GlassSelect
         value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className="bg-transparent text-sm focus:outline-none"
-      >
-        {residents.length === 0 && <option value="">No residents</option>}
-        {residents.map((r) => (
-          <option key={r.id} value={r.id}>
-            {r.preferred_name || r.full_name}
-          </option>
-        ))}
-      </select>
+        onChange={onChange}
+        className="min-w-44"
+        options={
+          residents.length === 0
+            ? [{ value: "", label: "Sem residentes" }]
+            : residents.map((resident) => ({
+                value: resident.id,
+                label: resident.preferred_name || resident.full_name,
+              }))
+        }
+      />
     </div>
   );
 }

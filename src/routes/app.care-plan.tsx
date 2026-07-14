@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { Card, PageHeader, Pill } from "@/components/app/primitives";
+import { GlassSelect } from "@/components/app/GlassSelect";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/app/care-plan")({ component: CarePlanPage });
@@ -33,16 +34,21 @@ type Task = {
 };
 
 const CATEGORIES = [
-  "general",
-  "medication",
-  "vitals",
-  "nutrition",
-  "hydration",
-  "mobility",
-  "cognition",
-  "emotional",
+  { value: "general", label: "Em geral" },
+  { value: "medication", label: "Medicamento" },
+  { value: "vitals", label: "Sinais vitais" },
+  { value: "nutrition", label: "Nutricao" },
+  { value: "hydration", label: "Hidratacao" },
+  { value: "mobility", label: "Mobilidade" },
+  { value: "cognition", label: "Cognicao" },
+  { value: "emotional", label: "Emocional" },
 ];
-const PRIORITIES = ["low", "normal", "high", "critical"];
+const PRIORITIES = [
+  { value: "low", label: "Baixa" },
+  { value: "normal", label: "Normal" },
+  { value: "high", label: "Alta" },
+  { value: "critical", label: "Critica" },
+];
 
 function CarePlanPage() {
   const { user, profile, hasAnyRole, isSuperAdmin } = useAuth();
@@ -53,6 +59,10 @@ function CarePlanPage() {
   const [residentId, setResidentId] = useState<string>("");
   const [showPlanForm, setShowPlanForm] = useState(false);
   const [showTaskForm, setShowTaskForm] = useState(false);
+  const [planPriority, setPlanPriority] = useState("normal");
+  const [taskCategory, setTaskCategory] = useState("general");
+  const [taskPriority, setTaskPriority] = useState("normal");
+  const [taskPlanId, setTaskPlanId] = useState("");
 
   const { data: residents = [], isLoading: residentsLoading } = useQuery({
     queryKey: ["residents-list", profile?.tenant_id, isSuperAdmin],
@@ -248,17 +258,12 @@ function CarePlanPage() {
         <>
           <div className="mb-6 flex flex-wrap items-center gap-3">
             <label className="text-xs uppercase text-muted-foreground">Resident</label>
-            <select
+            <GlassSelect
               value={residentId}
-              onChange={(e) => setResidentId(e.target.value)}
-              className="rounded-xl border border-border bg-ivory px-3 py-2 text-sm"
-            >
-              {residents.map((r) => (
-                <option key={r.id} value={r.id}>
-                  {r.preferred_name ?? r.full_name}
-                </option>
-              ))}
-            </select>
+              onChange={setResidentId}
+              className="w-64"
+              options={residents.map((r) => ({ value: r.id, label: r.preferred_name ?? r.full_name }))}
+            />
             <div className="ml-auto flex items-center gap-2">
               <Pill>
                 {stats.done}/{stats.total} done
@@ -297,6 +302,7 @@ function CarePlanPage() {
                       start_date: (f.get("start_date") as string) || null,
                       end_date: (f.get("end_date") as string) || null,
                     });
+                    setPlanPriority("normal");
                     (e.target as HTMLFormElement).reset();
                   }}
                   className="mb-4 space-y-2 rounded-2xl border border-border bg-ivory p-3"
@@ -314,14 +320,13 @@ function CarePlanPage() {
                     rows={2}
                   />
                   <div className="flex gap-2">
-                    <select
+                    <GlassSelect
                       name="priority"
-                      className="flex-1 rounded-lg border border-border bg-card px-2 py-1.5 text-sm"
-                    >
-                      {PRIORITIES.map((p) => (
-                        <option key={p}>{p}</option>
-                      ))}
-                    </select>
+                      value={planPriority}
+                      onChange={setPlanPriority}
+                      className="flex-1"
+                      options={PRIORITIES}
+                    />
                     <input
                       type="date"
                       name="start_date"
@@ -405,6 +410,9 @@ function CarePlanPage() {
                       priority: String(f.get("priority") || "normal"),
                       due_at: due ? new Date(due).toISOString() : null,
                     });
+                    setTaskCategory("general");
+                    setTaskPriority("normal");
+                    setTaskPlanId("");
                     (e.target as HTMLFormElement).reset();
                   }}
                   className="mb-4 grid grid-cols-1 gap-2 rounded-2xl border border-border bg-ivory p-3 md:grid-cols-2"
@@ -415,38 +423,33 @@ function CarePlanPage() {
                     placeholder="Task title"
                     className="rounded-lg border border-border bg-card px-2 py-1.5 text-sm md:col-span-2"
                   />
-                  <select
+                  <GlassSelect
                     name="category"
-                    className="rounded-lg border border-border bg-card px-2 py-1.5 text-sm"
-                  >
-                    {CATEGORIES.map((c) => (
-                      <option key={c}>{c}</option>
-                    ))}
-                  </select>
-                  <select
+                    value={taskCategory}
+                    onChange={setTaskCategory}
+                    options={CATEGORIES}
+                  />
+                  <GlassSelect
                     name="priority"
-                    className="rounded-lg border border-border bg-card px-2 py-1.5 text-sm"
-                  >
-                    {PRIORITIES.map((p) => (
-                      <option key={p}>{p}</option>
-                    ))}
-                  </select>
+                    value={taskPriority}
+                    onChange={setTaskPriority}
+                    options={PRIORITIES}
+                  />
                   <input
                     type="datetime-local"
                     name="due_at"
                     className="rounded-lg border border-border bg-card px-2 py-1.5 text-sm"
                   />
-                  <select
+                  <GlassSelect
                     name="care_plan_id"
-                    className="rounded-lg border border-border bg-card px-2 py-1.5 text-sm"
-                  >
-                    <option value="">No plan</option>
-                    {plans.map((p) => (
-                      <option key={p.id} value={p.id}>
-                        {p.title}
-                      </option>
-                    ))}
-                  </select>
+                    value={taskPlanId}
+                    onChange={setTaskPlanId}
+                    placeholder="Sem plano"
+                    options={[
+                      { value: "", label: "Sem plano" },
+                      ...plans.map((p) => ({ value: p.id, label: p.title })),
+                    ]}
+                  />
                   <textarea
                     name="notes"
                     placeholder="Notes"

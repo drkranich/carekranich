@@ -2,6 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { Card, PageHeader, Pill } from "@/components/app/primitives";
+import { GlassSelect } from "@/components/app/GlassSelect";
 import { useAuth } from "@/hooks/use-auth";
 import { AGENTS, type AgentKey } from "@/lib/agents";
 import { supabase } from "@/integrations/supabase/client";
@@ -207,18 +208,16 @@ function AgentWorkspace() {
             </div>
             <p className="text-sm font-medium text-foreground">{agent.name}</p>
             {agent.needsResident && (
-              <select
+              <GlassSelect
                 value={residentId ?? ""}
-                onChange={(e) => setResidentId(e.target.value || null)}
-                className="ml-auto rounded-full border border-border bg-ivory px-3 py-1.5 text-xs"
-              >
-                <option value="">Select resident...</option>
-                {residents.map((r) => (
-                  <option key={r.id} value={r.id}>
-                    {r.preferred_name ?? r.full_name}
-                  </option>
-                ))}
-              </select>
+                onChange={(value) => setResidentId(value || null)}
+                className="ml-auto w-52"
+                placeholder="Selecionar residente..."
+                options={[
+                  { value: "", label: "Selecionar residente..." },
+                  ...residents.map((r) => ({ value: r.id, label: r.preferred_name ?? r.full_name })),
+                ]}
+              />
             )}
           </div>
 

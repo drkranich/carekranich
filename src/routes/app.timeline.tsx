@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { Card, PageHeader, Pill, Avatar } from "@/components/app/primitives";
+import { GlassSelect } from "@/components/app/GlassSelect";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/app/timeline")({ component: TimelinePage });
@@ -21,19 +22,25 @@ type EventRow = {
 };
 
 const CATEGORIES = [
-  "all",
-  "general",
-  "medication",
-  "vitals",
-  "nutrition",
-  "hydration",
-  "mobility",
-  "mood",
-  "incident",
-  "memory",
-  "alert",
+  { value: "all", label: "Todos" },
+  { value: "general", label: "Em geral" },
+  { value: "medication", label: "Medicamento" },
+  { value: "vitals", label: "Sinais vitais" },
+  { value: "nutrition", label: "Nutricao" },
+  { value: "hydration", label: "Hidratacao" },
+  { value: "mobility", label: "Mobilidade" },
+  { value: "mood", label: "Humor" },
+  { value: "incident", label: "Incidente" },
+  { value: "memory", label: "Memoria" },
+  { value: "alert", label: "Alerta" },
 ];
-const SEVERITIES = ["all", "info", "success", "warning", "critical"];
+const SEVERITIES = [
+  { value: "all", label: "Todos" },
+  { value: "info", label: "Informacoes" },
+  { value: "success", label: "Sucesso" },
+  { value: "warning", label: "Aviso" },
+  { value: "critical", label: "Critico" },
+];
 
 const sevTone = (s: string) =>
   s === "critical" ? "wine" : s === "warning" ? "gold" : s === "success" ? "moss" : "olive";
@@ -57,6 +64,8 @@ function TimelinePage() {
   const [date, setDate] = useState(() => toDayKey(new Date()));
   const [category, setCategory] = useState("all");
   const [severity, setSeverity] = useState("all");
+  const [formCategory, setFormCategory] = useState("general");
+  const [formSeverity, setFormSeverity] = useState("info");
   const [showForm, setShowForm] = useState(false);
 
   const { data: events = [], isLoading } = useQuery({
@@ -165,28 +174,18 @@ function TimelinePage() {
 
         <span className="mx-2 h-4 w-px bg-border" />
 
-        <select
+        <GlassSelect
           value={category}
-          onChange={(e) => setCategory(e.target.value)}
-          className="rounded-full border border-border bg-ivory px-3 py-1.5 text-xs capitalize"
-        >
-          {CATEGORIES.map((c) => (
-            <option key={c} value={c}>
-              {c}
-            </option>
-          ))}
-        </select>
-        <select
+          onChange={setCategory}
+          options={CATEGORIES}
+          className="w-36"
+        />
+        <GlassSelect
           value={severity}
-          onChange={(e) => setSeverity(e.target.value)}
-          className="rounded-full border border-border bg-ivory px-3 py-1.5 text-xs capitalize"
-        >
-          {SEVERITIES.map((s) => (
-            <option key={s} value={s}>
-              {s}
-            </option>
-          ))}
-        </select>
+          onChange={setSeverity}
+          options={SEVERITIES}
+          className="w-36"
+        />
 
         <span className="ml-auto flex items-center gap-1.5 text-xs text-muted-foreground">
           <span className="h-2 w-2 animate-pulse rounded-full bg-moss" /> Live
@@ -206,6 +205,8 @@ function TimelinePage() {
                 description: String(f.get("description") || ""),
               });
               (e.target as HTMLFormElement).reset();
+              setFormCategory("general");
+              setFormSeverity("info");
             }}
             className="grid grid-cols-1 gap-2 md:grid-cols-4"
           >
@@ -215,22 +216,18 @@ function TimelinePage() {
               placeholder="What happened?"
               className="rounded-lg border border-border bg-card px-2 py-1.5 text-sm md:col-span-2"
             />
-            <select
+            <GlassSelect
               name="category"
-              className="rounded-lg border border-border bg-card px-2 py-1.5 text-sm capitalize"
-            >
-              {CATEGORIES.filter((c) => c !== "all").map((c) => (
-                <option key={c}>{c}</option>
-              ))}
-            </select>
-            <select
+              value={formCategory}
+              onChange={setFormCategory}
+              options={CATEGORIES.filter((item) => item.value !== "all")}
+            />
+            <GlassSelect
               name="severity"
-              className="rounded-lg border border-border bg-card px-2 py-1.5 text-sm capitalize"
-            >
-              {SEVERITIES.filter((s) => s !== "all").map((s) => (
-                <option key={s}>{s}</option>
-              ))}
-            </select>
+              value={formSeverity}
+              onChange={setFormSeverity}
+              options={SEVERITIES.filter((item) => item.value !== "all")}
+            />
             <textarea
               name="description"
               placeholder="Notes (optional)"

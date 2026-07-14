@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { Gate } from "@/components/app/Gate";
 import { GeoAddressField } from "@/components/app/GeoAddressField";
+import { GlassSelect } from "@/components/app/GlassSelect";
 import type { GeoAddress } from "@/lib/geocoding";
 
 export const Route = createFileRoute("/app/residents")({ component: Residents });
@@ -25,6 +26,8 @@ type Resident = {
   created_at: string;
 };
 
+type TenantOption = { id: string; name: string };
+
 function Residents() {
   const qc = useQueryClient();
   const { profile, hasAnyRole, isSuperAdmin } = useAuth();
@@ -40,6 +43,20 @@ function Residents() {
         .order("created_at", { ascending: false });
       if (error) throw error;
       return (data ?? []) as Resident[];
+    },
+  });
+
+  const { data: tenants = [] } = useQuery({
+    queryKey: ["resident-tenant-options", isSuperAdmin, profile?.tenant_id],
+    enabled: isSuperAdmin || !!profile?.tenant_id,
+    queryFn: async () => {
+      const { data, error } = await (supabase as any)
+        .from("tenants")
+        .select("id,name")
+        .order("name", { ascending: true })
+        .limit(200);
+      if (error) throw error;
+      return (data ?? []) as TenantOption[];
     },
   });
 
@@ -66,11 +83,11 @@ function Residents() {
           >
             <button
               onClick={() => setCreating(true)}
-              disabled={!profile?.tenant_id}
-              title={!profile?.tenant_id ? "Create or select an organization before adding residents" : ""}
+              disabled={!profile?.tenant_id && !isSuperAdmin}
+              title={!profile?.tenant_id && !isSuperAdmin ? "Crie ou selecione uma organizacao antes de adicionar residentes" : ""}
               className="rounded-full bg-olive px-4 py-2 text-xs text-ivory shadow-soft hover:opacity-90 disabled:opacity-50"
             >
-              + Add resident
+              + Adicionar residente
             </button>
           </Gate>
         }
@@ -99,7 +116,7 @@ function Residents() {
         <p className="text-sm text-muted-foreground">Loading...</p>
       ) : residents.length === 0 ? (
         <Card className="text-center py-16">
-          <p className="text-xl font-semibold text-foreground">No residents yet</p>
+          <p className="text-xl font-semibold text-foreground">Nenhum residente ainda</p>
           <p className="mt-2 text-sm text-muted-foreground">
             When you add someone, their story begins here.
           </p>
@@ -125,15 +142,15 @@ function Residents() {
                     onClick={() => setEditing(r)}
                     className="rounded-full border border-border bg-ivory px-3 py-1.5 text-xs hover:bg-cream"
                   >
-                    Edit
+                    Editar
                   </button>
                 )}
                 {canDelete && (
                   <button
-                    onClick={() => confirm(`Delete ${r.full_name}?`) && del.mutate(r.id)}
+                    onClick={() => confirm(`Excluir ${r.full_name}?`) && del.mutate(r.id)}
                     className="rounded-full border border-wine/30 px-3 py-1.5 text-xs text-wine hover:bg-wine/5"
                   >
-                    Delete
+                    Excluir
                   </button>
                 )}
               </div>
@@ -142,10 +159,12 @@ function Residents() {
         </div>
       )}
 
-      {(creating || editing) && profile?.tenant_id && (
+      {(creating || editing) && (profile?.tenant_id || isSuperAdmin) && (
         <ResidentDialog
           resident={editing}
-          tenantId={profile!.tenant_id!}
+          initialTenantId={editing?.tenant_id ?? profile?.tenant_id ?? tenants[0]?.id ?? ""}
+          tenantOptions={tenants}
+          requireTenantPicker={isSuperAdmin && !profile?.tenant_id}
           onClose={() => {
             setCreating(false);
             setEditing(null);
@@ -172,15 +191,20 @@ function ageFrom(dob: string) {
 
 function ResidentDialog({
   resident,
-  tenantId,
+  initialTenantId,
+  tenantOptions,
+  requireTenantPicker,
   onClose,
   onSaved,
 }: {
   resident: Resident | null;
-  tenantId: string;
+  initialTenantId: string;
+  tenantOptions: TenantOption[];
+  requireTenantPicker: boolean;
   onClose: () => void;
   onSaved: () => void;
 }) {
+  const [tenantId, setTenantId] = useState(initialTenantId);
   const [form, setForm] = useState({
     full_name: resident?.full_name ?? "",
     preferred_name: resident?.preferred_name ?? "",
@@ -198,6 +222,10 @@ function ResidentDialog({
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErr(null);
+    if (!tenantId) {
+      setErr("Selecione uma organizacao antes de criar o residente.");
+      return;
+    }
     setSaving(true);
     const payload = {
       tenant_id: tenantId,
@@ -251,7 +279,7 @@ function ResidentDialog({
       >
         <div className="flex items-center justify-between">
           <h2 className="text-2xl font-semibold text-foreground">
-            {resident ? "Edit resident" : "Add a resident"}
+            {resident ? "Editar residente" : "Adicionar residente"}
           </h2>
           <button
             type="button"
@@ -261,17 +289,37 @@ function ResidentDialog({
             x
           </button>
         </div>
-        <p className="mt-1 text-sm text-muted-foreground">Capture the person behind the care.</p>
+        <p className="mt-1 text-sm text-muted-foreground">Cadastre a pessoa por tras do cuidado.</p>
+
+        {requireTenantPicker && (
+          <div className="mt-5">
+            <label className="block text-sm">
+              <span className="text-foreground/80">Organizacao</span>
+              <GlassSelect
+                value={tenantId}
+                onChange={setTenantId}
+                className="mt-1"
+                placeholder="Selecione a organizacao"
+                options={tenantOptions.map((tenant) => ({ value: tenant.id, label: tenant.name }))}
+              />
+            </label>
+            {tenantOptions.length === 0 && (
+              <p className="mt-2 rounded-xl border border-gold/25 bg-gold/10 px-3 py-2 text-xs text-foreground">
+                Nenhuma organizacao existe ainda. Crie ou aprove uma organizacao antes de cadastrar residentes.
+              </p>
+            )}
+          </div>
+        )}
 
         <div className="mt-6 grid gap-4 md:grid-cols-2">
           <Field
-            label="Full name"
+            label="Nome completo"
             required
             value={form.full_name}
             onChange={(v) => setForm({ ...form, full_name: v })}
           />
           <Field
-            label="Preferred name"
+            label="Nome preferido"
             value={form.preferred_name}
             onChange={(v) => setForm({ ...form, preferred_name: v })}
           />
@@ -333,13 +381,13 @@ function ResidentDialog({
             onClick={onClose}
             className="rounded-full border border-border bg-ivory px-4 py-2 text-sm hover:bg-cream"
           >
-            Cancel
+            Cancelar
           </button>
           <button
-            disabled={saving}
+            disabled={saving || !tenantId}
             className="rounded-full bg-olive px-5 py-2 text-sm text-ivory hover:opacity-90 disabled:opacity-50"
           >
-            {saving ? "Saving..." : resident ? "Save changes" : "Create resident"}
+            {saving ? "Salvando..." : resident ? "Salvar alteracoes" : "Criar residente"}
           </button>
         </div>
       </form>

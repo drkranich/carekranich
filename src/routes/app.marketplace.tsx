@@ -11,7 +11,16 @@ export const Route = createFileRoute("/app/marketplace")({
   component: Marketplace,
 });
 
-const categories = ["all", "service_provider", "staff", "clinic", "family"];
+const categories = [
+  { value: "all", label: "Todos" },
+  { value: "service_provider", label: "Prestador de servicos" },
+  { value: "staff", label: "Funcionario" },
+  { value: "clinic", label: "Clinica" },
+  { value: "family", label: "Familia" },
+];
+
+const categoryLabel = (value: string) =>
+  categories.find((item) => item.value === value)?.label ?? value.replaceAll("_", " ");
 
 function Marketplace() {
   const qc = useQueryClient();
@@ -83,11 +92,11 @@ function Marketplace() {
       <div className="mb-6 flex flex-wrap gap-2">
         {categories.map((item) => (
           <button
-            key={item}
-            onClick={() => setCategory(item)}
-            className={`rounded-full px-4 py-2 text-xs ${category === item ? "bg-olive text-ivory" : "border border-border bg-white/50 text-muted-foreground"}`}
+            key={item.value}
+            onClick={() => setCategory(item.value)}
+            className={`rounded-full px-4 py-2 text-xs ${category === item.value ? "bg-olive text-ivory" : "border border-border bg-white/50 text-muted-foreground"}`}
           >
-            {item}
+            {item.label}
           </button>
         ))}
       </div>
@@ -109,7 +118,7 @@ function Marketplace() {
                 <Avatar name={provider.full_name ?? provider.id} src={provider.avatar_url} size={48} />
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-lg font-semibold text-foreground">{provider.full_name ?? provider.id}</p>
-                  <p className="text-xs text-muted-foreground">{provider.user_kind} · {provider.account_status}</p>
+                  <p className="text-xs text-muted-foreground">{categoryLabel(provider.user_kind)} - {provider.account_status}</p>
                 </div>
                 <Pill tone={provider.identity_status === "verified" ? "moss" : "gold"}>{provider.identity_status}</Pill>
               </div>

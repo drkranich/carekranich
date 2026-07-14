@@ -3,12 +3,19 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Check, Shield, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 import { Card, PageHeader, Pill, Stat } from "@/components/app/primitives";
+import { GlassSelect } from "@/components/app/GlassSelect";
 import { supabase } from "@/integrations/supabase/client";
 import { ROLE_LABELS, useAuth, type AppRole } from "@/hooks/use-auth";
 
 export const Route = createFileRoute("/app/approvals")({ component: Approvals });
 
 const roleOptions: AppRole[] = ["family", "caregiver", "nurse", "doctor", "clinic_admin"];
+const userKindLabels: Record<string, string> = {
+  family: "Familia",
+  clinic: "Clinica",
+  service_provider: "Prestador de servicos",
+  staff: "Funcionario",
+};
 
 function Approvals() {
   const { isSuperAdmin } = useAuth();
@@ -150,7 +157,9 @@ function Approvals() {
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
                     <p className="truncate font-medium text-foreground">{member.full_name ?? member.id}</p>
-                    <p className="text-xs text-muted-foreground">{member.user_kind} · {member.account_status} · face: {member.verification_status}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {userKindLabels[member.user_kind] ?? member.user_kind} - {member.account_status} - face: {member.verification_status}
+                    </p>
                   </div>
                   <Pill tone={member.account_status === "active" ? "moss" : "gold"}>{member.account_status}</Pill>
                 </div>
@@ -169,20 +178,13 @@ function Approvals() {
                   ))}
                 </div>
                 {member.tenant_id && (
-                  <select
-                    className="mt-3 w-full rounded-xl border border-border bg-ivory px-3 py-2 text-xs"
-                    defaultValue=""
-                    onChange={(event) => {
-                      const role = event.target.value as AppRole;
-                      if (role) addRole(member.id, member.tenant_id, role);
-                      event.currentTarget.value = "";
-                    }}
-                  >
-                    <option value="">Add permission...</option>
-                    {roleOptions.map((role) => (
-                      <option key={role} value={role}>{ROLE_LABELS[role]}</option>
-                    ))}
-                  </select>
+                  <GlassSelect
+                    className="mt-3"
+                    value=""
+                    placeholder="Adicionar permissao..."
+                    onChange={(value) => addRole(member.id, member.tenant_id, value as AppRole)}
+                    options={roleOptions.map((role) => ({ value: role, label: ROLE_LABELS[role] }))}
+                  />
                 )}
               </div>
             ))}

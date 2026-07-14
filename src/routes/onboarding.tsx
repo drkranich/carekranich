@@ -3,6 +3,7 @@ import { useState, type FormEvent } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { GeoAddressField } from "@/components/app/GeoAddressField";
+import { GlassSelect } from "@/components/app/GlassSelect";
 import type { GeoAddress } from "@/lib/geocoding";
 
 export const Route = createFileRoute("/onboarding")({ component: Onboarding });
@@ -90,11 +91,16 @@ function Onboarding() {
           <form onSubmit={create} className="mt-6 space-y-4">
             <label className="block text-sm">
               <span className="text-foreground/80">Account type</span>
-              <select value={userKind} onChange={(e) => setUserKind(e.target.value as any)} className="mt-1 w-full rounded-xl border border-border bg-ivory px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-olive/40">
-                <option value="clinic">Clinic / care company</option>
-                <option value="service_provider">Health service provider / advertiser</option>
-                <option value="family">Family / individual client</option>
-              </select>
+              <GlassSelect
+                value={userKind}
+                onChange={(value) => setUserKind(value as any)}
+                className="mt-1"
+                options={[
+                  { value: "clinic", label: "Clinica" },
+                  { value: "service_provider", label: "Prestador de servicos" },
+                  { value: "family", label: "Familia" },
+                ]}
+              />
             </label>
             <label className="block text-sm">
               <span className="text-foreground/80">Organization name</span>

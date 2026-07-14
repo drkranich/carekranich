@@ -12,6 +12,7 @@ import {
   Field,
   inputCls,
 } from "@/components/app/twin/shared";
+import { GlassSelect } from "@/components/app/GlassSelect";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/app/twin")({ component: TwinPage });
@@ -98,6 +99,19 @@ const DOMAINS: {
     icon: "M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2 M16 3.13a4 4 0 0 1 0 7.75 M23 21v-2a4 4 0 0 0-3-3.87",
     unit: "events",
   },
+];
+const EXTRA_DOMAIN_OPTIONS = [
+  { value: "environment", label: "Ambiente" },
+  { value: "routine", label: "Rotina" },
+  { value: "behavior", label: "Comportamento" },
+];
+const SOURCE_OPTIONS = [
+  { value: "manual", label: "Manual" },
+  { value: "caregiver", label: "Cuidador" },
+  { value: "nurse", label: "Enfermagem" },
+  { value: "doctor", label: "Medico" },
+  { value: "device", label: "Dispositivo" },
+  { value: "family", label: "Familia" },
 ];
 
 function TwinPage() {
@@ -405,16 +419,14 @@ function ObsForm({
     <Card className="mb-6">
       <form onSubmit={submit} className="grid gap-3 md:grid-cols-3">
         <Field label="Domain">
-          <select value={domain} onChange={(e) => setDomain(e.target.value)} className={inputCls()}>
-            {DOMAINS.map((d) => (
-              <option key={d.key} value={d.key}>
-                {d.label}
-              </option>
-            ))}
-            <option value="environment">Environment</option>
-            <option value="routine">Routine</option>
-            <option value="behavior">Behavior</option>
-          </select>
+          <GlassSelect
+            value={domain}
+            onChange={setDomain}
+            options={[
+              ...DOMAINS.map((d) => ({ value: d.key, label: d.label })),
+              ...EXTRA_DOMAIN_OPTIONS,
+            ]}
+          />
         </Field>
         <Field label="Metric">
           <input
@@ -426,14 +438,7 @@ function ObsForm({
           />
         </Field>
         <Field label="Source">
-          <select value={source} onChange={(e) => setSource(e.target.value)} className={inputCls()}>
-            <option value="manual">Manual</option>
-            <option value="caregiver">Caregiver</option>
-            <option value="nurse">Nurse</option>
-            <option value="doctor">Doctor</option>
-            <option value="device">Device</option>
-            <option value="family">Family</option>
-          </select>
+          <GlassSelect value={source} onChange={setSource} options={SOURCE_OPTIONS} />
         </Field>
         <Field label="Value (numeric)">
           <input

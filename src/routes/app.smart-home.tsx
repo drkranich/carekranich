@@ -4,6 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Home, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { Card, EmptyState, PageHeader, Pill, Stat } from "@/components/app/primitives";
+import { GlassSelect } from "@/components/app/GlassSelect";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -92,11 +93,15 @@ function SmartHome() {
                 <p className="text-xs font-semibold uppercase text-muted-foreground">Resident</p>
                 <h2 className="text-2xl font-semibold text-foreground">{selectedResident.preferred_name || selectedResident.full_name}</h2>
               </div>
-              <select value={selectedResident.id} onChange={(event) => setResidentId(event.target.value)} className="rounded-xl border border-border bg-ivory px-3 py-2 text-sm">
-                {(home.data?.residents ?? []).map((resident: any) => (
-                  <option key={resident.id} value={resident.id}>{resident.preferred_name || resident.full_name}</option>
-                ))}
-              </select>
+              <GlassSelect
+                value={selectedResident.id}
+                onChange={setResidentId}
+                className="w-64"
+                options={(home.data?.residents ?? []).map((resident: any) => ({
+                  value: resident.id,
+                  label: resident.preferred_name || resident.full_name,
+                }))}
+              />
             </div>
           </Card>
 
@@ -190,12 +195,16 @@ function SmartHome() {
               <div className="mt-4 space-y-3">
                 <input value={draft.metric} onChange={(event) => setDraft({ ...draft, metric: event.target.value })} placeholder="Metric, e.g. front door" className="w-full rounded-xl border border-border bg-ivory px-3 py-2 text-sm" />
                 <input value={draft.value_text} onChange={(event) => setDraft({ ...draft, value_text: event.target.value })} placeholder="Value, e.g. locked" className="w-full rounded-xl border border-border bg-ivory px-3 py-2 text-sm" />
-                <select value={draft.domain} onChange={(event) => setDraft({ ...draft, domain: event.target.value })} className="w-full rounded-xl border border-border bg-ivory px-3 py-2 text-sm">
-                  <option value="environment">environment</option>
-                  <option value="safety">safety</option>
-                  <option value="movement">movement</option>
-                  <option value="sleep">sleep</option>
-                </select>
+                <GlassSelect
+                  value={draft.domain}
+                  onChange={(value) => setDraft({ ...draft, domain: value })}
+                  options={[
+                    { value: "environment", label: "Ambiente" },
+                    { value: "safety", label: "Seguranca" },
+                    { value: "movement", label: "Movimento" },
+                    { value: "sleep", label: "Sono" },
+                  ]}
+                />
                 <textarea value={draft.notes} onChange={(event) => setDraft({ ...draft, notes: event.target.value })} placeholder="Notes" rows={3} className="w-full rounded-xl border border-border bg-ivory px-3 py-2 text-sm" />
                 <button onClick={addObservation} className="w-full rounded-xl bg-olive px-4 py-2 text-sm text-ivory">Save observation</button>
               </div>
