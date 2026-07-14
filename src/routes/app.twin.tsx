@@ -4,7 +4,14 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { Card, PageHeader, Pill, EmptyState } from "@/components/app/primitives";
-import { ResidentPicker, StatusTile, InsightCard, useResidents, Field, inputCls } from "@/components/app/twin/shared";
+import {
+  ResidentPicker,
+  StatusTile,
+  InsightCard,
+  useResidents,
+  Field,
+  inputCls,
+} from "@/components/app/twin/shared";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/app/twin")({ component: TwinPage });
@@ -23,19 +30,74 @@ type Obs = {
 };
 
 type Insight = {
-  id: string; module: string; title: string; summary: string; reasoning: string | null;
-  confidence: number | null; severity: string; recommendations: unknown; generated_by: string; created_at: string;
+  id: string;
+  module: string;
+  title: string;
+  summary: string;
+  reasoning: string | null;
+  confidence: number | null;
+  severity: string;
+  recommendations: unknown;
+  generated_by: string;
+  created_at: string;
 };
 
-const DOMAINS: { key: string; label: string; tone: "olive" | "wine" | "moss" | "terracotta" | "gold"; icon: string; unit?: string }[] = [
-  { key: "health",     label: "Health",        tone: "wine",       icon: "M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67 10.94 4.61a5.5 5.5 0 0 0-7.78 7.78l8.84 8.84 8.84-8.84a5.5 5.5 0 0 0 0-7.78z" },
-  { key: "emotional",  label: "Emotional",     tone: "terracotta", icon: "M14 9V5a3 3 0 0 0-6 0v4 M5 9h14l-1 12H6L5 9z", unit: "/10" },
-  { key: "cognitive",  label: "Cognitive",     tone: "olive",      icon: "M12 2a5 5 0 0 0-5 5v1a4 4 0 0 0-2 7 4 4 0 0 0 7 3 4 4 0 0 0 7-3 4 4 0 0 0-2-7V7a5 5 0 0 0-5-5z", unit: "/100" },
-  { key: "mobility",   label: "Mobility",      tone: "moss",       icon: "M13 4a2 2 0 1 1-4 0 2 2 0 0 1 4 0 M5 21l4-7 4 4 5-9", unit: "steps" },
-  { key: "hydration",  label: "Hydration",     tone: "olive",      icon: "M12 2s7 8 7 13a7 7 0 1 1-14 0c0-5 7-13 7-13z", unit: "ml" },
-  { key: "sleep",      label: "Sleep",         tone: "wine",       icon: "M21 12.79A9 9 0 1 1 11.21 3", unit: "h" },
-  { key: "medication", label: "Medication",    tone: "gold",       icon: "M9 12h6 M12 9v6 M10.5 2h3l7 7v6l-7 7h-3l-7-7v-6z", unit: "%" },
-  { key: "social",     label: "Social",        tone: "terracotta", icon: "M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2 M16 3.13a4 4 0 0 1 0 7.75 M23 21v-2a4 4 0 0 0-3-3.87", unit: "events" },
+const DOMAINS: {
+  key: string;
+  label: string;
+  tone: "olive" | "wine" | "moss" | "terracotta" | "gold";
+  icon: string;
+  unit?: string;
+}[] = [
+  {
+    key: "health",
+    label: "Health",
+    tone: "wine",
+    icon: "M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67 10.94 4.61a5.5 5.5 0 0 0-7.78 7.78l8.84 8.84 8.84-8.84a5.5 5.5 0 0 0 0-7.78z",
+  },
+  {
+    key: "emotional",
+    label: "Emotional",
+    tone: "terracotta",
+    icon: "M14 9V5a3 3 0 0 0-6 0v4 M5 9h14l-1 12H6L5 9z",
+    unit: "/10",
+  },
+  {
+    key: "cognitive",
+    label: "Cognitive",
+    tone: "olive",
+    icon: "M12 2a5 5 0 0 0-5 5v1a4 4 0 0 0-2 7 4 4 0 0 0 7 3 4 4 0 0 0 7-3 4 4 0 0 0-2-7V7a5 5 0 0 0-5-5z",
+    unit: "/100",
+  },
+  {
+    key: "mobility",
+    label: "Mobility",
+    tone: "moss",
+    icon: "M13 4a2 2 0 1 1-4 0 2 2 0 0 1 4 0 M5 21l4-7 4 4 5-9",
+    unit: "steps",
+  },
+  {
+    key: "hydration",
+    label: "Hydration",
+    tone: "olive",
+    icon: "M12 2s7 8 7 13a7 7 0 1 1-14 0c0-5 7-13 7-13z",
+    unit: "ml",
+  },
+  { key: "sleep", label: "Sleep", tone: "wine", icon: "M21 12.79A9 9 0 1 1 11.21 3", unit: "h" },
+  {
+    key: "medication",
+    label: "Medication",
+    tone: "gold",
+    icon: "M9 12h6 M12 9v6 M10.5 2h3l7 7v6l-7 7h-3l-7-7v-6z",
+    unit: "%",
+  },
+  {
+    key: "social",
+    label: "Social",
+    tone: "terracotta",
+    icon: "M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2 M16 3.13a4 4 0 0 1 0 7.75 M23 21v-2a4 4 0 0 0-3-3.87",
+    unit: "events",
+  },
 ];
 
 function TwinPage() {
@@ -52,7 +114,9 @@ function TwinPage() {
   if (residents.length && !residentId) setResidentId(residents[0].id);
 
   const sinceISO = useMemo(() => {
-    const d = new Date(); d.setDate(d.getDate() - window); return d.toISOString();
+    const d = new Date();
+    d.setDate(d.getDate() - window);
+    return d.toISOString();
   }, [window]);
 
   const { data: observations = [] } = useQuery({
@@ -60,7 +124,8 @@ function TwinPage() {
     enabled: !!residentId,
     queryFn: async () => {
       const { data } = await supabase
-        .from("twin_observations").select("*")
+        .from("twin_observations")
+        .select("*")
         .eq("resident_id", residentId)
         .gte("observed_at", sinceISO)
         .order("observed_at", { ascending: true });
@@ -73,10 +138,12 @@ function TwinPage() {
     enabled: !!residentId,
     queryFn: async () => {
       const { data } = await supabase
-        .from("ai_insights").select("*")
+        .from("ai_insights")
+        .select("*")
         .eq("resident_id", residentId)
         .in("module", ["digital_twin", "behavior", "health_trajectory"])
-        .order("created_at", { ascending: false }).limit(8);
+        .order("created_at", { ascending: false })
+        .limit(8);
       return (data ?? []) as Insight[];
     },
   });
@@ -89,7 +156,15 @@ function TwinPage() {
   }, [observations]);
 
   const addObs = useMutation({
-    mutationFn: async (v: { domain: string; metric: string; value_numeric: string; value_text: string; unit: string; notes: string; source: string }) => {
+    mutationFn: async (v: {
+      domain: string;
+      metric: string;
+      value_numeric: string;
+      value_text: string;
+      unit: string;
+      notes: string;
+      source: string;
+    }) => {
       const { error } = await supabase.from("twin_observations").insert({
         tenant_id: profile!.tenant_id!,
         resident_id: residentId,
@@ -127,7 +202,10 @@ function TwinPage() {
     return (
       <>
         <PageHeader title="Digital Twin" subtitle="A living representation of every resident." />
-        <EmptyState title="No residents yet" hint="Add a resident to begin building their Digital Twin." />
+        <EmptyState
+          title="No residents yet"
+          hint="Add a resident to begin building their Digital Twin."
+        />
       </>
     );
   }
@@ -139,20 +217,30 @@ function TwinPage() {
     <>
       <PageHeader
         title="Digital Twin"
-        subtitle={selected ? `Living representation of ${selected.preferred_name || selected.full_name}` : ""}
+        subtitle={
+          selected
+            ? `Living representation of ${selected.preferred_name || selected.full_name}`
+            : ""
+        }
         action={
           <div className="flex flex-wrap items-center gap-2">
             <ResidentPicker residents={residents} value={residentId} onChange={setResidentId} />
             <div className="flex rounded-full border border-border bg-ivory p-1 text-xs">
               {[7, 30, 90, 365].map((d) => (
-                <button key={d} onClick={() => setWindow(d as 7 | 30 | 90 | 365)}
-                  className={`rounded-full px-3 py-1 ${window === d ? "bg-olive text-ivory" : "text-muted-foreground hover:text-olive"}`}>
+                <button
+                  key={d}
+                  onClick={() => setWindow(d as 7 | 30 | 90 | 365)}
+                  className={`rounded-full px-3 py-1 ${window === d ? "bg-olive text-ivory" : "text-muted-foreground hover:text-olive"}`}
+                >
                   {d === 365 ? "1y" : `${d}d`}
                 </button>
               ))}
             </div>
             {canContribute && (
-              <button onClick={() => setShowForm((v) => !v)} className="rounded-full bg-olive px-4 py-2 text-xs text-ivory shadow-soft hover:opacity-90">
+              <button
+                onClick={() => setShowForm((v) => !v)}
+                className="rounded-full bg-olive px-4 py-2 text-xs text-ivory shadow-soft hover:opacity-90"
+              >
                 + Observation
               </button>
             )}
@@ -160,7 +248,13 @@ function TwinPage() {
         }
       />
 
-      {showForm && canContribute && <ObsForm onCancel={() => setShowForm(false)} onSubmit={(v) => addObs.mutate(v)} submitting={addObs.isPending} />}
+      {showForm && canContribute && (
+        <ObsForm
+          onCancel={() => setShowForm(false)}
+          onSubmit={(v) => addObs.mutate(v)}
+          submitting={addObs.isPending}
+        />
+      )}
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         {DOMAINS.map((d) => {
@@ -168,15 +262,30 @@ function TwinPage() {
           const last = obs[obs.length - 1];
           const prev = obs[obs.length - 2];
           const values = obs.map((o) => o.value_numeric ?? 0).filter((v) => v > 0);
-          const trend = last && prev && last.value_numeric != null && prev.value_numeric != null
-            ? (last.value_numeric > prev.value_numeric ? "up" : last.value_numeric < prev.value_numeric ? "down" : "flat")
-            : "flat";
+          const trend =
+            last && prev && last.value_numeric != null && prev.value_numeric != null
+              ? last.value_numeric > prev.value_numeric
+                ? "up"
+                : last.value_numeric < prev.value_numeric
+                  ? "down"
+                  : "flat"
+              : "flat";
           const status = obs.length === 0 ? "no data" : `${obs.length} observations`;
-          const value = last?.value_numeric != null
-            ? `${last.value_numeric}${last.unit || d.unit || ""}`
-            : last?.value_text ?? undefined;
+          const value =
+            last?.value_numeric != null
+              ? `${last.value_numeric}${last.unit || d.unit || ""}`
+              : (last?.value_text ?? undefined);
           return (
-            <StatusTile key={d.key} label={d.label} status={status} value={value} trend={trend} spark={values} tone={d.tone} icon={d.icon} />
+            <StatusTile
+              key={d.key}
+              label={d.label}
+              status={status}
+              value={value}
+              trend={trend}
+              spark={values}
+              tone={d.tone}
+              icon={d.icon}
+            />
           );
         })}
       </div>
@@ -185,8 +294,16 @@ function TwinPage() {
         <Card className="lg:col-span-2">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs uppercase tracking-widest text-muted-foreground">Health trajectory</p>
-              <p className="mt-1 font-display text-2xl text-foreground">{window === 7 ? "Last 7 days" : window === 30 ? "Last 30 days" : window === 90 ? "Last 90 days" : "Last year"}</p>
+              <p className="text-xs uppercase text-muted-foreground">Health trajectory</p>
+              <p className="mt-1 text-2xl font-semibold text-foreground">
+                {window === 7
+                  ? "Last 7 days"
+                  : window === 30
+                    ? "Last 30 days"
+                    : window === 90
+                      ? "Last 90 days"
+                      : "Last year"}
+              </p>
             </div>
             <Pill tone="moss">{observations.length} observations</Pill>
           </div>
@@ -194,31 +311,54 @@ function TwinPage() {
         </Card>
 
         <Card>
-          <p className="text-xs uppercase tracking-widest text-muted-foreground">Behavior stability</p>
+          <p className="text-xs uppercase text-muted-foreground">Behavior stability</p>
           <p className="mt-2 font-display text-5xl text-olive">{stabilityScore}</p>
-          <p className="mt-1 text-xs text-muted-foreground">based on routine adherence, social interaction frequency, and observation cadence over the selected window</p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            based on routine adherence, social interaction frequency, and observation cadence over
+            the selected window
+          </p>
           <div className="mt-4 space-y-2">
             <BehaviorRow label="Social interaction" value={byDomain.social?.length ?? 0} />
-            <BehaviorRow label="Routine adherence" value={Math.min(100, Math.round(((byDomain.routine?.length ?? 0) / window) * 100))} suffix="%" />
-            <BehaviorRow label="Mood stability" value={moodVariance(byDomain.emotional ?? [])} suffix="σ" />
+            <BehaviorRow
+              label="Routine adherence"
+              value={Math.min(100, Math.round(((byDomain.routine?.length ?? 0) / window) * 100))}
+              suffix="%"
+            />
+            <BehaviorRow
+              label="Mood stability"
+              value={moodVariance(byDomain.emotional ?? [])}
+              suffix="Ïƒ"
+            />
           </div>
         </Card>
       </div>
 
       <div className="mt-8">
         <div className="mb-4 flex items-center justify-between">
-          <h2 className="font-display text-xl text-foreground">AI observations</h2>
+          <h2 className="text-xl font-semibold text-foreground">AI observations</h2>
           {canManage && <Pill tone="muted">admin-managed</Pill>}
         </div>
         {insights.length === 0 ? (
-          <EmptyState title="No AI insights yet" hint="Once enough observations are recorded, the AI insight system will surface patterns here." />
+          <EmptyState
+            title="No AI insights yet"
+            hint="Once enough observations are recorded, the AI insight system will surface patterns here."
+          />
         ) : (
           <div className="grid gap-4 md:grid-cols-2">
             {insights.map((i) => (
-              <InsightCard key={i.id} title={i.title} summary={i.summary} reasoning={i.reasoning}
-                confidence={i.confidence} severity={i.severity}
-                recommendations={Array.isArray(i.recommendations) ? (i.recommendations as string[]) : []}
-                generatedBy={i.generated_by} createdAt={i.created_at} />
+              <InsightCard
+                key={i.id}
+                title={i.title}
+                summary={i.summary}
+                reasoning={i.reasoning}
+                confidence={i.confidence}
+                severity={i.severity}
+                recommendations={
+                  Array.isArray(i.recommendations) ? (i.recommendations as string[]) : []
+                }
+                generatedBy={i.generated_by}
+                createdAt={i.created_at}
+              />
             ))}
           </div>
         )}
@@ -227,9 +367,21 @@ function TwinPage() {
   );
 }
 
-function ObsForm({ onCancel, onSubmit, submitting }: {
+function ObsForm({
+  onCancel,
+  onSubmit,
+  submitting,
+}: {
   onCancel: () => void;
-  onSubmit: (v: { domain: string; metric: string; value_numeric: string; value_text: string; unit: string; notes: string; source: string }) => void;
+  onSubmit: (v: {
+    domain: string;
+    metric: string;
+    value_numeric: string;
+    value_text: string;
+    unit: string;
+    notes: string;
+    source: string;
+  }) => void;
   submitting: boolean;
 }) {
   const [domain, setDomain] = useState("health");
@@ -249,30 +401,85 @@ function ObsForm({ onCancel, onSubmit, submitting }: {
       <form onSubmit={submit} className="grid gap-3 md:grid-cols-3">
         <Field label="Domain">
           <select value={domain} onChange={(e) => setDomain(e.target.value)} className={inputCls()}>
-            {DOMAINS.map((d) => <option key={d.key} value={d.key}>{d.label}</option>)}
+            {DOMAINS.map((d) => (
+              <option key={d.key} value={d.key}>
+                {d.label}
+              </option>
+            ))}
             <option value="environment">Environment</option>
             <option value="routine">Routine</option>
             <option value="behavior">Behavior</option>
           </select>
         </Field>
-        <Field label="Metric"><input className={inputCls()} value={metric} onChange={(e) => setMetric(e.target.value)} placeholder="e.g. resting heart rate" required /></Field>
+        <Field label="Metric">
+          <input
+            className={inputCls()}
+            value={metric}
+            onChange={(e) => setMetric(e.target.value)}
+            placeholder="e.g. resting heart rate"
+            required
+          />
+        </Field>
         <Field label="Source">
           <select value={source} onChange={(e) => setSource(e.target.value)} className={inputCls()}>
-            <option value="manual">Manual</option><option value="caregiver">Caregiver</option><option value="nurse">Nurse</option>
-            <option value="doctor">Doctor</option><option value="device">Device</option><option value="family">Family</option>
+            <option value="manual">Manual</option>
+            <option value="caregiver">Caregiver</option>
+            <option value="nurse">Nurse</option>
+            <option value="doctor">Doctor</option>
+            <option value="device">Device</option>
+            <option value="family">Family</option>
           </select>
         </Field>
-        <Field label="Value (numeric)"><input className={inputCls()} type="number" step="0.01" value={vNum} onChange={(e) => setVNum(e.target.value)} /></Field>
-        <Field label="Unit"><input className={inputCls()} value={unit} onChange={(e) => setUnit(e.target.value)} placeholder="bpm, ml, h…" /></Field>
-        <Field label="Value (text)"><input className={inputCls()} value={vTxt} onChange={(e) => setVTxt(e.target.value)} placeholder="alert, calm, agitated…" /></Field>
+        <Field label="Value (numeric)">
+          <input
+            className={inputCls()}
+            type="number"
+            step="0.01"
+            value={vNum}
+            onChange={(e) => setVNum(e.target.value)}
+          />
+        </Field>
+        <Field label="Unit">
+          <input
+            className={inputCls()}
+            value={unit}
+            onChange={(e) => setUnit(e.target.value)}
+            placeholder="bpm, ml, h..."
+          />
+        </Field>
+        <Field label="Value (text)">
+          <input
+            className={inputCls()}
+            value={vTxt}
+            onChange={(e) => setVTxt(e.target.value)}
+            placeholder="alert, calm, agitated..."
+          />
+        </Field>
         <div className="md:col-span-3">
-          <Field label="Notes"><textarea className={inputCls()} rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} /></Field>
+          <Field label="Notes">
+            <textarea
+              className={inputCls()}
+              rows={2}
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+            />
+          </Field>
         </div>
         <div className="md:col-span-3 flex gap-2">
-          <button type="submit" disabled={submitting} className="rounded-full bg-olive px-4 py-2 text-sm text-ivory hover:opacity-90 disabled:opacity-50">
-            {submitting ? "Saving…" : "Save observation"}
+          <button
+            type="submit"
+            disabled={submitting}
+            className="rounded-full bg-olive px-4 py-2 text-sm text-ivory hover:opacity-90 disabled:opacity-50"
+          >
+            {submitting ? "Saving..." : "Save observation"}
           </button>
-          <button type="button" onClick={onCancel} className="rounded-full border border-border px-4 py-2 text-sm text-foreground hover:bg-cream">Cancel</button>
+          <button
+            type="button"
+            onClick={onCancel}
+            className="rounded-full border border-border px-4 py-2 text-sm text-foreground hover:bg-cream"
+          >
+            Cancel
+          </button>
         </div>
       </form>
     </Card>
@@ -282,37 +489,54 @@ function ObsForm({ onCancel, onSubmit, submitting }: {
 function Trajectory({ observations, window }: { observations: Obs[]; window: number }) {
   // build per-domain sparkline series
   const series = DOMAINS.map((d) => {
-    const pts = observations.filter((o) => o.domain === d.key && o.value_numeric != null).map((o) => o.value_numeric as number);
+    const pts = observations
+      .filter((o) => o.domain === d.key && o.value_numeric != null)
+      .map((o) => o.value_numeric as number);
     return { key: d.key, label: d.label, tone: d.tone, pts };
   }).filter((s) => s.pts.length > 1);
-  if (series.length === 0) return <p className="mt-6 text-sm text-muted-foreground">Not enough data to draw a trajectory. Record observations to build the trend.</p>;
+  if (series.length === 0)
+    return (
+      <p className="mt-6 text-sm text-muted-foreground">
+        Not enough data to draw a trajectory. Record observations to build the trend.
+      </p>
+    );
   return (
     <div className="mt-4 grid gap-3 md:grid-cols-2">
       {series.map((s) => {
-        const first = s.pts[0]; const last = s.pts[s.pts.length - 1];
+        const first = s.pts[0];
+        const last = s.pts[s.pts.length - 1];
         const delta = last - first;
         return (
           <div key={s.key} className="rounded-2xl border border-border bg-cream/40 p-3">
             <div className="flex items-center justify-between text-xs text-muted-foreground">
               <span>{s.label}</span>
-              <span className={delta > 0 ? "text-moss" : delta < 0 ? "text-wine" : ""}>{delta > 0 ? "+" : ""}{delta.toFixed(1)}</span>
+              <span className={delta > 0 ? "text-moss" : delta < 0 ? "text-wine" : ""}>
+                {delta > 0 ? "+" : ""}
+                {delta.toFixed(1)}
+              </span>
             </div>
             <Sparkline pts={s.pts} />
           </div>
         );
       })}
       <p className="md:col-span-2 mt-2 text-xs text-muted-foreground">
-        Window: {window === 365 ? "1 year" : `${window} days`}. AI summary panel will populate once observations cross the analysis threshold.
+        Window: {window === 365 ? "1 year" : `${window} days`}. AI summary panel will populate once
+        observations cross the analysis threshold.
       </p>
     </div>
   );
 }
 
 function Sparkline({ pts }: { pts: number[] }) {
-  const max = Math.max(...pts); const min = Math.min(...pts); const r = max - min || 1;
-  const w = 200; const h = 40;
+  const max = Math.max(...pts);
+  const min = Math.min(...pts);
+  const r = max - min || 1;
+  const w = 200;
+  const h = 40;
   const step = w / (pts.length - 1);
-  const path = pts.map((p, i) => `${i === 0 ? "M" : "L"} ${i * step} ${h - ((p - min) / r) * (h - 4) - 2}`).join(" ");
+  const path = pts
+    .map((p, i) => `${i === 0 ? "M" : "L"} ${i * step} ${h - ((p - min) / r) * (h - 4) - 2}`)
+    .join(" ");
   return (
     <svg viewBox={`0 0 ${w} ${h}`} className="mt-2 h-10 w-full">
       <path d={path} fill="none" stroke="var(--olive)" strokeWidth="1.5" />
@@ -320,11 +544,22 @@ function Sparkline({ pts }: { pts: number[] }) {
   );
 }
 
-function BehaviorRow({ label, value, suffix }: { label: string; value: number | string; suffix?: string }) {
+function BehaviorRow({
+  label,
+  value,
+  suffix,
+}: {
+  label: string;
+  value: number | string;
+  suffix?: string;
+}) {
   return (
     <div className="flex items-center justify-between text-sm">
       <span className="text-muted-foreground">{label}</span>
-      <span className="font-display text-foreground">{value}{suffix}</span>
+      <span className="font-display text-foreground">
+        {value}
+        {suffix}
+      </span>
     </div>
   );
 }
@@ -339,7 +574,7 @@ function computeStability(observations: Obs[]) {
 
 function moodVariance(obs: Obs[]) {
   const vals = obs.map((o) => o.value_numeric).filter((v): v is number => v != null);
-  if (vals.length < 2) return "—";
+  if (vals.length < 2) return "-";
   const m = vals.reduce((a, b) => a + b, 0) / vals.length;
   const v = Math.sqrt(vals.reduce((a, b) => a + (b - m) ** 2, 0) / vals.length);
   return v.toFixed(2);

@@ -20,7 +20,19 @@ type EventRow = {
   occurred_at: string;
 };
 
-const CATEGORIES = ["all", "general", "medication", "vitals", "nutrition", "hydration", "mobility", "mood", "incident", "memory", "alert"];
+const CATEGORIES = [
+  "all",
+  "general",
+  "medication",
+  "vitals",
+  "nutrition",
+  "hydration",
+  "mobility",
+  "mood",
+  "incident",
+  "memory",
+  "alert",
+];
 const SEVERITIES = ["all", "info", "success", "warning", "critical"];
 
 const sevTone = (s: string) =>
@@ -68,7 +80,12 @@ function TimelinePage() {
   });
 
   const createEvent = useMutation({
-    mutationFn: async (vars: { title: string; category: string; severity: string; description: string }) => {
+    mutationFn: async (vars: {
+      title: string;
+      category: string;
+      severity: string;
+      description: string;
+    }) => {
       const { error } = await supabase.from("events").insert({
         tenant_id: profile!.tenant_id!,
         actor_id: user!.id,
@@ -110,7 +127,10 @@ function TimelinePage() {
         subtitle="A unified, realtime stream of every meaningful care moment."
         action={
           canLog && (
-            <button onClick={() => setShowForm((v) => !v)} className="rounded-full bg-olive px-4 py-2 text-xs text-ivory hover:opacity-90">
+            <button
+              onClick={() => setShowForm((v) => !v)}
+              className="rounded-full bg-olive px-4 py-2 text-xs text-ivory hover:opacity-90"
+            >
               {showForm ? "Cancel" : "+ Log event"}
             </button>
           )
@@ -118,23 +138,54 @@ function TimelinePage() {
       />
 
       <div className="mb-4 flex flex-wrap items-center gap-2">
-        <button onClick={() => shiftDay(-1)} className="rounded-full border border-border bg-ivory px-3 py-1.5 text-xs hover:bg-cream">← Yesterday</button>
+        <button
+          onClick={() => shiftDay(-1)}
+          className="rounded-full border border-border bg-ivory px-3 py-1.5 text-xs hover:bg-cream"
+        >
+          Yesterday
+        </button>
         <input
           type="date"
           value={date}
           onChange={(e) => setDate(e.target.value)}
           className="rounded-full border border-border bg-ivory px-3 py-1.5 text-xs"
         />
-        <button onClick={() => shiftDay(1)} className="rounded-full border border-border bg-ivory px-3 py-1.5 text-xs hover:bg-cream">Tomorrow →</button>
-        <button onClick={() => setDate(toDayKey(new Date()))} className="rounded-full border border-border bg-ivory px-3 py-1.5 text-xs hover:bg-cream">Today</button>
+        <button
+          onClick={() => shiftDay(1)}
+          className="rounded-full border border-border bg-ivory px-3 py-1.5 text-xs hover:bg-cream"
+        >
+          Tomorrow
+        </button>
+        <button
+          onClick={() => setDate(toDayKey(new Date()))}
+          className="rounded-full border border-border bg-ivory px-3 py-1.5 text-xs hover:bg-cream"
+        >
+          Today
+        </button>
 
         <span className="mx-2 h-4 w-px bg-border" />
 
-        <select value={category} onChange={(e) => setCategory(e.target.value)} className="rounded-full border border-border bg-ivory px-3 py-1.5 text-xs capitalize">
-          {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
+        <select
+          value={category}
+          onChange={(e) => setCategory(e.target.value)}
+          className="rounded-full border border-border bg-ivory px-3 py-1.5 text-xs capitalize"
+        >
+          {CATEGORIES.map((c) => (
+            <option key={c} value={c}>
+              {c}
+            </option>
+          ))}
         </select>
-        <select value={severity} onChange={(e) => setSeverity(e.target.value)} className="rounded-full border border-border bg-ivory px-3 py-1.5 text-xs capitalize">
-          {SEVERITIES.map((s) => <option key={s} value={s}>{s}</option>)}
+        <select
+          value={severity}
+          onChange={(e) => setSeverity(e.target.value)}
+          className="rounded-full border border-border bg-ivory px-3 py-1.5 text-xs capitalize"
+        >
+          {SEVERITIES.map((s) => (
+            <option key={s} value={s}>
+              {s}
+            </option>
+          ))}
         </select>
 
         <span className="ml-auto flex items-center gap-1.5 text-xs text-muted-foreground">
@@ -158,16 +209,39 @@ function TimelinePage() {
             }}
             className="grid grid-cols-1 gap-2 md:grid-cols-4"
           >
-            <input name="title" required placeholder="What happened?" className="rounded-lg border border-border bg-card px-2 py-1.5 text-sm md:col-span-2" />
-            <select name="category" className="rounded-lg border border-border bg-card px-2 py-1.5 text-sm capitalize">
-              {CATEGORIES.filter((c) => c !== "all").map((c) => <option key={c}>{c}</option>)}
+            <input
+              name="title"
+              required
+              placeholder="What happened?"
+              className="rounded-lg border border-border bg-card px-2 py-1.5 text-sm md:col-span-2"
+            />
+            <select
+              name="category"
+              className="rounded-lg border border-border bg-card px-2 py-1.5 text-sm capitalize"
+            >
+              {CATEGORIES.filter((c) => c !== "all").map((c) => (
+                <option key={c}>{c}</option>
+              ))}
             </select>
-            <select name="severity" className="rounded-lg border border-border bg-card px-2 py-1.5 text-sm capitalize">
-              {SEVERITIES.filter((s) => s !== "all").map((s) => <option key={s}>{s}</option>)}
+            <select
+              name="severity"
+              className="rounded-lg border border-border bg-card px-2 py-1.5 text-sm capitalize"
+            >
+              {SEVERITIES.filter((s) => s !== "all").map((s) => (
+                <option key={s}>{s}</option>
+              ))}
             </select>
-            <textarea name="description" placeholder="Notes (optional)" rows={2} className="rounded-lg border border-border bg-card px-2 py-1.5 text-sm md:col-span-3" />
-            <button disabled={createEvent.isPending} className="rounded-lg bg-olive py-1.5 text-xs text-ivory hover:opacity-90 disabled:opacity-50">
-              {createEvent.isPending ? "Logging…" : "Log event"}
+            <textarea
+              name="description"
+              placeholder="Notes (optional)"
+              rows={2}
+              className="rounded-lg border border-border bg-card px-2 py-1.5 text-sm md:col-span-3"
+            />
+            <button
+              disabled={createEvent.isPending}
+              className="rounded-lg bg-olive py-1.5 text-xs text-ivory hover:opacity-90 disabled:opacity-50"
+            >
+              {createEvent.isPending ? "Logging..." : "Log event"}
             </button>
           </form>
         </Card>
@@ -181,14 +255,18 @@ function TimelinePage() {
         </div>
       ) : events.length === 0 ? (
         <Card className="p-10 text-center">
-          <p className="font-display text-lg text-foreground">A quiet day.</p>
-          <p className="mt-1 text-sm text-muted-foreground">No events recorded for {dayLabel(date)}.</p>
+          <p className="text-lg font-semibold text-foreground">A quiet day.</p>
+          <p className="mt-1 text-sm text-muted-foreground">
+            No events recorded for {dayLabel(date)}.
+          </p>
         </Card>
       ) : (
         <div className="space-y-6">
           {grouped.map(([day, items]) => (
             <div key={day}>
-              <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-muted-foreground">{dayLabel(day)}</p>
+              <p className="mb-2 text-xs font-semibold uppercase text-muted-foreground">
+                {dayLabel(day)}
+              </p>
               <div className="space-y-1.5">
                 {items.map((e) => (
                   <Card key={e.id} className="flex items-start gap-3 p-3" padded={false}>
@@ -199,10 +277,15 @@ function TimelinePage() {
                         <Pill tone={sevTone(e.severity) as "olive"}>{e.severity}</Pill>
                         <Pill tone="muted">{e.category}</Pill>
                       </div>
-                      {e.description && <p className="mt-0.5 text-xs text-muted-foreground">{e.description}</p>}
+                      {e.description && (
+                        <p className="mt-0.5 text-xs text-muted-foreground">{e.description}</p>
+                      )}
                     </div>
                     <span className="flex-none text-xs text-muted-foreground">
-                      {new Date(e.occurred_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                      {new Date(e.occurred_at).toLocaleTimeString([], {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
                     </span>
                   </Card>
                 ))}

@@ -10,15 +10,38 @@ export const Route = createFileRoute("/app/care-plan")({ component: CarePlanPage
 
 type Resident = { id: string; full_name: string; preferred_name: string | null };
 type Plan = {
-  id: string; resident_id: string; title: string; description: string | null;
-  status: string; priority: string; start_date: string | null; end_date: string | null;
+  id: string;
+  resident_id: string;
+  title: string;
+  description: string | null;
+  status: string;
+  priority: string;
+  start_date: string | null;
+  end_date: string | null;
 };
 type Task = {
-  id: string; resident_id: string; care_plan_id: string | null; title: string; notes: string | null;
-  category: string; status: string; priority: string; due_at: string | null; completed_at: string | null;
+  id: string;
+  resident_id: string;
+  care_plan_id: string | null;
+  title: string;
+  notes: string | null;
+  category: string;
+  status: string;
+  priority: string;
+  due_at: string | null;
+  completed_at: string | null;
 };
 
-const CATEGORIES = ["general", "medication", "vitals", "nutrition", "hydration", "mobility", "cognition", "emotional"];
+const CATEGORIES = [
+  "general",
+  "medication",
+  "vitals",
+  "nutrition",
+  "hydration",
+  "mobility",
+  "cognition",
+  "emotional",
+];
 const PRIORITIES = ["low", "normal", "high", "critical"];
 
 function CarePlanPage() {
@@ -35,7 +58,10 @@ function CarePlanPage() {
     queryKey: ["residents-list"],
     enabled: !!profile?.tenant_id,
     queryFn: async () => {
-      const { data } = await supabase.from("residents").select("id,full_name,preferred_name").order("full_name");
+      const { data } = await supabase
+        .from("residents")
+        .select("id,full_name,preferred_name")
+        .order("full_name");
       const r = (data ?? []) as Resident[];
       if (r[0] && !residentId) setResidentId(r[0].id);
       return r;
@@ -46,7 +72,11 @@ function CarePlanPage() {
     queryKey: ["care-plans", residentId],
     enabled: !!residentId,
     queryFn: async () => {
-      const { data } = await supabase.from("care_plans").select("*").eq("resident_id", residentId).order("created_at", { ascending: false });
+      const { data } = await supabase
+        .from("care_plans")
+        .select("*")
+        .eq("resident_id", residentId)
+        .order("created_at", { ascending: false });
       return (data ?? []) as Plan[];
     },
   });
@@ -55,13 +85,23 @@ function CarePlanPage() {
     queryKey: ["care-tasks", residentId],
     enabled: !!residentId,
     queryFn: async () => {
-      const { data } = await supabase.from("care_tasks").select("*").eq("resident_id", residentId).order("due_at", { ascending: true, nullsFirst: false });
+      const { data } = await supabase
+        .from("care_tasks")
+        .select("*")
+        .eq("resident_id", residentId)
+        .order("due_at", { ascending: true, nullsFirst: false });
       return (data ?? []) as Task[];
     },
   });
 
   const createPlan = useMutation({
-    mutationFn: async (v: { title: string; description: string | null; priority: string; start_date: string | null; end_date: string | null }) => {
+    mutationFn: async (v: {
+      title: string;
+      description: string | null;
+      priority: string;
+      start_date: string | null;
+      end_date: string | null;
+    }) => {
       const { error } = await supabase.from("care_plans").insert({
         tenant_id: profile!.tenant_id!,
         resident_id: residentId,
@@ -83,7 +123,14 @@ function CarePlanPage() {
   });
 
   const createTask = useMutation({
-    mutationFn: async (v: { title: string; notes: string | null; category: string; priority: string; due_at: string | null; care_plan_id: string | null }) => {
+    mutationFn: async (v: {
+      title: string;
+      notes: string | null;
+      category: string;
+      priority: string;
+      due_at: string | null;
+      care_plan_id: string | null;
+    }) => {
       const { error } = await supabase.from("care_tasks").insert({
         tenant_id: profile!.tenant_id!,
         resident_id: residentId,
@@ -134,9 +181,13 @@ function CarePlanPage() {
       qc.setQueryData<Task[]>(["care-tasks", residentId], (old) =>
         old?.map((x) =>
           x.id === t.id
-            ? { ...x, status: done ? "pending" : "completed", completed_at: done ? null : new Date().toISOString() }
-            : x
-        )
+            ? {
+                ...x,
+                status: done ? "pending" : "completed",
+                completed_at: done ? null : new Date().toISOString(),
+              }
+            : x,
+        ),
       );
       return { prev };
     },
@@ -165,29 +216,47 @@ function CarePlanPage() {
   const stats = useMemo(() => {
     const total = tasks.length;
     const done = tasks.filter((t) => t.status === "completed").length;
-    const overdue = tasks.filter((t) => t.status !== "completed" && t.due_at && new Date(t.due_at) < new Date()).length;
+    const overdue = tasks.filter(
+      (t) => t.status !== "completed" && t.due_at && new Date(t.due_at) < new Date(),
+    ).length;
     return { total, done, overdue, pct: total ? Math.round((done / total) * 100) : 0 };
   }, [tasks]);
 
-  if (residentsLoading) return <p className="text-sm text-muted-foreground">Loading care plan…</p>;
+  if (residentsLoading)
+    return <p className="text-sm text-muted-foreground">Loading care plan...</p>;
 
   return (
     <>
-      <PageHeader title="Care plan" subtitle="Individualized plans and daily tasks · synced live across the care team" />
+      <PageHeader
+        title="Care plan"
+        subtitle="Individualized plans and daily tasks - synced live across the care team"
+      />
 
       {residents.length === 0 ? (
         <Card className="p-6">
-          <p className="text-sm text-muted-foreground">Add a resident first to start building care plans.</p>
+          <p className="text-sm text-muted-foreground">
+            Add a resident first to start building care plans.
+          </p>
         </Card>
       ) : (
         <>
           <div className="mb-6 flex flex-wrap items-center gap-3">
-            <label className="text-xs uppercase tracking-wider text-muted-foreground">Resident</label>
-            <select value={residentId} onChange={(e) => setResidentId(e.target.value)} className="rounded-xl border border-border bg-ivory px-3 py-2 text-sm">
-              {residents.map((r) => <option key={r.id} value={r.id}>{r.preferred_name ?? r.full_name}</option>)}
+            <label className="text-xs uppercase text-muted-foreground">Resident</label>
+            <select
+              value={residentId}
+              onChange={(e) => setResidentId(e.target.value)}
+              className="rounded-xl border border-border bg-ivory px-3 py-2 text-sm"
+            >
+              {residents.map((r) => (
+                <option key={r.id} value={r.id}>
+                  {r.preferred_name ?? r.full_name}
+                </option>
+              ))}
             </select>
             <div className="ml-auto flex items-center gap-2">
-              <Pill>{stats.done}/{stats.total} done</Pill>
+              <Pill>
+                {stats.done}/{stats.total} done
+              </Pill>
               {stats.overdue > 0 && <Pill tone="wine">{stats.overdue} overdue</Pill>}
               <Pill tone="moss">{stats.pct}%</Pill>
               <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
@@ -200,9 +269,12 @@ function CarePlanPage() {
             {/* Plans */}
             <Card className="p-6 lg:col-span-1">
               <div className="mb-4 flex items-center justify-between">
-                <h3 className="font-display text-lg text-foreground">Plans</h3>
+                <h3 className="text-lg font-semibold text-foreground">Plans</h3>
                 {canEditPlans && (
-                  <button onClick={() => setShowPlanForm((v) => !v)} className="rounded-full bg-olive px-3 py-1 text-xs text-ivory hover:opacity-90">
+                  <button
+                    onClick={() => setShowPlanForm((v) => !v)}
+                    className="rounded-full bg-olive px-3 py-1 text-xs text-ivory hover:opacity-90"
+                  >
                     {showPlanForm ? "Cancel" : "+ New"}
                   </button>
                 )}
@@ -223,33 +295,76 @@ function CarePlanPage() {
                   }}
                   className="mb-4 space-y-2 rounded-2xl border border-border bg-ivory p-3"
                 >
-                  <input name="title" required placeholder="Plan title" className="w-full rounded-lg border border-border bg-card px-2 py-1.5 text-sm" />
-                  <textarea name="description" placeholder="Description / goals" className="w-full rounded-lg border border-border bg-card px-2 py-1.5 text-sm" rows={2} />
+                  <input
+                    name="title"
+                    required
+                    placeholder="Plan title"
+                    className="w-full rounded-lg border border-border bg-card px-2 py-1.5 text-sm"
+                  />
+                  <textarea
+                    name="description"
+                    placeholder="Description / goals"
+                    className="w-full rounded-lg border border-border bg-card px-2 py-1.5 text-sm"
+                    rows={2}
+                  />
                   <div className="flex gap-2">
-                    <select name="priority" className="flex-1 rounded-lg border border-border bg-card px-2 py-1.5 text-sm">
-                      {PRIORITIES.map((p) => <option key={p}>{p}</option>)}
+                    <select
+                      name="priority"
+                      className="flex-1 rounded-lg border border-border bg-card px-2 py-1.5 text-sm"
+                    >
+                      {PRIORITIES.map((p) => (
+                        <option key={p}>{p}</option>
+                      ))}
                     </select>
-                    <input type="date" name="start_date" className="rounded-lg border border-border bg-card px-2 py-1.5 text-sm" />
-                    <input type="date" name="end_date" className="rounded-lg border border-border bg-card px-2 py-1.5 text-sm" />
+                    <input
+                      type="date"
+                      name="start_date"
+                      className="rounded-lg border border-border bg-card px-2 py-1.5 text-sm"
+                    />
+                    <input
+                      type="date"
+                      name="end_date"
+                      className="rounded-lg border border-border bg-card px-2 py-1.5 text-sm"
+                    />
                   </div>
-                  <button disabled={createPlan.isPending} className="w-full rounded-lg bg-olive py-1.5 text-xs text-ivory hover:opacity-90 disabled:opacity-50">
-                    {createPlan.isPending ? "Creating…" : "Create plan"}
+                  <button
+                    disabled={createPlan.isPending}
+                    className="w-full rounded-lg bg-olive py-1.5 text-xs text-ivory hover:opacity-90 disabled:opacity-50"
+                  >
+                    {createPlan.isPending ? "Creating..." : "Create plan"}
                   </button>
                 </form>
               )}
               <div className="space-y-2">
-                {plans.length === 0 && <p className="text-xs text-muted-foreground">No plans yet.</p>}
+                {plans.length === 0 && (
+                  <p className="text-xs text-muted-foreground">No plans yet.</p>
+                )}
                 {plans.map((p) => (
                   <div key={p.id} className="rounded-xl border border-border bg-ivory/60 p-3">
                     <div className="flex items-start justify-between gap-2">
                       <p className="text-sm font-medium text-foreground">{p.title}</p>
-                      <Pill tone={p.priority === "critical" || p.priority === "high" ? "wine" : "moss"}>{p.priority}</Pill>
+                      <Pill
+                        tone={p.priority === "critical" || p.priority === "high" ? "wine" : "moss"}
+                      >
+                        {p.priority}
+                      </Pill>
                     </div>
-                    {p.description && <p className="mt-1 text-xs text-muted-foreground">{p.description}</p>}
+                    {p.description && (
+                      <p className="mt-1 text-xs text-muted-foreground">{p.description}</p>
+                    )}
                     <div className="mt-2 flex items-center justify-between text-[11px] text-muted-foreground">
-                      <span>{p.start_date ?? "—"} → {p.end_date ?? "ongoing"}</span>
+                      <span>
+                        {p.start_date ?? "-"} to {p.end_date ?? "ongoing"}
+                      </span>
                       {hasAnyRole(["clinic_admin", "super_admin"]) && (
-                        <button onClick={() => { if (confirm("Delete this care plan?")) deletePlan.mutate(p.id); }} className="text-wine hover:underline">Delete</button>
+                        <button
+                          onClick={() => {
+                            if (confirm("Delete this care plan?")) deletePlan.mutate(p.id);
+                          }}
+                          className="text-wine hover:underline"
+                        >
+                          Delete
+                        </button>
                       )}
                     </div>
                   </div>
@@ -260,9 +375,12 @@ function CarePlanPage() {
             {/* Tasks */}
             <Card className="p-6 lg:col-span-2">
               <div className="mb-4 flex items-center justify-between">
-                <h3 className="font-display text-lg text-foreground">Daily tasks</h3>
+                <h3 className="text-lg font-semibold text-foreground">Daily tasks</h3>
                 {canEditTasks && (
-                  <button onClick={() => setShowTaskForm((v) => !v)} className="rounded-full bg-olive px-3 py-1 text-xs text-ivory hover:opacity-90">
+                  <button
+                    onClick={() => setShowTaskForm((v) => !v)}
+                    className="rounded-full bg-olive px-3 py-1 text-xs text-ivory hover:opacity-90"
+                  >
                     {showTaskForm ? "Cancel" : "+ New task"}
                   </button>
                 )}
@@ -285,26 +403,62 @@ function CarePlanPage() {
                   }}
                   className="mb-4 grid grid-cols-1 gap-2 rounded-2xl border border-border bg-ivory p-3 md:grid-cols-2"
                 >
-                  <input name="title" required placeholder="Task title" className="rounded-lg border border-border bg-card px-2 py-1.5 text-sm md:col-span-2" />
-                  <select name="category" className="rounded-lg border border-border bg-card px-2 py-1.5 text-sm">
-                    {CATEGORIES.map((c) => <option key={c}>{c}</option>)}
+                  <input
+                    name="title"
+                    required
+                    placeholder="Task title"
+                    className="rounded-lg border border-border bg-card px-2 py-1.5 text-sm md:col-span-2"
+                  />
+                  <select
+                    name="category"
+                    className="rounded-lg border border-border bg-card px-2 py-1.5 text-sm"
+                  >
+                    {CATEGORIES.map((c) => (
+                      <option key={c}>{c}</option>
+                    ))}
                   </select>
-                  <select name="priority" className="rounded-lg border border-border bg-card px-2 py-1.5 text-sm">
-                    {PRIORITIES.map((p) => <option key={p}>{p}</option>)}
+                  <select
+                    name="priority"
+                    className="rounded-lg border border-border bg-card px-2 py-1.5 text-sm"
+                  >
+                    {PRIORITIES.map((p) => (
+                      <option key={p}>{p}</option>
+                    ))}
                   </select>
-                  <input type="datetime-local" name="due_at" className="rounded-lg border border-border bg-card px-2 py-1.5 text-sm" />
-                  <select name="care_plan_id" className="rounded-lg border border-border bg-card px-2 py-1.5 text-sm">
+                  <input
+                    type="datetime-local"
+                    name="due_at"
+                    className="rounded-lg border border-border bg-card px-2 py-1.5 text-sm"
+                  />
+                  <select
+                    name="care_plan_id"
+                    className="rounded-lg border border-border bg-card px-2 py-1.5 text-sm"
+                  >
                     <option value="">No plan</option>
-                    {plans.map((p) => <option key={p.id} value={p.id}>{p.title}</option>)}
+                    {plans.map((p) => (
+                      <option key={p.id} value={p.id}>
+                        {p.title}
+                      </option>
+                    ))}
                   </select>
-                  <textarea name="notes" placeholder="Notes" className="rounded-lg border border-border bg-card px-2 py-1.5 text-sm md:col-span-2" rows={2} />
-                  <button disabled={createTask.isPending} className="rounded-lg bg-olive py-1.5 text-xs text-ivory hover:opacity-90 disabled:opacity-50 md:col-span-2">
-                    {createTask.isPending ? "Adding…" : "Create task"}
+                  <textarea
+                    name="notes"
+                    placeholder="Notes"
+                    className="rounded-lg border border-border bg-card px-2 py-1.5 text-sm md:col-span-2"
+                    rows={2}
+                  />
+                  <button
+                    disabled={createTask.isPending}
+                    className="rounded-lg bg-olive py-1.5 text-xs text-ivory hover:opacity-90 disabled:opacity-50 md:col-span-2"
+                  >
+                    {createTask.isPending ? "Adding..." : "Create task"}
                   </button>
                 </form>
               )}
               <div className="space-y-1.5">
-                {tasks.length === 0 && <p className="text-xs text-muted-foreground">No tasks yet.</p>}
+                {tasks.length === 0 && (
+                  <p className="text-xs text-muted-foreground">No tasks yet.</p>
+                )}
                 {tasks.map((t) => {
                   const done = t.status === "completed";
                   const overdue = !done && t.due_at && new Date(t.due_at) < new Date();
@@ -312,7 +466,11 @@ function CarePlanPage() {
                     <div
                       key={t.id}
                       className={`flex items-center gap-3 rounded-xl border p-3 transition-all ${
-                        done ? "border-border bg-cream/40" : overdue ? "border-wine/30 bg-wine/5" : "border-border bg-ivory"
+                        done
+                          ? "border-border bg-cream/40"
+                          : overdue
+                            ? "border-wine/30 bg-wine/5"
+                            : "border-border bg-ivory"
                       }`}
                     >
                       <button
@@ -322,21 +480,57 @@ function CarePlanPage() {
                           done ? "border-moss bg-moss text-ivory" : "border-border bg-card"
                         } ${canEditTasks ? "hover:border-olive" : "cursor-not-allowed"}`}
                       >
-                        {done && <svg viewBox="0 0 24 24" className="h-3 w-3" fill="none" stroke="currentColor" strokeWidth="3"><path d="M5 13l4 4L19 7" /></svg>}
+                        {done && (
+                          <svg
+                            viewBox="0 0 24 24"
+                            className="h-3 w-3"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="3"
+                          >
+                            <path d="M5 13l4 4L19 7" />
+                          </svg>
+                        )}
                       </button>
                       <div className="min-w-0 flex-1">
-                        <p className={`truncate text-sm ${done ? "text-muted-foreground line-through" : "text-foreground"}`}>{t.title}</p>
-                        {t.notes && <p className="truncate text-xs text-muted-foreground">{t.notes}</p>}
+                        <p
+                          className={`truncate text-sm ${done ? "text-muted-foreground line-through" : "text-foreground"}`}
+                        >
+                          {t.title}
+                        </p>
+                        {t.notes && (
+                          <p className="truncate text-xs text-muted-foreground">{t.notes}</p>
+                        )}
                       </div>
                       <Pill>{t.category}</Pill>
                       {t.due_at && (
-                        <span className={`text-xs ${overdue ? "text-wine" : "text-muted-foreground"}`}>
-                          {new Date(t.due_at).toLocaleString([], { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}
+                        <span
+                          className={`text-xs ${overdue ? "text-wine" : "text-muted-foreground"}`}
+                        >
+                          {new Date(t.due_at).toLocaleString([], {
+                            month: "short",
+                            day: "numeric",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })}
                         </span>
                       )}
-                      {t.priority !== "normal" && <Pill tone={t.priority === "critical" || t.priority === "high" ? "wine" : "moss"}>{t.priority}</Pill>}
+                      {t.priority !== "normal" && (
+                        <Pill
+                          tone={
+                            t.priority === "critical" || t.priority === "high" ? "wine" : "moss"
+                          }
+                        >
+                          {t.priority}
+                        </Pill>
+                      )}
                       {hasAnyRole(["clinic_admin", "super_admin"]) && (
-                        <button onClick={() => deleteTask.mutate(t.id)} className="text-xs text-muted-foreground hover:text-wine">×</button>
+                        <button
+                          onClick={() => deleteTask.mutate(t.id)}
+                          className="text-xs text-muted-foreground hover:text-wine"
+                        >
+                          x
+                        </button>
                       )}
                     </div>
                   );

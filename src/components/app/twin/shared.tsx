@@ -30,7 +30,15 @@ export function ResidentPicker({
 }) {
   return (
     <div className="flex items-center gap-2 rounded-full border border-border bg-ivory px-3 py-1.5">
-      <svg viewBox="0 0 24 24" className="h-4 w-4 text-muted-foreground" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2 M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8" /></svg>
+      <svg
+        viewBox="0 0 24 24"
+        className="h-4 w-4 text-muted-foreground"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+      >
+        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2 M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8" />
+      </svg>
       <select
         value={value}
         onChange={(e) => onChange(e.target.value)}
@@ -64,8 +72,9 @@ export function StatusTile({
   tone?: "olive" | "wine" | "moss" | "terracotta" | "gold";
   icon: string;
 }) {
-  const trendArrow = trend === "up" ? "▲" : trend === "down" ? "▼" : "—";
-  const trendTone = trend === "up" ? "text-moss" : trend === "down" ? "text-wine" : "text-muted-foreground";
+  const trendArrow = trend === "up" ? "up" : trend === "down" ? "down" : "-";
+  const trendTone =
+    trend === "up" ? "text-moss" : trend === "down" ? "text-wine" : "text-muted-foreground";
   const toneColor: Record<string, string> = {
     olive: "var(--olive)",
     wine: "var(--wine)",
@@ -77,15 +86,32 @@ export function StatusTile({
     <Card>
       <div className="flex items-start justify-between">
         <div>
-          <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">{label}</p>
-          <p className="mt-2 font-display text-2xl text-foreground">{value ?? "—"}</p>
-          <p className={`mt-1 text-xs ${trendTone}`}>{trendArrow} {status}</p>
+          <p className="text-[10px] font-semibold uppercase text-muted-foreground">{label}</p>
+          <p className="mt-2 text-2xl font-semibold text-foreground">{value ?? "-"}</p>
+          <p className={`mt-1 text-xs ${trendTone}`}>
+            {trendArrow} {status}
+          </p>
         </div>
-        <div className={`flex h-10 w-10 items-center justify-center rounded-2xl bg-${tone}/10 text-${tone}`}>
-          <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d={icon} /></svg>
+        <div
+          className={`flex h-10 w-10 items-center justify-center rounded-2xl bg-${tone}/10 text-${tone}`}
+        >
+          <svg
+            viewBox="0 0 24 24"
+            className="h-4 w-4"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+          >
+            <path d={icon} />
+          </svg>
         </div>
       </div>
-      {spark && spark.length > 1 && <div className="mt-3"><Spark points={spark} color={toneColor[tone]} height={36} /></div>}
+      {spark && spark.length > 1 && (
+        <div className="mt-3">
+          <Spark points={spark} color={toneColor[tone]} height={36} />
+        </div>
+      )}
     </Card>
   );
 }
@@ -122,12 +148,12 @@ export function InsightCard({
           <div className="flex items-center gap-2">
             <Pill tone={sevTone[severity] ?? "olive"}>{severity}</Pill>
             {typeof confidence === "number" && (
-              <span className="text-[10px] uppercase tracking-widest text-muted-foreground">
+              <span className="text-[10px] uppercase text-muted-foreground">
                 {Math.round(confidence * 100)}% confidence
               </span>
             )}
           </div>
-          <p className="mt-2 font-display text-lg text-foreground">{title}</p>
+          <p className="mt-2 text-lg font-semibold text-foreground">{title}</p>
           <p className="mt-1 text-sm text-muted-foreground">{summary}</p>
           {reasoning && (
             <details className="mt-3 text-xs text-muted-foreground">
@@ -138,13 +164,16 @@ export function InsightCard({
           {recommendations && recommendations.length > 0 && (
             <ul className="mt-3 space-y-1 text-xs text-foreground">
               {recommendations.map((r, i) => (
-                <li key={i} className="flex items-start gap-2"><span className="mt-1 h-1 w-1 rounded-full bg-olive" />{r}</li>
+                <li key={i} className="flex items-start gap-2">
+                  <span className="mt-1 h-1 w-1 rounded-full bg-olive" />
+                  {r}
+                </li>
               ))}
             </ul>
           )}
         </div>
       </div>
-      <div className="mt-3 flex items-center justify-between text-[10px] uppercase tracking-widest text-muted-foreground">
+      <div className="mt-3 flex items-center justify-between text-[10px] uppercase text-muted-foreground">
         <span>{generatedBy}</span>
         {createdAt && <span>{new Date(createdAt).toLocaleString()}</span>}
       </div>
@@ -155,7 +184,7 @@ export function InsightCard({
 export function Field({ label, children }: { label: string; children: ReactNode }) {
   return (
     <label className="flex flex-col gap-1.5 text-sm">
-      <span className="text-xs font-medium uppercase tracking-widest text-muted-foreground">{label}</span>
+      <span className="text-xs font-medium uppercase text-muted-foreground">{label}</span>
       {children}
     </label>
   );
