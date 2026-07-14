@@ -10,7 +10,7 @@ export function Longevity() {
             More years.<br/><span className="italic text-olive">More life in them.</span>
           </h2>
           <p className="mt-5 text-lg leading-relaxed text-muted-foreground">
-            Personalised plans for movement, nutrition, sleep and cognitive vitality — guided by Olia's longevity intelligence and reviewed by your care team.
+            Personalised plans for movement, nutrition, sleep and cognitive vitality - guided by Care Kranich's longevity intelligence and reviewed by your care team.
           </p>
           <div className="mt-8 flex gap-6">
             <div>
@@ -26,13 +26,13 @@ export function Longevity() {
         </div>
 
         <div className="relative lg:col-span-3">
-          <div className="overflow-hidden rounded-[2rem] shadow-elevated">
+          <div className="overflow-hidden rounded-3xl shadow-elevated">
             <img src={wellnessImg} alt="Wellness still life" loading="lazy" width={1200} height={1200} className="h-full w-full object-cover" />
           </div>
-          <div className="absolute right-6 top-6 rounded-2xl bg-card/90 p-4 backdrop-blur-md shadow-elevated">
+          <div className="absolute right-6 top-6 rounded-2xl border border-white/65 bg-white/55 p-4 shadow-elevated backdrop-blur-2xl">
             <div className="text-xs text-muted-foreground">Longevity score</div>
             <div className="mt-1 font-display text-4xl text-wine">87<span className="text-base text-muted-foreground">/100</span></div>
-            <div className="mt-1 text-xs text-moss">▲ 6 this month</div>
+            <div className="mt-1 text-xs text-moss">+6 this month</div>
           </div>
         </div>
       </div>

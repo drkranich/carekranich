@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+﻿import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState, type FormEvent } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -41,7 +41,7 @@ function Signup() {
           <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-olive text-ivory">
             <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2c3 4 5 7 5 11a5 5 0 1 1-10 0c0-4 2-7 5-11z" /></svg>
           </div>
-          <span className="font-display text-xl text-olive">Olia</span>
+          <span className="font-display text-xl text-olive">Care Kranich</span>
         </Link>
         <h1 className="mt-6 font-display text-2xl text-foreground">Create your account</h1>
         <p className="mt-1 text-sm text-muted-foreground">Tell us how you'd like to be greeted.</p>
@@ -53,7 +53,7 @@ function Signup() {
           </label>
           <label className="block text-sm">
             <span className="text-foreground/80">Preferred name <span className="text-muted-foreground">(how we'll greet you)</span></span>
-            <input value={preferredName} onChange={(e) => setPreferredName(e.target.value)} placeholder={fullName.trim().split(" ")[0] || "e.g. Inês"} className="mt-1 w-full rounded-xl border border-border bg-ivory px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-olive/40" />
+            <input value={preferredName} onChange={(e) => setPreferredName(e.target.value)} placeholder={fullName.trim().split(" ")[0] || "e.g. InÃªs"} className="mt-1 w-full rounded-xl border border-border bg-ivory px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-olive/40" />
           </label>
           <label className="block text-sm">
             <span className="text-foreground/80">Email</span>
@@ -66,7 +66,7 @@ function Signup() {
           {error && <p className="rounded-lg bg-wine/10 px-3 py-2 text-xs text-wine">{error}</p>}
           {info && <p className="rounded-lg bg-moss/10 px-3 py-2 text-xs text-moss">{info}</p>}
           <button disabled={loading} className="w-full rounded-full bg-olive px-4 py-2.5 text-sm text-ivory hover:opacity-90 disabled:opacity-50">
-            {loading ? "Creating…" : "Create account"}
+            {loading ? "Creatingâ€¦" : "Create account"}
           </button>
         </form>
         <p className="mt-4 text-center text-xs text-muted-foreground">

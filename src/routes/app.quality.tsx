@@ -1,11 +1,11 @@
-import { createFileRoute } from "@tanstack/react-router";
+﻿import { createFileRoute } from "@tanstack/react-router";
 import { Card, PageHeader, Pill, Stat, Ring, Avatar, Spark } from "@/components/app/primitives";
 
 export const Route = createFileRoute("/app/quality")({ component: Quality });
 
 const caregivers = [
-  { n: "Sofia Mendes", tone: "terracotta", role: "Senior · Cardiac specialty", punctuality: 98, adherence: 96, family: 4.9, incidents: 0, burnout: "Low", trend: [88, 91, 92, 94, 95, 96, 98] },
-  { n: "André Pinto", tone: "olive", role: "Mobility specialist", punctuality: 92, adherence: 89, family: 4.7, incidents: 1, burnout: "Low", trend: [80, 82, 85, 87, 88, 90, 92] },
+  { n: "Sofia Mendes", tone: "terracotta", role: "Senior Â· Cardiac specialty", punctuality: 98, adherence: 96, family: 4.9, incidents: 0, burnout: "Low", trend: [88, 91, 92, 94, 95, 96, 98] },
+  { n: "AndrÃ© Pinto", tone: "olive", role: "Mobility specialist", punctuality: 92, adherence: 89, family: 4.7, incidents: 1, burnout: "Low", trend: [80, 82, 85, 87, 88, 90, 92] },
   { n: "Carla Nunes", tone: "wine", role: "Dementia care", punctuality: 84, adherence: 88, family: 4.6, incidents: 2, burnout: "Medium", trend: [90, 88, 86, 85, 84, 84, 84] },
   { n: "Rui Saldanha", tone: "gold", role: "Night shift lead", punctuality: 96, adherence: 94, family: 4.8, incidents: 0, burnout: "Low", trend: [85, 88, 90, 92, 93, 95, 96] },
 ];
@@ -13,19 +13,19 @@ const caregivers = [
 function Quality() {
   return (
     <>
-      <PageHeader title="Caregiver quality" subtitle="Reliability, adherence, family satisfaction, and wellbeing — measured kindly." action={<Pill tone="moss">Organization avg 4.8 / 5</Pill>} />
+      <PageHeader title="Caregiver quality" subtitle="Reliability, adherence, family satisfaction, and wellbeing â€” measured kindly." action={<Pill tone="moss">Organization avg 4.8 / 5</Pill>} />
 
       <div className="grid gap-4 md:grid-cols-4">
         <Stat label="Active caregivers" value="312" sub="14 on leave" tone="olive" />
         <Stat label="Avg punctuality" value="94%" sub="+2 vs last month" tone="moss" />
-        <Stat label="Family satisfaction" value="4.8" sub="of 5 · n=1,284" tone="gold" />
+        <Stat label="Family satisfaction" value="4.8" sub="of 5 Â· n=1,284" tone="gold" />
         <Stat label="Burnout watch" value="9" sub="proactive support engaged" tone="wine" />
       </div>
 
       <div className="mt-6 grid gap-6">
         <Card className="p-0">
           <div className="border-b border-border/60 px-6 py-4">
-            <p className="text-xs uppercase tracking-widest text-muted-foreground">Caregiver scorecards · live</p>
+            <p className="text-xs uppercase tracking-widest text-muted-foreground">Caregiver scorecards Â· live</p>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
@@ -35,7 +35,7 @@ function Quality() {
                   <th className="px-4 py-3 text-left">Punctuality</th>
                   <th className="px-4 py-3 text-left">Adherence</th>
                   <th className="px-4 py-3 text-left">Family rating</th>
-                  <th className="px-4 py-3 text-left">Incidents · 90d</th>
+                  <th className="px-4 py-3 text-left">Incidents Â· 90d</th>
                   <th className="px-4 py-3 text-left">Burnout</th>
                   <th className="px-4 py-3 text-left w-32">Trend</th>
                 </tr>
@@ -70,7 +70,7 @@ function Quality() {
           <Card className="lg:col-span-2 bg-gradient-wine text-ivory border-none">
             <p className="text-xs uppercase tracking-widest text-ivory/70">Burnout intelligence</p>
             <p className="mt-2 font-display text-xl">9 caregivers showing early fatigue signals</p>
-            <p className="mt-2 text-sm text-ivory/85">Olia detected reduced response variability, longer shift overruns and quieter chat tone. Proactive 1:1 support already scheduled with each of them.</p>
+            <p className="mt-2 text-sm text-ivory/85">Care Kranich detected reduced response variability, longer shift overruns and quieter chat tone. Proactive 1:1 support already scheduled with each of them.</p>
             <div className="mt-4 flex gap-2">
               <button className="rounded-full bg-ivory px-4 py-2 text-xs text-wine">View cohort</button>
               <button className="rounded-full border border-ivory/30 px-4 py-2 text-xs">Wellbeing playbook</button>

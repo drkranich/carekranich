@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+﻿import { createFileRoute } from "@tanstack/react-router";
 import { MarketingPage, Section } from "@/components/site/MarketingPage";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -6,9 +6,9 @@ import { toast } from "sonner";
 export const Route = createFileRoute("/contact")({
   head: () => ({
     meta: [
-      { title: "Contact — Olia" },
+      { title: "Contact â€” Care Kranich" },
       { name: "description", content: "Talk to sales, support or our partnerships team. We typically reply within one business day." },
-      { property: "og:title", content: "Contact — Olia" },
+      { property: "og:title", content: "Contact â€” Care Kranich" },
       { property: "og:description", content: "Talk to sales, support or our partnerships team." },
     ],
   }),
@@ -17,8 +17,8 @@ export const Route = createFileRoute("/contact")({
 
 const faqs = [
   { q: "How long does onboarding take?", a: "Most families are set up in under 30 minutes. Enterprise rollouts begin within two weeks." },
-  { q: "Do you integrate with our EHR?", a: "Yes — FHIR R4, HL7 v2, and direct integrations with Epic, Cerner and Meditech." },
-  { q: "Where is data stored?", a: "Regionally — EU, US and LATAM regions available. Tenant-isolated, encrypted at rest and in transit." },
+  { q: "Do you integrate with our EHR?", a: "Yes â€” FHIR R4, HL7 v2, and direct integrations with Epic, Cerner and Meditech." },
+  { q: "Where is data stored?", a: "Regionally â€” EU, US and LATAM regions available. Tenant-isolated, encrypted at rest and in transit." },
   { q: "Is there a free trial?", a: "Yes, 14 days with no credit card required for the family tier." },
 ];
 
@@ -29,7 +29,7 @@ function Page() {
       eyebrow="Contact"
       crumbs={[{ label: "Company" }, { label: "Contact" }]}
       title="Let's talk."
-      lede="Tell us a little about you and we'll route you to the right person — typically within one business day."
+      lede="Tell us a little about you and we'll route you to the right person â€” typically within one business day."
     >
       <div className="grid gap-12 lg:grid-cols-5">
         <form
@@ -37,7 +37,7 @@ function Page() {
           onSubmit={(e) => {
             e.preventDefault();
             setSending(true);
-            setTimeout(() => { setSending(false); toast.success("Thank you — we'll be in touch shortly."); (e.target as HTMLFormElement).reset(); }, 600);
+            setTimeout(() => { setSending(false); toast.success("Thank you â€” we'll be in touch shortly."); (e.target as HTMLFormElement).reset(); }, 600);
           }}
         >
           <div className="grid gap-4 md:grid-cols-2">
@@ -62,14 +62,14 @@ function Page() {
             <textarea name="message" rows={5} required className="mt-2 w-full rounded-xl border border-border bg-ivory px-4 py-3 text-sm" />
           </div>
           <button disabled={sending} className="mt-6 rounded-full bg-primary px-6 py-3 text-sm text-primary-foreground shadow-elevated transition hover:opacity-90 disabled:opacity-60">
-            {sending ? "Sending…" : "Send message"}
+            {sending ? "Sendingâ€¦" : "Send message"}
           </button>
         </form>
         <aside className="lg:col-span-2 space-y-4">
-          <Channel title="Family support" body="help@olia.care · 24/7 chat in-app" />
-          <Channel title="Enterprise sales" body="sales@olia.care · book a 30-min discovery" />
-          <Channel title="Partnerships" body="partners@olia.care" />
-          <Channel title="Press" body="press@olia.care" />
+          <Channel title="Family support" body="help@Care Kranich.care Â· 24/7 chat in-app" />
+          <Channel title="Enterprise sales" body="sales@Care Kranich.care Â· book a 30-min discovery" />
+          <Channel title="Partnerships" body="partners@Care Kranich.care" />
+          <Channel title="Press" body="press@Care Kranich.care" />
         </aside>
       </div>
       <Section kicker="FAQ" title="Quick answers.">

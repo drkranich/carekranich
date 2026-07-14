@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 
 export function Card({ children, className = "", padded = true }: { children: ReactNode; className?: string; padded?: boolean }) {
   return (
-    <div className={`rounded-3xl border border-border bg-card shadow-soft ${padded ? "p-6" : ""} ${className}`}>
+    <div className={`rounded-2xl border border-white/65 bg-card/75 shadow-soft backdrop-blur-xl ${padded ? "p-6" : ""} ${className}`}>
       {children}
     </div>
   );
@@ -47,12 +47,12 @@ export function Stat({ label, value, sub, tone = "olive" }: { label: string; val
 
 export function Pill({ children, tone = "moss" }: { children: ReactNode; tone?: "moss" | "wine" | "gold" | "olive" | "terracotta" | "muted" }) {
   const toneMap: Record<string, string> = {
-    moss: "bg-moss/10 text-moss",
-    wine: "bg-wine/10 text-wine",
-    gold: "bg-gold/15 text-gold",
-    olive: "bg-olive/10 text-olive",
-    terracotta: "bg-terracotta/10 text-terracotta",
-    muted: "bg-muted text-muted-foreground",
+    moss: "border border-moss/15 bg-moss/10 text-moss",
+    wine: "border border-wine/20 bg-wine/10 text-wine",
+    gold: "border border-gold/25 bg-gold/15 text-wine",
+    olive: "border border-olive/15 bg-olive/10 text-olive",
+    terracotta: "border border-terracotta/20 bg-terracotta/10 text-terracotta",
+    muted: "border border-border/70 bg-muted/70 text-muted-foreground",
   };
   return <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs ${toneMap[tone]}`}>{children}</span>;
 }
@@ -137,7 +137,7 @@ export function Avatar({ name, src, tone = "olive", size = 36 }: { name: string;
 export function EmptyState({ title, hint, action }: { title: string; hint?: string; action?: ReactNode }) {
   return (
     <Card className="text-center">
-      <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-gradient-olive text-ivory">
+      <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-olive text-ivory shadow-soft">
         <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 5v14 M5 12h14"/></svg>
       </div>
       <p className="mt-4 font-display text-lg text-foreground">{title}</p>

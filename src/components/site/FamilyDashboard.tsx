@@ -2,31 +2,31 @@ import handsImg from "@/assets/hands.jpg";
 
 export function FamilyDashboard() {
   const timeline = [
-    { time: "07:30", title: "Morning routine", note: "Slept 7h 42m · woke calm", tone: "bg-moss" },
-    { time: "08:15", title: "Breakfast", note: "Ate 90% · porridge & berries", tone: "bg-gold" },
-    { time: "09:00", title: "Medication", note: "Atorvastatin · Vitamin D", tone: "bg-olive" },
-    { time: "10:30", title: "Walk in the garden", note: "1,240 steps · mood lifted", tone: "bg-terracotta" },
+    { time: "07:30", title: "Morning routine", note: "Slept 7h 42m - woke calm", tone: "bg-moss" },
+    { time: "08:15", title: "Breakfast", note: "Ate 90% - porridge & berries", tone: "bg-gold" },
+    { time: "09:00", title: "Medication", note: "Atorvastatin - Vitamin D", tone: "bg-olive" },
+    { time: "10:30", title: "Walk in the garden", note: "1,240 steps - mood lifted", tone: "bg-terracotta" },
   ];
+
   return (
     <section id="family" className="relative overflow-hidden py-24 md:py-32">
       <div className="mx-auto grid max-w-7xl gap-16 px-6 lg:grid-cols-2 lg:items-center">
         <div className="relative">
-          <div className="overflow-hidden rounded-[2rem] shadow-elevated">
+          <div className="overflow-hidden rounded-3xl shadow-elevated">
             <img src={handsImg} alt="Caregiver and elder hands" loading="lazy" width={1200} height={1400} className="h-full w-full object-cover" />
           </div>
-          {/* Timeline overlay */}
-          <div className="absolute -right-2 -bottom-6 w-[22rem] rounded-3xl border border-border/60 bg-card p-6 shadow-elevated md:-right-10">
+          <div className="absolute -right-2 -bottom-6 w-[22rem] rounded-2xl border border-white/65 bg-white/55 p-6 shadow-elevated backdrop-blur-2xl md:-right-10">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs uppercase tracking-widest text-muted-foreground">Today · Maria</p>
+                <p className="text-xs uppercase tracking-widest text-muted-foreground">Today - Maria</p>
                 <p className="font-display text-xl text-olive">A peaceful morning</p>
               </div>
-              <div className="rounded-full bg-moss/10 px-2.5 py-1 text-xs text-moss">All clear</div>
+              <div className="rounded-full border border-moss/20 bg-moss/10 px-2.5 py-1 text-xs text-moss">All clear</div>
             </div>
             <ol className="mt-5 space-y-4">
               {timeline.map((t) => (
                 <li key={t.time} className="flex gap-4">
-                  <div className="text-xs tabular-nums text-muted-foreground pt-1 w-10">{t.time}</div>
+                  <div className="w-10 pt-1 text-xs tabular-nums text-muted-foreground">{t.time}</div>
                   <div className={`mt-1.5 h-2 w-2 rounded-full ${t.tone}`} />
                   <div className="flex-1">
                     <p className="text-sm text-foreground">{t.title}</p>
@@ -44,12 +44,12 @@ export function FamilyDashboard() {
             Be present, even when you're far.
           </h2>
           <p className="mt-5 text-lg leading-relaxed text-muted-foreground">
-            A living timeline of your loved one's day — meals, medication, mood, movement and meaningful moments — written in plain language by caregivers and gently summarized by Olia AI.
+            A living timeline of your loved one's day - meals, medication, mood, movement and meaningful moments - written in plain language by caregivers and gently summarized by Care Kranich AI.
           </p>
           <ul className="mt-8 space-y-4">
             {[
               "Tonight's letter: an AI-written summary delivered every evening at 8 PM.",
-              "Real-time vitals from any wearable — paired in seconds.",
+              "Real-time vitals from any wearable - paired in seconds.",
               "Secure family chat, video calls and shared photo album.",
               "One-tap SOS that reaches caregiver, neighbor and emergency services.",
             ].map((f) => (

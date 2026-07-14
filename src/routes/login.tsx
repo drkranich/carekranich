@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+﻿import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState, type FormEvent } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -28,7 +28,7 @@ function Login() {
           <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-olive text-ivory">
             <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2c3 4 5 7 5 11a5 5 0 1 1-10 0c0-4 2-7 5-11z" /></svg>
           </div>
-          <span className="font-display text-xl text-olive">Olia</span>
+          <span className="font-display text-xl text-olive">Care Kranich</span>
         </Link>
         <h1 className="mt-6 font-display text-2xl text-foreground">Welcome back</h1>
         <p className="mt-1 text-sm text-muted-foreground">Sign in to continue caring.</p>
@@ -44,7 +44,7 @@ function Login() {
           </label>
           {error && <p className="rounded-lg bg-wine/10 px-3 py-2 text-xs text-wine">{error}</p>}
           <button disabled={loading} className="w-full rounded-full bg-olive px-4 py-2.5 text-sm text-ivory hover:opacity-90 disabled:opacity-50">
-            {loading ? "Signing in…" : "Sign in"}
+            {loading ? "Signing inâ€¦" : "Sign in"}
           </button>
         </form>
         <p className="mt-4 text-center text-xs text-muted-foreground">

@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+﻿import { createFileRoute } from "@tanstack/react-router";
 import { Card, PageHeader, Pill, Avatar } from "@/components/app/primitives";
 
 export const Route = createFileRoute("/app/notifications")({ component: Notifications });
@@ -8,7 +8,7 @@ const groups = [
     label: "Today",
     items: [
       { who: "Sofia Mendes", what: "completed morning routine", when: "9:24", tone: "moss", k: "Care" },
-      { who: "Olia AI", what: "summarized last night: peaceful, 7h sleep", when: "8:02", tone: "gold", k: "AI" },
+      { who: "Care Kranich AI", what: "summarized last night: peaceful, 7h sleep", when: "8:02", tone: "gold", k: "AI" },
       { who: "Dr. Costa", what: "approved prescription renewal", when: "11:18", tone: "wine", k: "Medical" },
       { who: "Smart home", what: "stove guard armed automatically", when: "13:40", tone: "olive", k: "Home" },
     ],
@@ -16,8 +16,8 @@ const groups = [
   {
     label: "Yesterday",
     items: [
-      { who: "Tomás", what: "video call answered by Maria · 14 min", when: "18:22", tone: "wine", k: "Family" },
-      { who: "Pharmacy", what: "delivery confirmed · 3 items", when: "10:11", tone: "terracotta", k: "Ops" },
+      { who: "TomÃ¡s", what: "video call answered by Maria Â· 14 min", when: "18:22", tone: "wine", k: "Family" },
+      { who: "Pharmacy", what: "delivery confirmed Â· 3 items", when: "10:11", tone: "terracotta", k: "Ops" },
     ],
   },
 ];
@@ -25,7 +25,7 @@ const groups = [
 function Notifications() {
   return (
     <>
-      <PageHeader title="Notifications" subtitle="Quiet hours respected · emergency overrides on · grouped by intelligence" action={<Pill tone="moss">All channels healthy</Pill>} />
+      <PageHeader title="Notifications" subtitle="Quiet hours respected Â· emergency overrides on Â· grouped by intelligence" action={<Pill tone="moss">All channels healthy</Pill>} />
 
       <div className="grid gap-6 lg:grid-cols-3">
         <Card className="lg:col-span-2 p-0">
@@ -46,7 +46,7 @@ function Notifications() {
                     <Avatar name={n.who} tone={n.tone} size={36} />
                     <div className="flex-1 min-w-0">
                       <p className="text-sm text-foreground"><span className="font-medium">{n.who}</span> {n.what}</p>
-                      <p className="text-xs text-muted-foreground">{n.k} · {n.when}</p>
+                      <p className="text-xs text-muted-foreground">{n.k} Â· {n.when}</p>
                     </div>
                     <Pill tone={n.tone as any}>{n.k}</Pill>
                   </li>
@@ -63,10 +63,10 @@ function Notifications() {
               {[
                 { c: "In-app", on: true },
                 { c: "Push (mobile)", on: true },
-                { c: "Email · daily digest", on: true },
-                { c: "SMS · emergency only", on: true },
+                { c: "Email Â· daily digest", on: true },
+                { c: "SMS Â· emergency only", on: true },
                 { c: "WhatsApp", on: false },
-                { c: "Phone call · escalation", on: true },
+                { c: "Phone call Â· escalation", on: true },
               ].map((c) => (
                 <li key={c.c} className="flex items-center justify-between rounded-xl border border-border/60 bg-cream/40 p-3">
                   <span className="text-foreground">{c.c}</span>
@@ -80,13 +80,13 @@ function Notifications() {
 
           <Card className="bg-gradient-olive text-ivory border-none">
             <p className="text-xs uppercase tracking-widest text-ivory/70">Quiet hours</p>
-            <p className="mt-2 font-display text-xl">22:00 → 07:30</p>
+            <p className="mt-2 font-display text-xl">22:00 â†’ 07:30</p>
             <p className="mt-1 text-sm text-ivory/85">Only Critical and Emergency notifications break through. Family voice messages saved until morning.</p>
           </Card>
 
           <Card>
             <p className="text-xs uppercase tracking-widest text-muted-foreground">Smart grouping</p>
-            <p className="mt-2 text-sm text-foreground/85">14 routine events from Sofia today were grouped into one summary card. Olia learns your attention pattern.</p>
+            <p className="mt-2 text-sm text-foreground/85">14 routine events from Sofia today were grouped into one summary card. Care Kranich learns your attention pattern.</p>
           </Card>
         </div>
       </div>

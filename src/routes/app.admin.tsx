@@ -1,4 +1,4 @@
-import { createFileRoute, Navigate } from "@tanstack/react-router";
+﻿import { createFileRoute, Navigate } from "@tanstack/react-router";
 import { Card, PageHeader, Pill, Spark, Bars, Stat } from "@/components/app/primitives";
 import { useAuth } from "@/hooks/use-auth";
 
@@ -8,19 +8,19 @@ export const Route = createFileRoute("/app/admin")({
 
 function Admin() {
   const { isSuperAdmin, loading } = useAuth();
-  if (loading) return <p className="text-sm text-muted-foreground">Loading…</p>;
+  if (loading) return <p className="text-sm text-muted-foreground">Loadingâ€¦</p>;
   if (!isSuperAdmin) return <Navigate to="/app" />;
   return (
     <>
       <PageHeader
         title="Executive command center"
-        subtitle="Olia Care Systems · Q2 2026 · Live"
+        subtitle="Care Kranich Â· Q2 2026 Â· Live"
         action={<div className="flex gap-2"><Pill tone="moss"><span className="h-1.5 w-1.5 animate-pulse-soft rounded-full bg-moss"/>All systems healthy</Pill><button className="rounded-full bg-olive px-4 py-2 text-xs text-ivory">Export brief</button></div>}
       />
 
       <div className="grid gap-4 md:grid-cols-4">
-        <Stat label="MRR" value="€842K" sub="▲ 14.2% MoM" tone="olive" />
-        <Stat label="ARR" value="€10.1M" sub="On pace · €14M FY" tone="wine" />
+        <Stat label="MRR" value="â‚¬842K" sub="â–² 14.2% MoM" tone="olive" />
+        <Stat label="ARR" value="â‚¬10.1M" sub="On pace Â· â‚¬14M FY" tone="wine" />
         <Stat label="Net retention" value="118%" sub="Best-in-class" tone="moss" />
         <Stat label="Active lives" value="12,418" sub="+892 this month" tone="gold" />
       </div>
@@ -29,8 +29,8 @@ function Admin() {
         <Card className="lg:col-span-2">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs uppercase tracking-widest text-muted-foreground">Revenue · trailing 12 months</p>
-              <h3 className="mt-1 font-display text-2xl text-foreground">€7.2M trailing</h3>
+              <p className="text-xs uppercase tracking-widest text-muted-foreground">Revenue Â· trailing 12 months</p>
+              <h3 className="mt-1 font-display text-2xl text-foreground">â‚¬7.2M trailing</h3>
             </div>
             <div className="flex gap-3 text-xs">
               <span className="flex items-center gap-1.5 text-foreground"><span className="h-2 w-2 rounded-sm bg-olive"/>Subscriptions</span>
@@ -63,8 +63,8 @@ function Admin() {
             ))}
           </div>
           <div className="mt-6 grid grid-cols-2 gap-3 border-t border-border pt-4 text-xs">
-            <div><p className="text-muted-foreground">LTV</p><p className="font-display text-xl text-olive">€8,420</p></div>
-            <div><p className="text-muted-foreground">CAC</p><p className="font-display text-xl text-olive">€640</p></div>
+            <div><p className="text-muted-foreground">LTV</p><p className="font-display text-xl text-olive">â‚¬8,420</p></div>
+            <div><p className="text-muted-foreground">CAC</p><p className="font-display text-xl text-olive">â‚¬640</p></div>
             <div><p className="text-muted-foreground">Payback</p><p className="font-display text-xl text-olive">7.2 mo</p></div>
             <div><p className="text-muted-foreground">Churn</p><p className="font-display text-xl text-wine">1.8%</p></div>
           </div>
@@ -81,17 +81,17 @@ function Admin() {
             </thead>
             <tbody>
               {[
-                { n: "Sofia Mendes", t: "Caregiver", b: 142, r: "4.9", p: "€2,840" },
-                { n: "Vita Care Clinic", t: "Clinic", b: 98, r: "4.8", p: "€18,420" },
-                { n: "Dr. Costa", t: "Telemed", b: 64, r: "5.0", p: "€6,240" },
-                { n: "PhysioStudio", t: "Therapy", b: 52, r: "4.7", p: "€4,160" },
-                { n: "PharmaPlus", t: "Pharmacy", b: 240, r: "4.9", p: "€8,800" },
+                { n: "Sofia Mendes", t: "Caregiver", b: 142, r: "4.9", p: "â‚¬2,840" },
+                { n: "Vita Care Clinic", t: "Clinic", b: 98, r: "4.8", p: "â‚¬18,420" },
+                { n: "Dr. Costa", t: "Telemed", b: 64, r: "5.0", p: "â‚¬6,240" },
+                { n: "PhysioStudio", t: "Therapy", b: 52, r: "4.7", p: "â‚¬4,160" },
+                { n: "PharmaPlus", t: "Pharmacy", b: 240, r: "4.9", p: "â‚¬8,800" },
               ].map((p) => (
                 <tr key={p.n} className="border-b border-border/40 last:border-0">
                   <td className="py-3 text-foreground">{p.n}</td>
                   <td className="text-muted-foreground">{p.t}</td>
                   <td className="text-muted-foreground tabular-nums">{p.b}</td>
-                  <td><Pill tone="gold">★ {p.r}</Pill></td>
+                  <td><Pill tone="gold">â˜… {p.r}</Pill></td>
                   <td className="text-right font-display text-olive tabular-nums">{p.p}</td>
                 </tr>
               ))}
@@ -100,11 +100,11 @@ function Admin() {
         </Card>
 
         <Card>
-          <p className="text-xs uppercase tracking-widest text-muted-foreground">AI usage · 30 days</p>
+          <p className="text-xs uppercase tracking-widest text-muted-foreground">AI usage Â· 30 days</p>
           <div className="mt-3"><Spark points={[40,52,48,60,72,68,80,76,90,88,96,104,108,118,124]} color="var(--wine)" height={60} /></div>
           <div className="mt-4 space-y-2 text-sm">
             <div className="flex justify-between"><span className="text-muted-foreground">Tokens</span><span className="font-display text-foreground">42.8M</span></div>
-            <div className="flex justify-between"><span className="text-muted-foreground">AI cost</span><span className="font-display text-foreground">€1,820</span></div>
+            <div className="flex justify-between"><span className="text-muted-foreground">AI cost</span><span className="font-display text-foreground">â‚¬1,820</span></div>
             <div className="flex justify-between"><span className="text-muted-foreground">Quality (avg)</span><span className="font-display text-moss">4.86/5</span></div>
             <div className="flex justify-between"><span className="text-muted-foreground">Letters sent</span><span className="font-display text-foreground">12,418</span></div>
           </div>
@@ -112,7 +112,7 @@ function Admin() {
 
         <Card className="lg:col-span-3">
           <div className="flex items-center justify-between">
-            <p className="text-xs uppercase tracking-widest text-muted-foreground">Geographic activity · last 24h</p>
+            <p className="text-xs uppercase tracking-widest text-muted-foreground">Geographic activity Â· last 24h</p>
             <Pill tone="terracotta">3 priority regions</Pill>
           </div>
           <div className="mt-4 grid grid-cols-3 md:grid-cols-6 gap-2">

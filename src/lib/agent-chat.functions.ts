@@ -93,7 +93,7 @@ export const sendAgentMessage = createServerFn({ method: "POST" })
     const systemFull = [agent.systemPrompt, residentCtx, memoryBlock].filter(Boolean).join("\n\n");
 
     try {
-      const model = getModel("lovable", "google/gemini-2.5-flash");
+      const model = getModel();
       const result = await generateText({
         model,
         system: systemFull,
@@ -113,10 +113,10 @@ export const sendAgentMessage = createServerFn({ method: "POST" })
 
       return { conversationId, reply, confidence };
     } catch (e: any) {
-      const msg = e?.message ?? "AI gateway error";
+      const msg = e?.message ?? "AI provider error";
       await supabase.from("agent_messages").insert({
         conversation_id: conversationId, tenant_id: tenantId, role: "assistant",
-        content: `I couldn't reach the AI gateway right now. ${msg.includes("429") ? "Rate limit exceeded — please retry shortly." : msg.includes("402") ? "AI credits exhausted — please add credits in Lovable settings." : "Please try again."}`,
+        content: `I couldn't reach the AI provider right now. ${msg.includes("429") ? "Rate limit exceeded — please retry shortly." : msg.includes("402") ? "AI credits exhausted — please check the provider billing settings." : "Please try again."}`,
       });
       return { conversationId, reply: "", confidence: null, error: msg };
     }

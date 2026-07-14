@@ -1,4 +1,4 @@
-import { Link, Outlet, createFileRoute, useRouterState, useNavigate, Navigate } from "@tanstack/react-router";
+﻿import { Link, Outlet, createFileRoute, useRouterState, useNavigate, Navigate } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { Avatar } from "@/components/app/primitives";
 import { NotificationBell } from "@/components/app/NotificationBell";
@@ -85,18 +85,18 @@ function AppLayout() {
       .filter((s) => s.items.length > 0);
   }, [roles]);
 
-  if (loading) return <div className="min-h-screen grid place-items-center text-muted-foreground text-sm">Loading…</div>;
+  if (loading) return <div className="min-h-screen grid place-items-center text-muted-foreground text-sm">Loading...</div>;
   if (!user) return <Navigate to="/login" />;
   if (!profile?.tenant_id) return <Navigate to="/onboarding" />;
 
   return (
     <div className="flex min-h-screen bg-background">
-      <aside className="sticky top-0 hidden h-screen w-64 flex-none flex-col border-r border-border bg-cream/40 backdrop-blur-xl lg:flex">
+      <aside className="sticky top-0 hidden h-screen w-64 flex-none flex-col border-r border-white/60 bg-white/42 shadow-soft backdrop-blur-2xl lg:flex">
         <Link to="/" className="flex items-center gap-2 border-b border-border/60 px-6 py-5">
-          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-olive text-ivory">
+          <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-olive text-ivory shadow-soft">
             <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2c3 4 5 7 5 11a5 5 0 1 1-10 0c0-4 2-7 5-11z" /></svg>
           </div>
-          <span className="font-display text-xl text-olive">Olia</span>
+          <span className="font-display text-2xl text-olive">Care Kranich</span>
           {primaryRole === "super_admin" && <span className="ml-auto rounded-full bg-wine/10 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider text-wine">Platform</span>}
           {primaryRole === "clinic_admin" && <span className="ml-auto rounded-full bg-olive/10 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider text-olive">Admin</span>}
         </Link>
@@ -113,7 +113,7 @@ function AppLayout() {
                       key={item.to}
                       to={item.to}
                       className={`flex items-center gap-3 rounded-xl px-3 py-2 text-sm transition-colors ${
-                        active ? "bg-olive text-ivory shadow-soft" : "text-foreground/70 hover:bg-ivory hover:text-olive"
+                        active ? "bg-olive text-ivory shadow-soft" : "text-foreground/70 hover:bg-white/60 hover:text-olive"
                       }`}
                     >
                       <svg viewBox="0 0 24 24" className="h-4 w-4 flex-none" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -129,7 +129,7 @@ function AppLayout() {
         </div>
 
         <div className="border-t border-border/60 p-4">
-          <div className="flex items-center gap-3 rounded-2xl bg-ivory p-3">
+          <div className="flex items-center gap-3 rounded-2xl border border-white/65 bg-white/50 p-3 backdrop-blur-xl">
             <Avatar name={profile.full_name ?? user.email ?? "U"} src={profile.avatar_url} tone="olive" />
             <div className="min-w-0 flex-1">
               <p className="truncate text-sm text-foreground">{displayName}</p>
@@ -143,18 +143,18 @@ function AppLayout() {
       </aside>
 
       <div className="flex-1">
-        <header className="sticky top-0 z-30 flex h-16 items-center justify-between gap-4 border-b border-border/60 bg-ivory/70 px-6 backdrop-blur-xl">
+        <header className="sticky top-0 z-30 flex h-16 items-center justify-between gap-4 border-b border-white/60 bg-white/48 px-6 shadow-soft backdrop-blur-2xl">
           <div className="flex items-center gap-3">
             <Link to="/" className="lg:hidden flex items-center gap-2">
-              <div className="flex h-7 w-7 items-center justify-center rounded-full bg-gradient-olive text-ivory">
+              <div className="flex h-7 w-7 items-center justify-center rounded-xl bg-gradient-olive text-ivory shadow-soft">
                 <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2c3 4 5 7 5 11a5 5 0 1 1-10 0c0-4 2-7 5-11z" /></svg>
               </div>
-              <span className="font-display text-lg text-olive">Olia</span>
+              <span className="font-display text-xl text-olive">Care Kranich</span>
             </Link>
-            <div className="hidden md:flex items-center gap-2 rounded-full border border-border bg-ivory px-3 py-1.5">
+            <div className="hidden md:flex items-center gap-2 rounded-full border border-white/65 bg-white/50 px-3 py-1.5 shadow-soft backdrop-blur-xl">
               <svg viewBox="0 0 24 24" className="h-4 w-4 text-muted-foreground" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg>
-              <input placeholder="Search residents, caregivers, alerts…" className="w-72 bg-transparent text-sm placeholder:text-muted-foreground focus:outline-none"/>
-              <kbd className="rounded bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">⌘K</kbd>
+              <input placeholder="Search residents, caregivers, alerts..." className="w-72 bg-transparent text-sm placeholder:text-muted-foreground focus:outline-none"/>
+              <kbd className="rounded bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">Ctrl K</kbd>
             </div>
           </div>
           <div className="relative flex items-center gap-3">

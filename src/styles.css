@@ -1,16 +1,15 @@
 @source "../src";
-@source inline("bg-olive bg-wine bg-moss bg-gold bg-terracotta bg-sand bg-cream bg-ivory bg-sage");
+@source inline("bg-olive bg-wine bg-moss bg-gold bg-terracotta bg-sand bg-cream bg-ivory bg-sage bg-baby bg-glass");
 @source inline("bg-olive/5 bg-olive/10 bg-olive/15 bg-olive/20 bg-olive/30 bg-olive/40");
 @source inline("bg-wine/5 bg-wine/10 bg-wine/15 bg-wine/20 bg-wine/30 bg-wine/40 bg-wine/60");
 @source inline("bg-moss/5 bg-moss/10 bg-moss/15 bg-moss/20 bg-moss/30");
 @source inline("bg-gold/10 bg-gold/15 bg-gold/20 bg-gold/30");
 @source inline("bg-terracotta/10 bg-terracotta/15 bg-terracotta/20 bg-terracotta/30");
-@source inline("text-olive text-wine text-moss text-gold text-terracotta text-sage text-ivory text-cream");
-@source inline("border-olive border-wine border-moss border-gold border-terracotta");
+@source inline("text-olive text-wine text-moss text-gold text-terracotta text-sage text-ivory text-cream text-baby");
+@source inline("border-olive border-wine border-moss border-gold border-terracotta border-glass");
 @source inline("ring-wine/30 ring-olive/30 ring-moss/30 ring-card");
 @import "tailwindcss" source(none);
 @source "../src";
-@import "tw-animate-css";
 @import "tw-animate-css";
 
 @custom-variant dark (&:is(.dark *));
@@ -52,36 +51,38 @@
   --color-wine: var(--wine);
   --color-terracotta: var(--terracotta);
   --color-gold: var(--gold);
+  --color-baby: var(--baby);
+  --color-glass: var(--glass);
 
-  --font-display: "Fraunces", "Cormorant Garamond", Georgia, serif;
+  --font-display: "Instrument Serif", "Fraunces", Georgia, serif;
   --font-sans: "Inter", system-ui, sans-serif;
 
-  --shadow-soft: 0 1px 2px oklch(0.3 0.04 130 / 0.04), 0 8px 24px -8px oklch(0.3 0.04 130 / 0.08);
-  --shadow-elevated: 0 2px 4px oklch(0.3 0.04 130 / 0.05), 0 24px 60px -20px oklch(0.3 0.04 130 / 0.18);
-  --shadow-glow: 0 20px 80px -20px oklch(0.42 0.06 135 / 0.35);
+  --shadow-soft: 0 1px 0 oklch(1 0 0 / 0.75) inset, 0 18px 42px -32px oklch(0.25 0.05 160 / 0.45);
+  --shadow-elevated: 0 1px 0 oklch(1 0 0 / 0.8) inset, 0 28px 72px -36px oklch(0.22 0.05 160 / 0.55);
+  --shadow-glow: 0 24px 80px -40px oklch(0.78 0.08 215 / 0.75);
 }
 
 :root {
-  --radius: 1rem;
+  --radius: 0.875rem;
 
-  /* Earthy core palette */
-  --ivory: oklch(0.985 0.008 90);
-  --cream: oklch(0.965 0.018 85);
-  --sand: oklch(0.92 0.025 82);
-  --beige: oklch(0.88 0.03 80);
-  --sage: oklch(0.78 0.04 130);
-  --moss: oklch(0.55 0.07 135);
-  --olive: oklch(0.42 0.06 135);
-  --wine: oklch(0.42 0.12 20);
-  --terracotta: oklch(0.62 0.13 40);
-  --gold: oklch(0.76 0.11 80);
+  --ivory: oklch(0.99 0.006 92);
+  --cream: oklch(0.965 0.018 92);
+  --sand: oklch(0.91 0.025 96);
+  --sage: oklch(0.79 0.05 150);
+  --moss: oklch(0.56 0.075 153);
+  --olive: oklch(0.36 0.065 158);
+  --baby: oklch(0.86 0.055 215);
+  --wine: oklch(0.54 0.085 222);
+  --terracotta: oklch(0.62 0.075 166);
+  --gold: oklch(0.80 0.055 204);
+  --glass: oklch(1 0 0 / 0.62);
 
   --background: var(--ivory);
-  --foreground: oklch(0.22 0.025 130);
+  --foreground: oklch(0.2 0.035 158);
 
-  --card: oklch(1 0 0);
+  --card: oklch(1 0 0 / 0.74);
   --card-foreground: var(--foreground);
-  --popover: oklch(1 0 0);
+  --popover: oklch(1 0 0 / 0.86);
   --popover-foreground: var(--foreground);
 
   --primary: var(--olive);
@@ -89,22 +90,20 @@
   --secondary: var(--cream);
   --secondary-foreground: var(--olive);
   --muted: var(--cream);
-  --muted-foreground: oklch(0.45 0.02 130);
+  --muted-foreground: oklch(0.43 0.03 160);
   --accent: var(--wine);
   --accent-foreground: var(--ivory);
-  --destructive: oklch(0.55 0.18 25);
+  --destructive: oklch(0.56 0.16 25);
   --destructive-foreground: var(--ivory);
 
-  --border: oklch(0.88 0.015 100);
-  --input: oklch(0.92 0.015 100);
-  --ring: var(--moss);
+  --border: oklch(0.83 0.025 155 / 0.62);
+  --input: oklch(1 0 0 / 0.68);
+  --ring: var(--wine);
 
-  --gradient-warm: linear-gradient(180deg, var(--ivory) 0%, var(--cream) 100%);
-  --gradient-hero: radial-gradient(ellipse at top right, oklch(0.78 0.04 130 / 0.35), transparent 60%),
-                   radial-gradient(ellipse at bottom left, oklch(0.76 0.11 80 / 0.18), transparent 55%),
-                   linear-gradient(180deg, var(--cream), var(--ivory));
-  --gradient-olive: linear-gradient(135deg, var(--olive), var(--moss));
-  --gradient-wine: linear-gradient(135deg, var(--wine), var(--terracotta));
+  --gradient-warm: linear-gradient(145deg, var(--ivory) 0%, var(--cream) 44%, oklch(0.94 0.025 145) 100%);
+  --gradient-hero: linear-gradient(115deg, oklch(0.99 0.006 92 / 0.92), oklch(0.94 0.032 150 / 0.82) 50%, oklch(0.87 0.055 215 / 0.72));
+  --gradient-olive: linear-gradient(135deg, oklch(0.32 0.07 158), oklch(0.58 0.08 156));
+  --gradient-wine: linear-gradient(135deg, oklch(0.68 0.06 212), oklch(0.49 0.08 222));
 }
 
 .dark {
@@ -140,7 +139,7 @@
   h1, h2, h3, h4, .font-display {
     font-family: var(--font-display);
     font-weight: 400;
-    letter-spacing: -0.02em;
+    letter-spacing: 0;
   }
 }
 
@@ -152,8 +151,17 @@
   .shadow-soft { box-shadow: var(--shadow-soft); }
   .shadow-elevated { box-shadow: var(--shadow-elevated); }
   .shadow-glow { box-shadow: var(--shadow-glow); }
+  .glass-panel {
+    background: linear-gradient(135deg, oklch(1 0 0 / 0.72), oklch(1 0 0 / 0.42));
+    border: 1px solid oklch(1 0 0 / 0.72);
+    box-shadow: var(--shadow-soft);
+    backdrop-filter: blur(22px) saturate(145%);
+  }
+  .glass-line {
+    background: linear-gradient(90deg, transparent, oklch(0.86 0.055 215 / 0.8), transparent);
+  }
   .grain {
-    background-image: radial-gradient(oklch(0.42 0.06 135 / 0.04) 1px, transparent 1px);
+    background-image: radial-gradient(oklch(0.32 0.06 155 / 0.045) 1px, transparent 1px);
     background-size: 4px 4px;
   }
 }

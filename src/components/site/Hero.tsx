@@ -1,71 +1,57 @@
 import heroImg from "@/assets/hero-elder.jpg";
 
+const signals = [
+  { label: "Active care lives", value: "12.4k" },
+  { label: "Alert response", value: "2m 18s" },
+  { label: "Family clarity", value: "4.9/5" },
+];
+
 export function Hero() {
   return (
-    <section className="relative overflow-hidden bg-gradient-hero">
-      <div className="absolute inset-0 grain opacity-40" />
-      <div className="relative mx-auto grid max-w-7xl gap-12 px-6 py-20 md:grid-cols-2 md:py-28 lg:py-32">
-        <div className="flex flex-col justify-center">
-          <span className="inline-flex w-fit items-center gap-2 rounded-full border border-border bg-ivory/60 px-3 py-1 text-xs text-olive backdrop-blur">
-            <span className="h-1.5 w-1.5 animate-pulse-soft rounded-full bg-moss" />
-            Now monitoring 12,400+ lives with care
+    <section className="relative min-h-[86vh] overflow-hidden bg-background">
+      <img
+        src={heroImg}
+        alt="Older adult relaxing at home with soft morning light"
+        width={1600}
+        height={1200}
+        className="absolute inset-0 h-full w-full object-cover opacity-42"
+      />
+      <div className="absolute inset-0 bg-gradient-hero" />
+      <div className="absolute inset-x-0 top-0 h-px glass-line" />
+
+      <div className="relative mx-auto flex min-h-[86vh] max-w-7xl flex-col justify-center px-6 py-24 md:py-28">
+        <div className="max-w-4xl">
+          <span className="inline-flex items-center gap-2 rounded-full border border-white/70 bg-white/45 px-3 py-1 text-xs text-olive shadow-soft backdrop-blur-xl">
+            <span className="h-1.5 w-1.5 rounded-full bg-wine shadow-glow" />
+            Live care intelligence for families, teams and clinics
           </span>
-          <h1 className="mt-6 font-display text-5xl leading-[1.05] text-foreground text-balance md:text-6xl lg:text-7xl">
-            Care that feels like
-            <span className="block italic text-olive">family, again.</span>
+
+          <h1 className="mt-7 max-w-4xl font-display text-6xl leading-[0.98] text-foreground text-balance md:text-8xl">
+            Care Kranich
           </h1>
-          <p className="mt-6 max-w-lg text-lg leading-relaxed text-muted-foreground text-balance">
-            Olia is the calm, intelligent platform that connects families, caregivers and clinicians around the people they love — in one elegant, human experience.
+
+          <p className="mt-6 max-w-2xl text-lg leading-relaxed text-foreground/72 text-balance md:text-xl">
+            A glass-clear operating system for elder care: monitoring, care plans,
+            family updates, AI agents and digital twin insight in one calm workspace.
           </p>
-          <div className="mt-8 flex flex-wrap items-center gap-3">
-            <a href="#start" className="rounded-full bg-primary px-6 py-3 text-sm text-primary-foreground shadow-elevated hover:opacity-90">
-              Start a 14-day trial
+
+          <div className="mt-9 flex flex-wrap items-center gap-3">
+            <a href="#start" className="rounded-full bg-primary px-6 py-3 text-sm font-medium text-primary-foreground shadow-elevated transition hover:translate-y-[-1px] hover:opacity-95">
+              Start care journey
             </a>
-            <a href="#tour" className="group inline-flex items-center gap-2 rounded-full border border-border bg-ivory/60 px-6 py-3 text-sm text-olive backdrop-blur hover:bg-ivory">
-              Watch the 90-second tour
-              <span className="transition-transform group-hover:translate-x-0.5">→</span>
+            <a href="#caregivers" className="rounded-full border border-white/70 bg-white/45 px-6 py-3 text-sm font-medium text-olive shadow-soft backdrop-blur-xl transition hover:bg-white/70">
+              See the platform
             </a>
-          </div>
-          <div className="mt-10 flex items-center gap-8 text-xs text-muted-foreground">
-            <div><div className="font-display text-2xl text-olive">99.98%</div>uptime</div>
-            <div className="h-8 w-px bg-border" />
-            <div><div className="font-display text-2xl text-olive">HIPAA</div>GDPR · LGPD</div>
-            <div className="h-8 w-px bg-border" />
-            <div><div className="font-display text-2xl text-olive">4.9★</div>family rating</div>
           </div>
         </div>
 
-        <div className="relative">
-          <div className="absolute -inset-6 rounded-[3rem] bg-gradient-olive opacity-10 blur-3xl" />
-          <div className="relative overflow-hidden rounded-[2.5rem] shadow-elevated">
-            <img src={heroImg} alt="Elder enjoying a calm morning at home" width={1600} height={1200} className="h-full w-full object-cover" />
-          </div>
-          {/* Floating cards */}
-          <div className="absolute -left-4 top-10 hidden w-56 rounded-2xl bg-card p-4 shadow-elevated animate-float md:block">
-            <div className="flex items-center justify-between">
-              <span className="text-xs text-muted-foreground">Heart rate</span>
-              <span className="h-1.5 w-1.5 animate-pulse-soft rounded-full bg-moss" />
+        <div className="mt-14 grid max-w-4xl gap-3 sm:grid-cols-3">
+          {signals.map((signal) => (
+            <div key={signal.label} className="glass-panel rounded-2xl px-5 py-4">
+              <p className="text-xs uppercase tracking-widest text-muted-foreground">{signal.label}</p>
+              <p className="mt-2 font-display text-3xl text-olive">{signal.value}</p>
             </div>
-            <div className="mt-1 flex items-baseline gap-1">
-              <span className="font-display text-3xl text-olive">72</span>
-              <span className="text-xs text-muted-foreground">bpm · resting</span>
-            </div>
-            <svg viewBox="0 0 100 24" className="mt-2 h-6 w-full text-moss">
-              <polyline fill="none" stroke="currentColor" strokeWidth="1.5" points="0,14 12,14 16,6 22,20 28,12 40,12 46,4 52,18 58,12 70,12 76,8 82,16 100,12"/>
-            </svg>
-          </div>
-          <div className="absolute -right-4 bottom-10 hidden w-60 rounded-2xl bg-card p-4 shadow-elevated md:block">
-            <div className="flex items-center gap-3">
-              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-wine/10 text-wine">
-                <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 12a8 8 0 1 1-16 0 8 8 0 0 1 16 0z M12 8v4l3 2"/></svg>
-              </div>
-              <div>
-                <div className="text-xs text-muted-foreground">Caregiver check-in</div>
-                <div className="text-sm text-foreground">Sofia · 09:14 AM</div>
-              </div>
-            </div>
-            <p className="mt-3 text-xs leading-relaxed text-muted-foreground">"Mom slept well, took her morning medication and is reading on the porch."</p>
-          </div>
+          ))}
         </div>
       </div>
     </section>

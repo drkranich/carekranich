@@ -1,12 +1,12 @@
-import { createFileRoute } from "@tanstack/react-router";
+﻿import { createFileRoute } from "@tanstack/react-router";
 import { MarketingPage, FeatureGrid, Section } from "@/components/site/MarketingPage";
 
 export const Route = createFileRoute("/solutions/home-care")({
   head: () => ({
     meta: [
-      { title: "Home Care — Olia" },
+      { title: "Home Care â€” Care Kranich" },
       { name: "description", content: "Operational backbone for home-care agencies: staffing, coordination, monitoring and family oversight." },
-      { property: "og:title", content: "Home Care — Olia" },
+      { property: "og:title", content: "Home Care â€” Care Kranich" },
       { property: "og:description", content: "Operational backbone for home-care agencies: staffing, coordination, monitoring and family oversight." },
     ],
   }),
@@ -19,7 +19,7 @@ function Page() {
       eyebrow="Solutions"
       crumbs={[{ label: "Solutions", to: "/solutions/home-care" }, { label: "Home Care" }]}
       title="The operating system for modern home-care agencies."
-      lede="From rota to revenue — staffing intelligence, caregiver coordination and a family experience that drives retention."
+      lede="From rota to revenue â€” staffing intelligence, caregiver coordination and a family experience that drives retention."
       primaryCta={{ label: "Request a demo", to: "/contact" }}
       secondaryCta={{ label: "Open platform", to: "/app" }}
     >
@@ -30,7 +30,7 @@ function Page() {
           { title: "Home monitoring", body: "Ambient sensors and wearables feeding a single resident dashboard." },
           { title: "Family oversight", body: "A premium family portal that becomes your strongest retention tool." },
           { title: "Billing & compliance", body: "Visit verification, payor exports and audit-ready records." },
-          { title: "Outcomes analytics", body: "Falls, hospitalizations, satisfaction — measured and benchmarked." },
+          { title: "Outcomes analytics", body: "Falls, hospitalizations, satisfaction â€” measured and benchmarked." },
         ]} />
       </Section>
     </MarketingPage>

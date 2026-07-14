@@ -1,4 +1,4 @@
-import type { AppRole } from "@/hooks/use-auth";
+﻿import type { AppRole } from "@/hooks/use-auth";
 
 export type AgentKey =
   | "family_companion"
@@ -24,7 +24,7 @@ export type AgentDef = {
   needsResident: boolean;
 };
 
-const SHARED_GUARDRAILS = `You are part of Olia, a healthcare longevity platform. Always:
+const SHARED_GUARDRAILS = `You are part of Care Kranich, a healthcare longevity platform. Always:
 - Stay strictly within your mission; defer to a sibling agent if asked outside your scope.
 - Be warm, precise, and clinically honest. Never invent data.
 - When relevant data is provided in the context block, ground every claim in it and cite it briefly (e.g. "based on the last 14 days of hydration").

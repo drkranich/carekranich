@@ -1,4 +1,4 @@
-import { createFileRoute, Navigate, useNavigate } from "@tanstack/react-router";
+﻿import { createFileRoute, Navigate, useNavigate } from "@tanstack/react-router";
 import { useState, type FormEvent } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -18,7 +18,7 @@ function Onboarding() {
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
-  if (loading) return <div className="min-h-screen grid place-items-center text-sm text-muted-foreground">Loading…</div>;
+  if (loading) return <div className="min-h-screen grid place-items-center text-sm text-muted-foreground">Loadingâ€¦</div>;
   if (!user) return <Navigate to="/login" />;
   if (profile?.tenant_id) return <Navigate to="/app" />;
 
@@ -65,7 +65,7 @@ function Onboarding() {
           <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-olive text-ivory">
             <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2c3 4 5 7 5 11a5 5 0 1 1-10 0c0-4 2-7 5-11z" /></svg>
           </div>
-          <span className="font-display text-xl text-olive">Olia</span>
+          <span className="font-display text-xl text-olive">Care Kranich</span>
         </div>
         <h1 className="mt-6 font-display text-2xl text-foreground">Welcome{profile?.full_name ? `, ${profile.full_name.split(" ")[0]}` : ""}</h1>
         <p className="mt-1 text-sm text-muted-foreground">Create your care organization or join one with an invite code.</p>
@@ -84,7 +84,7 @@ function Onboarding() {
             <p className="rounded-xl bg-cream/60 px-3 py-2 text-xs text-muted-foreground">You'll become the clinic admin. You can invite family and care staff afterward.</p>
             {err && <p className="rounded-lg bg-wine/10 px-3 py-2 text-xs text-wine">{err}</p>}
             <button disabled={busy} className="w-full rounded-full bg-olive px-4 py-2.5 text-sm text-ivory hover:opacity-90 disabled:opacity-50">
-              {busy ? "Creating…" : "Create organization"}
+              {busy ? "Creatingâ€¦" : "Create organization"}
             </button>
           </form>
         ) : (
@@ -96,7 +96,7 @@ function Onboarding() {
             <p className="rounded-xl bg-cream/60 px-3 py-2 text-xs text-muted-foreground">Ask your organization's admin for the invite code. You'll join as a family member by default; admins can elevate your role.</p>
             {err && <p className="rounded-lg bg-wine/10 px-3 py-2 text-xs text-wine">{err}</p>}
             <button disabled={busy} className="w-full rounded-full bg-olive px-4 py-2.5 text-sm text-ivory hover:opacity-90 disabled:opacity-50">
-              {busy ? "Joining…" : "Join organization"}
+              {busy ? "Joiningâ€¦" : "Join organization"}
             </button>
           </form>
         )}

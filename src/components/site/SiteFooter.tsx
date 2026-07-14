@@ -1,4 +1,4 @@
-import { Link } from "@tanstack/react-router";
+﻿import { Link } from "@tanstack/react-router";
 
 type LinkItem = { label: string; to: string };
 
@@ -34,17 +34,17 @@ export function SiteFooter() {
     ]},
   ];
   return (
-    <footer className="border-t border-border/60 bg-cream">
+    <footer className="border-t border-white/60 bg-cream/70 backdrop-blur-xl">
       <div className="mx-auto max-w-7xl px-6 py-20">
         <div className="grid gap-12 md:grid-cols-6">
           <div className="md:col-span-2">
             <Link to="/" className="flex items-center gap-2">
-              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-olive text-ivory">
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-olive text-ivory shadow-soft">
                 <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M12 2c3 4 5 7 5 11a5 5 0 1 1-10 0c0-4 2-7 5-11z" />
                 </svg>
               </div>
-              <span className="font-display text-2xl text-olive">Olia</span>
+              <span className="font-display text-3xl text-olive">Care Kranich</span>
             </Link>
             <p className="mt-5 max-w-sm text-sm leading-relaxed text-muted-foreground">
               The operating system for elderly care and longevity. Built with dignity, designed for families.
@@ -73,7 +73,7 @@ export function SiteFooter() {
           ))}
         </div>
         <div className="mt-16 flex flex-col items-start justify-between gap-4 border-t border-border/60 pt-8 text-xs text-muted-foreground md:flex-row md:items-center">
-          <p>© {new Date().getFullYear()} Olia Care Systems. Crafted with care.</p>
+          <p>© {new Date().getFullYear()} Care Kranich. Intelligent care infrastructure.</p>
           <p className="font-display italic">"To grow old surrounded by attention is a kind of luxury."</p>
         </div>
       </div>

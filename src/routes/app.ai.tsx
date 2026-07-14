@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+﻿import { createFileRoute } from "@tanstack/react-router";
 import { Card, PageHeader, Pill, Spark, Stat } from "@/components/app/primitives";
 
 export const Route = createFileRoute("/app/ai")({
@@ -8,26 +8,26 @@ export const Route = createFileRoute("/app/ai")({
 function AIInsights() {
   return (
     <>
-      <PageHeader title="Olia Intelligence" subtitle="Predictive healthcare AI · trained on 4.2M elder-days" action={<Pill tone="wine">Confidence 94%</Pill>} />
+      <PageHeader title="Care Kranich Intelligence" subtitle="Predictive healthcare AI Â· trained on 4.2M elder-days" action={<Pill tone="wine">Confidence 94%</Pill>} />
 
       <div className="grid gap-4 md:grid-cols-4">
-        <Stat label="Health trajectory" value="↑ Stable" sub="90-day forecast" tone="moss" />
-        <Stat label="Hospitalization risk" value="3.2%" sub="▼ from 5.1%" tone="moss" />
+        <Stat label="Health trajectory" value="â†‘ Stable" sub="90-day forecast" tone="moss" />
+        <Stat label="Hospitalization risk" value="3.2%" sub="â–¼ from 5.1%" tone="moss" />
         <Stat label="Cognitive index" value="0.86" sub="No decline detected" tone="olive" />
-        <Stat label="Emotional index" value="0.78" sub="▲ from 0.71" tone="wine" />
+        <Stat label="Emotional index" value="0.78" sub="â–² from 0.71" tone="wine" />
       </div>
 
       <div className="mt-6 grid gap-6 lg:grid-cols-3">
         <Card className="lg:col-span-2">
           <div className="flex items-center justify-between">
             <p className="text-xs uppercase tracking-widest text-muted-foreground">Predictive alerts</p>
-            <Pill tone="moss">3 active · 0 critical</Pill>
+            <Pill tone="moss">3 active Â· 0 critical</Pill>
           </div>
           <div className="mt-5 space-y-4">
             {[
-              { t: "Hydration risk · medium", n: "Pattern of low afternoon fluid intake. AI recommends gentle reminders at 14:30 and 17:00.", c: 78, tone: "gold", action: "Schedule reminders" },
-              { t: "Sleep regularity · low risk", n: "Bedtime drift of 38 min over the past week. Consider winding down rituals.", c: 64, tone: "moss", action: "Suggest routine" },
-              { t: "Social connection · improving", n: "Video calls increased 40% — emotional sentiment up. Maintain current cadence.", c: 92, tone: "wine", action: "Send to family" },
+              { t: "Hydration risk Â· medium", n: "Pattern of low afternoon fluid intake. AI recommends gentle reminders at 14:30 and 17:00.", c: 78, tone: "gold", action: "Schedule reminders" },
+              { t: "Sleep regularity Â· low risk", n: "Bedtime drift of 38 min over the past week. Consider winding down rituals.", c: 64, tone: "moss", action: "Suggest routine" },
+              { t: "Social connection Â· improving", n: "Video calls increased 40% â€” emotional sentiment up. Maintain current cadence.", c: 92, tone: "wine", action: "Send to family" },
             ].map((a) => (
               <div key={a.t} className="rounded-2xl border border-border/60 bg-cream/40 p-5">
                 <div className="flex items-start justify-between gap-4">
@@ -54,20 +54,20 @@ function AIInsights() {
               <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
             </div>
             <div>
-              <p className="font-display text-lg text-foreground">Olia Companion</p>
+              <p className="font-display text-lg text-foreground">Care Kranich Companion</p>
               <p className="text-xs text-muted-foreground">Conversational emotional AI</p>
             </div>
           </div>
           <div className="mt-5 space-y-3 max-h-96 overflow-y-auto pr-1">
             <Bubble who="Maria">Sometimes I miss the old garden in Coimbra.</Bubble>
-            <Bubble who="Olia" tone="wine">That sounds like such a beautiful memory. What did you grow there?</Bubble>
+            <Bubble who="Care Kranich" tone="wine">That sounds like such a beautiful memory. What did you grow there?</Bubble>
             <Bubble who="Maria">My father's roses. Reds and yellows.</Bubble>
-            <Bubble who="Olia" tone="wine">Roses. That love seems to have stayed in your hands — Sofia mentioned the tulips Helena brought today look perfectly arranged.</Bubble>
+            <Bubble who="Care Kranich" tone="wine">Roses. That love seems to have stayed in your hands â€” Sofia mentioned the tulips Helena brought today look perfectly arranged.</Bubble>
             <Bubble who="Maria">Helena is kind.</Bubble>
-            <Bubble who="Olia" tone="wine">She is. Would you like me to schedule a little tea with her this week?</Bubble>
+            <Bubble who="Care Kranich" tone="wine">She is. Would you like me to schedule a little tea with her this week?</Bubble>
           </div>
           <div className="mt-4 flex gap-2 rounded-full border border-border bg-ivory p-1.5">
-            <input placeholder="Speak or write to Olia…" className="flex-1 bg-transparent px-3 text-sm focus:outline-none"/>
+            <input placeholder="Speak or write to Care Kranichâ€¦" className="flex-1 bg-transparent px-3 text-sm focus:outline-none"/>
             <button className="rounded-full bg-wine p-2 text-ivory">
               <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z M19 10v2a7 7 0 0 1-14 0v-2"/></svg>
             </button>
@@ -76,7 +76,7 @@ function AIInsights() {
 
         <Card className="lg:col-span-3">
           <div className="flex items-center justify-between">
-            <p className="text-xs uppercase tracking-widest text-muted-foreground">Trend forecasting · next 90 days</p>
+            <p className="text-xs uppercase tracking-widest text-muted-foreground">Trend forecasting Â· next 90 days</p>
             <div className="flex gap-2 text-xs">
               <Legend color="var(--olive)" label="Cardiovascular"/>
               <Legend color="var(--wine)" label="Emotional"/>

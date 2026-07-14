@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+﻿import { createFileRoute } from "@tanstack/react-router";
 import { Card, PageHeader, Pill, Avatar } from "@/components/app/primitives";
 
 export const Route = createFileRoute("/app/marketplace")({
@@ -8,20 +8,20 @@ export const Route = createFileRoute("/app/marketplace")({
 const categories = ["All", "Caregivers", "Nurses", "Physiotherapy", "Psychology", "Nutrition", "Telemedicine", "Pharmacies", "Transport", "Devices", "Wellness"];
 
 const providers = [
-  { n: "Sofia Mendes", r: "Live-in Caregiver · Geriatrics", rate: "€18/h", rating: 4.9, jobs: 142, tags: ["Verified","Geriatrics","CPR"], tone: "terracotta", available: "Today" },
-  { n: "Dr. Joana Costa", r: "Cardiology · Telemedicine", rate: "€80/visit", rating: 5.0, jobs: 64, tags: ["MD","English","French"], tone: "wine", available: "In 30 min" },
-  { n: "Vita Care Home", r: "Boutique residence · 24 beds", rate: "€2,400/mo", rating: 4.8, jobs: 98, tags: ["Lisbon","5★"], tone: "olive", available: "2 spots" },
-  { n: "André Faria", r: "Physiotherapy · Mobility", rate: "€45/visit", rating: 4.7, jobs: 52, tags: ["Home visits","Falls"], tone: "moss", available: "Tomorrow" },
+  { n: "Sofia Mendes", r: "Live-in Caregiver Â· Geriatrics", rate: "â‚¬18/h", rating: 4.9, jobs: 142, tags: ["Verified","Geriatrics","CPR"], tone: "terracotta", available: "Today" },
+  { n: "Dr. Joana Costa", r: "Cardiology Â· Telemedicine", rate: "â‚¬80/visit", rating: 5.0, jobs: 64, tags: ["MD","English","French"], tone: "wine", available: "In 30 min" },
+  { n: "Vita Care Home", r: "Boutique residence Â· 24 beds", rate: "â‚¬2,400/mo", rating: 4.8, jobs: 98, tags: ["Lisbon","5â˜…"], tone: "olive", available: "2 spots" },
+  { n: "AndrÃ© Faria", r: "Physiotherapy Â· Mobility", rate: "â‚¬45/visit", rating: 4.7, jobs: 52, tags: ["Home visits","Falls"], tone: "moss", available: "Tomorrow" },
   { n: "PharmaPlus Express", r: "Same-day delivery pharmacy", rate: "Free delivery", rating: 4.9, jobs: 240, tags: ["24/7","Refills"], tone: "gold", available: "Now" },
-  { n: "Dra. Helena Reis", r: "Geropsychology", rate: "€60/visit", rating: 4.9, jobs: 38, tags: ["Loneliness","Family"], tone: "wine", available: "This week" },
-  { n: "ElderRide Lisbon", r: "Senior transport · medical", rate: "€12 base", rating: 4.8, jobs: 178, tags: ["Wheelchair","Insured"], tone: "terracotta", available: "8 cars near" },
-  { n: "Withings BP+", r: "Connected blood pressure cuff", rate: "€129", rating: 4.7, jobs: 412, tags: ["Olia ready","FDA"], tone: "olive", available: "Ships today" },
+  { n: "Dra. Helena Reis", r: "Geropsychology", rate: "â‚¬60/visit", rating: 4.9, jobs: 38, tags: ["Loneliness","Family"], tone: "wine", available: "This week" },
+  { n: "ElderRide Lisbon", r: "Senior transport Â· medical", rate: "â‚¬12 base", rating: 4.8, jobs: 178, tags: ["Wheelchair","Insured"], tone: "terracotta", available: "8 cars near" },
+  { n: "Withings BP+", r: "Connected blood pressure cuff", rate: "â‚¬129", rating: 4.7, jobs: 412, tags: ["Care Kranich ready","FDA"], tone: "olive", available: "Ships today" },
 ];
 
 function Marketplace() {
   return (
     <>
-      <PageHeader title="Care marketplace" subtitle="Verified caregivers, clinicians, pharmacies, devices and wellness — booked in seconds." action={<button className="rounded-full bg-wine px-4 py-2 text-xs text-ivory">Emergency booking</button>} />
+      <PageHeader title="Care marketplace" subtitle="Verified caregivers, clinicians, pharmacies, devices and wellness â€” booked in seconds." action={<button className="rounded-full bg-wine px-4 py-2 text-xs text-ivory">Emergency booking</button>} />
 
       {/* Filters */}
       <div className="-mx-2 mb-6 overflow-x-auto">
@@ -41,7 +41,7 @@ function Marketplace() {
                 <p className="font-display text-lg text-foreground truncate">{p.n}</p>
                 <p className="text-xs text-muted-foreground">{p.r}</p>
               </div>
-              <Pill tone="gold">★ {p.rating}</Pill>
+              <Pill tone="gold">â˜… {p.rating}</Pill>
             </div>
             <div className="mt-4 flex flex-wrap gap-1.5">
               {p.tags.map(t => <Pill key={t} tone="muted">{t}</Pill>)}

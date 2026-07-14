@@ -1,12 +1,12 @@
-import { createFileRoute } from "@tanstack/react-router";
+﻿import { createFileRoute } from "@tanstack/react-router";
 import { MarketingPage, FeatureGrid, Section } from "@/components/site/MarketingPage";
 
 export const Route = createFileRoute("/press")({
   head: () => ({
     meta: [
-      { title: "Press — Olia" },
+      { title: "Press â€” Care Kranich" },
       { name: "description", content: "Press kit, brand assets and announcements for journalists and media partners." },
-      { property: "og:title", content: "Press — Olia" },
+      { property: "og:title", content: "Press â€” Care Kranich" },
       { property: "og:description", content: "Press kit, brand assets and announcements for journalists and media partners." },
     ],
   }),
@@ -19,7 +19,7 @@ function Page() {
       eyebrow="Press"
       crumbs={[{ label: "Company" }, { label: "Press" }]}
       title="For journalists, partners and the curious."
-      lede="Everything you need to write about Olia — brand assets, leadership bios and the story behind the company."
+      lede="Everything you need to write about Care Kranich â€” brand assets, leadership bios and the story behind the company."
       primaryCta={{ label: "Press contact", to: "/contact" }}
     >
       <Section kicker="Press kit" title="Download what you need.">

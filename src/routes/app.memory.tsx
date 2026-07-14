@@ -1,15 +1,15 @@
-import { createFileRoute } from "@tanstack/react-router";
+﻿import { createFileRoute } from "@tanstack/react-router";
 import { Card, PageHeader, Pill } from "@/components/app/primitives";
 
 export const Route = createFileRoute("/app/memory")({ component: Memory });
 
 const memories = [
-  { y: "1968", t: "Wedding day · Estrela church", k: "Photo", tone: "wine" },
-  { y: "1972", t: "Inês's first steps", k: "Photo", tone: "olive" },
-  { y: "1981", t: "Family summer · Algarve", k: "Photo", tone: "gold" },
-  { y: "1995", t: "Mum's voice · birthday song", k: "Audio", tone: "terracotta" },
-  { y: "2001", t: "Grandson Tomás born", k: "Photo", tone: "moss" },
-  { y: "2019", t: "Letter to António", k: "Journal", tone: "wine" },
+  { y: "1968", t: "Wedding day Â· Estrela church", k: "Photo", tone: "wine" },
+  { y: "1972", t: "InÃªs's first steps", k: "Photo", tone: "olive" },
+  { y: "1981", t: "Family summer Â· Algarve", k: "Photo", tone: "gold" },
+  { y: "1995", t: "Mum's voice Â· birthday song", k: "Audio", tone: "terracotta" },
+  { y: "2001", t: "Grandson TomÃ¡s born", k: "Photo", tone: "moss" },
+  { y: "2019", t: "Letter to AntÃ³nio", k: "Journal", tone: "wine" },
   { y: "2024", t: "Garden in bloom", k: "Photo", tone: "moss" },
   { y: "2025", t: "Voice note to grandchildren", k: "Audio", tone: "gold" },
 ];
@@ -19,7 +19,7 @@ function Memory() {
     <>
       <PageHeader
         title="Memory & legacy"
-        subtitle="A private, dignified archive of Maria's life — preserved for her, shared with whom she chooses."
+        subtitle="A private, dignified archive of Maria's life â€” preserved for her, shared with whom she chooses."
         action={<Pill tone="gold">End-to-end encrypted</Pill>}
       />
 
@@ -45,7 +45,7 @@ function Memory() {
           <Card className="bg-gradient-olive text-ivory border-none">
             <p className="text-xs uppercase tracking-widest text-ivory/70">Today's prompt</p>
             <p className="mt-2 font-display text-xl">"What did your mother teach you about patience?"</p>
-            <p className="mt-2 text-sm text-ivory/85">Olia gently invites Maria to record a 2-minute voice memory.</p>
+            <p className="mt-2 text-sm text-ivory/85">Care Kranich gently invites Maria to record a 2-minute voice memory.</p>
             <button className="mt-4 inline-flex items-center gap-2 rounded-full bg-ivory px-4 py-2 text-xs text-olive">
               <span className="h-2 w-2 rounded-full bg-wine"/> Begin recording
             </button>
@@ -53,17 +53,17 @@ function Memory() {
 
           <Card>
             <p className="text-xs uppercase tracking-widest text-muted-foreground">Private journal</p>
-            <p className="mt-2 text-sm text-foreground/85 italic leading-relaxed">"Today I planted tomatoes. The sun was warm and Tomás called. I'm well."</p>
-            <p className="mt-2 text-xs text-muted-foreground">May 14 · Maria · private</p>
+            <p className="mt-2 text-sm text-foreground/85 italic leading-relaxed">"Today I planted tomatoes. The sun was warm and TomÃ¡s called. I'm well."</p>
+            <p className="mt-2 text-xs text-muted-foreground">May 14 Â· Maria Â· private</p>
           </Card>
 
           <Card>
             <p className="text-xs uppercase tracking-widest text-muted-foreground">Legacy access</p>
             <ul className="mt-3 space-y-2 text-sm">
               {[
-                { n: "Inês · daughter", a: "Full access · now" },
-                { n: "Pedro · son", a: "Full · after Maria" },
-                { n: "Tomás · grandson", a: "Curated · selected items" },
+                { n: "InÃªs Â· daughter", a: "Full access Â· now" },
+                { n: "Pedro Â· son", a: "Full Â· after Maria" },
+                { n: "TomÃ¡s Â· grandson", a: "Curated Â· selected items" },
               ].map((p) => (
                 <li key={p.n} className="flex items-center justify-between rounded-xl border border-border/60 bg-cream/40 p-3">
                   <span className="text-foreground">{p.n}</span>

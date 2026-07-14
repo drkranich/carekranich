@@ -1,12 +1,12 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+﻿import { createFileRoute, Link } from "@tanstack/react-router";
 import { MarketingPage, FeatureGrid, Section } from "@/components/site/MarketingPage";
 
 export const Route = createFileRoute("/careers")({
   head: () => ({
     meta: [
-      { title: "Careers — Olia" },
+      { title: "Careers â€” Care Kranich" },
       { name: "description", content: "Help us build the most human technology company in healthcare. Engineering, design, clinical and operations roles." },
-      { property: "og:title", content: "Careers — Olia" },
+      { property: "og:title", content: "Careers â€” Care Kranich" },
       { property: "og:description", content: "Help us build the most human technology company in healthcare." },
     ],
   }),
@@ -15,9 +15,9 @@ export const Route = createFileRoute("/careers")({
 
 const roles = [
   { team: "Engineering", role: "Senior Full-Stack Engineer", location: "Remote (EU/LATAM)" },
-  { team: "Design", role: "Senior Product Designer — Family Hub", location: "Remote" },
-  { team: "Clinical", role: "Head of Clinical Operations", location: "Hybrid · Lisbon" },
-  { team: "Go-to-Market", role: "Enterprise Account Executive — Senior Living", location: "Remote (US)" },
+  { team: "Design", role: "Senior Product Designer â€” Family Hub", location: "Remote" },
+  { team: "Clinical", role: "Head of Clinical Operations", location: "Hybrid Â· Lisbon" },
+  { team: "Go-to-Market", role: "Enterprise Account Executive â€” Senior Living", location: "Remote (US)" },
 ];
 
 function Page() {
@@ -49,7 +49,7 @@ function Page() {
                 <div className="mt-1 font-display text-xl text-foreground">{r.role}</div>
                 <div className="mt-1 text-sm text-muted-foreground">{r.location}</div>
               </div>
-              <Link to="/contact" className="rounded-full border border-border bg-ivory/60 px-5 py-2 text-sm text-olive hover:bg-ivory">Apply →</Link>
+              <Link to="/contact" className="rounded-full border border-border bg-ivory/60 px-5 py-2 text-sm text-olive hover:bg-ivory">Apply â†’</Link>
             </div>
           ))}
         </div>

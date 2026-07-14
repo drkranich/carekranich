@@ -193,7 +193,7 @@ function AgentWorkspace() {
           </div>
           <div className="mt-4">
             <p className="text-[11px] uppercase tracking-wider text-muted-foreground">Provider</p>
-            <Pill tone="moss">Lovable AI · gemini-2.5-flash</Pill>
+            <Pill tone="moss">OpenAI-compatible AI · configurable model</Pill>
           </div>
         </Card>
       </div>

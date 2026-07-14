@@ -1,12 +1,12 @@
-import { createFileRoute } from "@tanstack/react-router";
+﻿import { createFileRoute } from "@tanstack/react-router";
 import { MarketingPage, FeatureGrid, Section } from "@/components/site/MarketingPage";
 
 export const Route = createFileRoute("/solutions/insurance")({
   head: () => ({
     meta: [
-      { title: "Insurance — Olia" },
+      { title: "Insurance â€” Care Kranich" },
       { name: "description", content: "Claims integration, healthcare intelligence and preventative care analytics for insurers and payors." },
-      { property: "og:title", content: "Insurance — Olia" },
+      { property: "og:title", content: "Insurance â€” Care Kranich" },
       { property: "og:description", content: "Claims integration, healthcare intelligence and preventative care analytics for insurers and payors." },
     ],
   }),
@@ -19,7 +19,7 @@ function Page() {
       eyebrow="Solutions"
       crumbs={[{ label: "Solutions" }, { label: "Insurance" }]}
       title="Better outcomes lower costs. We help you prove it."
-      lede="Connect Olia's care graph to your claims pipeline and watch readmissions, ER visits and long-stay placements bend."
+      lede="Connect Care Kranich's care graph to your claims pipeline and watch readmissions, ER visits and long-stay placements bend."
       primaryCta={{ label: "Partner with us", to: "/partners" }}
       secondaryCta={{ label: "Talk to actuarial team", to: "/contact" }}
     >

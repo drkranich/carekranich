@@ -49,7 +49,7 @@ function AgentsHub() {
         <p className="text-xs uppercase tracking-widest text-muted-foreground">Architecture</p>
         <p className="mt-2 text-sm text-foreground">
           Agents share a tenant-scoped memory layer, a provider-agnostic model gateway, and a recommendations bus.
-          Each one is role-gated and resident-aware where relevant. Switching providers (Lovable AI today; future Anthropic / OpenAI / Gemini / custom) does not require UI changes.
+          Each one is role-gated and resident-aware where relevant. Switching AI providers does not require UI changes.
         </p>
         <div className="mt-4 grid gap-3 sm:grid-cols-4 text-xs">
           {["Resident & Twin context", "Tenant memory", "Provider gateway", "Recommendations bus"].map((p) => (

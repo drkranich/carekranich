@@ -1,7 +1,21 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "tanstack-start-app",
-  "compatibility_date": "2025-09-24",
+  "name": "care-kranich",
+  "compatibility_date": "2026-07-13",
   "compatibility_flags": ["nodejs_compat"],
   "main": "src/server.ts",
+  "workers_dev": true,
+  "preview_urls": true,
+  "observability": {
+    "enabled": true
+  },
+  "vars": {
+    "SUPABASE_URL": "https://zyljrtmukcniwiloiwra.supabase.co",
+    "SUPABASE_PUBLISHABLE_KEY": "sb_publishable_aYsxT5_9aX7Bo2f8nr86YA_0P_EdAfK",
+    "VITE_SUPABASE_URL": "https://zyljrtmukcniwiloiwra.supabase.co",
+    "VITE_SUPABASE_PROJECT_ID": "zyljrtmukcniwiloiwra",
+    "VITE_SUPABASE_PUBLISHABLE_KEY": "sb_publishable_aYsxT5_9aX7Bo2f8nr86YA_0P_EdAfK",
+    "AI_PROVIDER": "openai",
+    "AI_MODEL": "gpt-4.1-mini"
+  }
 }

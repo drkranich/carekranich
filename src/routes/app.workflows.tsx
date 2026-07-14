@@ -1,36 +1,36 @@
-import { createFileRoute } from "@tanstack/react-router";
+﻿import { createFileRoute } from "@tanstack/react-router";
 import { Card, PageHeader, Pill } from "@/components/app/primitives";
 
 export const Route = createFileRoute("/app/workflows")({ component: Workflows });
 
 const workflows = [
   {
-    name: "Missed medication → Family escalation",
+    name: "Missed medication â†’ Family escalation",
     cat: "Medication",
     runs: 1248,
     success: 99.2,
     steps: ["Med skipped 15min", "Notify caregiver", "Wait 5min", "Notify family", "Generate AI summary"],
   },
   {
-    name: "Abnormal vitals → Telemedicine bridge",
+    name: "Abnormal vitals â†’ Telemedicine bridge",
     cat: "Health",
     runs: 412,
     success: 98.5,
     steps: ["Detect anomaly (2 readings)", "Page caregiver", "Open telemed slot", "Doctor joins", "Plan updated"],
   },
   {
-    name: "Fall detected → Full emergency chain",
+    name: "Fall detected â†’ Full emergency chain",
     cat: "Emergency",
     runs: 18,
     success: 100,
     steps: ["IMU + audio confirm", "SOS to caregiver", "Family alerted", "112 dispatched", "Incident report"],
   },
   {
-    name: "Emotional withdrawal → Companion intervention",
+    name: "Emotional withdrawal â†’ Companion intervention",
     cat: "Emotional",
     runs: 86,
     success: 94.1,
-    steps: ["Detect 3-day pattern", "Olia companion call", "Notify family gently", "Suggest visit", "Wellness coach"],
+    steps: ["Detect 3-day pattern", "Care Kranich companion call", "Notify family gently", "Suggest visit", "Wellness coach"],
   },
 ];
 
@@ -69,9 +69,9 @@ function Workflows() {
             </div>
 
             <div className="mt-5 flex items-center justify-between border-t border-border/60 pt-4 text-xs text-muted-foreground">
-              <span>{w.runs.toLocaleString()} runs · 30d</span>
+              <span>{w.runs.toLocaleString()} runs Â· 30d</span>
               <span><span className="text-moss font-display text-sm">{w.success}%</span> success</span>
-              <button className="text-olive hover:underline">Open builder →</button>
+              <button className="text-olive hover:underline">Open builder â†’</button>
             </div>
           </Card>
         ))}
@@ -79,7 +79,7 @@ function Workflows() {
         <Card className="lg:col-span-2 bg-gradient-olive text-ivory border-none">
           <p className="text-xs uppercase tracking-widest text-ivory/70">AI suggestion</p>
           <h3 className="mt-1 font-display text-2xl">Create a workflow for nighttime restlessness?</h3>
-          <p className="mt-2 max-w-2xl text-sm text-ivory/85">Olia detected 7 nights of light fragmentation patterns across 12 residents. A proactive companion + environment routine could reduce wake events by ~34%.</p>
+          <p className="mt-2 max-w-2xl text-sm text-ivory/85">Care Kranich detected 7 nights of light fragmentation patterns across 12 residents. A proactive companion + environment routine could reduce wake events by ~34%.</p>
           <div className="mt-4 flex gap-2">
             <button className="rounded-full bg-ivory px-4 py-2 text-xs text-olive">Generate workflow</button>
             <button className="rounded-full border border-ivory/30 px-4 py-2 text-xs">Dismiss</button>
