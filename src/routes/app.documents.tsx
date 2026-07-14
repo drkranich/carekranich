@@ -121,15 +121,15 @@ function Documents() {
   return (
     <>
       <PageHeader
-        title="Document intelligence"
-        subtitle="Private uploads, signed access, PDF generation and audit-ready document metadata."
-        action={<Pill tone="olive">Private Supabase Storage</Pill>}
+        title="Inteligencia de documentos"
+        subtitle="Uploads privados, acesso assinado, geracao de PDFs e metadados prontos para auditoria."
+        action={<Pill tone="olive">Armazenamento privado Supabase</Pill>}
       />
 
-      <Card className="mb-6">
+      <Card className="relative z-30 mb-6 overflow-visible">
         <div className="grid gap-3 lg:grid-cols-[1fr_180px_180px_auto]">
           <input
-            placeholder="Document title"
+            placeholder="Titulo do documento"
             value={title}
             onChange={(event) => setTitle(event.target.value)}
             className="rounded-xl border border-border bg-ivory px-3 py-2 text-sm"
@@ -141,7 +141,7 @@ function Documents() {
           />
           <label className="flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-border bg-ivory px-3 py-2 text-sm">
             <Upload className="h-4 w-4" />
-            {file ? file.name.slice(0, 22) : "Choose file"}
+            {file ? file.name.slice(0, 22) : "Selecionar arquivo"}
             <input type="file" className="hidden" onChange={(event) => setFile(event.target.files?.[0] ?? null)} />
           </label>
           <button
@@ -149,21 +149,21 @@ function Documents() {
             disabled={!file || !profile?.tenant_id || uploading}
             className="rounded-xl bg-olive px-4 py-2 text-sm text-ivory disabled:opacity-50"
           >
-            {uploading ? "Uploading..." : "Upload"}
+            {uploading ? "Carregando..." : "Carregar"}
           </button>
         </div>
       </Card>
 
-      <Card className="mb-6">
+      <Card className="relative z-0 mb-6">
         <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-border bg-cream/40 px-4 py-3">
           <FileText className="h-5 w-5 text-muted-foreground" />
           <input
-            placeholder="Search prescriptions, contracts, lab results, dates..."
+            placeholder="Pesquisar receitas medicas, contratos, resultados de exames, datas..."
             value={query}
             onChange={(event) => setQuery(event.target.value)}
             className="min-w-52 flex-1 bg-transparent text-sm focus:outline-none"
           />
-          <Pill tone="gold">Real files only</Pill>
+          <Pill tone="gold">Somente arquivos reais</Pill>
         </div>
         <div className="mt-3 flex flex-wrap gap-2 text-xs">
           {["All", "medical", "prescription", "contract", "insurance", "certification", "identity"].map((t) => (
@@ -181,11 +181,11 @@ function Documents() {
       </Card>
 
       {!profile?.tenant_id && !isSuperAdmin ? (
-        <EmptyState title="Join an approved organization first" hint="Private documents are scoped to a tenant." />
+        <EmptyState title="Entre em uma organizacao aprovada primeiro" hint="Documentos privados ficam vinculados a uma organizacao." />
       ) : docs.isLoading ? (
-        <p className="text-sm text-muted-foreground">Loading...</p>
+        <p className="text-sm text-muted-foreground">Carregando...</p>
       ) : filteredDocs.length === 0 ? (
-        <EmptyState title="No documents yet" hint="Upload the first real file to create the vault." />
+        <EmptyState title="Ainda nao ha documentos." hint="Faca o upload do primeiro arquivo real para criar o cofre." />
       ) : (
         <div className="grid gap-4 lg:grid-cols-2">
           {filteredDocs.map((doc) => (
@@ -207,11 +207,11 @@ function Documents() {
                   </p>
                   <div className="mt-3 flex flex-wrap gap-2">
                     <button onClick={() => openDocument(doc)} className="rounded-full bg-olive px-3 py-1.5 text-xs text-ivory">
-                      Open signed file
+                      Abrir arquivo assinado
                     </button>
                     <button onClick={() => exportSummary(doc)} className="inline-flex items-center gap-1 rounded-full border border-border px-3 py-1.5 text-xs">
                       <Download className="h-3 w-3" />
-                      Export PDF
+                      Exportar PDF
                     </button>
                   </div>
                 </div>

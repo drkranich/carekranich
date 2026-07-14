@@ -49,7 +49,7 @@ export function GlassSelect({
         <ChevronDown className={`h-4 w-4 flex-none text-olive transition ${open ? "rotate-180" : ""}`} />
       </button>
       {open && !disabled && (
-        <div className="absolute left-0 right-0 z-[80] mt-2 overflow-hidden rounded-lg border border-white/75 bg-white/85 p-1 shadow-elevated backdrop-blur-2xl">
+        <div className="absolute left-0 right-0 z-[1000] mt-2 overflow-hidden rounded-lg border border-white/75 bg-white/85 p-1 shadow-elevated backdrop-blur-2xl">
           <div className="max-h-72 overflow-y-auto app-scrollbar">
             {options.map((option) => (
               <button
