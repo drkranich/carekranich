@@ -1,4 +1,3 @@
-import { Link } from "@tanstack/react-router";
 import heroImg from "@/assets/hero-elder.jpg";
 
 const signals = [
@@ -37,12 +36,12 @@ export function Hero() {
           </p>
 
           <div className="mt-9 flex flex-wrap items-center gap-3">
-            <Link to="/signup" className="rounded-full bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground shadow-elevated transition hover:translate-y-[-1px] hover:opacity-95">
+            <a href="/signup" className="rounded-full bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground shadow-elevated transition hover:translate-y-[-1px] hover:opacity-95">
               Start care journey
-            </Link>
-            <Link to="/family-center" className="rounded-full border border-white/70 bg-white/45 px-6 py-3 text-sm font-semibold text-olive shadow-soft backdrop-blur-xl transition hover:bg-white/70">
+            </a>
+            <a href="#platform" className="rounded-full border border-white/70 bg-white/45 px-6 py-3 text-sm font-semibold text-olive shadow-soft backdrop-blur-xl transition hover:bg-white/70">
               See the platform
-            </Link>
+            </a>
           </div>
         </div>
 

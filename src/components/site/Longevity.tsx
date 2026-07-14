@@ -3,7 +3,7 @@ import wellnessImg from "@/assets/wellness.jpg";
 
 export function Longevity() {
   return (
-    <section className="py-24 md:py-32">
+    <section id="longevity" className="scroll-mt-20 py-24 md:py-32">
       <div className="mx-auto grid max-w-7xl gap-16 px-6 lg:grid-cols-5 lg:items-center">
         <div className="lg:col-span-2">
           <span className="text-xs font-semibold uppercase tracking-[0.12em] text-terracotta">Longevity & wellbeing</span>

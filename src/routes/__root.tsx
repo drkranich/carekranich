@@ -9,6 +9,7 @@ import {
 } from "@tanstack/react-router";
 import { AuthProvider } from "@/hooks/use-auth";
 import { PlatformBrandRuntime } from "@/components/PlatformBrand";
+import { ScrollManager } from "@/components/ScrollManager";
 import { Toaster } from "sonner";
 
 import appCss from "../styles.css?url";
@@ -90,6 +91,7 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <PlatformBrandRuntime />
+      <ScrollManager />
       <AuthProvider>
         <Outlet />
         <Toaster position="top-right" richColors closeButton theme="light" />

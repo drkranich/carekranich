@@ -10,7 +10,7 @@ export function FamilyDashboard() {
   ];
 
   return (
-    <section id="family" className="relative overflow-hidden py-24 md:py-32">
+    <section id="family" className="relative scroll-mt-20 overflow-hidden py-24 md:py-32">
       <div className="mx-auto grid max-w-7xl gap-16 px-6 lg:grid-cols-2 lg:items-center">
         <div className="relative">
           <div className="overflow-hidden rounded-3xl shadow-elevated">

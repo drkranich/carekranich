@@ -9,6 +9,7 @@ import { Longevity } from "@/components/site/Longevity";
 import { Testimonials } from "@/components/site/Testimonials";
 import { Pricing } from "@/components/site/Pricing";
 import { CTA } from "@/components/site/CTA";
+import { PublicChatBox } from "@/components/site/PublicChatBox";
 
 export const Route = createFileRoute("/")({
   component: Index,
@@ -29,6 +30,7 @@ function Index() {
         <CTA />
       </main>
       <SiteFooter />
+      <PublicChatBox />
     </div>
   );
 }

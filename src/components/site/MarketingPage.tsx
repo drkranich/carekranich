@@ -1,6 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { SiteHeader } from "@/components/site/SiteHeader";
 import { SiteFooter } from "@/components/site/SiteFooter";
+import { PublicChatBox } from "@/components/site/PublicChatBox";
 import type { ReactNode } from "react";
 
 export type Crumb = { label: string; to?: string };
@@ -119,6 +120,7 @@ export function MarketingPage({
         </div>
       </main>
       <SiteFooter />
+      <PublicChatBox />
     </div>
   );
 }

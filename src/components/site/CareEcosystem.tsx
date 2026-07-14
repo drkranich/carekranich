@@ -8,7 +8,7 @@ export function CareEcosystem() {
   ];
 
   return (
-    <section id="caregivers" className="bg-gradient-olive py-24 text-ivory md:py-32">
+    <section id="caregivers" className="scroll-mt-20 bg-gradient-olive py-24 text-ivory md:py-32">
       <div className="mx-auto max-w-7xl px-6">
         <div className="grid gap-12 md:grid-cols-2 md:items-end">
           <div>

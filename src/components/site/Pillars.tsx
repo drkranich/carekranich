@@ -11,7 +11,7 @@ const pillars = [
 
 export function Pillars() {
   return (
-    <section id="platform" className="bg-ivory/70 py-24 md:py-32">
+    <section id="platform" className="scroll-mt-20 bg-ivory/70 py-24 md:py-32">
       <div className="mx-auto max-w-7xl px-6">
         <div className="max-w-2xl">
           <span className="text-xs font-semibold uppercase tracking-[0.12em] text-moss">The Care Kranich platform</span>

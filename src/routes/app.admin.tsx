@@ -245,6 +245,7 @@ function Admin() {
                     title="Approvals"
                     rows={data?.approvals ?? []}
                     empty="No approval requests."
+                    hrefFor={() => "/app/approvals"}
                     render={(item: any) => (
                       <>
                         <span>{item.request_type}</span>
@@ -256,6 +257,7 @@ function Admin() {
                     title="Inbox"
                     rows={data?.threads ?? []}
                     empty="No conversations."
+                    hrefFor={(item: any) => `/app/inbox?thread=${item.id}`}
                     render={(item: any) => (
                       <>
                         <span>{item.subject}</span>
@@ -267,6 +269,7 @@ function Admin() {
                     title="Contracts"
                     rows={data?.contracts ?? []}
                     empty="No contracts."
+                    hrefFor={() => "/app/contracts"}
                     render={(item: any) => (
                       <>
                         <span>{item.title}</span>
@@ -548,22 +551,44 @@ function RecentList({
   title,
   rows,
   empty,
+  hrefFor,
   render,
 }: {
   title: string;
   rows: any[];
   empty: string;
+  hrefFor?: (item: any) => string;
   render: (item: any) => ReactNode;
 }) {
   return (
     <div className="rounded-2xl border border-white/70 bg-white/45 p-4">
       <p className="text-xs font-semibold uppercase text-muted-foreground">{title}</p>
       <div className="mt-3 space-y-2">
-        {rows.slice(0, 5).map((item) => (
-          <div key={item.id} className="flex items-center justify-between gap-3 rounded-xl bg-cream/45 px-3 py-2 text-sm">
-            {render(item)}
-          </div>
-        ))}
+        {rows.slice(0, 5).map((item) => {
+          const content = (
+            <>
+              <div className="min-w-0 flex-1 truncate">{render(item)}</div>
+              {hrefFor && (
+                <span className="rounded-full border border-olive/20 bg-olive/8 px-3 py-1 text-xs text-olive">
+                  Abrir
+                </span>
+              )}
+            </>
+          );
+          return hrefFor ? (
+            <a
+              key={item.id}
+              href={hrefFor(item)}
+              className="flex items-center justify-between gap-3 rounded-xl bg-cream/45 px-3 py-2 text-sm transition hover:bg-white/65"
+            >
+              {content}
+            </a>
+          ) : (
+            <div key={item.id} className="flex items-center justify-between gap-3 rounded-xl bg-cream/45 px-3 py-2 text-sm">
+              {content}
+            </div>
+          );
+        })}
         {rows.length === 0 && <p className="py-4 text-sm text-muted-foreground">{empty}</p>}
       </div>
     </div>
