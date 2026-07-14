@@ -7,7 +7,7 @@ import {
   Navigate,
 } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { Avatar } from "@/components/app/primitives";
+import { Avatar, Card, PageHeader, Pill } from "@/components/app/primitives";
 import { NotificationBell } from "@/components/app/NotificationBell";
 import { useAuth, ROLE_LABELS, type AppRole, type Profile } from "@/hooks/use-auth";
 import { useTenantRealtime } from "@/hooks/use-realtime";
@@ -266,12 +266,21 @@ function AppLayout() {
     return ALL_SECTIONS.map((s) => ({
       ...s,
       items: s.items.filter((i) => {
-        const roleAllowed = !i.roles || i.roles.some((r) => roles.includes(r));
-        const kindAllowed = !i.userKinds || (!!profile?.user_kind && i.userKinds.includes(profile.user_kind));
-        return i.roles && i.userKinds ? roleAllowed || kindAllowed : roleAllowed && kindAllowed;
+        return canAccessNavItem(i, roles, profile?.user_kind);
       }),
     })).filter((s) => s.items.length > 0);
   }, [profile?.user_kind, roles]);
+
+  const currentNavItem = useMemo(() => {
+    const allItems = ALL_SECTIONS.flatMap((section) => section.items);
+    const exact = allItems.find((item) => path === item.to);
+    if (exact) return exact;
+    return allItems
+      .filter((item) => item.to !== "/app" && path.startsWith(`${item.to}/`))
+      .sort((a, b) => b.to.length - a.to.length)[0] ?? null;
+  }, [path]);
+
+  const canAccessCurrentRoute = !currentNavItem || canAccessNavItem(currentNavItem, roles, profile?.user_kind);
 
   const quickLinks = useMemo(() => {
     return sections.flatMap((section) =>
@@ -602,10 +611,77 @@ function AppLayout() {
         </header>
         <main className="px-5 py-8 md:px-8 md:py-10">
           <div className="mx-auto max-w-[1500px]">
-            <Outlet />
+            {canAccessCurrentRoute ? (
+              <Outlet />
+            ) : (
+              <AccessDenied
+                routeLabel={currentNavItem.label}
+                primaryRole={primaryRole}
+                userKind={profile?.user_kind}
+              />
+            )}
           </div>
         </main>
       </div>
     </div>
   );
 }
+
+function canAccessNavItem(
+  item: NavItem,
+  roles: AppRole[],
+  userKind: UserKind | null | undefined,
+) {
+  if (roles.includes("super_admin")) return true;
+  const roleAllowed = !item.roles || item.roles.some((role) => roles.includes(role));
+  const kindAllowed = !item.userKinds || (!!userKind && item.userKinds.includes(userKind));
+  return roleAllowed && kindAllowed;
+}
+
+function AccessDenied({
+  routeLabel,
+  primaryRole,
+  userKind,
+}: {
+  routeLabel: string;
+  primaryRole: AppRole | null;
+  userKind: UserKind | null | undefined;
+}) {
+  return (
+    <>
+      <PageHeader
+        title="Acesso restrito"
+        subtitle={`Esta area pertence a outro perfil operacional do SaaS: ${routeLabel}.`}
+        action={<Pill tone="gold">Permissoes por perfil</Pill>}
+      />
+      <Card className="max-w-3xl">
+        <p className="text-sm leading-6 text-muted-foreground">
+          Seu acesso atual esta configurado como{" "}
+          <span className="font-medium text-foreground">
+            {primaryRole ? ROLE_LABELS[primaryRole] : "membro"}
+          </span>
+          {userKind ? ` / ${USER_KIND_LABELS[userKind]}` : ""}. Para evitar mistura entre super admin,
+          clinicas, equipe, prestadores e familias, esta rota fica bloqueada fora do perfil correto.
+        </p>
+        <div className="mt-5 flex flex-wrap gap-2">
+          <Link to="/app" className="rounded-full bg-olive px-4 py-2 text-xs font-semibold text-ivory">
+            Voltar ao painel
+          </Link>
+          <Link
+            to="/app/profile"
+            className="rounded-full border border-border bg-white/55 px-4 py-2 text-xs font-semibold text-foreground"
+          >
+            Ver meu perfil
+          </Link>
+        </div>
+      </Card>
+    </>
+  );
+}
+
+const USER_KIND_LABELS: Record<NonNullable<UserKind>, string> = {
+  family: "familia",
+  clinic: "clinica",
+  service_provider: "prestador de servicos",
+  staff: "equipe",
+};
