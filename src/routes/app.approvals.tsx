@@ -1,6 +1,7 @@
 import { createFileRoute, Navigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Check, Shield, Trash2, X } from "lucide-react";
+import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Card, PageHeader, Pill, Stat } from "@/components/app/primitives";
 import { GlassSelect } from "@/components/app/GlassSelect";
@@ -10,6 +11,8 @@ import { ROLE_LABELS, useAuth, type AppRole } from "@/hooks/use-auth";
 export const Route = createFileRoute("/app/approvals")({ component: Approvals });
 
 const roleOptions: AppRole[] = ["family", "caregiver", "nurse", "doctor", "clinic_admin"];
+const accountStatusOptions = ["all", "pending", "active", "suspended", "rejected"];
+const userKindOptions = ["all", "family", "clinic", "service_provider", "staff"];
 const userKindLabels: Record<string, string> = {
   family: "Familia",
   clinic: "Clinica",
@@ -20,6 +23,8 @@ const userKindLabels: Record<string, string> = {
 function Approvals() {
   const { isSuperAdmin } = useAuth();
   const qc = useQueryClient();
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [kindFilter, setKindFilter] = useState("all");
   if (!isSuperAdmin) return <Navigate to="/app" />;
 
   const approvals = useQuery({
@@ -70,6 +75,36 @@ function Approvals() {
     onError: (error: any) => toast.error(error.message ?? "Could not review request"),
   });
 
+  const accountStatus = useMutation({
+    mutationFn: async ({
+      userId,
+      status,
+      note,
+    }: {
+      userId: string;
+      status: "pending" | "active" | "rejected" | "suspended";
+      note: string;
+    }) => {
+      const { error } = await (supabase as any).rpc("set_profile_account_status", {
+        _user_id: userId,
+        _account_status: status,
+        _note: note,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Account status updated");
+      qc.invalidateQueries({ queryKey: ["platform-members"] });
+      qc.invalidateQueries({ queryKey: ["super-admin-control-plane"] });
+    },
+    onError: (error: any) =>
+      toast.error(
+        error.message?.includes("function")
+          ? "Supabase migration for account controls is not applied yet."
+          : error.message ?? "Could not update account status",
+      ),
+  });
+
   const addRole = async (userId: string, tenantId: string | null, role: AppRole) => {
     const { error } = await supabase.from("user_roles").insert({ user_id: userId, tenant_id: tenantId, role });
     if (error) toast.error(error.message);
@@ -89,6 +124,13 @@ function Approvals() {
   };
 
   const pending = (approvals.data ?? []).filter((item: any) => item.status === "pending");
+  const filteredMembers = useMemo(() => {
+    return (members.data ?? []).filter((member: any) => {
+      const statusAllowed = statusFilter === "all" || member.account_status === statusFilter;
+      const kindAllowed = kindFilter === "all" || member.user_kind === kindFilter;
+      return statusAllowed && kindAllowed;
+    });
+  }, [kindFilter, members.data, statusFilter]);
 
   return (
     <>
@@ -147,12 +189,33 @@ function Approvals() {
         </Card>
 
         <Card>
-          <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-xl font-semibold text-foreground">Permissions</h2>
-            <Shield className="h-5 w-5 text-olive" />
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <h2 className="text-xl font-semibold text-foreground">Permissions</h2>
+              <Shield className="h-5 w-5 text-olive" />
+            </div>
+            <Pill tone="olive">{filteredMembers.length} shown</Pill>
+          </div>
+          <div className="mb-4 grid gap-2 sm:grid-cols-2">
+            <GlassSelect
+              value={statusFilter}
+              onChange={setStatusFilter}
+              options={accountStatusOptions.map((status) => ({
+                value: status,
+                label: status === "all" ? "Todos os status" : status,
+              }))}
+            />
+            <GlassSelect
+              value={kindFilter}
+              onChange={setKindFilter}
+              options={userKindOptions.map((kind) => ({
+                value: kind,
+                label: kind === "all" ? "Todos os perfis" : userKindLabels[kind] ?? kind,
+              }))}
+            />
           </div>
           <div className="space-y-3">
-            {(members.data ?? []).map((member: any) => (
+            {filteredMembers.map((member: any) => (
               <div key={member.id} className="rounded-2xl border border-white/70 bg-white/50 p-4">
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
@@ -177,6 +240,17 @@ function Approvals() {
                     </button>
                   ))}
                 </div>
+                <AccountStatusControls
+                  member={member}
+                  busy={accountStatus.isPending}
+                  onChange={(status) =>
+                    accountStatus.mutate({
+                      userId: member.id,
+                      status,
+                      note: `Set to ${status} from approvals console`,
+                    })
+                  }
+                />
                 {member.tenant_id && (
                   <GlassSelect
                     className="mt-3"
@@ -188,9 +262,51 @@ function Approvals() {
                 )}
               </div>
             ))}
+            {filteredMembers.length === 0 && (
+              <p className="py-8 text-center text-sm text-muted-foreground">No members match these filters.</p>
+            )}
           </div>
         </Card>
       </div>
     </>
+  );
+}
+
+function AccountStatusControls({
+  member,
+  busy,
+  onChange,
+}: {
+  member: any;
+  busy: boolean;
+  onChange: (status: "pending" | "active" | "rejected" | "suspended") => void;
+}) {
+  const isProtected = member.roles.some((role: any) => role.role === "super_admin");
+  const actions: { status: "pending" | "active" | "rejected" | "suspended"; label: string; tone: string }[] = [
+    { status: "active", label: "Ativar", tone: "bg-olive text-ivory" },
+    { status: "suspended", label: "Suspender", tone: "border border-gold/35 text-wine" },
+    { status: "rejected", label: "Rejeitar", tone: "border border-wine/35 text-wine" },
+    { status: "pending", label: "Pendente", tone: "border border-border text-foreground" },
+  ];
+
+  return (
+    <div className="mt-4 border-t border-white/60 pt-3">
+      <p className="text-[10px] font-semibold uppercase text-muted-foreground">Account lifecycle</p>
+      <div className="mt-2 flex flex-wrap gap-2">
+        {actions.map((action) => (
+          <button
+            key={action.status}
+            onClick={() => onChange(action.status)}
+            disabled={busy || isProtected || member.account_status === action.status}
+            className={`rounded-full px-3 py-1.5 text-xs font-medium disabled:cursor-not-allowed disabled:opacity-45 ${action.tone}`}
+          >
+            {action.label}
+          </button>
+        ))}
+      </div>
+      {isProtected && (
+        <p className="mt-2 text-[11px] text-muted-foreground">Super admin account is protected from lifecycle changes.</p>
+      )}
+    </div>
   );
 }
