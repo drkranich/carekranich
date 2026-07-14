@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useState } from "react";
 import { Card, PageHeader, Pill, Spark, Stat } from "@/components/app/primitives";
 
 export const Route = createFileRoute("/app/ai")({
@@ -6,6 +7,26 @@ export const Route = createFileRoute("/app/ai")({
 });
 
 function AIInsights() {
+  const [selectedAlert, setSelectedAlert] = useState(predictiveAlerts[0]);
+  const [resolvedActions, setResolvedActions] = useState<string[]>([]);
+  const [message, setMessage] = useState("");
+  const [conversation, setConversation] = useState(initialConversation);
+
+  const sendMessage = () => {
+    const clean = message.trim();
+    if (!clean) return;
+    setConversation((items) => [
+      ...items,
+      { who: "Maria", text: clean, tone: "moss" as const },
+      {
+        who: "Care Kranich",
+        text: "I captured that and connected it to today's emotional pattern.",
+        tone: "wine" as const,
+      },
+    ]);
+    setMessage("");
+  };
+
   return (
     <>
       <PageHeader
@@ -28,52 +49,66 @@ function AIInsights() {
             <Pill tone="moss">3 active - 0 critical</Pill>
           </div>
           <div className="mt-5 space-y-4">
-            {[
-              {
-                t: "Hydration risk - medium",
-                n: "Pattern of low afternoon fluid intake. AI recommends gentle reminders at 14:30 and 17:00.",
-                c: 78,
-                tone: "gold",
-                action: "Schedule reminders",
-              },
-              {
-                t: "Sleep regularity - low risk",
-                n: "Bedtime drift of 38 min over the past week. Consider winding down rituals.",
-                c: 64,
-                tone: "moss",
-                action: "Suggest routine",
-              },
-              {
-                t: "Social connection - improving",
-                n: "Video calls increased 40% - emotional sentiment up. Maintain current cadence.",
-                c: 92,
-                tone: "wine",
-                action: "Send to family",
-              },
-            ].map((a) => (
-              <div key={a.t} className="rounded-2xl border border-border/60 bg-cream/40 p-5">
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex-1">
-                    <p className="text-lg font-semibold text-foreground">{a.t}</p>
-                    <p className="mt-1 text-sm text-muted-foreground">{a.n}</p>
+            {predictiveAlerts.map((a) => {
+              const isSelected = selectedAlert.t === a.t;
+              const isDone = resolvedActions.includes(a.t);
+              return (
+                <div
+                  key={a.t}
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => setSelectedAlert(a)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter" || event.key === " ") setSelectedAlert(a);
+                  }}
+                  className={`w-full rounded-2xl border p-5 text-left transition ${
+                    isSelected
+                      ? "border-olive/50 bg-olive/10 shadow-soft"
+                      : "border-border/60 bg-cream/40 hover:border-olive/30"
+                  }`}
+                >
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex-1">
+                      <p className="text-lg font-semibold text-foreground">{a.t}</p>
+                      <p className="mt-1 text-sm text-muted-foreground">{a.n}</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        setResolvedActions((items) =>
+                          items.includes(a.t)
+                            ? items.filter((item) => item !== a.t)
+                            : [...items, a.t],
+                        );
+                        setSelectedAlert(a);
+                      }}
+                      className={`whitespace-nowrap rounded-full px-4 py-2 text-xs ${
+                        isDone ? "bg-moss/15 text-moss" : "bg-olive text-ivory"
+                      }`}
+                    >
+                      {isDone ? "Queued" : a.action}
+                    </button>
                   </div>
-                  <button className="rounded-full bg-olive px-4 py-2 text-xs text-ivory whitespace-nowrap">
-                    {a.action}
-                  </button>
-                </div>
-                <div className="mt-4 flex items-center gap-3">
-                  <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-muted">
-                    <div
-                      className="h-full rounded-full"
-                      style={{ width: `${a.c}%`, background: `var(--${a.tone})` }}
-                    />
+                  <div className="mt-4 flex items-center gap-3">
+                    <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-muted">
+                      <div
+                        className="h-full rounded-full"
+                        style={{ width: `${a.c}%`, background: `var(--${a.tone})` }}
+                      />
+                    </div>
+                    <span className="text-xs tabular-nums text-muted-foreground">
+                      {a.c}% confidence
+                    </span>
                   </div>
-                  <span className="text-xs tabular-nums text-muted-foreground">
-                    {a.c}% confidence
-                  </span>
                 </div>
-              </div>
-            ))}
+              );
+            })}
+          </div>
+          <div className="mt-4 rounded-2xl border border-olive/20 bg-olive/10 p-4">
+            <p className="text-xs uppercase text-muted-foreground">AI recommendation selected</p>
+            <p className="mt-1 text-sm font-medium text-foreground">{selectedAlert.t}</p>
+            <p className="mt-1 text-sm text-muted-foreground">{selectedAlert.recommendation}</p>
           </div>
         </Card>
 
@@ -96,26 +131,26 @@ function AIInsights() {
             </div>
           </div>
           <div className="mt-5 space-y-3 max-h-96 overflow-y-auto pr-1">
-            <Bubble who="Maria">Sometimes I miss the old garden in Coimbra.</Bubble>
-            <Bubble who="Care Kranich" tone="wine">
-              That sounds like such a beautiful memory. What did you grow there?
-            </Bubble>
-            <Bubble who="Maria">My father's roses. Reds and yellows.</Bubble>
-            <Bubble who="Care Kranich" tone="wine">
-              Roses. That love seems to have stayed in your hands - Sofia mentioned the tulips
-              Helena brought today look perfectly arranged.
-            </Bubble>
-            <Bubble who="Maria">Helena is kind.</Bubble>
-            <Bubble who="Care Kranich" tone="wine">
-              She is. Would you like me to schedule a little tea with her this week?
-            </Bubble>
+            {conversation.map((item, index) => (
+              <Bubble key={`${item.who}-${index}`} who={item.who} tone={item.tone}>
+                {item.text}
+              </Bubble>
+            ))}
           </div>
-          <div className="mt-4 flex gap-2 rounded-full border border-border bg-ivory p-1.5">
+          <form
+            className="mt-4 flex gap-2 rounded-full border border-border bg-ivory p-1.5"
+            onSubmit={(event) => {
+              event.preventDefault();
+              sendMessage();
+            }}
+          >
             <input
+              value={message}
+              onChange={(event) => setMessage(event.target.value)}
               placeholder="Speak or write to Care Kranich..."
               className="flex-1 bg-transparent px-3 text-sm focus:outline-none"
             />
-            <button className="rounded-full bg-wine p-2 text-ivory">
+            <button type="submit" className="rounded-full bg-wine p-2 text-ivory">
               <svg
                 viewBox="0 0 24 24"
                 className="h-4 w-4"
@@ -126,7 +161,7 @@ function AIInsights() {
                 <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z M19 10v2a7 7 0 0 1-14 0v-2" />
               </svg>
             </button>
-          </div>
+          </form>
         </Card>
 
         <Card className="lg:col-span-3">
@@ -178,6 +213,54 @@ function AIInsights() {
     </>
   );
 }
+
+const predictiveAlerts = [
+  {
+    t: "Hydration risk - medium",
+    n: "Pattern of low afternoon fluid intake. AI recommends gentle reminders at 14:30 and 17:00.",
+    c: 78,
+    tone: "gold",
+    action: "Schedule reminders",
+    recommendation: "Create two gentle reminders and ask Sofia to verify intake at the next visit.",
+  },
+  {
+    t: "Sleep regularity - low risk",
+    n: "Bedtime drift of 38 min over the past week. Consider winding down rituals.",
+    c: 64,
+    tone: "moss",
+    action: "Suggest routine",
+    recommendation: "Send a 21:15 wind-down checklist and lower smart-home lighting at 21:30.",
+  },
+  {
+    t: "Social connection - improving",
+    n: "Video calls increased 40% - emotional sentiment up. Maintain current cadence.",
+    c: 92,
+    tone: "wine",
+    action: "Send to family",
+    recommendation: "Share the positive trend with family and protect two call windows this week.",
+  },
+];
+
+const initialConversation = [
+  { who: "Maria", text: "Sometimes I miss the old garden in Coimbra.", tone: "moss" as const },
+  {
+    who: "Care Kranich",
+    text: "That sounds like such a beautiful memory. What did you grow there?",
+    tone: "wine" as const,
+  },
+  { who: "Maria", text: "My father's roses. Reds and yellows.", tone: "moss" as const },
+  {
+    who: "Care Kranich",
+    text: "Roses. That love seems to have stayed in your hands - Sofia mentioned the tulips Helena brought today look perfectly arranged.",
+    tone: "wine" as const,
+  },
+  { who: "Maria", text: "Helena is kind.", tone: "moss" as const },
+  {
+    who: "Care Kranich",
+    text: "She is. Would you like me to schedule a little tea with her this week?",
+    tone: "wine" as const,
+  },
+];
 
 function Bubble({
   who,

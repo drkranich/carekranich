@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useState } from "react";
 import { Card, PageHeader, Pill, Stat, Ring, Avatar, Spark } from "@/components/app/primitives";
 
 export const Route = createFileRoute("/app/quality")({ component: Quality });
@@ -51,6 +52,10 @@ const caregivers = [
 ];
 
 function Quality() {
+  const [selectedCaregiver, setSelectedCaregiver] = useState(caregivers[0]);
+  const [supportMode, setSupportMode] = useState<"cohort" | "playbook">("cohort");
+  const [enabledBadges, setEnabledBadges] = useState<string[]>(qualityBadges);
+
   return (
     <>
       <PageHeader
@@ -86,7 +91,13 @@ function Quality() {
               </thead>
               <tbody>
                 {caregivers.map((c) => (
-                  <tr key={c.n} className="border-b border-border/60 hover:bg-cream/40">
+                  <tr
+                    key={c.n}
+                    onClick={() => setSelectedCaregiver(c)}
+                    className={`cursor-pointer border-b border-border/60 transition ${
+                      selectedCaregiver.n === c.n ? "bg-olive/10" : "hover:bg-cream/40"
+                    }`}
+                  >
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
                         <Avatar name={c.n} tone={c.tone} />
@@ -122,6 +133,41 @@ function Quality() {
           </div>
         </Card>
 
+        <Card>
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <p className="text-xs uppercase text-muted-foreground">Caregiver in focus</p>
+              <h3 className="mt-1 text-xl font-semibold text-foreground">{selectedCaregiver.n}</h3>
+              <p className="text-sm text-muted-foreground">{selectedCaregiver.role}</p>
+            </div>
+            <Pill tone={selectedCaregiver.burnout === "Low" ? "moss" : "gold"}>
+              Burnout {selectedCaregiver.burnout}
+            </Pill>
+          </div>
+          <div className="mt-4 grid gap-3 md:grid-cols-4">
+            <div className="rounded-2xl border border-border/60 bg-cream/40 p-4">
+              <p className="text-xs text-muted-foreground">Punctuality</p>
+              <p className="mt-1 text-2xl font-semibold text-olive">
+                {selectedCaregiver.punctuality}%
+              </p>
+            </div>
+            <div className="rounded-2xl border border-border/60 bg-cream/40 p-4">
+              <p className="text-xs text-muted-foreground">Adherence</p>
+              <p className="mt-1 text-2xl font-semibold text-olive">
+                {selectedCaregiver.adherence}%
+              </p>
+            </div>
+            <div className="rounded-2xl border border-border/60 bg-cream/40 p-4">
+              <p className="text-xs text-muted-foreground">Family rating</p>
+              <p className="mt-1 text-2xl font-semibold text-gold">{selectedCaregiver.family}</p>
+            </div>
+            <div className="rounded-2xl border border-border/60 bg-cream/40 p-4">
+              <p className="text-xs text-muted-foreground">90d incidents</p>
+              <p className="mt-1 text-2xl font-semibold text-wine">{selectedCaregiver.incidents}</p>
+            </div>
+          </div>
+        </Card>
+
         <div className="grid gap-6 lg:grid-cols-3">
           <Card>
             <Ring value={94} label="Org punctuality" sub="30-day rolling" color="var(--olive)" />
@@ -151,27 +197,49 @@ function Quality() {
               chat tone. Proactive 1:1 support already scheduled with each of them.
             </p>
             <div className="mt-4 flex gap-2">
-              <button className="rounded-full bg-ivory px-4 py-2 text-xs text-wine">
+              <button
+                onClick={() => setSupportMode("cohort")}
+                className={`rounded-full px-4 py-2 text-xs ${
+                  supportMode === "cohort" ? "bg-ivory text-wine" : "border border-ivory/30"
+                }`}
+              >
                 View cohort
               </button>
-              <button className="rounded-full border border-ivory/30 px-4 py-2 text-xs">
+              <button
+                onClick={() => setSupportMode("playbook")}
+                className={`rounded-full px-4 py-2 text-xs ${
+                  supportMode === "playbook" ? "bg-ivory text-wine" : "border border-ivory/30"
+                }`}
+              >
                 Wellbeing playbook
               </button>
             </div>
+            <p className="mt-3 text-xs text-ivory/75">
+              {supportMode === "cohort"
+                ? "Showing the 9-person fatigue cohort with scheduled support windows."
+                : "Playbook loaded: shorter shifts, quieter notifications, supervisor check-ins."}
+            </p>
           </Card>
 
           <Card>
             <p className="text-xs uppercase text-muted-foreground">Reputation badges</p>
             <ul className="mt-3 space-y-2 text-sm">
-              {[
-                "Verified ID",
-                "Background checked",
-                "First responder",
-                "Dementia certified",
-                "Family-rated 4.9+",
-              ].map((b) => (
-                <li key={b} className="flex items-center gap-2">
-                  <span className="h-2 w-2 rounded-full bg-moss" /> {b}
+              {qualityBadges.map((b) => (
+                <li
+                  key={b}
+                  onClick={() =>
+                    setEnabledBadges((items) =>
+                      items.includes(b) ? items.filter((item) => item !== b) : [...items, b],
+                    )
+                  }
+                  className="flex cursor-pointer items-center gap-2 rounded-xl px-2 py-1 transition hover:bg-cream/50"
+                >
+                  <span
+                    className={`h-2 w-2 rounded-full ${
+                      enabledBadges.includes(b) ? "bg-moss" : "bg-muted"
+                    }`}
+                  />{" "}
+                  {b}
                 </li>
               ))}
             </ul>
@@ -181,3 +249,11 @@ function Quality() {
     </>
   );
 }
+
+const qualityBadges = [
+  "Verified ID",
+  "Background checked",
+  "First responder",
+  "Dementia certified",
+  "Family-rated 4.9+",
+];

@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useState } from "react";
 import { Card, PageHeader, Pill } from "@/components/app/primitives";
 
 export const Route = createFileRoute("/app/memory")({ component: Memory });
@@ -15,6 +16,9 @@ const memories = [
 ];
 
 function Memory() {
+  const [activeMemory, setActiveMemory] = useState(memories[0]);
+  const [recording, setRecording] = useState(false);
+
   return (
     <>
       <PageHeader
@@ -28,8 +32,9 @@ function Memory() {
           <p className="text-xs uppercase text-muted-foreground">Memory archive</p>
           <div className="mt-4 grid gap-3 sm:grid-cols-2 md:grid-cols-4">
             {memories.map((m) => (
-              <div
+              <button
                 key={m.t}
+                onClick={() => setActiveMemory(m)}
                 className="group relative overflow-hidden rounded-2xl border border-border bg-cream/40 aspect-[4/5]"
               >
                 <div
@@ -41,7 +46,7 @@ function Memory() {
                   <p className="mt-2 text-sm font-medium text-ivory drop-shadow">{m.t}</p>
                   <p className="text-xs text-ivory/80">{m.y}</p>
                 </div>
-              </div>
+              </button>
             ))}
           </div>
         </Card>
@@ -55,9 +60,27 @@ function Memory() {
             <p className="mt-2 text-sm text-ivory/85">
               Care Kranich gently invites Maria to record a 2-minute voice memory.
             </p>
-            <button className="mt-4 inline-flex items-center gap-2 rounded-full bg-ivory px-4 py-2 text-xs text-olive">
-              <span className="h-2 w-2 rounded-full bg-wine" /> Begin recording
+            <button
+              onClick={() => setRecording((v) => !v)}
+              className="mt-4 inline-flex items-center gap-2 rounded-full bg-ivory px-4 py-2 text-xs text-olive"
+            >
+              <span
+                className={`h-2 w-2 rounded-full ${recording ? "animate-pulse bg-wine" : "bg-moss"}`}
+              />
+              <span>{recording ? "Recording memory..." : "Begin recording"}</span>
             </button>
+          </Card>
+
+          <Card>
+            <p className="text-xs uppercase text-muted-foreground">Selected memory</p>
+            <div className="mt-3 rounded-2xl border border-border/60 bg-cream/40 p-4">
+              <Pill tone={activeMemory.tone as any}>{activeMemory.k}</Pill>
+              <p className="mt-3 text-lg font-semibold text-foreground">{activeMemory.t}</p>
+              <p className="text-xs text-muted-foreground">{activeMemory.y}</p>
+              <button className="mt-4 rounded-full bg-olive px-4 py-2 text-xs text-ivory">
+                Share with family
+              </button>
+            </div>
           </Card>
 
           <Card>

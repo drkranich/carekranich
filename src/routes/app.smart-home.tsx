@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useState } from "react";
 import { Card, PageHeader, Pill, Stat } from "@/components/app/primitives";
 
 export const Route = createFileRoute("/app/smart-home")({
@@ -42,6 +43,9 @@ const rooms = [
 ];
 
 function SmartHome() {
+  const [selectedRoom, setSelectedRoom] = useState(rooms.find((room) => room.active) ?? rooms[0]);
+  const [guardMode, setGuardMode] = useState<"Home" | "Night" | "Away">("Home");
+
   return (
     <>
       <PageHeader
@@ -65,9 +69,16 @@ function SmartHome() {
             style={{ aspectRatio: "4/3.5" }}
           >
             {rooms.map((r) => (
-              <div
+              <button
                 key={r.name}
-                className={`relative rounded-2xl border p-3 transition ${r.active ? "border-wine bg-wine/10 shadow-soft" : "border-border bg-card"}`}
+                onClick={() => setSelectedRoom(r)}
+                className={`relative rounded-2xl border p-3 text-left transition ${
+                  selectedRoom.name === r.name
+                    ? "border-baby/70 bg-baby/20 shadow-soft"
+                    : r.active
+                      ? "border-wine bg-wine/10 shadow-soft"
+                      : "border-border bg-card"
+                }`}
                 style={{
                   gridColumn: `${r.x + 1} / span ${r.w}`,
                   gridRow: `${r.y + 1} / span ${r.h}`,
@@ -81,12 +92,30 @@ function SmartHome() {
                     <span className="relative h-1.5 w-1.5 rounded-full bg-wine" />
                   </span>
                 )}
-              </div>
+              </button>
             ))}
           </div>
         </Card>
 
         <Card>
+          <div className="mb-4 rounded-2xl border border-baby/40 bg-baby/20 p-4">
+            <p className="text-xs uppercase text-muted-foreground">Selected room</p>
+            <h3 className="mt-1 text-lg font-semibold text-foreground">{selectedRoom.name}</h3>
+            <p className="text-sm text-muted-foreground">{selectedRoom.status}</p>
+          </div>
+          <div className="mb-4 flex gap-2">
+            {(["Home", "Night", "Away"] as const).map((mode) => (
+              <button
+                key={mode}
+                onClick={() => setGuardMode(mode)}
+                className={`rounded-full px-3 py-1.5 text-xs ${
+                  guardMode === mode ? "bg-olive text-ivory" : "border border-border bg-white/55"
+                }`}
+              >
+                {mode}
+              </button>
+            ))}
+          </div>
           <p className="text-xs uppercase text-muted-foreground">Connected devices</p>
           <ul className="mt-4 space-y-3">
             {[

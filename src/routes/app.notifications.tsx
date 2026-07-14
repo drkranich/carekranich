@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useMemo, useState } from "react";
 import { Card, PageHeader, Pill, Avatar } from "@/components/app/primitives";
 
 export const Route = createFileRoute("/app/notifications")({ component: Notifications });
@@ -59,6 +60,25 @@ const groups = [
 ];
 
 function Notifications() {
+  const [filter, setFilter] = useState("All");
+  const [channels, setChannels] = useState([
+    { c: "In-app", on: true },
+    { c: "Push (mobile)", on: true },
+    { c: "Email - daily digest", on: true },
+    { c: "SMS - emergency only", on: true },
+    { c: "WhatsApp", on: false },
+    { c: "Phone call - escalation", on: true },
+  ]);
+  const visibleGroups = useMemo(() => {
+    if (filter === "All") return groups;
+    return groups.map((group) => ({
+      ...group,
+      items: group.items.filter((item) =>
+        filter === "Mentions" ? item.k === "Family" || item.k === "Medical" : item.k !== "Care",
+      ),
+    }));
+  }, [filter]);
+
   return (
     <>
       <PageHeader
@@ -72,21 +92,32 @@ function Notifications() {
           <div className="border-b border-border/60 px-6 py-4 flex items-center justify-between">
             <p className="text-xs uppercase text-muted-foreground">Inbox</p>
             <div className="flex gap-2 text-xs">
-              <button className="rounded-full bg-olive px-3 py-1 text-ivory">All</button>
-              <button className="rounded-full border border-border px-3 py-1 text-muted-foreground">
-                Unread
-              </button>
-              <button className="rounded-full border border-border px-3 py-1 text-muted-foreground">
-                Mentions
-              </button>
+              {["All", "Unread", "Mentions"].map((item) => (
+                <button
+                  key={item}
+                  onClick={() => setFilter(item)}
+                  className={`rounded-full px-3 py-1 ${
+                    filter === item
+                      ? "bg-olive text-ivory"
+                      : "border border-border text-muted-foreground"
+                  }`}
+                >
+                  {item}
+                </button>
+              ))}
             </div>
           </div>
-          {groups.map((g) => (
+          {visibleGroups.map((g) => (
             <div key={g.label}>
               <p className="px-6 pt-4 pb-2 text-[10px] uppercase text-muted-foreground">
                 {g.label}
               </p>
               <ul>
+                {g.items.length === 0 && (
+                  <li className="px-6 py-5 text-sm text-muted-foreground">
+                    No items in this group.
+                  </li>
+                )}
                 {g.items.map((n, i) => (
                   <li
                     key={i}
@@ -113,16 +144,14 @@ function Notifications() {
           <Card>
             <p className="text-xs uppercase text-muted-foreground">Channels</p>
             <ul className="mt-3 space-y-3 text-sm">
-              {[
-                { c: "In-app", on: true },
-                { c: "Push (mobile)", on: true },
-                { c: "Email - daily digest", on: true },
-                { c: "SMS - emergency only", on: true },
-                { c: "WhatsApp", on: false },
-                { c: "Phone call - escalation", on: true },
-              ].map((c) => (
+              {[...channels].map((c) => (
                 <li
                   key={c.c}
+                  onClick={() =>
+                    setChannels((current) =>
+                      current.map((item) => (item.c === c.c ? { ...item, on: !item.on } : item)),
+                    )
+                  }
                   className="flex items-center justify-between rounded-xl border border-border/60 bg-cream/40 p-3"
                 >
                   <span className="text-foreground">{c.c}</span>

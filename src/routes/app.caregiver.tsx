@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useState } from "react";
 import { PageHeader, Pill, Avatar } from "@/components/app/primitives";
 
 export const Route = createFileRoute("/app/caregiver")({
@@ -6,6 +7,21 @@ export const Route = createFileRoute("/app/caregiver")({
 });
 
 function CaregiverApp() {
+  const [tasks, setTasks] = useState(shiftTasks);
+  const [lastAction, setLastAction] = useState("Checked in 09:14");
+  const [sosArmed, setSosArmed] = useState(false);
+  const [vitalsSubmitted, setVitalsSubmitted] = useState(false);
+  const completedTasks = tasks.filter((task) => task.done).length;
+
+  const toggleTask = (taskTitle: string) => {
+    setTasks((items) =>
+      items.map((task) =>
+        task.t === taskTitle ? { ...task, done: !task.done, next: false } : task,
+      ),
+    );
+    setLastAction(`Updated task: ${taskTitle}`);
+  };
+
   return (
     <>
       <PageHeader
@@ -32,39 +48,55 @@ function CaregiverApp() {
               </div>
             </div>
             <div className="mt-3 flex justify-between text-[11px] text-ivory/70">
-              <span>Checked in 09:14</span>
+              <span>{lastAction}</span>
               <span>4h 12m elapsed</span>
             </div>
           </div>
           <div className="mt-4 grid grid-cols-2 gap-2">
-            <ActionBtn icon="M9 11l3 3 8-8" label="Check task" />
-            <ActionBtn icon="M12 5v14 M5 12h14" label="Add note" />
-            <ActionBtn icon="M23 7l-7 5 7 5V7z" label="Voice note" />
+            <ActionBtn
+              icon="M9 11l3 3 8-8"
+              label="Check task"
+              onClick={() => setLastAction("Task checklist opened")}
+            />
+            <ActionBtn
+              icon="M12 5v14 M5 12h14"
+              label="Add note"
+              onClick={() => setLastAction("Draft note started")}
+            />
+            <ActionBtn
+              icon="M23 7l-7 5 7 5V7z"
+              label="Voice note"
+              onClick={() => setLastAction("Voice note recording")}
+            />
             <ActionBtn
               icon="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4 M7 10l5 5 5-5 M12 15V3"
               label="Photo"
+              onClick={() => setLastAction("Photo attached to visit")}
             />
           </div>
-          <button className="mt-5 w-full rounded-2xl bg-wine px-4 py-3 text-sm text-ivory">
-            SOS - escalate
+          <button
+            onClick={() => {
+              setSosArmed((armed) => !armed);
+              setLastAction(sosArmed ? "SOS cancelled" : "SOS armed - awaiting confirmation");
+            }}
+            className={`mt-5 w-full rounded-2xl px-4 py-3 text-sm text-ivory ${
+              sosArmed ? "bg-gold text-foreground" : "bg-wine"
+            }`}
+          >
+            {sosArmed ? "SOS armed - tap to cancel" : "SOS - escalate"}
           </button>
         </Phone>
 
         {/* Phone 2 - Tasks */}
-        <Phone title="Tasks - 12 of 14">
+        <Phone title={`Tasks - ${completedTasks} of ${tasks.length}`}>
           <ul className="space-y-2">
-            {[
-              { t: "Morning medication", d: "09:00 - Atorvastatin, Vit D", done: true },
-              { t: "Breakfast support", d: "08:15 - Porridge & berries", done: true },
-              { t: "Garden walk - 20 min", d: "10:30 - 1,240 steps", done: true },
-              { t: "Hydration check", d: "11:30 - 6/8 glasses", done: true },
-              { t: "Afternoon medication", d: "16:00 - Losartan 50mg", done: false, next: true },
-              { t: "Cognitive exercise", d: "17:00 - Memory cards", done: false },
-              { t: "Dinner & evening hygiene", d: "19:00", done: false },
-            ].map((t) => (
+            {tasks.map((t) => (
               <li
                 key={t.t}
-                className={`flex items-center gap-3 rounded-2xl p-3 ${t.next ? "bg-wine/15 ring-1 ring-wine/30" : "bg-ivory/10"}`}
+                onClick={() => toggleTask(t.t)}
+                className={`flex cursor-pointer items-center gap-3 rounded-2xl p-3 transition ${
+                  t.next ? "bg-wine/15 ring-1 ring-wine/30" : "bg-ivory/10 hover:bg-ivory/15"
+                }`}
               >
                 <div
                   className={`flex h-6 w-6 items-center justify-center rounded-full ${t.done ? "bg-moss text-ivory" : "border border-ivory/30"}`}
@@ -117,8 +149,14 @@ function CaregiverApp() {
               </div>
             ))}
           </div>
-          <button className="mt-5 w-full rounded-2xl bg-gradient-wine px-4 py-3 text-sm text-ivory">
-            Submit reading
+          <button
+            onClick={() => {
+              setVitalsSubmitted(true);
+              setLastAction("Vitals synced 1 min ago");
+            }}
+            className="mt-5 w-full rounded-2xl bg-gradient-wine px-4 py-3 text-sm text-ivory"
+          >
+            {vitalsSubmitted ? "Reading synced" : "Submit reading"}
           </button>
         </Phone>
       </div>
@@ -162,6 +200,16 @@ function CaregiverApp() {
   );
 }
 
+const shiftTasks = [
+  { t: "Morning medication", d: "09:00 - Atorvastatin, Vit D", done: true },
+  { t: "Breakfast support", d: "08:15 - Porridge & berries", done: true },
+  { t: "Garden walk - 20 min", d: "10:30 - 1,240 steps", done: true },
+  { t: "Hydration check", d: "11:30 - 6/8 glasses", done: true },
+  { t: "Afternoon medication", d: "16:00 - Losartan 50mg", done: false, next: true },
+  { t: "Cognitive exercise", d: "17:00 - Memory cards", done: false },
+  { t: "Dinner & evening hygiene", d: "19:00", done: false },
+];
+
 function Phone({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div className="mx-auto w-full max-w-[300px]">
@@ -182,9 +230,12 @@ function Phone({ title, children }: { title: string; children: React.ReactNode }
   );
 }
 
-function ActionBtn({ icon, label }: { icon: string; label: string }) {
+function ActionBtn({ icon, label, onClick }: { icon: string; label: string; onClick: () => void }) {
   return (
-    <button className="flex flex-col items-center gap-1 rounded-2xl bg-ivory/10 p-3 text-ivory">
+    <button
+      onClick={onClick}
+      className="flex flex-col items-center gap-1 rounded-2xl bg-ivory/10 p-3 text-ivory transition hover:bg-ivory/15"
+    >
       <svg
         viewBox="0 0 24 24"
         className="h-5 w-5"

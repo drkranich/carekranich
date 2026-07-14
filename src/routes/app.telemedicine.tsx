@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useState } from "react";
 import { Card, PageHeader, Pill, Avatar } from "@/components/app/primitives";
 
 export const Route = createFileRoute("/app/telemedicine")({
@@ -6,6 +7,13 @@ export const Route = createFileRoute("/app/telemedicine")({
 });
 
 function Telemedicine() {
+  const [muted, setMuted] = useState(false);
+  const [cameraOn, setCameraOn] = useState(true);
+  const [checklistDone, setChecklistDone] = useState(false);
+  const [callEnded, setCallEnded] = useState(false);
+  const [summaryApproved, setSummaryApproved] = useState(false);
+  const [selectedAppointment, setSelectedAppointment] = useState(upcomingAppointments[0]);
+
   return (
     <>
       <PageHeader
@@ -42,27 +50,40 @@ function Telemedicine() {
             </div>
             {/* Controls */}
             <div className="absolute bottom-5 left-1/2 flex -translate-x-1/2 gap-2 rounded-full bg-foreground/40 p-2 backdrop-blur-md">
-              {[
-                "M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z",
-                "M23 7l-7 5 7 5V7z M14 5H3v14h11V5z",
-                "M9 11l3 3 8-8",
-                "M3 3l18 18",
-              ].map((d, i) => (
-                <button
-                  key={i}
-                  className={`flex h-10 w-10 items-center justify-center rounded-full ${i === 3 ? "bg-wine text-ivory" : "bg-ivory/15 text-ivory hover:bg-ivory/25"}`}
-                >
-                  <svg
-                    viewBox="0 0 24 24"
-                    className="h-4 w-4"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
+              {callControls.map((control, i) => {
+                const active =
+                  (control.label === "Mute" && muted) ||
+                  (control.label === "Camera" && !cameraOn) ||
+                  (control.label === "Checklist" && checklistDone) ||
+                  (control.label === "End" && callEnded);
+                return (
+                  <button
+                    key={control.label}
+                    onClick={() => {
+                      if (control.label === "Mute") setMuted((value) => !value);
+                      if (control.label === "Camera") setCameraOn((value) => !value);
+                      if (control.label === "Checklist") setChecklistDone((value) => !value);
+                      if (control.label === "End") setCallEnded((value) => !value);
+                    }}
+                    title={control.label}
+                    className={`flex h-10 w-10 items-center justify-center rounded-full ${
+                      i === 3 || active
+                        ? "bg-wine text-ivory"
+                        : "bg-ivory/15 text-ivory hover:bg-ivory/25"
+                    }`}
                   >
-                    <path d={d} />
-                  </svg>
-                </button>
-              ))}
+                    <svg
+                      viewBox="0 0 24 24"
+                      className="h-4 w-4"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                    >
+                      <path d={control.icon} />
+                    </svg>
+                  </button>
+                );
+              })}
             </div>
           </div>
           <div className="grid grid-cols-2 gap-4 p-6 md:grid-cols-4">
@@ -99,6 +120,12 @@ function Telemedicine() {
               },
               { who: "Maria", text: "And I've been walking in the garden again." },
               { who: "Dr. Costa", text: "Perfect. Let's keep this dose. I'll renew for 90 days." },
+              ...(checklistDone
+                ? [{ who: "Care Kranich", text: "Medication renewal checklist completed." }]
+                : []),
+              ...(callEnded
+                ? [{ who: "Care Kranich", text: "Call ended. Summary is ready for signature." }]
+                : []),
             ].map((m, i) => (
               <div
                 key={i}
@@ -114,8 +141,11 @@ function Telemedicine() {
         <Card className="lg:col-span-2">
           <div className="flex items-center justify-between">
             <p className="text-xs uppercase text-muted-foreground">AI clinical summary - drafted</p>
-            <button className="rounded-full bg-olive px-4 py-2 text-xs text-ivory">
-              Approve & sign
+            <button
+              onClick={() => setSummaryApproved((value) => !value)}
+              className="rounded-full bg-olive px-4 py-2 text-xs text-ivory"
+            >
+              {summaryApproved ? "Signed" : "Approve & sign"}
             </button>
           </div>
           <div className="mt-4 rounded-2xl border border-border/60 bg-cream/40 p-5 text-sm leading-relaxed text-foreground/90">
@@ -143,14 +173,15 @@ function Telemedicine() {
         <Card>
           <p className="text-xs uppercase text-muted-foreground">Upcoming appointments</p>
           <div className="mt-4 space-y-3">
-            {[
-              { d: "Fri - 10:30", w: "Dr. Costa", t: "Cardiology follow-up" },
-              { d: "Mon - 14:00", w: "Dra. Reis", t: "Geropsychology" },
-              { d: "Wed - 09:00", w: "Andre F.", t: "Physiotherapy at home" },
-            ].map((a) => (
+            {upcomingAppointments.map((a) => (
               <div
                 key={a.d}
-                className="flex items-center gap-3 rounded-2xl border border-border/60 bg-cream/40 p-3"
+                onClick={() => setSelectedAppointment(a)}
+                className={`flex cursor-pointer items-center gap-3 rounded-2xl border p-3 transition ${
+                  selectedAppointment.d === a.d
+                    ? "border-olive/50 bg-olive/10"
+                    : "border-border/60 bg-cream/40 hover:bg-cream/70"
+                }`}
               >
                 <div className="font-display text-xs text-olive w-20">{a.d}</div>
                 <div className="flex-1">
@@ -161,10 +192,23 @@ function Telemedicine() {
             ))}
           </div>
           <button className="mt-4 w-full rounded-full border border-border bg-ivory px-4 py-2 text-xs text-olive hover:bg-cream">
-            + Schedule new
+            Next: {selectedAppointment.t}
           </button>
         </Card>
       </div>
     </>
   );
 }
+
+const callControls = [
+  { label: "Mute", icon: "M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" },
+  { label: "Camera", icon: "M23 7l-7 5 7 5V7z M14 5H3v14h11V5z" },
+  { label: "Checklist", icon: "M9 11l3 3 8-8" },
+  { label: "End", icon: "M3 3l18 18" },
+];
+
+const upcomingAppointments = [
+  { d: "Fri - 10:30", w: "Dr. Costa", t: "Cardiology follow-up" },
+  { d: "Mon - 14:00", w: "Dra. Reis", t: "Geropsychology" },
+  { d: "Wed - 09:00", w: "Andre F.", t: "Physiotherapy at home" },
+];

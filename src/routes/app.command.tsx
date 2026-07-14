@@ -1,9 +1,15 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Card, PageHeader, Pill, Stat, Avatar, Spark, Bars } from "@/components/app/primitives";
+import { useState } from "react";
+import { Card, PageHeader, Pill, Stat, Spark } from "@/components/app/primitives";
 
 export const Route = createFileRoute("/app/command")({ component: Command });
 
 function Command() {
+  const [selectedCity, setSelectedCity] = useState(operationCities[0]);
+  const [selectedIncident, setSelectedIncident] = useState(activeIncidents[0]);
+  const [acknowledged, setAcknowledged] = useState<string[]>([]);
+  const [heatmapMode, setHeatmapMode] = useState<"risk" | "staffing">("risk");
+
   return (
     <>
       <PageHeader
@@ -46,14 +52,14 @@ function Command() {
                 stroke="var(--olive)"
                 strokeWidth="1"
               />
-              {[
-                { x: 130, y: 90, label: "Lisboa", n: 84, critical: true },
-                { x: 180, y: 60, label: "Porto", n: 52 },
-                { x: 240, y: 110, label: "Madrid", n: 118, critical: true },
-                { x: 290, y: 150, label: "Valencia", n: 31 },
-                { x: 160, y: 150, label: "Sevilla", n: 27, critical: true },
-              ].map((c) => (
-                <g key={c.label}>
+              {operationCities.map((c) => (
+                <g
+                  key={c.label}
+                  className="cursor-pointer"
+                  onClick={() => setSelectedCity(c)}
+                  onKeyDown={() => setSelectedCity(c)}
+                  tabIndex={0}
+                >
                   {c.critical && (
                     <circle cx={c.x} cy={c.y} r="14" fill="var(--wine)" opacity="0.18">
                       <animate
@@ -67,8 +73,14 @@ function Command() {
                   <circle
                     cx={c.x}
                     cy={c.y}
-                    r="5"
-                    fill={c.critical ? "var(--wine)" : "var(--olive)"}
+                    r={selectedCity.label === c.label ? "7" : "5"}
+                    fill={
+                      selectedCity.label === c.label
+                        ? "var(--gold)"
+                        : c.critical
+                          ? "var(--wine)"
+                          : "var(--olive)"
+                    }
                   />
                   <text
                     x={c.x + 9}
@@ -85,16 +97,18 @@ function Command() {
           </div>
           <div className="mt-4 grid grid-cols-3 gap-3 text-xs">
             <div className="rounded-xl border border-border bg-cream/40 p-3">
-              <p className="text-muted-foreground">Active shifts</p>
-              <p className="mt-1 text-lg font-semibold">312</p>
+              <p className="text-muted-foreground">{selectedCity.label} shifts</p>
+              <p className="mt-1 text-lg font-semibold">{selectedCity.n}</p>
             </div>
             <div className="rounded-xl border border-border bg-cream/40 p-3">
-              <p className="text-muted-foreground">Unstaffed regions</p>
-              <p className="mt-1 text-lg font-semibold text-wine">2</p>
+              <p className="text-muted-foreground">Escalation state</p>
+              <p className="mt-1 text-lg font-semibold text-wine">
+                {selectedCity.critical ? "Active" : "Clear"}
+              </p>
             </div>
             <div className="rounded-xl border border-border bg-cream/40 p-3">
-              <p className="text-muted-foreground">Surge requests</p>
-              <p className="mt-1 text-lg font-semibold text-gold">5</p>
+              <p className="text-muted-foreground">Dispatch cue</p>
+              <p className="mt-1 text-lg font-semibold text-gold">{selectedCity.cue}</p>
             </div>
           </div>
         </Card>
@@ -102,54 +116,76 @@ function Command() {
         <Card>
           <p className="text-xs uppercase text-muted-foreground">Active incidents</p>
           <ul className="mt-4 space-y-3">
-            {[
-              {
-                t: "Fall detected",
-                r: "Madrid - M. Alves",
-                lvl: "Critical",
-                tone: "wine",
-                time: "0:42",
-              },
-              {
-                t: "BP spike",
-                r: "Lisboa - J. Santos",
-                lvl: "High",
-                tone: "terracotta",
-                time: "2:18",
-              },
-              {
-                t: "Missed medication",
-                r: "Sevilla - A. Cruz",
-                lvl: "Med",
-                tone: "gold",
-                time: "4:05",
-              },
-              {
-                t: "Caregiver late",
-                r: "Porto - shift 14:00",
-                lvl: "Low",
-                tone: "moss",
-                time: "8:22",
-              },
-            ].map((i) => (
-              <li key={i.t} className="rounded-2xl border border-border bg-card p-3">
-                <div className="flex items-center justify-between">
-                  <p className="text-sm text-foreground">{i.t}</p>
-                  <Pill tone={i.tone as any}>{i.lvl}</Pill>
-                </div>
-                <p className="mt-1 text-xs text-muted-foreground">
-                  {i.r} - open {i.time}
-                </p>
-              </li>
-            ))}
+            {activeIncidents.map((i) => {
+              const selected = selectedIncident.t === i.t;
+              const isAcknowledged = acknowledged.includes(i.t);
+              return (
+                <li
+                  key={i.t}
+                  onClick={() => setSelectedIncident(i)}
+                  className={`cursor-pointer rounded-2xl border p-3 transition ${
+                    selected
+                      ? "border-olive/50 bg-olive/10"
+                      : "border-border bg-card hover:bg-cream/40"
+                  }`}
+                >
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm text-foreground">{i.t}</p>
+                    <Pill tone={isAcknowledged ? "moss" : (i.tone as any)}>
+                      {isAcknowledged ? "Ack" : i.lvl}
+                    </Pill>
+                  </div>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    {i.r} - open {i.time}
+                  </p>
+                </li>
+              );
+            })}
           </ul>
+          <div className="mt-4 rounded-2xl border border-border/60 bg-cream/40 p-4">
+            <p className="text-xs uppercase text-muted-foreground">Dispatch focus</p>
+            <p className="mt-1 text-sm font-medium text-foreground">{selectedIncident.t}</p>
+            <p className="text-xs text-muted-foreground">{selectedIncident.next}</p>
+            <button
+              onClick={() =>
+                setAcknowledged((items) =>
+                  items.includes(selectedIncident.t)
+                    ? items.filter((item) => item !== selectedIncident.t)
+                    : [...items, selectedIncident.t],
+                )
+              }
+              className="mt-3 rounded-full bg-olive px-4 py-2 text-xs text-ivory"
+            >
+              {acknowledged.includes(selectedIncident.t) ? "Reopen incident" : "Acknowledge"}
+            </button>
+          </div>
         </Card>
 
         <Card className="lg:col-span-2">
-          <p className="text-xs uppercase text-muted-foreground">AI risk heatmap - next 48h</p>
+          <div className="flex items-center justify-between">
+            <p className="text-xs uppercase text-muted-foreground">
+              AI {heatmapMode} heatmap - next 48h
+            </p>
+            <div className="flex rounded-full border border-border bg-cream/40 p-1 text-xs">
+              {(["risk", "staffing"] as const).map((mode) => (
+                <button
+                  key={mode}
+                  onClick={() => setHeatmapMode(mode)}
+                  className={`rounded-full px-3 py-1 ${
+                    heatmapMode === mode ? "bg-olive text-ivory" : "text-muted-foreground"
+                  }`}
+                >
+                  {mode}
+                </button>
+              ))}
+            </div>
+          </div>
           <div className="mt-4 grid grid-cols-12 gap-1">
             {Array.from({ length: 96 }).map((_, i) => {
-              const r = Math.sin(i * 0.7) * 0.5 + 0.5;
+              const r =
+                heatmapMode === "risk"
+                  ? Math.sin(i * 0.7) * 0.5 + 0.5
+                  : Math.cos(i * 0.48) * 0.5 + 0.5;
               const color =
                 r > 0.75
                   ? "var(--wine)"
@@ -190,3 +226,46 @@ function Command() {
     </>
   );
 }
+
+const operationCities = [
+  { x: 130, y: 90, label: "Lisboa", n: 84, critical: true, cue: "+2 surge" },
+  { x: 180, y: 60, label: "Porto", n: 52, cue: "stable" },
+  { x: 240, y: 110, label: "Madrid", n: 118, critical: true, cue: "+3 surge" },
+  { x: 290, y: 150, label: "Valencia", n: 31, cue: "stable" },
+  { x: 160, y: 150, label: "Sevilla", n: 27, critical: true, cue: "+1 surge" },
+];
+
+const activeIncidents = [
+  {
+    t: "Fall detected",
+    r: "Madrid - M. Alves",
+    lvl: "Critical",
+    tone: "wine",
+    time: "0:42",
+    next: "Caregiver en route. Prepare telemedicine bridge and family notification.",
+  },
+  {
+    t: "BP spike",
+    r: "Lisboa - J. Santos",
+    lvl: "High",
+    tone: "terracotta",
+    time: "2:18",
+    next: "Request second reading and compare medication adherence for the last 72h.",
+  },
+  {
+    t: "Missed medication",
+    r: "Sevilla - A. Cruz",
+    lvl: "Med",
+    tone: "gold",
+    time: "4:05",
+    next: "Ask caregiver to confirm dose in person before 16:30.",
+  },
+  {
+    t: "Caregiver late",
+    r: "Porto - shift 14:00",
+    lvl: "Low",
+    tone: "moss",
+    time: "8:22",
+    next: "Offer backup shift if delay exceeds 12 minutes.",
+  },
+];

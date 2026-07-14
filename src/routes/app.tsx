@@ -193,6 +193,8 @@ function AppLayout() {
     useAuth();
   const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchOpen, setSearchOpen] = useState(false);
 
   useTenantRealtime(profile?.tenant_id, user?.id);
   const isPlatformUser = roles.includes("super_admin");
@@ -212,6 +214,45 @@ function AppLayout() {
       items: s.items.filter((i) => !i.roles || i.roles.some((r) => roles.includes(r))),
     })).filter((s) => s.items.length > 0);
   }, [roles]);
+
+  const quickLinks = useMemo(() => {
+    return sections.flatMap((section) =>
+      section.items.map((item) => ({
+        ...item,
+        section: section.title,
+        haystack: `${item.label} ${section.title}`.toLowerCase(),
+      })),
+    );
+  }, [sections]);
+
+  const searchResults = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    if (!q) return quickLinks.slice(0, 8);
+    return quickLinks.filter((item) => item.haystack.includes(q)).slice(0, 8);
+  }, [quickLinks, searchQuery]);
+
+  const openQuickLink = (to: string) => {
+    setSearchOpen(false);
+    setSearchQuery("");
+    navigate({ to: to as "/app" });
+  };
+
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "k") {
+        event.preventDefault();
+        setSearchOpen(true);
+        requestAnimationFrame(() => {
+          document.getElementById("app-command-search")?.focus();
+        });
+      }
+      if (event.key === "Escape") {
+        setSearchOpen(false);
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, []);
 
   if (loading)
     return (
@@ -345,7 +386,7 @@ function AppLayout() {
               </div>
               <span className="text-base font-semibold text-olive">Care Kranich</span>
             </Link>
-            <div className="hidden items-center gap-2 rounded-2xl border border-white/70 bg-white/60 px-3 py-2 shadow-soft backdrop-blur-xl md:flex">
+            <div className="relative hidden items-center gap-2 rounded-2xl border border-white/70 bg-white/60 px-3 py-2 shadow-soft backdrop-blur-xl md:flex">
               <svg
                 viewBox="0 0 24 24"
                 className="h-4 w-4 text-muted-foreground"
@@ -357,12 +398,81 @@ function AppLayout() {
                 <path d="M21 21l-4.35-4.35" />
               </svg>
               <input
+                id="app-command-search"
                 placeholder="Search residents, caregivers, alerts..."
+                value={searchQuery}
+                onFocus={() => setSearchOpen(true)}
+                onChange={(event) => {
+                  setSearchQuery(event.target.value);
+                  setSearchOpen(true);
+                }}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter" && searchResults[0]) {
+                    event.preventDefault();
+                    openQuickLink(searchResults[0].to);
+                  }
+                }}
                 className="w-72 bg-transparent text-sm placeholder:text-muted-foreground focus:outline-none"
               />
               <kbd className="rounded bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">
                 Ctrl K
               </kbd>
+              {searchOpen && (
+                <div className="absolute left-0 top-12 z-50 w-[28rem] rounded-2xl border border-white/70 bg-white/86 p-2 shadow-elevated backdrop-blur-2xl">
+                  <div className="px-3 py-2 text-[11px] font-semibold uppercase text-muted-foreground">
+                    Quick switch
+                  </div>
+                  <div className="max-h-80 overflow-y-auto app-scrollbar">
+                    {searchResults.length === 0 ? (
+                      <p className="px-3 py-6 text-center text-xs text-muted-foreground">
+                        No matching workspace page.
+                      </p>
+                    ) : (
+                      searchResults.map((item) => {
+                        const active = path === item.to;
+                        return (
+                          <button
+                            key={`${item.section}-${item.to}`}
+                            onMouseDown={(event) => event.preventDefault()}
+                            onClick={() => openQuickLink(item.to)}
+                            className={`flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left text-sm transition-colors ${
+                              active ? "bg-olive text-ivory" : "text-foreground hover:bg-cream/80"
+                            }`}
+                          >
+                            <span
+                              className={`flex h-8 w-8 items-center justify-center rounded-lg ${
+                                active ? "bg-white/18" : "bg-baby/25 text-olive"
+                              }`}
+                            >
+                              <svg
+                                viewBox="0 0 24 24"
+                                className="h-4 w-4"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              >
+                                <path d={item.icon} />
+                              </svg>
+                            </span>
+                            <span className="min-w-0 flex-1">
+                              <span className="block truncate font-medium">{item.label}</span>
+                              <span
+                                className={`block truncate text-xs ${
+                                  active ? "text-ivory/70" : "text-muted-foreground"
+                                }`}
+                              >
+                                {item.section}
+                              </span>
+                            </span>
+                          </button>
+                        );
+                      })
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
           <div className="relative flex items-center gap-3">

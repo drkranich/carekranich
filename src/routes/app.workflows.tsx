@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useState } from "react";
 import { Card, PageHeader, Pill } from "@/components/app/primitives";
 
 export const Route = createFileRoute("/app/workflows")({ component: Workflows });
@@ -59,6 +60,9 @@ const workflows = [
 ];
 
 function Workflows() {
+  const [activeWorkflow, setActiveWorkflow] = useState(workflows[0]);
+  const [suggestionAccepted, setSuggestionAccepted] = useState(false);
+
   return (
     <>
       <PageHeader
@@ -73,7 +77,10 @@ function Workflows() {
 
       <div className="grid gap-6 lg:grid-cols-2">
         {workflows.map((w) => (
-          <Card key={w.name}>
+          <Card
+            key={w.name}
+            className={activeWorkflow.name === w.name ? "ring-2 ring-baby/50" : ""}
+          >
             <div className="flex items-start justify-between">
               <div>
                 <p className="text-xs uppercase text-moss">{w.cat}</p>
@@ -113,7 +120,9 @@ function Workflows() {
               <span>
                 <span className="text-moss font-display text-sm">{w.success}%</span> success
               </span>
-              <button className="text-olive hover:underline">Open builder</button>
+              <button onClick={() => setActiveWorkflow(w)} className="text-olive hover:underline">
+                Open builder
+              </button>
             </div>
           </Card>
         ))}
@@ -128,12 +137,22 @@ function Workflows() {
             proactive companion + environment routine could reduce wake events by ~34%.
           </p>
           <div className="mt-4 flex gap-2">
-            <button className="rounded-full bg-ivory px-4 py-2 text-xs text-olive">
-              Generate workflow
+            <button
+              onClick={() => setSuggestionAccepted(true)}
+              className="rounded-full bg-ivory px-4 py-2 text-xs text-olive"
+            >
+              {suggestionAccepted ? "Workflow drafted" : "Generate workflow"}
             </button>
             <button className="rounded-full border border-ivory/30 px-4 py-2 text-xs">
               Dismiss
             </button>
+          </div>
+          <div className="mt-5 rounded-2xl bg-white/12 p-4">
+            <p className="text-xs uppercase text-ivory/70">Builder focus</p>
+            <p className="mt-1 text-sm text-ivory/90">{activeWorkflow.name}</p>
+            <p className="mt-2 text-xs text-ivory/70">
+              {activeWorkflow.steps.length} steps - {activeWorkflow.success}% success
+            </p>
           </div>
         </Card>
       </div>

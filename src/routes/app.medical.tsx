@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useState } from "react";
 import { Card, PageHeader, Pill, Spark, Avatar, Stat } from "@/components/app/primitives";
 
 export const Route = createFileRoute("/app/medical")({
@@ -6,6 +7,9 @@ export const Route = createFileRoute("/app/medical")({
 });
 
 function Medical() {
+  const [noteOpen, setNoteOpen] = useState(false);
+  const [selectedMedication, setSelectedMedication] = useState("Losartan");
+
   return (
     <>
       <PageHeader
@@ -14,8 +18,11 @@ function Medical() {
         action={
           <div className="flex gap-2">
             <Pill tone="moss">Stable</Pill>
-            <button className="rounded-full bg-olive px-4 py-2 text-xs text-ivory">
-              + New note
+            <button
+              onClick={() => setNoteOpen((v) => !v)}
+              className="rounded-full bg-olive px-4 py-2 text-xs text-ivory"
+            >
+              {noteOpen ? "Close note" : "+ New note"}
             </button>
           </div>
         }
@@ -29,6 +36,18 @@ function Medical() {
       </div>
 
       <div className="mt-6 grid gap-6 lg:grid-cols-3">
+        {noteOpen && (
+          <Card className="lg:col-span-3 border-baby/50 bg-baby/20">
+            <p className="text-sm font-medium text-foreground">Draft clinical note</p>
+            <textarea
+              placeholder="Document assessment, plan, medication change or family update..."
+              className="mt-3 min-h-28 w-full rounded-2xl border border-white/70 bg-white/65 px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-baby/60"
+            />
+            <button className="mt-3 rounded-full bg-olive px-4 py-2 text-xs text-ivory">
+              Save note
+            </button>
+          </Card>
+        )}
         <Card className="lg:col-span-2">
           <div className="flex items-center justify-between">
             <div>
@@ -150,7 +169,12 @@ function Medical() {
                     <Pill tone="moss">{p.a}</Pill>
                   </td>
                   <td className="text-right">
-                    <button className="text-xs text-muted-foreground hover:text-olive">Edit</button>
+                    <button
+                      onClick={() => setSelectedMedication(p.m)}
+                      className="text-xs text-muted-foreground hover:text-olive"
+                    >
+                      Edit
+                    </button>
                   </td>
                 </tr>
               ))}
@@ -159,6 +183,11 @@ function Medical() {
         </Card>
 
         <Card>
+          <div className="mb-4 rounded-2xl border border-baby/40 bg-baby/20 p-4">
+            <p className="text-xs uppercase text-muted-foreground">Medication in focus</p>
+            <p className="mt-1 text-lg font-semibold text-foreground">{selectedMedication}</p>
+            <p className="text-xs text-muted-foreground">Editing opens reconciliation workflow.</p>
+          </div>
           <p className="text-xs uppercase text-muted-foreground">Care team</p>
           <div className="mt-4 space-y-3">
             {[

@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useMemo, useState } from "react";
 import { Card, PageHeader, Pill, Stat } from "@/components/app/primitives";
 
 export const Route = createFileRoute("/app/academy")({ component: Academy });
@@ -19,6 +20,14 @@ const sims = [
 ];
 
 function Academy() {
+  const [activeModule, setActiveModule] = useState(modules.find((m) => m.prog < 100) ?? modules[0]);
+  const [lessonStarted, setLessonStarted] = useState(false);
+  const nextAction = useMemo(() => {
+    if (activeModule.prog === 100) return "Review certificate";
+    if (lessonStarted) return "Resume lesson";
+    return "Start lesson";
+  }, [activeModule, lessonStarted]);
+
   return (
     <>
       <PageHeader
@@ -36,10 +45,24 @@ function Academy() {
 
       <div className="mt-6 grid gap-6 lg:grid-cols-3">
         <Card className="lg:col-span-2">
-          <p className="text-xs uppercase text-muted-foreground">Learning paths</p>
+          <div className="flex items-center justify-between gap-3">
+            <p className="text-xs uppercase text-muted-foreground">Learning paths</p>
+            <Pill tone="moss">{modules.filter((m) => m.prog === 100).length} certified</Pill>
+          </div>
           <div className="mt-4 space-y-3">
             {modules.map((m) => (
-              <div key={m.t} className="rounded-2xl border border-border bg-cream/40 p-4">
+              <button
+                key={m.t}
+                onClick={() => {
+                  setActiveModule(m);
+                  setLessonStarted(false);
+                }}
+                className={`w-full rounded-2xl border p-4 text-left transition-all ${
+                  activeModule.t === m.t
+                    ? "border-olive/35 bg-white/70 shadow-soft"
+                    : "border-border bg-cream/40 hover:border-olive/25 hover:bg-white/55"
+                }`}
+              >
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <div>
                     <p className="font-medium text-foreground">{m.t}</p>
@@ -57,7 +80,7 @@ function Academy() {
                     style={{ width: `${m.prog}%` }}
                   />
                 </div>
-              </div>
+              </button>
             ))}
           </div>
         </Card>
@@ -66,11 +89,23 @@ function Academy() {
           <Card className="bg-gradient-olive text-ivory border-none">
             <p className="text-xs uppercase text-ivory/70">AI training assistant</p>
             <p className="mt-2 text-lg font-semibold">
-              "Sofia, shall we review fall prevention together? It's the only module under 50%."
+              "{activeModule.t} is queued. The assistant will adapt the next drill to your last
+              simulation score."
             </p>
-            <button className="mt-3 rounded-full bg-ivory px-3 py-1.5 text-xs text-olive">
-              Start 5-min lesson
+            <div className="mt-3 rounded-2xl bg-white/12 p-3 text-sm text-ivory/85">
+              <p>{activeModule.lvl} track</p>
+              <p>{activeModule.time} expected time</p>
+              <p>{activeModule.badges} badges available</p>
+            </div>
+            <button
+              onClick={() => setLessonStarted(true)}
+              className="mt-3 rounded-full bg-ivory px-3 py-1.5 text-xs text-olive"
+            >
+              {nextAction}
             </button>
+            {lessonStarted && (
+              <p className="mt-2 text-xs text-ivory/75">Lesson opened in focus mode.</p>
+            )}
           </Card>
 
           <Card>

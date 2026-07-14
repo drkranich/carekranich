@@ -1,4 +1,5 @@
 import { createFileRoute, Navigate } from "@tanstack/react-router";
+import { useState } from "react";
 import { Card, PageHeader, Pill, Spark, Bars, Stat } from "@/components/app/primitives";
 import { useAuth } from "@/hooks/use-auth";
 
@@ -8,6 +9,10 @@ export const Route = createFileRoute("/app/admin")({
 
 function Admin() {
   const { isSuperAdmin, loading } = useAuth();
+  const [exportedBrief, setExportedBrief] = useState(false);
+  const [selectedMix, setSelectedMix] = useState(subscriptionMix[0]);
+  const [selectedProvider, setSelectedProvider] = useState(marketplaceProviders[0]);
+  const [selectedRegion, setSelectedRegion] = useState(cityActivity[0]);
   if (loading) return <p className="text-sm text-muted-foreground">Loading...</p>;
   if (!isSuperAdmin) return <Navigate to="/app" />;
   return (
@@ -21,8 +26,11 @@ function Admin() {
               <span className="h-1.5 w-1.5 animate-pulse-soft rounded-full bg-moss" />
               All systems healthy
             </Pill>
-            <button className="rounded-full bg-olive px-4 py-2 text-xs text-ivory">
-              Export brief
+            <button
+              onClick={() => setExportedBrief((value) => !value)}
+              className="rounded-full bg-olive px-4 py-2 text-xs text-ivory"
+            >
+              {exportedBrief ? "Brief ready" : "Export brief"}
             </button>
           </div>
         }
@@ -72,13 +80,14 @@ function Admin() {
         <Card>
           <p className="text-xs uppercase text-muted-foreground">Subscription mix</p>
           <div className="mt-4 space-y-4">
-            {[
-              { l: "Enterprise (clinics)", v: 58, c: "var(--olive)" },
-              { l: "Care Home", v: 26, c: "var(--wine)" },
-              { l: "Family", v: 14, c: "var(--gold)" },
-              { l: "Insurance partners", v: 2, c: "var(--terracotta)" },
-            ].map((s) => (
-              <div key={s.l}>
+            {subscriptionMix.map((s) => (
+              <div
+                key={s.l}
+                onClick={() => setSelectedMix(s)}
+                className={`cursor-pointer rounded-xl p-2 transition ${
+                  selectedMix.l === s.l ? "bg-olive/10" : "hover:bg-cream/50"
+                }`}
+              >
                 <div className="mb-1 flex justify-between text-xs">
                   <span className="text-foreground">{s.l}</span>
                   <span className="text-muted-foreground">{s.v}%</span>
@@ -92,6 +101,10 @@ function Admin() {
               </div>
             ))}
           </div>
+          <p className="mt-3 rounded-2xl border border-olive/20 bg-olive/10 p-3 text-xs text-muted-foreground">
+            Focus: <span className="font-medium text-foreground">{selectedMix.l}</span> contributes{" "}
+            {selectedMix.v}% of current subscription revenue.
+          </p>
           <div className="mt-6 grid grid-cols-2 gap-3 border-t border-border pt-4 text-xs">
             <div>
               <p className="text-muted-foreground">LTV</p>
@@ -128,14 +141,14 @@ function Admin() {
               </tr>
             </thead>
             <tbody>
-              {[
-                { n: "Sofia Mendes", t: "Caregiver", b: 142, r: "4.9", p: "EUR 2,840" },
-                { n: "Vita Care Clinic", t: "Clinic", b: 98, r: "4.8", p: "EUR 18,420" },
-                { n: "Dr. Costa", t: "Telemed", b: 64, r: "5.0", p: "EUR 6,240" },
-                { n: "PhysioStudio", t: "Therapy", b: 52, r: "4.7", p: "EUR 4,160" },
-                { n: "PharmaPlus", t: "Pharmacy", b: 240, r: "4.9", p: "EUR 8,800" },
-              ].map((p) => (
-                <tr key={p.n} className="border-b border-border/40 last:border-0">
+              {marketplaceProviders.map((p) => (
+                <tr
+                  key={p.n}
+                  onClick={() => setSelectedProvider(p)}
+                  className={`cursor-pointer border-b border-border/40 last:border-0 ${
+                    selectedProvider.n === p.n ? "bg-olive/10" : "hover:bg-cream/40"
+                  }`}
+                >
                   <td className="py-3 text-foreground">{p.n}</td>
                   <td className="text-muted-foreground">{p.t}</td>
                   <td className="text-muted-foreground tabular-nums">{p.b}</td>
@@ -147,6 +160,12 @@ function Admin() {
               ))}
             </tbody>
           </table>
+          <div className="mt-4 rounded-2xl border border-border/60 bg-cream/40 p-4 text-sm">
+            <p className="text-xs uppercase text-muted-foreground">Provider focus</p>
+            <p className="mt-1 font-medium text-foreground">
+              {selectedProvider.n} - {selectedProvider.b} bookings - payout {selectedProvider.p}
+            </p>
+          </div>
         </Card>
 
         <Card>
@@ -186,8 +205,7 @@ function Admin() {
             <Pill tone="terracotta">3 priority regions</Pill>
           </div>
           <div className="mt-4 grid grid-cols-3 md:grid-cols-6 gap-2">
-            {Array.from({ length: 24 }).map((_, i) => {
-              const intensity = Math.floor(Math.random() * 5);
+            {cityActivity.map((city, i) => {
               const palette = [
                 "bg-olive/5",
                 "bg-olive/15",
@@ -197,45 +215,66 @@ function Admin() {
               ];
               return (
                 <div
-                  key={i}
-                  className={`aspect-square rounded-xl ${palette[intensity]} flex items-end p-2`}
+                  key={city.code}
+                  onClick={() => setSelectedRegion(city)}
+                  className={`flex aspect-square cursor-pointer items-end rounded-xl ${palette[city.intensity]} p-2 ring-offset-2 ring-offset-background transition ${
+                    selectedRegion.code === city.code ? "ring-2 ring-olive" : "hover:scale-[1.02]"
+                  }`}
                 >
-                  <span className="text-[10px] text-foreground/60">
-                    {
-                      [
-                        "LIS",
-                        "PRT",
-                        "BCN",
-                        "MAD",
-                        "PAR",
-                        "BER",
-                        "MIL",
-                        "ROM",
-                        "AMS",
-                        "ZRH",
-                        "STO",
-                        "LON",
-                        "DUB",
-                        "CPH",
-                        "HEL",
-                        "OSL",
-                        "WAW",
-                        "VIE",
-                        "ATH",
-                        "BRX",
-                        "LUX",
-                        "NAP",
-                        "CGN",
-                        "FRA",
-                      ][i]
-                    }
-                  </span>
+                  <span className="text-[10px] text-foreground/60">{city.code}</span>
                 </div>
               );
             })}
           </div>
+          <p className="mt-4 rounded-2xl border border-border/60 bg-cream/40 p-3 text-sm text-muted-foreground">
+            Selected region:{" "}
+            <span className="font-medium text-foreground">{selectedRegion.code}</span> with activity
+            level {selectedRegion.intensity + 1}/5.
+          </p>
         </Card>
       </div>
     </>
   );
 }
+
+const subscriptionMix = [
+  { l: "Enterprise (clinics)", v: 58, c: "var(--olive)" },
+  { l: "Care Home", v: 26, c: "var(--wine)" },
+  { l: "Family", v: 14, c: "var(--gold)" },
+  { l: "Insurance partners", v: 2, c: "var(--terracotta)" },
+];
+
+const marketplaceProviders = [
+  { n: "Sofia Mendes", t: "Caregiver", b: 142, r: "4.9", p: "EUR 2,840" },
+  { n: "Vita Care Clinic", t: "Clinic", b: 98, r: "4.8", p: "EUR 18,420" },
+  { n: "Dr. Costa", t: "Telemed", b: 64, r: "5.0", p: "EUR 6,240" },
+  { n: "PhysioStudio", t: "Therapy", b: 52, r: "4.7", p: "EUR 4,160" },
+  { n: "PharmaPlus", t: "Pharmacy", b: 240, r: "4.9", p: "EUR 8,800" },
+];
+
+const cityActivity = [
+  "LIS",
+  "PRT",
+  "BCN",
+  "MAD",
+  "PAR",
+  "BER",
+  "MIL",
+  "ROM",
+  "AMS",
+  "ZRH",
+  "STO",
+  "LON",
+  "DUB",
+  "CPH",
+  "HEL",
+  "OSL",
+  "WAW",
+  "VIE",
+  "ATH",
+  "BRX",
+  "LUX",
+  "NAP",
+  "CGN",
+  "FRA",
+].map((code, index) => ({ code, intensity: (index * 3 + 1) % 5 }));

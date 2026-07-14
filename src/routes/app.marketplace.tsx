@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useMemo, useState } from "react";
 import { Card, PageHeader, Pill, Avatar } from "@/components/app/primitives";
 
 export const Route = createFileRoute("/app/marketplace")({
@@ -103,6 +104,18 @@ const providers = [
 ];
 
 function Marketplace() {
+  const [category, setCategory] = useState("All");
+  const [booking, setBooking] = useState<(typeof providers)[number] | null>(null);
+  const filteredProviders = useMemo(() => {
+    if (category === "All") return providers;
+    const key = category.toLowerCase();
+    return providers.filter(
+      (provider) =>
+        `${provider.r} ${provider.tags.join(" ")}`.toLowerCase().includes(key.slice(0, -1)) ||
+        `${provider.r} ${provider.tags.join(" ")}`.toLowerCase().includes(key),
+    );
+  }, [category]);
+
   return (
     <>
       <PageHeader
@@ -118,10 +131,15 @@ function Marketplace() {
       {/* Filters */}
       <div className="-mx-2 mb-6 overflow-x-auto">
         <div className="flex gap-2 px-2">
-          {categories.map((c, i) => (
+          {categories.map((c) => (
             <button
               key={c}
-              className={`whitespace-nowrap rounded-full border px-4 py-2 text-xs ${i === 0 ? "border-olive bg-olive text-ivory" : "border-border bg-ivory text-foreground hover:bg-cream"}`}
+              onClick={() => setCategory(c)}
+              className={`whitespace-nowrap rounded-full border px-4 py-2 text-xs ${
+                category === c
+                  ? "border-olive bg-olive text-ivory"
+                  : "border-border bg-ivory text-foreground hover:bg-cream"
+              }`}
             >
               {c}
             </button>
@@ -129,8 +147,32 @@ function Marketplace() {
         </div>
       </div>
 
+      {booking && (
+        <Card className="mb-6 border-baby/50 bg-baby/20">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <p className="text-sm font-medium text-foreground">Booking staged: {booking.n}</p>
+              <p className="text-xs text-muted-foreground">
+                {booking.r} - {booking.rate} - Available {booking.available}
+              </p>
+            </div>
+            <div className="flex gap-2">
+              <button className="rounded-full bg-olive px-4 py-2 text-xs text-ivory">
+                Confirm booking
+              </button>
+              <button
+                onClick={() => setBooking(null)}
+                className="rounded-full border border-border bg-white/55 px-4 py-2 text-xs"
+              >
+                Clear
+              </button>
+            </div>
+          </div>
+        </Card>
+      )}
+
       <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-        {providers.map((p) => (
+        {filteredProviders.map((p) => (
           <Card key={p.n} className="hover:shadow-elevated transition-shadow">
             <div className="flex items-start gap-4">
               <Avatar name={p.n} tone={p.tone} size={48} />
@@ -154,7 +196,10 @@ function Marketplace() {
               </div>
               <div className="text-right">
                 <p className="text-xs text-moss">Available {p.available}</p>
-                <button className="mt-1 rounded-full bg-olive px-4 py-2 text-xs text-ivory hover:opacity-90">
+                <button
+                  onClick={() => setBooking(p)}
+                  className="mt-1 rounded-full bg-olive px-4 py-2 text-xs text-ivory hover:opacity-90"
+                >
                   Book
                 </button>
               </div>
