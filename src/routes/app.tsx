@@ -6,11 +6,13 @@ import {
   useNavigate,
   Navigate,
 } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
 import { Avatar, Card, PageHeader, Pill } from "@/components/app/primitives";
 import { NotificationBell } from "@/components/app/NotificationBell";
 import { useAuth, ROLE_LABELS, type AppRole, type Profile } from "@/hooks/use-auth";
 import { useTenantRealtime } from "@/hooks/use-realtime";
+import { supabase } from "@/integrations/supabase/client";
 
 type UserKind = Profile["user_kind"];
 type NavItem = { to: string; label: string; icon: string; roles?: AppRole[]; userKinds?: UserKind[] };
@@ -253,6 +255,16 @@ function AppLayout() {
   useTenantRealtime(profile?.tenant_id, user?.id);
   const isPlatformUser = roles.includes("super_admin");
 
+  const tenantAccess = useQuery({
+    queryKey: ["current-tenant-access", profile?.tenant_id, isPlatformUser],
+    enabled: !!profile?.tenant_id && !isPlatformUser,
+    queryFn: async () => {
+      const { data, error } = await (supabase as any).rpc("current_tenant_access");
+      if (error) throw error;
+      return Array.isArray(data) ? data[0] ?? null : data;
+    },
+  });
+
   useEffect(() => {
     document.documentElement.classList.add("saas-scrollbar");
     document.body.classList.add("saas-scrollbar");
@@ -331,6 +343,20 @@ function AppLayout() {
   if (!isPlatformUser && profile?.account_status && profile.account_status !== "active")
     return <Navigate to="/onboarding" />;
   if (!profile?.tenant_id && !isPlatformUser) return <Navigate to="/onboarding" />;
+  if (!isPlatformUser && profile?.tenant_id && tenantAccess.isLoading)
+    return (
+      <div className="min-h-screen grid place-items-center text-muted-foreground text-sm">
+        Verificando acesso da organização...
+      </div>
+    );
+  if (!isPlatformUser && profile?.tenant_id && !tenantIsOperational(tenantAccess.data)) {
+    return (
+      <TenantBlocked
+        tenant={tenantAccess.data}
+        onSignOut={() => signOut().then(() => navigate({ to: "/login" }))}
+      />
+    );
+  }
 
   return (
     <div className="app-shell flex min-h-screen bg-[linear-gradient(135deg,var(--ivory)_0%,var(--cream)_42%,oklch(0.93_0.035_155)_100%)] text-foreground">
@@ -685,3 +711,44 @@ const USER_KIND_LABELS: Record<NonNullable<UserKind>, string> = {
   service_provider: "prestador de servicos",
   staff: "equipe",
 };
+
+function tenantIsOperational(tenant: any) {
+  if (!tenant) return false;
+  return (
+    tenant.status === "active" &&
+    !["revoked", "suspended"].includes(String(tenant.billing_status ?? "").toLowerCase())
+  );
+}
+
+function TenantBlocked({ tenant, onSignOut }: { tenant: any; onSignOut: () => void }) {
+  const status = tenant?.status ?? "unavailable";
+  const billing = tenant?.billing_status ?? "unavailable";
+  return (
+    <div className="grid min-h-screen place-items-center bg-[linear-gradient(135deg,var(--ivory)_0%,var(--cream)_50%,oklch(0.93_0.035_155)_100%)] px-4 text-foreground">
+      <Card className="max-w-xl">
+        <Pill tone="wine">Acesso pausado</Pill>
+        <h1 className="mt-4 text-2xl font-semibold text-foreground">Organização sem acesso operacional</h1>
+        <p className="mt-3 text-sm leading-6 text-muted-foreground">
+          {tenant?.name ? `${tenant.name} ` : "Esta organização "}
+          não está liberada para operar no SaaS neste momento. Status: {status}; cobrança: {billing}.
+        </p>
+        {tenant?.suspended_reason && (
+          <p className="mt-3 rounded-2xl border border-wine/15 bg-wine/5 px-4 py-3 text-sm text-wine">
+            {tenant.suspended_reason}
+          </p>
+        )}
+        <div className="mt-5 flex flex-wrap gap-2">
+          <button onClick={onSignOut} className="rounded-full bg-olive px-4 py-2 text-xs font-semibold text-ivory">
+            Sair
+          </button>
+          <Link
+            to="/"
+            className="rounded-full border border-border bg-white/55 px-4 py-2 text-xs font-semibold text-foreground"
+          >
+            Voltar ao site
+          </Link>
+        </div>
+      </Card>
+    </div>
+  );
+}

@@ -1,5 +1,5 @@
 import { createFileRoute, Navigate } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Card, PageHeader, Pill, Avatar, Stat } from "@/components/app/primitives";
 import { useAuth, ROLE_LABELS } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
@@ -9,6 +9,7 @@ export const Route = createFileRoute("/app/tenants")({ component: Tenants });
 
 function Tenants() {
   const { profile, isAdmin, isSuperAdmin, loading } = useAuth();
+  const qc = useQueryClient();
   const tenantId = profile?.tenant_id ?? null;
 
   const tenants = useQuery({
@@ -75,6 +76,35 @@ function Tenants() {
       if (error) throw error;
       return data ?? [];
     },
+  });
+
+  const tenantStatus = useMutation({
+    mutationFn: async ({
+      id,
+      status,
+      billingStatus,
+      reason,
+    }: {
+      id: string;
+      status: string;
+      billingStatus?: string;
+      reason?: string;
+    }) => {
+      const { error } = await (supabase as any).rpc("set_tenant_operational_status", {
+        _tenant_id: id,
+        _status: status,
+        _billing_status: billingStatus ?? null,
+        _reason: reason ?? null,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Status da organização atualizado");
+      qc.invalidateQueries({ queryKey: ["tenant-directory"] });
+      qc.invalidateQueries({ queryKey: ["current-tenant-access"] });
+      qc.invalidateQueries({ queryKey: ["super-admin-control-plane"] });
+    },
+    onError: (error: any) => toast.error(error.message ?? "Não foi possível atualizar a organização"),
   });
 
   if (loading) return <p className="text-sm text-muted-foreground">Loading...</p>;
@@ -181,6 +211,126 @@ function Tenants() {
           </ul>
         </Card>
       </div>
+
+      {isSuperAdmin && (
+        <Card className="mt-6">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <p className="text-xs uppercase text-muted-foreground">Controle operacional</p>
+              <h2 className="mt-1 text-xl font-semibold text-foreground">Acesso das organizações</h2>
+            </div>
+            <Pill tone="olive">RLS ativo</Pill>
+          </div>
+          <div className="mt-5 grid gap-3 xl:grid-cols-2">
+            {(tenants.data ?? []).map((tenant: any) => (
+              <div key={tenant.id} className="rounded-2xl border border-white/70 bg-white/50 p-4">
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="truncate font-medium text-foreground">{tenant.name}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {tenant.slug} - {tenant.invite_code ?? "sem código de convite"}
+                    </p>
+                  </div>
+                  <div className="flex flex-wrap gap-1">
+                    <Pill tone={tenant.status === "active" ? "moss" : tenant.status === "suspended" ? "wine" : "gold"}>
+                      {tenant.status}
+                    </Pill>
+                    <Pill tone={["revoked", "suspended"].includes(tenant.billing_status) ? "wine" : "olive"}>
+                      {tenant.billing_status}
+                    </Pill>
+                  </div>
+                </div>
+                <TenantStatusControls
+                  tenant={tenant}
+                  busy={tenantStatus.isPending}
+                  onChange={(status, billingStatus, reason) =>
+                    tenantStatus.mutate({ id: tenant.id, status, billingStatus, reason })
+                  }
+                />
+              </div>
+            ))}
+            {tenants.data?.length === 0 && (
+              <p className="py-8 text-center text-sm text-muted-foreground">Ainda não há organizações.</p>
+            )}
+          </div>
+        </Card>
+      )}
     </>
+  );
+}
+
+function TenantStatusControls({
+  tenant,
+  busy,
+  onChange,
+}: {
+  tenant: any;
+  busy: boolean;
+  onChange: (status: string, billingStatus?: string, reason?: string) => void;
+}) {
+  const actions = [
+    {
+      label: "Ativar",
+      status: "active",
+      billing: "active",
+      reason: null,
+      className: "bg-olive text-ivory",
+    },
+    {
+      label: "Trial",
+      status: "active",
+      billing: "trialing",
+      reason: null,
+      className: "border border-olive/25 text-olive",
+    },
+    {
+      label: "Pagamento pendente",
+      status: "active",
+      billing: "past_due",
+      reason: "Pagamento em atraso; acesso mantido sob monitoramento.",
+      className: "border border-gold/35 text-wine",
+    },
+    {
+      label: "Bloquear cobrança",
+      status: "active",
+      billing: "revoked",
+      reason: "Acesso revogado pelo super admin por status de cobrança.",
+      className: "border border-wine/35 text-wine",
+    },
+    {
+      label: "Suspender",
+      status: "suspended",
+      billing: "suspended",
+      reason: "Organização suspensa pelo super admin.",
+      className: "border border-wine/35 bg-wine/5 text-wine",
+    },
+    {
+      label: "Rejeitar",
+      status: "rejected",
+      billing: "revoked",
+      reason: "Organização rejeitada pelo super admin.",
+      className: "border border-wine/35 text-wine",
+    },
+  ];
+
+  return (
+    <div className="mt-4 border-t border-white/60 pt-3">
+      <p className="text-[10px] font-semibold uppercase text-muted-foreground">Controles de acesso</p>
+      <div className="mt-2 flex flex-wrap gap-2">
+        {actions.map((action) => (
+          <button
+            key={`${action.status}-${action.billing}`}
+            disabled={
+              busy ||
+              (tenant.status === action.status && tenant.billing_status === action.billing)
+            }
+            onClick={() => onChange(action.status, action.billing, action.reason ?? undefined)}
+            className={`rounded-full px-3 py-1.5 text-xs font-medium disabled:cursor-not-allowed disabled:opacity-45 ${action.className}`}
+          >
+            {action.label}
+          </button>
+        ))}
+      </div>
+    </div>
   );
 }
