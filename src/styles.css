@@ -54,8 +54,8 @@
   --color-baby: var(--baby);
   --color-glass: var(--glass);
 
-  --font-display: "Instrument Serif", "Fraunces", Georgia, serif;
-  --font-sans: "Inter", system-ui, sans-serif;
+  --font-display: "Source Serif 4", Georgia, serif;
+  --font-sans: "Manrope", system-ui, sans-serif;
 
   --shadow-soft: 0 1px 0 oklch(1 0 0 / 0.75) inset, 0 18px 42px -32px oklch(0.25 0.05 160 / 0.45);
   --shadow-elevated: 0 1px 0 oklch(1 0 0 / 0.8) inset, 0 28px 72px -36px oklch(0.22 0.05 160 / 0.55);
@@ -133,18 +133,22 @@
     background: var(--gradient-warm);
     color: var(--color-foreground);
     font-family: var(--font-sans);
+    font-optical-sizing: auto;
     font-feature-settings: "ss01", "cv11";
+    line-height: 1.65;
     -webkit-font-smoothing: antialiased;
   }
   h1, h2, h3, h4, .font-display {
     font-family: var(--font-display);
-    font-weight: 400;
+    font-weight: 600;
     letter-spacing: 0;
+    line-height: 1.12;
   }
 }
 
 @layer utilities {
   .text-balance { text-wrap: balance; }
+  .text-pretty { text-wrap: pretty; }
   .bg-gradient-hero { background: var(--gradient-hero); }
   .bg-gradient-olive { background: var(--gradient-olive); }
   .bg-gradient-wine { background: var(--gradient-wine); }

@@ -1,4 +1,4 @@
-﻿import { Link } from "@tanstack/react-router";
+import { Link } from "@tanstack/react-router";
 import { useAuth } from "@/hooks/use-auth";
 
 export function SiteHeader() {
@@ -8,7 +8,7 @@ export function SiteHeader() {
     { to: "/family-center", label: "Family" },
     { to: "/caregiver-app", label: "Caregivers" },
     { to: "/medical-office", label: "Clinics" },
-    { to: "/solutions/home-care", label: "Solutions" },
+    { to: "/solutions", label: "Solutions" },
     { to: "/about", label: "Company" },
   ];
   return (
@@ -22,7 +22,7 @@ export function SiteHeader() {
           </div>
           <span className="font-display text-2xl text-olive">Care Kranich</span>
         </Link>
-        <nav className="hidden items-center gap-8 text-sm text-foreground/70 md:flex">
+        <nav className="hidden items-center gap-7 text-sm font-medium text-foreground/70 md:flex">
           {navItems.map((n) => (
             <Link
               key={n.to}

@@ -1,13 +1,13 @@
-﻿import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { MarketingPage, FeatureGrid, Section } from "@/components/site/MarketingPage";
 
 export const Route = createFileRoute("/compliance")({
   head: () => ({
     meta: [
-      { title: "Compliance â€” Care Kranich" },
-      { name: "description", content: "Healthcare governance, audit systems, role-based permissions and operational controls â€” built to satisfy your auditors." },
-      { property: "og:title", content: "Compliance â€” Care Kranich" },
-      { property: "og:description", content: "Healthcare governance, audit systems and operational controls â€” built to satisfy your auditors." },
+      { title: "Compliance - Care Kranich" },
+      { name: "description", content: "Healthcare governance, audit systems, role-based permissions and operational controls - built to satisfy your auditors." },
+      { property: "og:title", content: "Compliance - Care Kranich" },
+      { property: "og:description", content: "Healthcare governance, audit systems and operational controls - built to satisfy your auditors." },
     ],
   }),
   component: Page,
@@ -19,7 +19,7 @@ function Page() {
       eyebrow="Trust"
       crumbs={[{ label: "Trust" }, { label: "Compliance" }]}
       title="Governance you can hand to your auditor."
-      lede="From clinical SOPs to access reviews â€” Care Kranich ships with the operational scaffolding healthcare organizations actually need."
+      lede="From clinical SOPs to access reviews - Care Kranich ships with the operational scaffolding healthcare organizations actually need."
       primaryCta={{ label: "Talk to compliance team", to: "/contact" }}
       secondaryCta={{ label: "Security overview", to: "/security" }}
     >

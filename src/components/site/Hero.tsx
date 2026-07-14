@@ -1,3 +1,4 @@
+import { Link } from "@tanstack/react-router";
 import heroImg from "@/assets/hero-elder.jpg";
 
 const signals = [
@@ -21,12 +22,12 @@ export function Hero() {
 
       <div className="relative mx-auto flex min-h-[86vh] max-w-7xl flex-col justify-center px-6 py-24 md:py-28">
         <div className="max-w-4xl">
-          <span className="inline-flex items-center gap-2 rounded-full border border-white/70 bg-white/45 px-3 py-1 text-xs text-olive shadow-soft backdrop-blur-xl">
+          <span className="inline-flex items-center gap-2 rounded-full border border-white/70 bg-white/45 px-3 py-1 text-xs font-semibold uppercase tracking-[0.12em] text-olive shadow-soft backdrop-blur-xl">
             <span className="h-1.5 w-1.5 rounded-full bg-wine shadow-glow" />
             Live care intelligence for families, teams and clinics
           </span>
 
-          <h1 className="mt-7 max-w-4xl font-display text-6xl leading-[0.98] text-foreground text-balance md:text-8xl">
+          <h1 className="mt-7 max-w-4xl font-display text-5xl text-foreground text-balance md:text-7xl">
             Care Kranich
           </h1>
 
@@ -36,19 +37,19 @@ export function Hero() {
           </p>
 
           <div className="mt-9 flex flex-wrap items-center gap-3">
-            <a href="#start" className="rounded-full bg-primary px-6 py-3 text-sm font-medium text-primary-foreground shadow-elevated transition hover:translate-y-[-1px] hover:opacity-95">
+            <Link to="/signup" className="rounded-full bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground shadow-elevated transition hover:translate-y-[-1px] hover:opacity-95">
               Start care journey
-            </a>
-            <a href="#caregivers" className="rounded-full border border-white/70 bg-white/45 px-6 py-3 text-sm font-medium text-olive shadow-soft backdrop-blur-xl transition hover:bg-white/70">
+            </Link>
+            <Link to="/family-center" className="rounded-full border border-white/70 bg-white/45 px-6 py-3 text-sm font-semibold text-olive shadow-soft backdrop-blur-xl transition hover:bg-white/70">
               See the platform
-            </a>
+            </Link>
           </div>
         </div>
 
         <div className="mt-14 grid max-w-4xl gap-3 sm:grid-cols-3">
           {signals.map((signal) => (
             <div key={signal.label} className="glass-panel rounded-2xl px-5 py-4">
-              <p className="text-xs uppercase tracking-widest text-muted-foreground">{signal.label}</p>
+              <p className="text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">{signal.label}</p>
               <p className="mt-2 font-display text-3xl text-olive">{signal.value}</p>
             </div>
           ))}

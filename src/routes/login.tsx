@@ -1,4 +1,4 @@
-﻿import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState, type FormEvent } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -44,7 +44,7 @@ function Login() {
           </label>
           {error && <p className="rounded-lg bg-wine/10 px-3 py-2 text-xs text-wine">{error}</p>}
           <button disabled={loading} className="w-full rounded-full bg-olive px-4 py-2.5 text-sm text-ivory hover:opacity-90 disabled:opacity-50">
-            {loading ? "Signing inâ€¦" : "Sign in"}
+            {loading ? "Signing in..." : "Sign in"}
           </button>
         </form>
         <p className="mt-4 text-center text-xs text-muted-foreground">

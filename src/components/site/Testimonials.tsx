@@ -12,7 +12,7 @@ export function Testimonials() {
           {quotes.map((t, i) => (
             <figure key={i} className="glass-panel rounded-2xl p-8">
               <svg viewBox="0 0 24 24" className="h-6 w-6 text-wine" fill="currentColor"><path d="M9 7H5a3 3 0 0 0-3 3v4h6V8 M19 7h-4a3 3 0 0 0-3 3v4h6V8"/></svg>
-              <blockquote className="mt-4 font-display text-xl leading-snug text-foreground">"{t.q}"</blockquote>
+              <blockquote className="mt-4 text-lg font-medium leading-8 text-foreground">"{t.q}"</blockquote>
               <figcaption className="mt-6 text-sm text-muted-foreground">- {t.a}</figcaption>
             </figure>
           ))}

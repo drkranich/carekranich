@@ -1,3 +1,4 @@
+import { Link } from "@tanstack/react-router";
 import handsImg from "@/assets/hands.jpg";
 
 export function FamilyDashboard() {
@@ -18,8 +19,8 @@ export function FamilyDashboard() {
           <div className="absolute -right-2 -bottom-6 w-[22rem] rounded-2xl border border-white/65 bg-white/55 p-6 shadow-elevated backdrop-blur-2xl md:-right-10">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs uppercase tracking-widest text-muted-foreground">Today - Maria</p>
-                <p className="font-display text-xl text-olive">A peaceful morning</p>
+                <p className="text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">Today - Maria</p>
+                <p className="text-lg font-semibold text-olive">A peaceful morning</p>
               </div>
               <div className="rounded-full border border-moss/20 bg-moss/10 px-2.5 py-1 text-xs text-moss">All clear</div>
             </div>
@@ -39,13 +40,21 @@ export function FamilyDashboard() {
         </div>
 
         <div>
-          <span className="text-xs font-semibold uppercase tracking-widest text-wine">For families</span>
+          <span className="text-xs font-semibold uppercase tracking-[0.12em] text-wine">For families</span>
           <h2 className="mt-3 font-display text-4xl text-foreground md:text-5xl text-balance">
             Be present, even when you're far.
           </h2>
           <p className="mt-5 text-lg leading-relaxed text-muted-foreground">
             A living timeline of your loved one's day - meals, medication, mood, movement and meaningful moments - written in plain language by caregivers and gently summarized by Care Kranich AI.
           </p>
+          <div className="mt-7 flex flex-wrap gap-3">
+            <Link to="/family-center" className="rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground shadow-soft">
+              Open Family Center
+            </Link>
+            <Link to="/signup" className="rounded-full border border-border bg-ivory/70 px-5 py-2.5 text-sm font-semibold text-olive">
+              Create family account
+            </Link>
+          </div>
           <ul className="mt-8 space-y-4">
             {[
               "Tonight's letter: an AI-written summary delivered every evening at 8 PM.",

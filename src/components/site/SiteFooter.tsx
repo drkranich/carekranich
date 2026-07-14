@@ -1,4 +1,4 @@
-﻿import { Link } from "@tanstack/react-router";
+import { Link } from "@tanstack/react-router";
 
 type LinkItem = { label: string; to: string };
 
@@ -12,6 +12,7 @@ export function SiteFooter() {
       { label: "Telemedicine", to: "/telemedicine" },
     ]},
     { title: "Solutions", links: [
+      { label: "Overview", to: "/solutions" },
       { label: "Home Care", to: "/solutions/home-care" },
       { label: "Clinics", to: "/solutions/clinics" },
       { label: "Senior Living", to: "/solutions/senior-living" },
@@ -52,7 +53,7 @@ export function SiteFooter() {
           </div>
           {cols.map((c) => (
             <div key={c.title}>
-              <h4 className="text-xs font-semibold uppercase tracking-widest text-olive">{c.title}</h4>
+              <h4 className="text-xs font-semibold uppercase tracking-[0.12em] text-olive">{c.title}</h4>
               <ul className="mt-4 space-y-2.5 text-sm text-muted-foreground">
                 {c.links.map((l) => (
                   <li key={l.label}>
@@ -74,7 +75,7 @@ export function SiteFooter() {
         </div>
         <div className="mt-16 flex flex-col items-start justify-between gap-4 border-t border-border/60 pt-8 text-xs text-muted-foreground md:flex-row md:items-center">
           <p>© {new Date().getFullYear()} Care Kranich. Intelligent care infrastructure.</p>
-          <p className="font-display italic">"To grow old surrounded by attention is a kind of luxury."</p>
+          <p className="font-medium italic">"To grow old surrounded by attention is a kind of luxury."</p>
         </div>
       </div>
     </footer>

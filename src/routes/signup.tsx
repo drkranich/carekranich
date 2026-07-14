@@ -1,4 +1,4 @@
-﻿import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState, type FormEvent } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -53,7 +53,7 @@ function Signup() {
           </label>
           <label className="block text-sm">
             <span className="text-foreground/80">Preferred name <span className="text-muted-foreground">(how we'll greet you)</span></span>
-            <input value={preferredName} onChange={(e) => setPreferredName(e.target.value)} placeholder={fullName.trim().split(" ")[0] || "e.g. InÃªs"} className="mt-1 w-full rounded-xl border border-border bg-ivory px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-olive/40" />
+            <input value={preferredName} onChange={(e) => setPreferredName(e.target.value)} placeholder={fullName.trim().split(" ")[0] || "e.g. Ines"} className="mt-1 w-full rounded-xl border border-border bg-ivory px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-olive/40" />
           </label>
           <label className="block text-sm">
             <span className="text-foreground/80">Email</span>
@@ -66,7 +66,7 @@ function Signup() {
           {error && <p className="rounded-lg bg-wine/10 px-3 py-2 text-xs text-wine">{error}</p>}
           {info && <p className="rounded-lg bg-moss/10 px-3 py-2 text-xs text-moss">{info}</p>}
           <button disabled={loading} className="w-full rounded-full bg-olive px-4 py-2.5 text-sm text-ivory hover:opacity-90 disabled:opacity-50">
-            {loading ? "Creatingâ€¦" : "Create account"}
+            {loading ? "Creating..." : "Create account"}
           </button>
         </form>
         <p className="mt-4 text-center text-xs text-muted-foreground">

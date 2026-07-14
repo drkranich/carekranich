@@ -1,12 +1,12 @@
-﻿import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { MarketingPage, FeatureGrid, Section } from "@/components/site/MarketingPage";
 
 export const Route = createFileRoute("/careers")({
   head: () => ({
     meta: [
-      { title: "Careers â€” Care Kranich" },
+      { title: "Careers - Care Kranich" },
       { name: "description", content: "Help us build the most human technology company in healthcare. Engineering, design, clinical and operations roles." },
-      { property: "og:title", content: "Careers â€” Care Kranich" },
+      { property: "og:title", content: "Careers - Care Kranich" },
       { property: "og:description", content: "Help us build the most human technology company in healthcare." },
     ],
   }),
@@ -15,9 +15,9 @@ export const Route = createFileRoute("/careers")({
 
 const roles = [
   { team: "Engineering", role: "Senior Full-Stack Engineer", location: "Remote (EU/LATAM)" },
-  { team: "Design", role: "Senior Product Designer â€” Family Hub", location: "Remote" },
-  { team: "Clinical", role: "Head of Clinical Operations", location: "Hybrid Â· Lisbon" },
-  { team: "Go-to-Market", role: "Enterprise Account Executive â€” Senior Living", location: "Remote (US)" },
+  { team: "Design", role: "Senior Product Designer - Family Hub", location: "Remote" },
+  { team: "Clinical", role: "Head of Clinical Operations", location: "Hybrid - Lisbon" },
+  { team: "Go-to-Market", role: "Enterprise Account Executive - Senior Living", location: "Remote (US)" },
 ];
 
 function Page() {
@@ -27,8 +27,8 @@ function Page() {
       crumbs={[{ label: "Company" }, { label: "Careers" }]}
       title="Build the most human technology company in healthcare."
       lede="We're a small, senior team of engineers, designers, clinicians and operators. We move quietly and ship beautiful things."
-      primaryCta={{ label: "See open roles", to: "/careers" }}
-      secondaryCta={{ label: "Talk to people", to: "/contact" }}
+      primaryCta={{ label: "Apply through contact", to: "/contact" }}
+      secondaryCta={{ label: "About Care Kranich", to: "/about" }}
     >
       <Section kicker="Culture" title="What it feels like to work here.">
         <FeatureGrid items={[
@@ -45,11 +45,11 @@ function Page() {
           {roles.map((r) => (
             <div key={r.role} className="flex flex-col gap-3 border-b border-border/60 p-6 last:border-b-0 md:flex-row md:items-center md:justify-between">
               <div>
-                <div className="text-xs uppercase tracking-widest text-moss">{r.team}</div>
+                <div className="text-xs font-semibold uppercase tracking-[0.12em] text-moss">{r.team}</div>
                 <div className="mt-1 font-display text-xl text-foreground">{r.role}</div>
                 <div className="mt-1 text-sm text-muted-foreground">{r.location}</div>
               </div>
-              <Link to="/contact" className="rounded-full border border-border bg-ivory/60 px-5 py-2 text-sm text-olive hover:bg-ivory">Apply â†’</Link>
+              <Link to="/contact" className="rounded-full border border-border bg-ivory/60 px-5 py-2 text-sm font-semibold text-olive hover:bg-ivory">Apply -&gt;</Link>
             </div>
           ))}
         </div>

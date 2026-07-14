@@ -1,12 +1,12 @@
-﻿import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { MarketingPage, FeatureGrid, Section } from "@/components/site/MarketingPage";
 
 export const Route = createFileRoute("/partners")({
   head: () => ({
     meta: [
-      { title: "Partners â€” Care Kranich" },
+      { title: "Partners - Care Kranich" },
       { name: "description", content: "Clinics, insurers, home-care companies, healthcare providers and technology integrators in the Care Kranich ecosystem." },
-      { property: "og:title", content: "Partners â€” Care Kranich" },
+      { property: "og:title", content: "Partners - Care Kranich" },
       { property: "og:description", content: "Clinics, insurers, home-care companies, healthcare providers and technology integrators in the Care Kranich ecosystem." },
     ],
   }),
@@ -27,9 +27,9 @@ function Page() {
         <FeatureGrid items={[
           { title: "Clinics & physicians", body: "Embed Care Kranich into your patient journey and grow long-term relationships." },
           { title: "Insurers & payors", body: "Reduce avoidable utilization with preventative, member-loved care." },
-          { title: "Home-care companies", body: "Run beautifully â€” and use Care Kranich as your strongest retention tool." },
+          { title: "Home-care companies", body: "Run beautifully - and use Care Kranich as your strongest retention tool." },
           { title: "Healthcare providers", body: "Hospitals, SNFs and senior living connected through one care graph." },
-          { title: "Technology integrations", body: "Wearables, IoT, EHRs and pharmacy networks â€” published APIs." },
+          { title: "Technology integrations", body: "Wearables, IoT, EHRs and pharmacy networks - published APIs." },
           { title: "Implementation partners", body: "Certified consultancies for large-scale rollouts." },
         ]} />
       </Section>

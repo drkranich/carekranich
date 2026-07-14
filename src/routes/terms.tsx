@@ -1,12 +1,12 @@
-﻿import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { MarketingPage } from "@/components/site/MarketingPage";
 
 export const Route = createFileRoute("/terms")({
   head: () => ({
     meta: [
-      { title: "Terms of Service â€” Care Kranich" },
+      { title: "Terms of Service - Care Kranich" },
       { name: "description", content: "The terms that govern your use of the Care Kranich platform." },
-      { property: "og:title", content: "Terms of Service â€” Care Kranich" },
+      { property: "og:title", content: "Terms of Service - Care Kranich" },
       { property: "og:description", content: "The terms that govern your use of the Care Kranich platform." },
     ],
   }),
@@ -25,7 +25,7 @@ const sections = [
   { h: "9. Limitation of liability", p: "To the maximum extent permitted by law, Care Kranich's aggregate liability is limited to fees paid in the 12 months preceding the claim." },
   { h: "10. Termination", p: "Either party may terminate for material breach with 30 days' notice. On termination, you may export data for 90 days before deletion." },
   { h: "11. Governing law", p: "These Terms are governed by the laws of the jurisdiction stated in your order form, or by default the laws of Portugal." },
-  { h: "12. Contact", p: "legal@Care Kranich.care" },
+  { h: "12. Contact", p: "carekranich@gmail.com" },
 ];
 
 function Page() {
@@ -34,13 +34,13 @@ function Page() {
       eyebrow="Legal"
       crumbs={[{ label: "Trust" }, { label: "Terms" }]}
       title="Terms of Service"
-      lede="Last updated: May 24, 2026. Written to be readable â€” and enforceable."
+      lede="Last updated: May 24, 2026. Written to be readable - and enforceable."
     >
       <article className="space-y-8">
         {sections.map((s) => (
           <section key={s.h}>
-            <h2 className="font-display text-xl text-olive">{s.h}</h2>
-            <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{s.p}</p>
+            <h2 className="text-lg font-semibold text-olive">{s.h}</h2>
+            <p className="mt-2 text-sm leading-7 text-muted-foreground">{s.p}</p>
           </section>
         ))}
       </article>

@@ -1,12 +1,12 @@
-﻿import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { MarketingPage, FeatureGrid, Section } from "@/components/site/MarketingPage";
 
 export const Route = createFileRoute("/solutions/insurance")({
   head: () => ({
     meta: [
-      { title: "Insurance â€” Care Kranich" },
+      { title: "Insurance - Care Kranich" },
       { name: "description", content: "Claims integration, healthcare intelligence and preventative care analytics for insurers and payors." },
-      { property: "og:title", content: "Insurance â€” Care Kranich" },
+      { property: "og:title", content: "Insurance - Care Kranich" },
       { property: "og:description", content: "Claims integration, healthcare intelligence and preventative care analytics for insurers and payors." },
     ],
   }),
@@ -17,7 +17,7 @@ function Page() {
   return (
     <MarketingPage
       eyebrow="Solutions"
-      crumbs={[{ label: "Solutions" }, { label: "Insurance" }]}
+      crumbs={[{ label: "Solutions", to: "/solutions" }, { label: "Insurance" }]}
       title="Better outcomes lower costs. We help you prove it."
       lede="Connect Care Kranich's care graph to your claims pipeline and watch readmissions, ER visits and long-stay placements bend."
       primaryCta={{ label: "Partner with us", to: "/partners" }}

@@ -1,4 +1,4 @@
-﻿import { createFileRoute, Navigate, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Navigate, useNavigate } from "@tanstack/react-router";
 import { useState, type FormEvent } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -18,7 +18,7 @@ function Onboarding() {
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
-  if (loading) return <div className="min-h-screen grid place-items-center text-sm text-muted-foreground">Loadingâ€¦</div>;
+  if (loading) return <div className="min-h-screen grid place-items-center text-sm text-muted-foreground">Loading...</div>;
   if (!user) return <Navigate to="/login" />;
   if (profile?.tenant_id) return <Navigate to="/app" />;
 
@@ -84,7 +84,7 @@ function Onboarding() {
             <p className="rounded-xl bg-cream/60 px-3 py-2 text-xs text-muted-foreground">You'll become the clinic admin. You can invite family and care staff afterward.</p>
             {err && <p className="rounded-lg bg-wine/10 px-3 py-2 text-xs text-wine">{err}</p>}
             <button disabled={busy} className="w-full rounded-full bg-olive px-4 py-2.5 text-sm text-ivory hover:opacity-90 disabled:opacity-50">
-              {busy ? "Creatingâ€¦" : "Create organization"}
+              {busy ? "Creating..." : "Create organization"}
             </button>
           </form>
         ) : (
@@ -96,7 +96,7 @@ function Onboarding() {
             <p className="rounded-xl bg-cream/60 px-3 py-2 text-xs text-muted-foreground">Ask your organization's admin for the invite code. You'll join as a family member by default; admins can elevate your role.</p>
             {err && <p className="rounded-lg bg-wine/10 px-3 py-2 text-xs text-wine">{err}</p>}
             <button disabled={busy} className="w-full rounded-full bg-olive px-4 py-2.5 text-sm text-ivory hover:opacity-90 disabled:opacity-50">
-              {busy ? "Joiningâ€¦" : "Join organization"}
+              {busy ? "Joining..." : "Join organization"}
             </button>
           </form>
         )}

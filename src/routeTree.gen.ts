@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as TermsRouteImport } from './routes/terms'
 import { Route as TelemedicineRouteImport } from './routes/telemedicine'
+import { Route as SolutionsRouteImport } from './routes/solutions'
 import { Route as SmartHomeRouteImport } from './routes/smart-home'
 import { Route as SignupRouteImport } from './routes/signup'
 import { Route as SecurityRouteImport } from './routes/security'
@@ -71,6 +72,11 @@ const TermsRoute = TermsRouteImport.update({
 const TelemedicineRoute = TelemedicineRouteImport.update({
   id: '/telemedicine',
   path: '/telemedicine',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SolutionsRoute = SolutionsRouteImport.update({
+  id: '/solutions',
+  path: '/solutions',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SmartHomeRoute = SmartHomeRouteImport.update({
@@ -169,29 +175,29 @@ const AppIndexRoute = AppIndexRouteImport.update({
   getParentRoute: () => AppRoute,
 } as any)
 const SolutionsSeniorLivingRoute = SolutionsSeniorLivingRouteImport.update({
-  id: '/solutions/senior-living',
-  path: '/solutions/senior-living',
-  getParentRoute: () => rootRouteImport,
+  id: '/senior-living',
+  path: '/senior-living',
+  getParentRoute: () => SolutionsRoute,
 } as any)
 const SolutionsInsuranceRoute = SolutionsInsuranceRouteImport.update({
-  id: '/solutions/insurance',
-  path: '/solutions/insurance',
-  getParentRoute: () => rootRouteImport,
+  id: '/insurance',
+  path: '/insurance',
+  getParentRoute: () => SolutionsRoute,
 } as any)
 const SolutionsHospitalsRoute = SolutionsHospitalsRouteImport.update({
-  id: '/solutions/hospitals',
-  path: '/solutions/hospitals',
-  getParentRoute: () => rootRouteImport,
+  id: '/hospitals',
+  path: '/hospitals',
+  getParentRoute: () => SolutionsRoute,
 } as any)
 const SolutionsHomeCareRoute = SolutionsHomeCareRouteImport.update({
-  id: '/solutions/home-care',
-  path: '/solutions/home-care',
-  getParentRoute: () => rootRouteImport,
+  id: '/home-care',
+  path: '/home-care',
+  getParentRoute: () => SolutionsRoute,
 } as any)
 const SolutionsClinicsRoute = SolutionsClinicsRouteImport.update({
-  id: '/solutions/clinics',
-  path: '/solutions/clinics',
-  getParentRoute: () => rootRouteImport,
+  id: '/clinics',
+  path: '/clinics',
+  getParentRoute: () => SolutionsRoute,
 } as any)
 const AppWorkflowsRoute = AppWorkflowsRouteImport.update({
   id: '/workflows',
@@ -349,6 +355,7 @@ export interface FileRoutesByFullPath {
   '/security': typeof SecurityRoute
   '/signup': typeof SignupRoute
   '/smart-home': typeof SmartHomeRoute
+  '/solutions': typeof SolutionsRouteWithChildren
   '/telemedicine': typeof TelemedicineRoute
   '/terms': typeof TermsRoute
   '/app/academy': typeof AppAcademyRoute
@@ -403,6 +410,7 @@ export interface FileRoutesByTo {
   '/security': typeof SecurityRoute
   '/signup': typeof SignupRoute
   '/smart-home': typeof SmartHomeRoute
+  '/solutions': typeof SolutionsRouteWithChildren
   '/telemedicine': typeof TelemedicineRoute
   '/terms': typeof TermsRoute
   '/app/academy': typeof AppAcademyRoute
@@ -459,6 +467,7 @@ export interface FileRoutesById {
   '/security': typeof SecurityRoute
   '/signup': typeof SignupRoute
   '/smart-home': typeof SmartHomeRoute
+  '/solutions': typeof SolutionsRouteWithChildren
   '/telemedicine': typeof TelemedicineRoute
   '/terms': typeof TermsRoute
   '/app/academy': typeof AppAcademyRoute
@@ -516,6 +525,7 @@ export interface FileRouteTypes {
     | '/security'
     | '/signup'
     | '/smart-home'
+    | '/solutions'
     | '/telemedicine'
     | '/terms'
     | '/app/academy'
@@ -570,6 +580,7 @@ export interface FileRouteTypes {
     | '/security'
     | '/signup'
     | '/smart-home'
+    | '/solutions'
     | '/telemedicine'
     | '/terms'
     | '/app/academy'
@@ -625,6 +636,7 @@ export interface FileRouteTypes {
     | '/security'
     | '/signup'
     | '/smart-home'
+    | '/solutions'
     | '/telemedicine'
     | '/terms'
     | '/app/academy'
@@ -681,13 +693,9 @@ export interface RootRouteChildren {
   SecurityRoute: typeof SecurityRoute
   SignupRoute: typeof SignupRoute
   SmartHomeRoute: typeof SmartHomeRoute
+  SolutionsRoute: typeof SolutionsRouteWithChildren
   TelemedicineRoute: typeof TelemedicineRoute
   TermsRoute: typeof TermsRoute
-  SolutionsClinicsRoute: typeof SolutionsClinicsRoute
-  SolutionsHomeCareRoute: typeof SolutionsHomeCareRoute
-  SolutionsHospitalsRoute: typeof SolutionsHospitalsRoute
-  SolutionsInsuranceRoute: typeof SolutionsInsuranceRoute
-  SolutionsSeniorLivingRoute: typeof SolutionsSeniorLivingRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -704,6 +712,13 @@ declare module '@tanstack/react-router' {
       path: '/telemedicine'
       fullPath: '/telemedicine'
       preLoaderRoute: typeof TelemedicineRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/solutions': {
+      id: '/solutions'
+      path: '/solutions'
+      fullPath: '/solutions'
+      preLoaderRoute: typeof SolutionsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/smart-home': {
@@ -841,38 +856,38 @@ declare module '@tanstack/react-router' {
     }
     '/solutions/senior-living': {
       id: '/solutions/senior-living'
-      path: '/solutions/senior-living'
+      path: '/senior-living'
       fullPath: '/solutions/senior-living'
       preLoaderRoute: typeof SolutionsSeniorLivingRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof SolutionsRoute
     }
     '/solutions/insurance': {
       id: '/solutions/insurance'
-      path: '/solutions/insurance'
+      path: '/insurance'
       fullPath: '/solutions/insurance'
       preLoaderRoute: typeof SolutionsInsuranceRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof SolutionsRoute
     }
     '/solutions/hospitals': {
       id: '/solutions/hospitals'
-      path: '/solutions/hospitals'
+      path: '/hospitals'
       fullPath: '/solutions/hospitals'
       preLoaderRoute: typeof SolutionsHospitalsRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof SolutionsRoute
     }
     '/solutions/home-care': {
       id: '/solutions/home-care'
-      path: '/solutions/home-care'
+      path: '/home-care'
       fullPath: '/solutions/home-care'
       preLoaderRoute: typeof SolutionsHomeCareRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof SolutionsRoute
     }
     '/solutions/clinics': {
       id: '/solutions/clinics'
-      path: '/solutions/clinics'
+      path: '/clinics'
       fullPath: '/solutions/clinics'
       preLoaderRoute: typeof SolutionsClinicsRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof SolutionsRoute
     }
     '/app/workflows': {
       id: '/app/workflows'
@@ -1140,6 +1155,26 @@ const AppRouteChildren: AppRouteChildren = {
 
 const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
 
+interface SolutionsRouteChildren {
+  SolutionsClinicsRoute: typeof SolutionsClinicsRoute
+  SolutionsHomeCareRoute: typeof SolutionsHomeCareRoute
+  SolutionsHospitalsRoute: typeof SolutionsHospitalsRoute
+  SolutionsInsuranceRoute: typeof SolutionsInsuranceRoute
+  SolutionsSeniorLivingRoute: typeof SolutionsSeniorLivingRoute
+}
+
+const SolutionsRouteChildren: SolutionsRouteChildren = {
+  SolutionsClinicsRoute: SolutionsClinicsRoute,
+  SolutionsHomeCareRoute: SolutionsHomeCareRoute,
+  SolutionsHospitalsRoute: SolutionsHospitalsRoute,
+  SolutionsInsuranceRoute: SolutionsInsuranceRoute,
+  SolutionsSeniorLivingRoute: SolutionsSeniorLivingRoute,
+}
+
+const SolutionsRouteWithChildren = SolutionsRoute._addFileChildren(
+  SolutionsRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AboutRoute: AboutRoute,
@@ -1159,13 +1194,9 @@ const rootRouteChildren: RootRouteChildren = {
   SecurityRoute: SecurityRoute,
   SignupRoute: SignupRoute,
   SmartHomeRoute: SmartHomeRoute,
+  SolutionsRoute: SolutionsRouteWithChildren,
   TelemedicineRoute: TelemedicineRoute,
   TermsRoute: TermsRoute,
-  SolutionsClinicsRoute: SolutionsClinicsRoute,
-  SolutionsHomeCareRoute: SolutionsHomeCareRoute,
-  SolutionsHospitalsRoute: SolutionsHospitalsRoute,
-  SolutionsInsuranceRoute: SolutionsInsuranceRoute,
-  SolutionsSeniorLivingRoute: SolutionsSeniorLivingRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

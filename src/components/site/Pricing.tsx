@@ -1,3 +1,5 @@
+import { Link } from "@tanstack/react-router";
+
 const plans = [
   {
     name: "Family",
@@ -6,6 +8,7 @@ const plans = [
     blurb: "For one loved one and the whole family.",
     features: ["Real-time monitoring", "AI daily summaries", "Family chat & video", "1 caregiver seat", "Emergency response"],
     cta: "Start trial",
+    to: "/signup",
     featured: false,
   },
   {
@@ -15,6 +18,7 @@ const plans = [
     blurb: "For boutique residences and home-care agencies.",
     features: ["Unlimited caregivers", "Medical suite", "Marketplace access", "Smart-home integrations", "White-label option"],
     cta: "Talk to sales",
+    to: "/contact",
     featured: true,
   },
   {
@@ -24,6 +28,7 @@ const plans = [
     blurb: "Clinics, hospitals and insurers.",
     features: ["SLA & dedicated CSM", "Advanced analytics", "Custom integrations", "On-premise option", "HIPAA / GDPR / LGPD"],
     cta: "Request demo",
+    to: "/contact",
     featured: false,
   },
 ];
@@ -33,7 +38,7 @@ export function Pricing() {
     <section id="pricing" className="bg-cream/70 py-24 md:py-32">
       <div className="mx-auto max-w-7xl px-6">
         <div className="mx-auto max-w-2xl text-center">
-          <span className="text-xs font-semibold uppercase tracking-widest text-moss">Pricing</span>
+          <span className="text-xs font-semibold uppercase tracking-[0.12em] text-moss">Pricing</span>
           <h2 className="mt-3 font-display text-4xl text-foreground md:text-5xl text-balance">
             Quiet pricing. Honest care.
           </h2>
@@ -57,9 +62,9 @@ export function Pricing() {
                 <span className="font-display text-5xl text-foreground">{p.price}</span>
                 <span className="text-sm text-muted-foreground">{p.period}</span>
               </div>
-              <a href="#start" className={`mt-6 block rounded-full px-5 py-3 text-center text-sm transition ${
+              <Link to={p.to} className={`mt-6 block rounded-full px-5 py-3 text-center text-sm font-semibold transition ${
                 p.featured ? "bg-primary text-primary-foreground hover:opacity-90" : "border border-border bg-ivory/80 text-olive hover:bg-white"
-              }`}>{p.cta}</a>
+              }`}>{p.cta}</Link>
               <ul className="mt-7 space-y-3 text-sm">
                 {p.features.map((f) => (
                   <li key={f} className="flex gap-3 text-foreground/80">
