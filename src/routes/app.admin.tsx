@@ -2,6 +2,7 @@ import { Link, createFileRoute, Navigate } from "@tanstack/react-router";
 import { useMemo, useState, type ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
+  Activity,
   AlertTriangle,
   Building2,
   CheckCircle2,
@@ -31,7 +32,8 @@ type AdminTab =
   | "marketing"
   | "identity"
   | "documents"
-  | "memories";
+  | "memories"
+  | "audit";
 
 const tabs: { id: AdminTab; label: string }[] = [
   { id: "overview", label: "Overview" },
@@ -45,6 +47,7 @@ const tabs: { id: AdminTab; label: string }[] = [
   { id: "identity", label: "Identity" },
   { id: "documents", label: "Documents" },
   { id: "memories", label: "Memories" },
+  { id: "audit", label: "Audit" },
 ];
 
 function Admin() {
@@ -69,6 +72,7 @@ function Admin() {
         identities,
         documents,
         memories,
+        audit,
         alerts,
         residents,
       ] = await Promise.all([
@@ -84,6 +88,7 @@ function Admin() {
         db.from("identity_verifications").select("id,tenant_id,user_id,subject_type,provider,status,required,created_at,reviewed_at").order("created_at", { ascending: false }).limit(100),
         db.from("documents").select("id,tenant_id,title,document_type,status,file_size,created_at").order("created_at", { ascending: false }).limit(100),
         db.from("legacy_memories").select("id,tenant_id,resident_id,title,memory_type,visibility,file_size,created_at").order("created_at", { ascending: false }).limit(100),
+        db.from("audit_log").select("id,tenant_id,actor_id,action,target_table,target_id,metadata,created_at").order("created_at", { ascending: false }).limit(200),
         db.from("alerts").select("id,tenant_id,severity,status,created_at").order("created_at", { ascending: false }).limit(100),
         db.from("residents").select("id,tenant_id,full_name,created_at").order("created_at", { ascending: false }).limit(100),
       ]);
@@ -101,6 +106,7 @@ function Admin() {
         identities: unwrap(identities),
         documents: unwrap(documents),
         memories: unwrap(memories),
+        audit: unwrap(audit),
         alerts: unwrap(alerts),
         residents: unwrap(residents),
       };
@@ -118,6 +124,7 @@ function Admin() {
         identities,
         documents,
         memories,
+        audit,
         alerts,
         residents,
       ]
@@ -135,6 +142,7 @@ function Admin() {
   const revokedSubscriptions =
     data?.subscriptions.filter((item: any) => item.access_status === "revoked") ?? [];
   const openThreads = data?.threads.filter((item: any) => item.status !== "closed") ?? [];
+  const sensitiveAudit = data?.audit.filter((item: any) => ["sensitive", "critical"].includes(auditSeverity(item))) ?? [];
 
   const tenantName = useMemo(() => {
     const map = new Map<string, string>();
@@ -189,9 +197,10 @@ function Admin() {
                 <Stat label="Users" value={data?.profiles.length ?? 0} sub="From profiles table" tone="moss" />
                 <Stat label="Pending approvals" value={pendingApprovals.length} sub="Requires your review" tone="gold" />
                 <Stat label="Identity pending" value={pendingIdentity.length} sub="Provider/session needed" tone="wine" />
+                <Stat label="Audit events" value={data?.audit.length ?? 0} sub={`${sensitiveAudit.length} sensitive`} tone="terracotta" />
               </div>
 
-              <div className="grid gap-4 lg:grid-cols-2">
+              <div className="grid gap-4 lg:grid-cols-3">
                 <EcosystemCard
                   icon={<CheckCircle2 className="h-5 w-5" />}
                   title="Approvals needing action"
@@ -219,6 +228,13 @@ function Admin() {
                   count={revokedSubscriptions.length}
                   to="/app/billing"
                   tone="wine"
+                />
+                <EcosystemCard
+                  icon={<Activity className="h-5 w-5" />}
+                  title="Sensitive audit events"
+                  count={sensitiveAudit.length}
+                  to="/app/admin"
+                  tone="gold"
                 />
               </div>
 
@@ -464,6 +480,24 @@ function Admin() {
               ]}
             />
           )}
+
+          {tab === "audit" && (
+            <TablePanel
+              icon={<Activity className="h-5 w-5" />}
+              title="Audit trail"
+              to="/app/admin"
+              rows={data?.audit ?? []}
+              empty="No audit events found."
+              columns={["Action", "Target", "Tenant", "When", "Severity"]}
+              render={(audit: any) => [
+                audit.action,
+                `${audit.target_table ?? "-"} ${audit.target_id ? audit.target_id.slice(0, 8) : ""}`,
+                tenantName.get(audit.tenant_id) ?? audit.tenant_id ?? "platform",
+                formatDateTime(audit.created_at),
+                <Pill key="severity" tone={statusTone(auditSeverity(audit))}>{auditSeverity(audit)}</Pill>,
+              ]}
+            />
+          )}
         </>
       )}
     </>
@@ -607,14 +641,39 @@ function TablePanel({
 function statusTone(status: string | null | undefined): "moss" | "wine" | "gold" | "olive" | "terracotta" | "muted" {
   const value = String(status ?? "").toLowerCase();
   if (["active", "approved", "verified", "sent", "open", "trialing"].includes(value)) return "moss";
-  if (["pending", "draft", "pending_provider_session", "pending_approval"].includes(value)) return "gold";
-  if (["rejected", "revoked", "suspended", "void", "failed", "closed"].includes(value)) return "wine";
+  if (["pending", "draft", "pending_provider_session", "pending_approval", "sensitive"].includes(value)) return "gold";
+  if (["rejected", "revoked", "suspended", "void", "failed", "closed", "critical"].includes(value)) return "wine";
+  if (["info", "insert", "update"].includes(value)) return "olive";
   return "muted";
 }
 
 function formatDate(value: string | null | undefined) {
   if (!value) return "-";
   return new Date(value).toLocaleDateString();
+}
+
+function formatDateTime(value: string | null | undefined) {
+  if (!value) return "-";
+  return new Date(value).toLocaleString();
+}
+
+function auditSeverity(audit: any) {
+  const action = String(audit?.action ?? "").toLowerCase();
+  const target = String(audit?.target_table ?? "").toLowerCase();
+  if (action.includes("delete") || action.includes("_deleted")) return "critical";
+  if (
+    [
+      "documents",
+      "legacy_memories",
+      "identity_verifications",
+      "tenant_subscriptions",
+      "platform_approvals",
+      "contracts",
+    ].includes(target)
+  ) {
+    return "sensitive";
+  }
+  return "info";
 }
 
 function formatMoney(cents: number | null | undefined, currency: string | null | undefined) {
