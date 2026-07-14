@@ -11,6 +11,7 @@ function Overview() {
   const { profile, displayName, primaryRole, isStaff, isSuperAdmin, isAdmin } = useAuth();
   const { greeting } = useGreeting(displayName);
   const tenantId = profile?.tenant_id ?? null;
+  const workspace = workspaceFor(profile?.user_kind, isSuperAdmin, isAdmin, isStaff);
 
   const stats = useQuery({
     queryKey: ["overview-stats", tenantId, isSuperAdmin],
@@ -70,7 +71,7 @@ function Overview() {
     <>
       <PageHeader
         title={greeting || "Welcome"}
-        subtitle={summary}
+        subtitle={`${workspace.subtitle} ${summary}`}
         action={
           <div className="flex items-center gap-2">
             <Pill tone={s && s.openAlerts > 0 ? "wine" : "moss"}>
@@ -83,6 +84,24 @@ function Overview() {
           </div>
         }
       />
+
+      <Card className="mb-6 overflow-hidden border-white/70 bg-white/45 p-0 backdrop-blur-2xl">
+        <div className="grid gap-0 lg:grid-cols-[1.15fr_.85fr]">
+          <div className="p-6">
+            <p className="text-xs uppercase text-muted-foreground">{workspace.eyebrow}</p>
+            <h2 className="mt-2 text-2xl font-semibold text-foreground">{workspace.title}</h2>
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">{workspace.body}</p>
+          </div>
+          <div className="border-t border-white/55 bg-white/30 p-5 lg:border-l lg:border-t-0">
+            <p className="text-xs uppercase text-muted-foreground">Sua area</p>
+            <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-1">
+              {workspace.links.map((link) => (
+                <QuickLink key={link.to} to={link.to} label={link.label} hint={link.hint} />
+              ))}
+            </div>
+          </div>
+        </div>
+      </Card>
 
       {/* Role-aware quick stats */}
       <div className="grid gap-4 md:grid-cols-4">
@@ -190,4 +209,80 @@ function QuickLink({ to, label, hint }: { to: string; label: string; hint: strin
       </svg>
     </Link>
   );
+}
+
+function workspaceFor(
+  userKind: string | null | undefined,
+  isSuperAdmin: boolean,
+  isAdmin: boolean,
+  isStaff: boolean,
+) {
+  if (isSuperAdmin) {
+    return {
+      eyebrow: "Super admin",
+      title: "Ecossistema Care Kranich",
+      subtitle: "Painel global para aprovar usuarios, planos, contratos e operacao.",
+      body: "Aqui ficam as decisoes de plataforma: acesso, receita, contratos, inbox, verificacoes e saude operacional.",
+      links: [
+        { to: "/app/admin", label: "Super Admin", hint: "Visao global" },
+        { to: "/app/approvals", label: "Aprovacoes", hint: "Usuarios e clinicas" },
+        { to: "/app/billing", label: "Planos", hint: "Assinaturas e acesso" },
+        { to: "/app/inbox", label: "Inbox", hint: "Conversas do ecossistema" },
+      ],
+    };
+  }
+  if (isAdmin || userKind === "clinic") {
+    return {
+      eyebrow: "Clinica",
+      title: "Operacao da clinica",
+      subtitle: "Area para gerir residentes, equipe, cuidado e qualidade.",
+      body: "A clinica acompanha alertas, tarefas, documentos, equipe e indicadores sem entrar nas ferramentas de dono da plataforma.",
+      links: [
+        { to: "/app/residents", label: "Residentes", hint: "Perfis e cuidado" },
+        { to: "/app/tenants", label: "Organizacao", hint: "Equipe e permissoes" },
+        { to: "/app/command", label: "Comando", hint: "Operacao do dia" },
+        { to: "/app/care-plan", label: "Plano de cuidado", hint: "Rotina clinica" },
+      ],
+    };
+  }
+  if (userKind === "service_provider") {
+    return {
+      eyebrow: "Prestador",
+      title: "Area do prestador de servicos",
+      subtitle: "Espaco para identidade, contatos, documentos e oportunidades.",
+      body: "Prestadores entram pelo marketplace, conversam pelo inbox, mantem verificacao facial e organizam documentos profissionais.",
+      links: [
+        { to: "/app/marketplace", label: "Marketplace", hint: "Presenca publica" },
+        { to: "/app/inbox", label: "Inbox", hint: "Conversas com clientes" },
+        { to: "/app/documents", label: "Documentos", hint: "Certificados e contratos" },
+        { to: "/app/identity", label: "Verificacao", hint: "Reconhecimento facial" },
+      ],
+    };
+  }
+  if (isStaff || userKind === "staff") {
+    return {
+      eyebrow: "Equipe de cuidado",
+      title: "Turno e cuidado direto",
+      subtitle: "Area para tarefas, registros, alertas e evolucao de residentes.",
+      body: "A equipe trabalha com timeline, plano de cuidado, app do cuidador, alertas e documentos clinicos conforme permissao.",
+      links: [
+        { to: "/app/caregiver", label: "App cuidador", hint: "Tarefas do turno" },
+        { to: "/app/timeline", label: "Timeline", hint: "Registrar cuidado" },
+        { to: "/app/alerts", label: "Alertas", hint: "Resolver incidentes" },
+        { to: "/app/medical", label: "Medico", hint: "Notas clinicas" },
+      ],
+    };
+  }
+  return {
+    eyebrow: "Familia",
+    title: "Cuidado familiar",
+    subtitle: "Area para acompanhar quem voce ama, memorias, casa inteligente e alertas.",
+    body: "Usuarios comuns veem o que importa para a familia: residentes vinculados, memorias, rotina, documentos, alertas e comunicacao com a equipe.",
+    links: [
+      { to: "/app/residents", label: "Residentes", hint: "Quem voce acompanha" },
+      { to: "/app/memory", label: "Memorias", hint: "Historia e legado" },
+      { to: "/app/smart-home", label: "Casa inteligente", hint: "Sensores e ambiente" },
+      { to: "/app/inbox", label: "Inbox", hint: "Fale com a equipe" },
+    ],
+  };
 }

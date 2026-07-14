@@ -85,7 +85,7 @@ function Residents() {
               onClick={() => setCreating(true)}
               disabled={!profile?.tenant_id && !isSuperAdmin}
               title={!profile?.tenant_id && !isSuperAdmin ? "Crie ou selecione uma organizacao antes de adicionar residentes" : ""}
-              className="rounded-full bg-olive px-4 py-2 text-xs text-ivory shadow-soft hover:opacity-90 disabled:opacity-50"
+              className="rounded-lg bg-olive px-4 py-2 text-xs text-ivory shadow-soft hover:opacity-90 disabled:opacity-50"
             >
               + Adicionar residente
             </button>
@@ -275,9 +275,9 @@ function ResidentDialog({
     <div className="fixed inset-0 z-50 grid place-items-center bg-foreground/40 px-4 backdrop-blur-sm">
       <form
         onSubmit={submit}
-        className="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-3xl bg-card p-8 shadow-elevated"
+        className="flex max-h-[calc(100vh-4rem)] w-full max-w-2xl flex-col overflow-hidden rounded-xl border border-white/70 bg-white/72 shadow-elevated backdrop-blur-2xl"
       >
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between border-b border-white/55 px-8 pb-4 pt-7">
           <h2 className="text-2xl font-semibold text-foreground">
             {resident ? "Editar residente" : "Adicionar residente"}
           </h2>
@@ -289,7 +289,9 @@ function ResidentDialog({
             x
           </button>
         </div>
-        <p className="mt-1 text-sm text-muted-foreground">Cadastre a pessoa por tras do cuidado.</p>
+
+        <div className="app-scrollbar overflow-y-auto px-8 pb-6 pr-6">
+        <p className="mt-4 text-sm text-muted-foreground">Cadastre a pessoa por tras do cuidado.</p>
 
         {requireTenantPicker && (
           <div className="mt-5">
@@ -324,37 +326,37 @@ function ResidentDialog({
             onChange={(v) => setForm({ ...form, preferred_name: v })}
           />
           <Field
-            label="Date of birth"
+            label="Data de nascimento"
             type="date"
             value={form.date_of_birth}
             onChange={(v) => setForm({ ...form, date_of_birth: v })}
           />
           <Field
-            label="Pronouns"
+            label="Pronomes"
             value={form.pronouns}
             onChange={(v) => setForm({ ...form, pronouns: v })}
-            placeholder="she / her"
+            placeholder="ela / dela"
           />
           <Field
-            label="Language"
+            label="Idioma"
             value={form.language}
             onChange={(v) => setForm({ ...form, language: v })}
-            placeholder="Portuguese - French"
+            placeholder="Portugues - Frances"
           />
           <Field
-            label="Hobbies (comma-separated)"
+            label="Hobbies (separados por virgula)"
             value={form.hobbies}
             onChange={(v) => setForm({ ...form, hobbies: v })}
-            placeholder="Gardening, Reading"
+            placeholder="Jardinagem, Leitura"
           />
         </div>
 
         <div className="mt-4">
-          <GeoAddressField label="Care address" value={address} onChange={setAddress} />
+          <GeoAddressField label="Endereco de atendimento" value={address} onChange={setAddress} />
         </div>
 
         <label className="mt-4 block text-sm">
-          <span className="text-foreground/80">Short biography</span>
+          <span className="text-foreground/80">Breve biografia</span>
           <textarea
             value={form.bio}
             onChange={(e) => setForm({ ...form, bio: e.target.value })}
@@ -363,29 +365,30 @@ function ResidentDialog({
           />
         </label>
         <label className="mt-4 block text-sm">
-          <span className="text-foreground/80">Her / his story</span>
+          <span className="text-foreground/80">A historia dela/dele</span>
           <textarea
             value={form.story}
             onChange={(e) => setForm({ ...form, story: e.target.value })}
             rows={5}
             className="mt-1 w-full rounded-xl border border-border bg-ivory px-3 py-2 text-sm"
-            placeholder="Where she grew up, what she loves, what calms her, what she fears."
+            placeholder="Onde ela cresceu, o que ela ama, o que acalma, do que ela tem medo."
           />
         </label>
 
         {err && <p className="mt-4 rounded-lg bg-wine/10 px-3 py-2 text-xs text-wine">{err}</p>}
+        </div>
 
-        <div className="mt-6 flex justify-end gap-2">
+        <div className="flex justify-end gap-2 border-t border-white/55 bg-white/42 px-8 py-5">
           <button
             type="button"
             onClick={onClose}
-            className="rounded-full border border-border bg-ivory px-4 py-2 text-sm hover:bg-cream"
+            className="rounded-lg border border-border bg-ivory px-4 py-2 text-sm hover:bg-cream"
           >
             Cancelar
           </button>
           <button
             disabled={saving || !tenantId}
-            className="rounded-full bg-olive px-5 py-2 text-sm text-ivory hover:opacity-90 disabled:opacity-50"
+            className="rounded-lg bg-olive px-5 py-2 text-sm text-ivory hover:opacity-90 disabled:opacity-50"
           >
             {saving ? "Salvando..." : resident ? "Salvar alteracoes" : "Criar residente"}
           </button>

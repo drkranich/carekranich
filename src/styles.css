@@ -194,7 +194,7 @@
   html.saas-scrollbar,
   body.saas-scrollbar {
     scrollbar-width: thin;
-    scrollbar-color: oklch(0.74 0.065 195 / 0.42) transparent;
+    scrollbar-color: oklch(0.56 0.045 165 / 0.44) oklch(1 0 0 / 0.14);
   }
   .app-scrollbar {
     scrollbar-gutter: stable;
@@ -203,34 +203,31 @@
   .app-shell *::-webkit-scrollbar,
   html.saas-scrollbar::-webkit-scrollbar,
   body.saas-scrollbar::-webkit-scrollbar {
-    width: 10px;
-    height: 10px;
+    width: 8px;
+    height: 8px;
   }
   .app-shell::-webkit-scrollbar-track,
   .app-shell *::-webkit-scrollbar-track,
   html.saas-scrollbar::-webkit-scrollbar-track,
   body.saas-scrollbar::-webkit-scrollbar-track {
-    background: oklch(1 0 0 / 0.16);
-    border-radius: 999px;
+    background: linear-gradient(180deg, oklch(1 0 0 / 0.16), oklch(0.92 0.035 145 / 0.18));
+    border: 1px solid oklch(1 0 0 / 0.26);
+    border-radius: 0;
   }
   .app-shell::-webkit-scrollbar-thumb,
   .app-shell *::-webkit-scrollbar-thumb,
   html.saas-scrollbar::-webkit-scrollbar-thumb,
   body.saas-scrollbar::-webkit-scrollbar-thumb {
-    background:
-      linear-gradient(180deg, oklch(0.88 0.055 215 / 0.62), oklch(0.72 0.07 155 / 0.58)),
-      oklch(1 0 0 / 0.38);
-    border: 3px solid oklch(1 0 0 / 0.44);
-    border-radius: 999px;
-    box-shadow: inset 0 1px 0 oklch(1 0 0 / 0.65);
+    background: linear-gradient(180deg, oklch(0.69 0.055 176 / 0.62), oklch(0.53 0.052 154 / 0.56));
+    border: 2px solid oklch(0.98 0.012 110 / 0.62);
+    border-radius: 2px;
+    box-shadow: inset 0 0 0 1px oklch(1 0 0 / 0.22);
   }
   .app-shell::-webkit-scrollbar-thumb:hover,
   .app-shell *::-webkit-scrollbar-thumb:hover,
   html.saas-scrollbar::-webkit-scrollbar-thumb:hover,
   body.saas-scrollbar::-webkit-scrollbar-thumb:hover {
-    background:
-      linear-gradient(180deg, oklch(0.82 0.07 205 / 0.72), oklch(0.64 0.08 155 / 0.68)),
-      oklch(1 0 0 / 0.42);
+    background: linear-gradient(180deg, oklch(0.58 0.07 178 / 0.78), oklch(0.43 0.065 154 / 0.72));
   }
   .app-shell::-webkit-scrollbar-corner,
   .app-shell *::-webkit-scrollbar-corner,

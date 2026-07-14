@@ -9,10 +9,11 @@ import {
 import { useEffect, useMemo, useState } from "react";
 import { Avatar } from "@/components/app/primitives";
 import { NotificationBell } from "@/components/app/NotificationBell";
-import { useAuth, ROLE_LABELS, type AppRole } from "@/hooks/use-auth";
+import { useAuth, ROLE_LABELS, type AppRole, type Profile } from "@/hooks/use-auth";
 import { useTenantRealtime } from "@/hooks/use-realtime";
 
-type NavItem = { to: string; label: string; icon: string; roles?: AppRole[] };
+type UserKind = Profile["user_kind"];
+type NavItem = { to: string; label: string; icon: string; roles?: AppRole[]; userKinds?: UserKind[] };
 type NavSection = { title: string; items: NavItem[] };
 
 const ALL_SECTIONS: NavSection[] = [
@@ -24,16 +25,19 @@ const ALL_SECTIONS: NavSection[] = [
         to: "/app/timeline",
         label: "Timeline",
         icon: "M12 6v6l4 2 M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0z",
+        userKinds: ["family", "clinic", "staff"],
       },
       {
         to: "/app/residents",
         label: "Residents",
         icon: "M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2 M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8 M23 21v-2a4 4 0 0 0-3-3.87 M16 3.13a4 4 0 0 1 0 7.75",
+        userKinds: ["family", "clinic", "staff"],
       },
       {
         to: "/app/care-plan",
         label: "Care plan",
         icon: "M9 11l3 3L22 4 M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11",
+        userKinds: ["family", "clinic", "staff"],
       },
       {
         to: "/app/profile",
@@ -45,8 +49,9 @@ const ALL_SECTIONS: NavSection[] = [
         label: "Memory & legacy",
         icon: "M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z",
         roles: ["family", "clinic_admin", "super_admin"],
+        userKinds: ["family"],
       },
-      { to: "/app/emergency", label: "Emergency", icon: "M12 2L1 21h22L12 2z M12 9v4 M12 17h.01" },
+      { to: "/app/emergency", label: "Emergency", icon: "M12 2L1 21h22L12 2z M12 9v4 M12 17h.01", userKinds: ["family", "clinic", "staff"] },
     ],
   },
   {
@@ -57,24 +62,28 @@ const ALL_SECTIONS: NavSection[] = [
         label: "Caregiver app",
         icon: "M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2 M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8",
         roles: ["caregiver", "nurse", "doctor", "clinic_admin", "super_admin"],
+        userKinds: ["clinic", "staff"],
       },
       {
         to: "/app/quality",
         label: "Quality & wellbeing",
         icon: "M22 11.08V12a10 10 0 1 1-5.93-9.14 M22 4L12 14.01l-3-3",
         roles: ["nurse", "doctor", "clinic_admin", "super_admin"],
+        userKinds: ["clinic", "staff"],
       },
       {
         to: "/app/academy",
         label: "Academy",
         icon: "M22 10v6 M2 10l10-5 10 5-10 5z M6 12v5c0 1.5 3 3 6 3s6-1.5 6-3v-5",
         roles: ["caregiver", "nurse", "doctor", "clinic_admin", "super_admin"],
+        userKinds: ["clinic", "staff"],
       },
       {
         to: "/app/medical",
         label: "Medical",
         icon: "M19 14V6a2 2 0 0 0-2-2H7a2 2 0 0 0-2 2v8 M5 14h14v6H5z M12 8v4 M10 10h4",
         roles: ["nurse", "doctor", "clinic_admin", "super_admin"],
+        userKinds: ["clinic", "staff"],
       },
       {
         to: "/app/marketplace",
@@ -105,16 +114,19 @@ const ALL_SECTIONS: NavSection[] = [
         to: "/app/twin",
         label: "Digital Twin",
         icon: "M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2z M12 6v6l4 2",
+        userKinds: ["family", "clinic", "staff"],
       },
       {
         to: "/app/cognitive",
         label: "Cognitive Twin",
         icon: "M12 2a5 5 0 0 0-5 5v1a4 4 0 0 0-2 7 4 4 0 0 0 7 3 4 4 0 0 0 7-3 4 4 0 0 0-2-7V7a5 5 0 0 0-5-5z",
+        userKinds: ["family", "clinic", "staff"],
       },
       {
         to: "/app/longevity",
         label: "Longevity Engine",
         icon: "M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67 10.94 4.61a5.5 5.5 0 0 0-7.78 7.78l8.84 8.84 8.84-8.84a5.5 5.5 0 0 0 0-7.78z",
+        userKinds: ["family", "clinic", "staff"],
       },
     ],
   },
@@ -125,11 +137,13 @@ const ALL_SECTIONS: NavSection[] = [
         to: "/app/ai",
         label: "AI Insights",
         icon: "M12 2v4 M12 18v4 M4.93 4.93l2.83 2.83 M2 12h4 M18 12h4",
+        userKinds: ["family", "clinic", "staff"],
       },
       {
         to: "/app/alerts",
         label: "Alert center",
         icon: "M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9 M13.73 21a2 2 0 0 1-3.46 0",
+        userKinds: ["family", "clinic", "staff"],
       },
       {
         to: "/app/workflows",
@@ -142,6 +156,7 @@ const ALL_SECTIONS: NavSection[] = [
         label: "Smart Home",
         icon: "M3 12l9-9 9 9 M5 10v10h14V10 M9 20v-6h6v6",
         roles: ["family", "caregiver", "nurse", "clinic_admin", "super_admin"],
+        userKinds: ["family", "clinic"],
       },
       {
         to: "/app/telemedicine",
@@ -250,9 +265,13 @@ function AppLayout() {
   const sections = useMemo(() => {
     return ALL_SECTIONS.map((s) => ({
       ...s,
-      items: s.items.filter((i) => !i.roles || i.roles.some((r) => roles.includes(r))),
+      items: s.items.filter((i) => {
+        const roleAllowed = !i.roles || i.roles.some((r) => roles.includes(r));
+        const kindAllowed = !i.userKinds || (!!profile?.user_kind && i.userKinds.includes(profile.user_kind));
+        return i.roles && i.userKinds ? roleAllowed || kindAllowed : roleAllowed && kindAllowed;
+      }),
     })).filter((s) => s.items.length > 0);
-  }, [roles]);
+  }, [profile?.user_kind, roles]);
 
   const quickLinks = useMemo(() => {
     return sections.flatMap((section) =>

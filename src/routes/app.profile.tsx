@@ -19,24 +19,68 @@ const tabs: { id: ProfileTab; label: string; icon: typeof UserRound }[] = [
   { id: "security", label: "Segurança", icon: Lock },
 ];
 
-const languages = [
-  { value: "pt-BR", label: "Português (Brasil)" },
-  { value: "pt-PT", label: "Português (Portugal)" },
-  { value: "en-US", label: "English (United States)" },
-  { value: "en-GB", label: "English (United Kingdom)" },
-  { value: "es-ES", label: "Español" },
-  { value: "fr-FR", label: "Français" },
-  { value: "de-DE", label: "Deutsch" },
-  { value: "it-IT", label: "Italiano" },
-  { value: "nl-NL", label: "Nederlands" },
-  { value: "ar", label: "العربية" },
-  { value: "zh-CN", label: "中文" },
-  { value: "ja-JP", label: "日本語" },
-  { value: "ko-KR", label: "한국어" },
-];
+const baseLanguageCodes =
+  "af,am,ar,az,be,bg,bn,bs,ca,cs,cy,da,de,el,en,es,et,eu,fa,fi,fil,fr,ga,gl,gu,he,hi,hr,hu,hy,id,is,it,ja,ka,kk,km,kn,ko,ky,lo,lt,lv,mk,ml,mn,mr,ms,my,nb,ne,nl,pa,pl,pt,ro,ru,si,sk,sl,sq,sr,sv,sw,ta,te,th,tr,uk,ur,uz,vi,zh,zu".split(",");
 
+const featuredLocales = [
+  "pt-BR",
+  "pt-PT",
+  "en-US",
+  "en-GB",
+  "es-ES",
+  "es-MX",
+  "fr-FR",
+  "fr-CA",
+  "de-DE",
+  "it-IT",
+  "nl-NL",
+  "ar-SA",
+  "zh-CN",
+  "zh-TW",
+  "ja-JP",
+  "ko-KR",
+];
 const countryCodes =
   "AF,AX,AL,DZ,AS,AD,AO,AI,AQ,AG,AR,AM,AW,AU,AT,AZ,BS,BH,BD,BB,BY,BE,BZ,BJ,BM,BT,BO,BQ,BA,BW,BV,BR,IO,BN,BG,BF,BI,CV,KH,CM,CA,KY,CF,TD,CL,CN,CX,CC,CO,KM,CG,CD,CK,CR,CI,HR,CU,CW,CY,CZ,DK,DJ,DM,DO,EC,EG,SV,GQ,ER,EE,SZ,ET,FK,FO,FJ,FI,FR,GF,PF,TF,GA,GM,GE,DE,GH,GI,GR,GL,GD,GP,GU,GT,GG,GN,GW,GY,HT,HM,VA,HN,HK,HU,IS,IN,ID,IR,IQ,IE,IM,IL,IT,JM,JP,JE,JO,KZ,KE,KI,KP,KR,KW,KG,LA,LV,LB,LS,LR,LY,LI,LT,LU,MO,MG,MW,MY,MV,ML,MT,MH,MQ,MR,MU,YT,MX,FM,MD,MC,MN,ME,MS,MA,MZ,MM,NA,NR,NP,NL,NC,NZ,NI,NE,NG,NU,NF,MK,MP,NO,OM,PK,PW,PS,PA,PG,PY,PE,PH,PN,PL,PT,PR,QA,RE,RO,RU,RW,BL,SH,KN,LC,MF,PM,VC,WS,SM,ST,SA,SN,RS,SC,SL,SG,SX,SK,SI,SB,SO,ZA,GS,SS,ES,LK,SD,SR,SJ,SE,CH,SY,TW,TJ,TZ,TH,TL,TG,TK,TO,TT,TN,TR,TM,TC,TV,UG,UA,AE,GB,US,UM,UY,UZ,VU,VE,VN,VG,VI,WF,EH,YE,ZM,ZW".split(",");
+
+function safeLocale(value: string) {
+  try {
+    return Intl.DateTimeFormat.supportedLocalesOf([value])[0] || "pt-BR";
+  } catch {
+    return "pt-BR";
+  }
+}
+
+function localeLabel(locale: string, displayLocale: string) {
+  const [language, region] = locale.split("-");
+  const languageNames = new Intl.DisplayNames([displayLocale, "en"], { type: "language" });
+  const regionNames = new Intl.DisplayNames([displayLocale, "en"], { type: "region" });
+  const languageLabel = languageNames.of(language) ?? language;
+  return region ? `${languageLabel} (${regionNames.of(region) ?? region})` : languageLabel;
+}
+
+function buildLanguageOptions(displayLocale: string, countries: { value: string; label: string }[]) {
+  const languageNames = new Intl.DisplayNames([displayLocale, "en"], { type: "language" });
+  const seen = new Set<string>();
+  const options: { value: string; label: string }[] = [];
+  const add = (option: { value: string; label: string }) => {
+    if (seen.has(option.value)) return;
+    seen.add(option.value);
+    options.push(option);
+  };
+
+  featuredLocales.forEach((locale) => add({ value: locale, label: localeLabel(locale, displayLocale) }));
+  baseLanguageCodes
+    .map((code) => ({ value: code, label: languageNames.of(code) ?? code }))
+    .sort((a, b) => a.label.localeCompare(b.label))
+    .forEach(add);
+  countries
+    .map((country) => ({ value: `und-${country.value}`, label: `Padrao local (${country.label})` }))
+    .sort((a, b) => a.label.localeCompare(b.label))
+    .forEach(add);
+
+  return options;
+}
 
 function Profile() {
   const { user, profile, roles, primaryRole, refresh, loading } = useAuth();
@@ -54,12 +98,18 @@ function Profile() {
   const [uploading, setUploading] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
+  const displayLocale = safeLocale(language);
   const countryOptions = useMemo(() => {
-    const names = new Intl.DisplayNames([language || "pt-BR", "en"], { type: "region" });
+    const names = new Intl.DisplayNames([displayLocale, "en"], { type: "region" });
     return countryCodes
       .map((code) => ({ value: code, label: names.of(code) ?? code }))
       .sort((a, b) => a.label.localeCompare(b.label));
-  }, [language]);
+  }, [displayLocale]);
+
+  const languageOptions = useMemo(
+    () => buildLanguageOptions(displayLocale, countryOptions),
+    [countryOptions, displayLocale],
+  );
 
   const timeZones = useMemo(() => {
     const values = (Intl as any).supportedValuesOf?.("timeZone") as string[] | undefined;
@@ -217,7 +267,7 @@ function Profile() {
                 <button
                   key={item.id}
                   onClick={() => setTab(item.id)}
-                  className={`inline-flex items-center gap-2 rounded-2xl px-4 py-2 text-sm transition ${
+                  className={`inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm transition ${
                     tab === item.id ? "bg-olive text-ivory shadow-soft" : "bg-white/42 text-foreground/75 hover:bg-white/65"
                   }`}
                 >
@@ -261,9 +311,9 @@ function Profile() {
             {tab === "preferences" && (
               <div className="grid gap-5 lg:grid-cols-2">
                 <GlassCombobox label="Fuso horário" value={tz} options={timeZones.map((zone) => ({ value: zone, label: zone }))} onChange={setTz} />
-                <GlassCombobox label="Idioma de preferência" value={language} options={languages} onChange={setLanguage} />
+                <GlassCombobox label="Idioma de preferência" value={language} options={languageOptions} onChange={setLanguage} />
                 <Readonly label="Formato regional" value={selectedCountry?.label ?? countryCode} />
-                <Readonly label="Horário local estimado" value={new Intl.DateTimeFormat(language, { timeZone: tz, dateStyle: "medium", timeStyle: "short" }).format(new Date())} />
+                <Readonly label="Horário local estimado" value={new Intl.DateTimeFormat(displayLocale, { timeZone: tz, dateStyle: "medium", timeStyle: "short" }).format(new Date())} />
               </div>
             )}
 
@@ -293,7 +343,7 @@ function Profile() {
             <button
               onClick={save}
               disabled={saving}
-              className="rounded-full bg-olive px-5 py-2 text-sm text-ivory shadow-soft hover:opacity-90 disabled:opacity-50"
+              className="rounded-lg bg-olive px-5 py-2 text-sm text-ivory shadow-soft hover:opacity-90 disabled:opacity-50"
             >
               {saving ? "Salvando..." : "Salvar alterações"}
             </button>
@@ -316,7 +366,7 @@ function Field({ label, value, onChange, hint, placeholder }: { label: string; v
 
 function Readonly({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-2xl border border-white/70 bg-white/38 p-4 shadow-soft backdrop-blur-xl">
+    <div className="rounded-lg border border-white/70 bg-white/38 p-4 shadow-soft backdrop-blur-xl">
       <p className="text-xs uppercase text-muted-foreground">{label}</p>
       <p className="mt-1 break-words text-sm font-medium text-foreground">{value}</p>
     </div>
@@ -332,13 +382,13 @@ function GlassCombobox({ label, value, options, onChange }: { label: string; val
   return (
     <div className="relative text-sm">
       <span className="text-foreground/80">{label}</span>
-      <button type="button" onClick={() => setOpen((state) => !state)} className="mt-1 flex w-full items-center justify-between rounded-xl border border-white/70 bg-white/55 px-3 py-2 text-left shadow-soft backdrop-blur-xl">
+      <button type="button" onClick={() => setOpen((state) => !state)} className="mt-1 flex w-full items-center justify-between rounded-lg border border-white/70 bg-white/55 px-3 py-2 text-left shadow-soft backdrop-blur-xl">
         <span className="truncate">{selected?.label ?? value}</span>
         <Search className="h-4 w-4 text-muted-foreground" />
       </button>
       {open && (
-        <div className="absolute z-40 mt-2 w-full overflow-hidden rounded-2xl border border-white/70 bg-white/82 p-2 shadow-elevated backdrop-blur-2xl">
-          <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Buscar..." className="mb-2 w-full rounded-xl border border-border/60 bg-ivory/70 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-olive/25" />
+        <div className="absolute z-40 mt-2 w-full overflow-hidden rounded-lg border border-white/70 bg-white/82 p-2 shadow-elevated backdrop-blur-2xl">
+          <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Buscar..." className="mb-2 w-full rounded-md border border-border/60 bg-ivory/70 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-olive/25" />
           <div className="app-scrollbar max-h-64 overflow-y-auto">
             {filtered.map((item) => (
               <button
@@ -349,7 +399,7 @@ function GlassCombobox({ label, value, options, onChange }: { label: string; val
                   setOpen(false);
                   setQuery("");
                 }}
-                className={`block w-full rounded-xl px-3 py-2 text-left text-sm hover:bg-baby/20 ${item.value === value ? "bg-olive/10 text-olive" : "text-foreground"}`}
+                className={`block w-full rounded-md px-3 py-2 text-left text-sm hover:bg-baby/20 ${item.value === value ? "bg-olive/10 text-olive" : "text-foreground"}`}
               >
                 {item.label}
               </button>
@@ -364,7 +414,7 @@ function GlassCombobox({ label, value, options, onChange }: { label: string; val
 
 function SecurityCard({ title, body, children }: { title: string; body: string; children?: React.ReactNode }) {
   return (
-    <div className="rounded-2xl border border-white/70 bg-white/38 p-5 shadow-soft backdrop-blur-xl">
+    <div className="rounded-lg border border-white/70 bg-white/38 p-5 shadow-soft backdrop-blur-xl">
       <p className="font-medium text-foreground">{title}</p>
       <p className="mt-1 text-xs leading-5 text-muted-foreground">{body}</p>
       {children}

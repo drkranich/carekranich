@@ -43,13 +43,13 @@ export function GlassSelect({
         type="button"
         disabled={disabled}
         onClick={() => setOpen((current) => !current)}
-        className="flex min-h-10 w-full items-center justify-between gap-3 rounded-2xl border border-white/70 bg-white/55 px-4 py-2 text-left text-sm text-foreground shadow-soft backdrop-blur-xl transition hover:bg-white/70 focus:outline-none focus:ring-2 focus:ring-olive/25 disabled:cursor-not-allowed disabled:opacity-55"
+        className="flex min-h-10 w-full items-center justify-between gap-3 rounded-lg border border-white/70 bg-white/55 px-4 py-2 text-left text-sm text-foreground shadow-soft backdrop-blur-xl transition hover:bg-white/70 focus:outline-none focus:ring-2 focus:ring-olive/25 disabled:cursor-not-allowed disabled:opacity-55"
       >
         <span className="min-w-0 truncate">{selected?.label ?? placeholder}</span>
         <ChevronDown className={`h-4 w-4 flex-none text-olive transition ${open ? "rotate-180" : ""}`} />
       </button>
       {open && !disabled && (
-        <div className="absolute left-0 right-0 z-[80] mt-2 overflow-hidden rounded-2xl border border-white/75 bg-white/85 p-1 shadow-elevated backdrop-blur-2xl">
+        <div className="absolute left-0 right-0 z-[80] mt-2 overflow-hidden rounded-lg border border-white/75 bg-white/85 p-1 shadow-elevated backdrop-blur-2xl">
           <div className="max-h-72 overflow-y-auto app-scrollbar">
             {options.map((option) => (
               <button
@@ -60,7 +60,7 @@ export function GlassSelect({
                   onChange(option.value);
                   setOpen(false);
                 }}
-                className={`block w-full rounded-xl px-3 py-2 text-left text-sm transition ${
+                className={`block w-full rounded-md px-3 py-2 text-left text-sm transition ${
                   option.value === value
                     ? "bg-olive text-ivory"
                     : "text-foreground hover:bg-olive/10"
