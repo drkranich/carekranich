@@ -106,6 +106,7 @@ const providers = [
 function Marketplace() {
   const [category, setCategory] = useState("All");
   const [booking, setBooking] = useState<(typeof providers)[number] | null>(null);
+  const [confirmedBooking, setConfirmedBooking] = useState<(typeof providers)[number] | null>(null);
   const filteredProviders = useMemo(() => {
     if (category === "All") return providers;
     const key = category.toLowerCase();
@@ -129,8 +130,8 @@ function Marketplace() {
       />
 
       {/* Filters */}
-      <div className="-mx-2 mb-6 overflow-x-auto">
-        <div className="flex gap-2 px-2">
+      <div className="mb-6 max-w-full">
+        <div className="flex min-w-0 flex-wrap gap-2">
           {categories.map((c) => (
             <button
               key={c}
@@ -147,21 +148,37 @@ function Marketplace() {
         </div>
       </div>
 
-      {booking && (
+      {(booking || confirmedBooking) && (
         <Card className="mb-6 border-baby/50 bg-baby/20">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <p className="text-sm font-medium text-foreground">Booking staged: {booking.n}</p>
+              <p className="text-sm font-medium text-foreground">
+                {confirmedBooking
+                  ? `Booking confirmed: ${confirmedBooking.n}`
+                  : `Booking staged: ${booking?.n}`}
+              </p>
               <p className="text-xs text-muted-foreground">
-                {booking.r} - {booking.rate} - Available {booking.available}
+                {(confirmedBooking ?? booking)?.r} - {(confirmedBooking ?? booking)?.rate} -
+                Available {(confirmedBooking ?? booking)?.available}
               </p>
             </div>
             <div className="flex gap-2">
-              <button className="rounded-full bg-olive px-4 py-2 text-xs text-ivory">
-                Confirm booking
-              </button>
+              {booking && (
+                <button
+                  onClick={() => {
+                    setConfirmedBooking(booking);
+                    setBooking(null);
+                  }}
+                  className="rounded-full bg-olive px-4 py-2 text-xs text-ivory"
+                >
+                  Confirm booking
+                </button>
+              )}
               <button
-                onClick={() => setBooking(null)}
+                onClick={() => {
+                  setBooking(null);
+                  setConfirmedBooking(null);
+                }}
                 className="rounded-full border border-border bg-white/55 px-4 py-2 text-xs"
               >
                 Clear
@@ -206,6 +223,16 @@ function Marketplace() {
             </div>
           </Card>
         ))}
+        {filteredProviders.length === 0 && (
+          <Card className="md:col-span-2 xl:col-span-3">
+            <p className="text-lg font-semibold text-foreground">
+              No providers in this category yet.
+            </p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Care Kranich can open a request with the partner network and notify operations.
+            </p>
+          </Card>
+        )}
       </div>
     </>
   );

@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -50,7 +50,10 @@ function LongevityPage() {
   const [residentId, setResidentId] = useState("");
 
   const { data: residents = [] } = useResidents(profile?.tenant_id);
-  if (residents.length && !residentId) setResidentId(residents[0].id);
+
+  useEffect(() => {
+    if (residents.length && !residentId) setResidentId(residents[0].id);
+  }, [residentId, residents]);
 
   const { data: scores = [] } = useQuery({
     queryKey: ["long-scores", residentId],

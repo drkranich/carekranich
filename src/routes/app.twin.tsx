@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -111,7 +111,10 @@ function TwinPage() {
   const [showForm, setShowForm] = useState(false);
 
   const { data: residents = [] } = useResidents(profile?.tenant_id);
-  if (residents.length && !residentId) setResidentId(residents[0].id);
+
+  useEffect(() => {
+    if (residents.length && !residentId) setResidentId(residents[0].id);
+  }, [residentId, residents]);
 
   const sinceISO = useMemo(() => {
     const d = new Date();

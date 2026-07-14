@@ -141,7 +141,7 @@ function Workflows() {
               onClick={() => setSuggestionAccepted(true)}
               className="rounded-full bg-ivory px-4 py-2 text-xs text-olive"
             >
-              {suggestionAccepted ? "Workflow drafted" : "Generate workflow"}
+              {suggestionAccepted ? "Workflow accepted" : "Generate workflow"}
             </button>
             <button className="rounded-full border border-ivory/30 px-4 py-2 text-xs">
               Dismiss

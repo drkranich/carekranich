@@ -116,6 +116,9 @@ function SmartHome() {
               </button>
             ))}
           </div>
+          <p className="mb-4 rounded-2xl border border-olive/20 bg-olive/10 p-3 text-sm text-foreground">
+            Guard mode: <span className="font-semibold">{guardMode}</span>
+          </p>
           <p className="text-xs uppercase text-muted-foreground">Connected devices</p>
           <ul className="mt-4 space-y-3">
             {[

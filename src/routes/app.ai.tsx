@@ -150,7 +150,12 @@ function AIInsights() {
               placeholder="Speak or write to Care Kranich..."
               className="flex-1 bg-transparent px-3 text-sm focus:outline-none"
             />
-            <button type="submit" className="rounded-full bg-wine p-2 text-ivory">
+            <button
+              type="submit"
+              aria-label="Send message"
+              title="Send message"
+              className="rounded-full bg-wine p-2 text-ivory"
+            >
               <svg
                 viewBox="0 0 24 24"
                 className="h-4 w-4"

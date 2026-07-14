@@ -104,7 +104,7 @@ function Academy() {
               {nextAction}
             </button>
             {lessonStarted && (
-              <p className="mt-2 text-xs text-ivory/75">Lesson opened in focus mode.</p>
+              <p className="mt-2 text-xs text-ivory/75">Lesson live in focus mode.</p>
             )}
           </Card>
 
