@@ -7,7 +7,8 @@ import { supabase } from "@/integrations/supabase/client";
 export function PublicChatBox() {
   const [open, setOpen] = useState(false);
   const [sent, setSent] = useState(false);
-  const [form, setForm] = useState({ name: "", email: "", message: "" });
+  const [form, setForm] = useState({ name: "", email: "", message: "", company: "" });
+  const canSend = form.name.trim().length >= 2 && /\S+@\S+\.\S+/.test(form.email.trim()) && form.message.trim().length >= 3;
 
   const send = useMutation({
     mutationFn: async () => {
@@ -16,12 +17,13 @@ export function PublicChatBox() {
         _email: form.email,
         _message: form.message,
         _page: typeof window !== "undefined" ? window.location.href : "",
+        _company: form.company,
       });
       if (error) throw error;
     },
     onSuccess: () => {
       setSent(true);
-      setForm({ name: "", email: "", message: "" });
+      setForm({ name: "", email: "", message: "", company: "" });
       toast.success("Mensagem enviada para a equipe Care Kranich");
     },
     onError: (error: any) => {
@@ -61,6 +63,14 @@ export function PublicChatBox() {
           ) : (
             <div className="space-y-3 p-5">
               <input
+                value={form.company}
+                onChange={(event) => setForm({ ...form, company: event.target.value })}
+                tabIndex={-1}
+                autoComplete="off"
+                aria-hidden="true"
+                className="hidden"
+              />
+              <input
                 value={form.name}
                 onChange={(event) => setForm({ ...form, name: event.target.value })}
                 placeholder="Seu nome"
@@ -82,7 +92,7 @@ export function PublicChatBox() {
               />
               <button
                 onClick={() => send.mutate()}
-                disabled={send.isPending || form.name.trim().length < 2 || form.message.trim().length < 3}
+                disabled={send.isPending || !canSend}
                 className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-olive px-4 py-3 text-sm font-semibold text-ivory disabled:cursor-not-allowed disabled:opacity-45"
               >
                 <Send className="h-4 w-4" />
