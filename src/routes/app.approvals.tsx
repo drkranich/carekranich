@@ -35,7 +35,7 @@ const accessRoutes = [
   { route: "/app/medical", label: "Medical", group: "Equipe" },
   { route: "/app/marketplace", label: "Marketplace", group: "Rede" },
   { route: "/app/agents", label: "Agentes", group: "IA" },
-  { route: "/app/agents/recommendations", label: "Recomendacoes", group: "IA" },
+  { route: "/app/agents/recommendations", label: "Recomendações", group: "IA" },
   { route: "/app/twin", label: "Digital twin", group: "IA" },
   { route: "/app/cognitive", label: "Cognitive twin", group: "IA" },
   { route: "/app/longevity", label: "Longevity", group: "IA" },
