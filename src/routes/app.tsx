@@ -170,6 +170,11 @@ const ALL_SECTIONS: NavSection[] = [
         userKinds: ["clinic", "staff"],
       },
       {
+        to: "/app/origins",
+        label: "Minhas Origens",
+        icon: "M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20z M2 12h20 M12 2c2.5 3 4 6.5 4 10s-1.5 7-4 10c-2.5-3-4-6.5-4-10s1.5-7 4-10z",
+      },
+      {
         to: "/app/patient-portal",
         label: "Portal do paciente",
         icon: "M12 21s-7-4.5-9-9a5 5 0 0 1 9-3 5 5 0 0 1 9 3c-2 4.5-9 9-9 9z",
