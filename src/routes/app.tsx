@@ -113,6 +113,13 @@ const ALL_SECTIONS: NavSection[] = [
         roles: ["caregiver", "nurse", "doctor", "clinic_admin", "super_admin"],
         userKinds: ["clinic", "staff"],
       },
+      {
+        to: "/app/records",
+        label: "Prontuário eletrônico",
+        icon: "M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z M14 2v6h6 M12 11v6 M9 14h6",
+        roles: ["nurse", "doctor", "clinic_admin", "super_admin"],
+        userKinds: ["clinic", "staff"],
+      },
     ],
   },
   {
