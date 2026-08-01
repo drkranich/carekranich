@@ -5,6 +5,7 @@ import { Card, PageHeader, Pill, Avatar, Stat } from "@/components/app/primitive
 import { PlatformBrandLogo, usePlatformBranding, type PlatformBranding } from "@/components/PlatformBrand";
 import { useAuth, ROLE_LABELS } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
+import { downloadPdf } from "@/lib/pdf";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/app/tenants")({ component: Tenants });
@@ -19,13 +20,46 @@ function slugify(value: string) {
     .slice(0, 40);
 }
 
+function stripAccents(value: string) {
+  return value.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+}
+
+type OrgForm = {
+  name: string;
+  legal_name: string;
+  cnpj: string;
+  email: string;
+  phone: string;
+  responsible_name: string;
+  address: string;
+  city: string;
+  state: string;
+  postal_code: string;
+  notes: string;
+};
+
+const EMPTY_FORM: OrgForm = {
+  name: "",
+  legal_name: "",
+  cnpj: "",
+  email: "",
+  phone: "",
+  responsible_name: "",
+  address: "",
+  city: "",
+  state: "",
+  postal_code: "",
+  notes: "",
+};
+
 function Tenants() {
   const { profile, user, isAdmin, isSuperAdmin, loading, refresh } = useAuth();
   const qc = useQueryClient();
   const tenantId = profile?.tenant_id ?? null;
   const branding = usePlatformBranding();
-  const [newOrgName, setNewOrgName] = useState("");
-  const [createOpen, setCreateOpen] = useState(false);
+  const [form, setForm] = useState<OrgForm>(EMPTY_FORM);
+  const [formOpen, setFormOpen] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
 
   const tenants = useQuery({
     queryKey: ["tenant-directory", tenantId, isSuperAdmin],
@@ -33,7 +67,9 @@ function Tenants() {
     queryFn: async () => {
       let query = (supabase as any)
         .from("tenants")
-        .select("id,name,slug,invite_code,status,billing_status,branding,created_at")
+        .select(
+          "id,name,slug,invite_code,status,billing_status,branding,created_at,legal_name,cnpj,email,phone,responsible_name,address,city,state,postal_code,country,notes,archived_at",
+        )
         .order("created_at", { ascending: false });
       if (!isSuperAdmin && tenantId) query = query.eq("id", tenantId);
       const { data, error } = await query;
@@ -93,14 +129,40 @@ function Tenants() {
     },
   });
 
-  const createTenant = useMutation({
-    mutationFn: async (name: string) => {
-      const trimmed = name.trim();
+  const invalidateOrgQueries = () => {
+    qc.invalidateQueries({ queryKey: ["tenant-directory"] });
+    qc.invalidateQueries({ queryKey: ["tenant-members"] });
+    qc.invalidateQueries({ queryKey: ["current-tenant-access"] });
+  };
+
+  const saveTenant = useMutation({
+    mutationFn: async ({ id, data }: { id: string | null; data: OrgForm }) => {
+      const trimmed = data.name.trim();
       if (trimmed.length < 3) throw new Error("O nome da organização precisa de pelo menos 3 caracteres.");
-      const slug = `${slugify(trimmed)}-${Math.random().toString(36).slice(2, 6)}`;
+      const payload: Record<string, unknown> = {
+        name: trimmed,
+        legal_name: data.legal_name.trim() || null,
+        cnpj: data.cnpj.trim() || null,
+        email: data.email.trim() || null,
+        phone: data.phone.trim() || null,
+        responsible_name: data.responsible_name.trim() || null,
+        address: data.address.trim() || null,
+        city: data.city.trim() || null,
+        state: data.state.trim() || null,
+        postal_code: data.postal_code.trim() || null,
+        notes: data.notes.trim() || null,
+      };
+
+      if (id) {
+        const { error } = await (supabase as any).from("tenants").update(payload).eq("id", id);
+        if (error) throw error;
+        return { id, name: trimmed, created: false };
+      }
+
+      payload.slug = `${slugify(trimmed)}-${Math.random().toString(36).slice(2, 6)}`;
       const { data: tenant, error } = await (supabase as any)
         .from("tenants")
-        .insert({ name: trimmed, slug })
+        .insert(payload)
         .select("id,name,invite_code")
         .single();
       if (error) throw error;
@@ -117,17 +179,45 @@ function Tenants() {
           .insert({ user_id: user.id, role: "clinic_admin", tenant_id: tenant.id });
         if (roleError && !String(roleError.message ?? "").includes("duplicate")) throw roleError;
       }
-      return tenant;
+      return { ...tenant, created: true };
     },
-    onSuccess: async (tenant: any) => {
-      toast.success(`Organização "${tenant.name}" criada`);
-      setNewOrgName("");
-      setCreateOpen(false);
+    onSuccess: async (result: any) => {
+      toast.success(result.created ? `Organização "${result.name}" criada` : "Organização atualizada");
+      setForm(EMPTY_FORM);
+      setFormOpen(false);
+      setEditingId(null);
       await refresh();
-      qc.invalidateQueries({ queryKey: ["tenant-directory"] });
-      qc.invalidateQueries({ queryKey: ["tenant-members"] });
+      invalidateOrgQueries();
     },
-    onError: (error: any) => toast.error(error.message ?? "Não foi possível criar a organização"),
+    onError: (error: any) => toast.error(error.message ?? "Não foi possível salvar a organização"),
+  });
+
+  const archiveTenant = useMutation({
+    mutationFn: async ({ id, archive }: { id: string; archive: boolean }) => {
+      const { error } = await (supabase as any)
+        .from("tenants")
+        .update({ archived_at: archive ? new Date().toISOString() : null })
+        .eq("id", id);
+      if (error) throw error;
+      return archive;
+    },
+    onSuccess: (archived) => {
+      toast.success(archived ? "Organização arquivada" : "Organização desarquivada");
+      invalidateOrgQueries();
+    },
+    onError: (error: any) => toast.error(error.message ?? "Não foi possível arquivar"),
+  });
+
+  const deleteTenant = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await (supabase as any).from("tenants").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Organização excluída");
+      invalidateOrgQueries();
+    },
+    onError: (error: any) => toast.error(error.message ?? "Não foi possível excluir"),
   });
 
   const tenantStatus = useMutation({
@@ -152,8 +242,7 @@ function Tenants() {
     },
     onSuccess: () => {
       toast.success("Status da organização atualizado");
-      qc.invalidateQueries({ queryKey: ["tenant-directory"] });
-      qc.invalidateQueries({ queryKey: ["current-tenant-access"] });
+      invalidateOrgQueries();
       qc.invalidateQueries({ queryKey: ["super-admin-control-plane"] });
     },
     onError: (error: any) => toast.error(error.message ?? "Não foi possível atualizar a organização"),
@@ -234,6 +323,79 @@ function Tenants() {
     toast.success("Código de convite copiado");
   };
 
+  const startCreate = () => {
+    setEditingId(null);
+    setForm(EMPTY_FORM);
+    setFormOpen(true);
+  };
+
+  const startEdit = (tenant: any) => {
+    setEditingId(tenant.id);
+    setForm({
+      name: tenant.name ?? "",
+      legal_name: tenant.legal_name ?? "",
+      cnpj: tenant.cnpj ?? "",
+      email: tenant.email ?? "",
+      phone: tenant.phone ?? "",
+      responsible_name: tenant.responsible_name ?? "",
+      address: tenant.address ?? "",
+      city: tenant.city ?? "",
+      state: tenant.state ?? "",
+      postal_code: tenant.postal_code ?? "",
+      notes: tenant.notes ?? "",
+    });
+    setFormOpen(true);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const orgReport = async (tenant: any) => {
+    const [{ count: residentCount }, { count: memberCount }] = await Promise.all([
+      (supabase as any).from("residents").select("id", { count: "exact", head: true }).eq("tenant_id", tenant.id),
+      (supabase as any).from("profiles").select("id", { count: "exact", head: true }).eq("tenant_id", tenant.id),
+    ]);
+    const line = (label: string, value: unknown) => `${label}: ${value ?? "-"}`;
+    downloadPdf(
+      `organizacao-${tenant.slug ?? tenant.id}`,
+      stripAccents(`Relatorio da organizacao - ${tenant.name}`),
+      [
+        line("Nome", tenant.name),
+        line("Razao social", tenant.legal_name),
+        line("CNPJ", tenant.cnpj),
+        line("E-mail", tenant.email),
+        line("Telefone", tenant.phone),
+        line("Responsavel", tenant.responsible_name),
+        line("Endereco", tenant.address),
+        line("Cidade/UF", [tenant.city, tenant.state].filter(Boolean).join(" / ")),
+        line("CEP", tenant.postal_code),
+        line("Pais", tenant.country),
+        "",
+        line("Status", tenant.status),
+        line("Cobranca", tenant.billing_status),
+        line("Arquivada", tenant.archived_at ? new Date(tenant.archived_at).toLocaleDateString("pt-BR") : "Nao"),
+        line("Codigo de convite", tenant.invite_code),
+        line("Criada em", tenant.created_at ? new Date(tenant.created_at).toLocaleDateString("pt-BR") : "-"),
+        "",
+        line("Membros", memberCount ?? 0),
+        line("Residentes", residentCount ?? 0),
+        line("Observacoes", tenant.notes),
+        "",
+        `Gerado em ${new Date().toLocaleString("pt-BR")} - Care Kranich`,
+      ].map((item) => stripAccents(String(item))),
+    );
+  };
+
+  const field = (key: keyof OrgForm, label: string, placeholder = "", span = 1) => (
+    <label className={`block ${span === 2 ? "md:col-span-2" : ""} ${span === 3 ? "md:col-span-3" : ""}`}>
+      <span className="mb-1 block text-[11px] font-semibold uppercase text-muted-foreground">{label}</span>
+      <input
+        value={form[key]}
+        onChange={(event) => setForm((current) => ({ ...current, [key]: event.target.value }))}
+        placeholder={placeholder}
+        className="w-full rounded-xl border border-white/70 bg-white/60 px-3 py-2 text-sm shadow-soft backdrop-blur-xl outline-none transition focus:border-olive/40 focus:ring-2 focus:ring-olive/20"
+      />
+    </label>
+  );
+
   return (
     <>
       <PageHeader
@@ -247,50 +409,76 @@ function Tenants() {
           <div className="flex items-center gap-2">
             <Pill tone="olive">{isSuperAdmin ? "Super admin global" : "Admin da organização"}</Pill>
             <button
-              onClick={() => setCreateOpen((v) => !v)}
+              onClick={() => (formOpen ? setFormOpen(false) : startCreate())}
               className="rounded-full bg-olive px-4 py-2 text-xs font-semibold text-ivory shadow-soft hover:opacity-90"
             >
-              + Criar organização
+              {formOpen ? "Fechar formulário" : "+ Criar organização"}
             </button>
           </div>
         }
       />
 
-      {createOpen && (
+      {formOpen && (
         <Card className="mb-6">
-          <p className="text-xs uppercase text-muted-foreground">Nova organização</p>
+          <div className="flex items-center justify-between">
+            <p className="text-xs uppercase text-muted-foreground">
+              {editingId ? "Editar organização" : "Nova organização"}
+            </p>
+            {editingId && <Pill tone="gold">Editando</Pill>}
+          </div>
           <form
             onSubmit={(event) => {
               event.preventDefault();
-              createTenant.mutate(newOrgName);
+              saveTenant.mutate({ id: editingId, data: form });
             }}
-            className="mt-3 flex flex-wrap items-center gap-2"
+            className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-3"
           >
-            <input
-              value={newOrgName}
-              onChange={(event) => setNewOrgName(event.target.value)}
-              placeholder="Nome da organização (ex.: Clínica Vida Plena)"
-              className="min-w-0 flex-1 rounded-full border border-border bg-white/70 px-4 py-2 text-sm outline-none focus:border-olive"
-              autoFocus
-            />
-            <button
-              type="submit"
-              disabled={createTenant.isPending || newOrgName.trim().length < 3}
-              className="rounded-full bg-olive px-5 py-2 text-xs font-semibold text-ivory disabled:opacity-45"
-            >
-              {createTenant.isPending ? "Criando..." : "Criar"}
-            </button>
-            <button
-              type="button"
-              onClick={() => setCreateOpen(false)}
-              className="rounded-full border border-border bg-white/55 px-4 py-2 text-xs font-semibold text-foreground"
-            >
-              Cancelar
-            </button>
+            {field("name", "Nome da organização *", "Ex.: Lar São Vicente")}
+            {field("legal_name", "Razão social", "Ex.: Lar São Vicente Ltda.")}
+            {field("cnpj", "CNPJ", "00.000.000/0000-00")}
+            {field("email", "E-mail", "contato@organizacao.com.br")}
+            {field("phone", "Telefone", "+55 (11) 99999-9999")}
+            {field("responsible_name", "Responsável", "Nome do responsável legal")}
+            {field("address", "Endereço", "Rua, número, complemento", 2)}
+            {field("postal_code", "CEP", "00000-000")}
+            {field("city", "Cidade", "São Paulo")}
+            {field("state", "UF", "SP")}
+            <label className="block">
+              <span className="mb-1 block text-[11px] font-semibold uppercase text-muted-foreground">Observações</span>
+              <input
+                value={form.notes}
+                onChange={(event) => setForm((current) => ({ ...current, notes: event.target.value }))}
+                placeholder="Notas internas"
+                className="w-full rounded-xl border border-white/70 bg-white/60 px-3 py-2 text-sm shadow-soft backdrop-blur-xl outline-none transition focus:border-olive/40 focus:ring-2 focus:ring-olive/20"
+              />
+            </label>
+            <div className="flex items-end gap-2 md:col-span-3">
+              <button
+                type="submit"
+                disabled={saveTenant.isPending || form.name.trim().length < 3}
+                className="rounded-full bg-olive px-6 py-2 text-xs font-semibold text-ivory disabled:opacity-45"
+              >
+                {saveTenant.isPending ? "Salvando..." : editingId ? "Salvar alterações" : "Criar organização"}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setFormOpen(false);
+                  setEditingId(null);
+                  setForm(EMPTY_FORM);
+                }}
+                className="rounded-full border border-border bg-white/55 px-4 py-2 text-xs font-semibold text-foreground"
+              >
+                Cancelar
+              </button>
+              {!editingId && (
+                <p className="text-[11px] text-muted-foreground">
+                  O código de convite é gerado automaticamente.{" "}
+                  {!isSuperAdmin && "Você se tornará admin da nova organização."}
+                </p>
+              )}
+            </div>
           </form>
-          <p className="mt-2 text-[11px] text-muted-foreground">
-            O código de convite é gerado automaticamente. {!isSuperAdmin && "Você se tornará admin da nova organização."}
-          </p>
         </Card>
       )}
 
@@ -337,7 +525,7 @@ function Tenants() {
                 Ainda não existe organização. Crie a primeira agora mesmo.
               </p>
               <button
-                onClick={() => setCreateOpen(true)}
+                onClick={startCreate}
                 className="mt-4 w-full rounded-full bg-olive px-4 py-2 text-xs font-semibold text-ivory hover:opacity-90"
               >
                 + Criar organização
@@ -390,7 +578,7 @@ function Tenants() {
         />
       )}
 
-      {isSuperAdmin && (
+      {(isSuperAdmin || isAdmin) && (
         <Card className="mt-6">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
@@ -401,15 +589,26 @@ function Tenants() {
           </div>
           <div className="mt-5 grid gap-3 xl:grid-cols-2">
             {(tenants.data ?? []).map((tenant: any) => (
-              <div key={tenant.id} className="rounded-2xl border border-white/70 bg-white/50 p-4">
+              <div
+                key={tenant.id}
+                className={`rounded-2xl border border-white/70 bg-white/50 p-4 ${tenant.archived_at ? "opacity-70" : ""}`}
+              >
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div className="min-w-0">
                     <p className="truncate font-medium text-foreground">{tenant.name}</p>
                     <p className="text-xs text-muted-foreground">
                       {tenant.slug} - {tenant.invite_code ?? "sem código de convite"}
                     </p>
+                    {(tenant.cnpj || tenant.city) && (
+                      <p className="mt-0.5 text-xs text-muted-foreground">
+                        {[tenant.cnpj, [tenant.city, tenant.state].filter(Boolean).join("/")]
+                          .filter(Boolean)
+                          .join(" · ")}
+                      </p>
+                    )}
                   </div>
                   <div className="flex flex-wrap gap-1">
+                    {tenant.archived_at && <Pill tone="muted">Arquivada</Pill>}
                     <Pill tone={tenant.status === "active" ? "moss" : tenant.status === "suspended" ? "wine" : "gold"}>
                       {tenant.status}
                     </Pill>
@@ -418,13 +617,55 @@ function Tenants() {
                     </Pill>
                   </div>
                 </div>
-                <TenantStatusControls
-                  tenant={tenant}
-                  busy={tenantStatus.isPending}
-                  onChange={(status, billingStatus, reason) =>
-                    tenantStatus.mutate({ id: tenant.id, status, billingStatus, reason })
-                  }
-                />
+
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <button
+                    onClick={() => startEdit(tenant)}
+                    className="rounded-full border border-olive/30 bg-white/60 px-3 py-1.5 text-xs font-medium text-olive transition hover:bg-olive hover:text-ivory"
+                  >
+                    Editar
+                  </button>
+                  <button
+                    disabled={archiveTenant.isPending}
+                    onClick={() => archiveTenant.mutate({ id: tenant.id, archive: !tenant.archived_at })}
+                    className="rounded-full border border-gold/40 bg-white/60 px-3 py-1.5 text-xs font-medium text-foreground transition hover:bg-gold/20 disabled:opacity-45"
+                  >
+                    {tenant.archived_at ? "Desarquivar" : "Arquivar"}
+                  </button>
+                  <button
+                    onClick={() => orgReport(tenant)}
+                    className="rounded-full border border-moss/40 bg-white/60 px-3 py-1.5 text-xs font-medium text-foreground transition hover:bg-moss/15"
+                  >
+                    Relatório PDF
+                  </button>
+                  {isSuperAdmin && (
+                    <button
+                      disabled={deleteTenant.isPending}
+                      onClick={() => {
+                        if (
+                          window.confirm(
+                            `Excluir definitivamente "${tenant.name}"? Todos os dados vinculados (residentes, planos, eventos) serão removidos.`,
+                          )
+                        ) {
+                          deleteTenant.mutate(tenant.id);
+                        }
+                      }}
+                      className="rounded-full border border-wine/35 bg-white/60 px-3 py-1.5 text-xs font-medium text-wine transition hover:bg-wine hover:text-ivory disabled:opacity-45"
+                    >
+                      Excluir
+                    </button>
+                  )}
+                </div>
+
+                {isSuperAdmin && (
+                  <TenantStatusControls
+                    tenant={tenant}
+                    busy={tenantStatus.isPending}
+                    onChange={(status, billingStatus, reason) =>
+                      tenantStatus.mutate({ id: tenant.id, status, billingStatus, reason })
+                    }
+                  />
+                )}
               </div>
             ))}
             {tenants.data?.length === 0 && (
