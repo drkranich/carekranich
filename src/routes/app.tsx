@@ -700,17 +700,17 @@ function AccessDenied({
     <>
       <PageHeader
         title="Acesso restrito"
-        subtitle={`Esta area pertence a outro perfil operacional do SaaS: ${routeLabel}.`}
-        action={<Pill tone="gold">Permissoes por perfil</Pill>}
+        subtitle={`Esta área pertence a outro perfil operacional do SaaS: ${routeLabel}.`}
+        action={<Pill tone="gold">Permissões por perfil</Pill>}
       />
       <Card className="max-w-3xl">
         <p className="text-sm leading-6 text-muted-foreground">
-          Seu acesso atual esta configurado como{" "}
+          Seu acesso atual está configurado como{" "}
           <span className="font-medium text-foreground">
             {primaryRole ? ROLE_LABELS[primaryRole] : "membro"}
           </span>
           {userKind ? ` / ${USER_KIND_LABELS[userKind]}` : ""}. Para evitar mistura entre super admin,
-          clinicas, equipe, prestadores e familias, esta rota fica bloqueada fora do perfil correto.
+          clínicas, equipe, prestadores e famílias, esta rota fica bloqueada fora do perfil correto.
         </p>
         <div className="mt-5 flex flex-wrap gap-2">
           <Link to="/app" className="rounded-full bg-olive px-4 py-2 text-xs font-semibold text-ivory">
@@ -729,9 +729,9 @@ function AccessDenied({
 }
 
 const USER_KIND_LABELS: Record<NonNullable<UserKind>, string> = {
-  family: "familia",
-  clinic: "clinica",
-  service_provider: "prestador de servicos",
+  family: "família",
+  clinic: "clínica",
+  service_provider: "prestador de serviços",
   staff: "equipe",
 };
 

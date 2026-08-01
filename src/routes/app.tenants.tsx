@@ -9,11 +9,23 @@ import { toast } from "sonner";
 
 export const Route = createFileRoute("/app/tenants")({ component: Tenants });
 
+function slugify(value: string) {
+  return value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 40);
+}
+
 function Tenants() {
-  const { profile, isAdmin, isSuperAdmin, loading } = useAuth();
+  const { profile, user, isAdmin, isSuperAdmin, loading, refresh } = useAuth();
   const qc = useQueryClient();
   const tenantId = profile?.tenant_id ?? null;
   const branding = usePlatformBranding();
+  const [newOrgName, setNewOrgName] = useState("");
+  const [createOpen, setCreateOpen] = useState(false);
 
   const tenants = useQuery({
     queryKey: ["tenant-directory", tenantId, isSuperAdmin],
@@ -81,6 +93,43 @@ function Tenants() {
     },
   });
 
+  const createTenant = useMutation({
+    mutationFn: async (name: string) => {
+      const trimmed = name.trim();
+      if (trimmed.length < 3) throw new Error("O nome da organização precisa de pelo menos 3 caracteres.");
+      const slug = `${slugify(trimmed)}-${Math.random().toString(36).slice(2, 6)}`;
+      const { data: tenant, error } = await (supabase as any)
+        .from("tenants")
+        .insert({ name: trimmed, slug })
+        .select("id,name,invite_code")
+        .single();
+      if (error) throw error;
+
+      // Quem cria sem organização vira admin dela e entra automaticamente.
+      if (!isSuperAdmin && user && !tenantId) {
+        const { error: profileError } = await (supabase as any)
+          .from("profiles")
+          .update({ tenant_id: tenant.id })
+          .eq("id", user.id);
+        if (profileError) throw profileError;
+        const { error: roleError } = await (supabase as any)
+          .from("user_roles")
+          .insert({ user_id: user.id, role: "clinic_admin", tenant_id: tenant.id });
+        if (roleError && !String(roleError.message ?? "").includes("duplicate")) throw roleError;
+      }
+      return tenant;
+    },
+    onSuccess: async (tenant: any) => {
+      toast.success(`Organização "${tenant.name}" criada`);
+      setNewOrgName("");
+      setCreateOpen(false);
+      await refresh();
+      qc.invalidateQueries({ queryKey: ["tenant-directory"] });
+      qc.invalidateQueries({ queryKey: ["tenant-members"] });
+    },
+    onError: (error: any) => toast.error(error.message ?? "Não foi possível criar a organização"),
+  });
+
   const tenantStatus = useMutation({
     mutationFn: async ({
       id,
@@ -137,7 +186,7 @@ function Tenants() {
       toast.success("Marca atualizada");
       qc.invalidateQueries({ queryKey: ["platform-branding"] });
     },
-    onError: (error: any) => toast.error(error.message ?? "Nao foi possivel atualizar a marca"),
+    onError: (error: any) => toast.error(error.message ?? "Não foi possível atualizar a marca"),
   });
 
   const uploadBrandAsset = useMutation({
@@ -156,7 +205,7 @@ function Tenants() {
 
       const { data } = (supabase as any).storage.from("branding").getPublicUrl(path);
       const publicUrl = data?.publicUrl;
-      if (!publicUrl) throw new Error("Nao foi possivel gerar a URL publica do arquivo.");
+      if (!publicUrl) throw new Error("Não foi possível gerar a URL pública do arquivo.");
 
       await brandingUpdate.mutateAsync(
         kind === "logo"
@@ -167,10 +216,10 @@ function Tenants() {
     onSuccess: (_, variables) => {
       toast.success(variables.kind === "logo" ? "Logo publicada" : "Favicon publicado");
     },
-    onError: (error: any) => toast.error(error.message ?? "Upload nao concluido"),
+    onError: (error: any) => toast.error(error.message ?? "Upload não concluído"),
   });
 
-  if (loading) return <p className="text-sm text-muted-foreground">Loading...</p>;
+  if (loading) return <p className="text-sm text-muted-foreground">Carregando...</p>;
   if (!isAdmin && !isSuperAdmin) return <Navigate to="/app" />;
 
   const currentTenant = tenantId
@@ -182,29 +231,77 @@ function Tenants() {
   const copy = () => {
     if (!currentTenant?.invite_code) return;
     navigator.clipboard.writeText(currentTenant.invite_code);
-    toast.success("Invite code copied");
+    toast.success("Código de convite copiado");
   };
 
   return (
     <>
       <PageHeader
-        title={isSuperAdmin ? "Organizations" : currentTenant?.name || "Organization"}
+        title={isSuperAdmin ? "Organizações" : currentTenant?.name || "Organização"}
         subtitle={
           isSuperAdmin
-            ? "Global tenant, member and subscription records from Supabase."
-            : "Manage your organization, invite members, configure access."
+            ? "Registros globais de organizações, membros e assinaturas."
+            : "Gerencie sua organização, convide membros e configure acessos."
         }
-        action={<Pill tone="olive">{isSuperAdmin ? "Super admin global" : "Organization admin"}</Pill>}
+        action={
+          <div className="flex items-center gap-2">
+            <Pill tone="olive">{isSuperAdmin ? "Super admin global" : "Admin da organização"}</Pill>
+            <button
+              onClick={() => setCreateOpen((v) => !v)}
+              className="rounded-full bg-olive px-4 py-2 text-xs font-semibold text-ivory shadow-soft hover:opacity-90"
+            >
+              + Criar organização
+            </button>
+          </div>
+        }
       />
 
+      {createOpen && (
+        <Card className="mb-6">
+          <p className="text-xs uppercase text-muted-foreground">Nova organização</p>
+          <form
+            onSubmit={(event) => {
+              event.preventDefault();
+              createTenant.mutate(newOrgName);
+            }}
+            className="mt-3 flex flex-wrap items-center gap-2"
+          >
+            <input
+              value={newOrgName}
+              onChange={(event) => setNewOrgName(event.target.value)}
+              placeholder="Nome da organização (ex.: Clínica Vida Plena)"
+              className="min-w-0 flex-1 rounded-full border border-border bg-white/70 px-4 py-2 text-sm outline-none focus:border-olive"
+              autoFocus
+            />
+            <button
+              type="submit"
+              disabled={createTenant.isPending || newOrgName.trim().length < 3}
+              className="rounded-full bg-olive px-5 py-2 text-xs font-semibold text-ivory disabled:opacity-45"
+            >
+              {createTenant.isPending ? "Criando..." : "Criar"}
+            </button>
+            <button
+              type="button"
+              onClick={() => setCreateOpen(false)}
+              className="rounded-full border border-border bg-white/55 px-4 py-2 text-xs font-semibold text-foreground"
+            >
+              Cancelar
+            </button>
+          </form>
+          <p className="mt-2 text-[11px] text-muted-foreground">
+            O código de convite é gerado automaticamente. {!isSuperAdmin && "Você se tornará admin da nova organização."}
+          </p>
+        </Card>
+      )}
+
       <div className="grid gap-4 md:grid-cols-4">
-        <Stat label="Organizations" value={tenants.data?.length ?? "-"} sub="Tenants table" tone="olive" />
-        <Stat label="Members" value={members.data?.length ?? "-"} sub="Profiles table" tone="moss" />
-        <Stat label="Residents" value={residents.data ?? "-"} sub="In care" tone="wine" />
+        <Stat label="Organizações" value={tenants.data?.length ?? "-"} sub="Tabela tenants" tone="olive" />
+        <Stat label="Membros" value={members.data?.length ?? "-"} sub="Tabela profiles" tone="moss" />
+        <Stat label="Residentes" value={residents.data ?? "-"} sub="Em cuidado" tone="wine" />
         <Stat
-          label="Billing access"
-          value={revokedSubscriptions.length ? `${revokedSubscriptions.length} revoked` : `${activeSubscriptions.length} active`}
-          sub="Tenant subscriptions"
+          label="Acesso de cobrança"
+          value={revokedSubscriptions.length ? `${revokedSubscriptions.length} revogadas` : `${activeSubscriptions.length} ativas`}
+          sub="Assinaturas das organizações"
           tone={revokedSubscriptions.length ? "wine" : "gold"}
         />
       </div>
@@ -212,39 +309,47 @@ function Tenants() {
       <div className="mt-6 grid gap-6 lg:grid-cols-3">
         <Card className="lg:col-span-1">
           <p className="text-xs uppercase text-muted-foreground">
-            {currentTenant ? "Invite members" : "Tenant setup"}
+            {currentTenant ? "Convidar membros" : "Configuração da organização"}
           </p>
           {currentTenant ? (
             <>
               <p className="mt-2 text-sm text-foreground/80">
-                Share this code so families and caregivers can join this organization.
+                Compartilhe este código para famílias e cuidadores entrarem nesta organização.
               </p>
               <div className="mt-4 rounded-2xl bg-cream/60 p-4">
-                <p className="text-[10px] uppercase text-muted-foreground">Invite code</p>
+                <p className="text-[10px] uppercase text-muted-foreground">Código de convite</p>
                 <p className="mt-1 font-mono text-2xl text-olive">{currentTenant.invite_code ?? "-"}</p>
                 <button
                   onClick={copy}
                   disabled={!currentTenant.invite_code}
                   className="mt-3 w-full rounded-full bg-olive px-4 py-2 text-xs text-ivory hover:opacity-90 disabled:opacity-50"
                 >
-                  Copy code
+                  Copiar código
                 </button>
               </div>
               <p className="mt-3 text-[11px] text-muted-foreground">
-                Status: {currentTenant.status ?? "unknown"} - Billing: {currentTenant.billing_status ?? "unknown"}
+                Status: {currentTenant.status ?? "desconhecido"} - Cobrança: {currentTenant.billing_status ?? "desconhecida"}
               </p>
             </>
           ) : (
-            <p className="mt-3 text-sm text-muted-foreground">
-              No organization exists yet. Create one through onboarding or Supabase before inviting members.
-            </p>
+            <>
+              <p className="mt-3 text-sm text-muted-foreground">
+                Ainda não existe organização. Crie a primeira agora mesmo.
+              </p>
+              <button
+                onClick={() => setCreateOpen(true)}
+                className="mt-4 w-full rounded-full bg-olive px-4 py-2 text-xs font-semibold text-ivory hover:opacity-90"
+              >
+                + Criar organização
+              </button>
+            </>
           )}
         </Card>
 
         <Card className="lg:col-span-2">
           <div className="flex items-center justify-between">
-            <p className="text-xs uppercase text-muted-foreground">Members</p>
-            <Pill tone="moss">{members.data?.length ?? 0} visible</Pill>
+            <p className="text-xs uppercase text-muted-foreground">Membros</p>
+            <Pill tone="moss">{members.data?.length ?? 0} visíveis</Pill>
           </div>
           <ul className="mt-4 divide-y divide-border/60">
             {members.data?.map((member: any) => (
@@ -252,13 +357,13 @@ function Tenants() {
                 <Avatar name={member.full_name ?? "?"} src={member.avatar_url} tone="olive" />
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm text-foreground">
-                    {member.preferred_name || member.full_name || "Unnamed"}
+                    {member.preferred_name || member.full_name || "Sem nome"}
                   </p>
                   <p className="text-xs text-muted-foreground">
-                    {member.user_kind ?? "user"} - {member.account_status ?? "unknown"}
+                    {member.user_kind ?? "usuário"} - {member.account_status ?? "desconhecido"}
                   </p>
                   <div className="mt-1 flex flex-wrap gap-1">
-                    {member.roles.length === 0 && <span className="text-[10px] text-muted-foreground">no role</span>}
+                    {member.roles.length === 0 && <span className="text-[10px] text-muted-foreground">sem papel</span>}
                     {member.roles.map((role: string) => (
                       <Pill key={role} tone="muted">
                         {ROLE_LABELS[role as keyof typeof ROLE_LABELS] ?? role}
@@ -269,7 +374,7 @@ function Tenants() {
               </li>
             ))}
             {members.data?.length === 0 && (
-              <li className="py-4 text-sm text-muted-foreground">No members yet.</li>
+              <li className="py-4 text-sm text-muted-foreground">Ainda não há membros.</li>
             )}
           </ul>
         </Card>
@@ -364,7 +469,7 @@ function BrandingPanel({
           <p className="text-xs uppercase text-muted-foreground">Branding global</p>
           <h2 className="mt-1 text-xl font-semibold text-foreground">Logo e favicon do projeto</h2>
           <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
-            Esses arquivos renderizam no site publico, no SaaS e no icone da aba do navegador.
+            Esses arquivos renderizam no site público, no SaaS e no ícone da aba do navegador.
           </p>
         </div>
         <Pill tone={branding?.logo_url || branding?.favicon_url ? "moss" : "gold"}>
@@ -412,14 +517,14 @@ function BrandingPanel({
           <div className="mt-4 grid gap-3 sm:grid-cols-2">
             <AssetUpload
               label="Enviar logo"
-              hint="PNG, JPG, WebP ou SVG ate 5 MB."
+              hint="PNG, JPG, WebP ou SVG até 5 MB."
               accept="image/png,image/jpeg,image/webp,image/svg+xml"
               disabled={busy}
               onChange={(files) => handleFile("logo", files)}
             />
             <AssetUpload
               label="Enviar favicon"
-              hint="ICO, PNG, SVG ou WebP ate 1 MB."
+              hint="ICO, PNG, SVG ou WebP até 1 MB."
               accept="image/x-icon,image/vnd.microsoft.icon,image/png,image/svg+xml,image/webp"
               disabled={busy}
               onChange={(files) => handleFile("favicon", files)}
@@ -477,7 +582,7 @@ function validateBrandAsset(kind: "logo" | "favicon", file: File) {
     throw new Error(kind === "logo" ? "Use PNG, JPG, WebP ou SVG para a logo." : "Use ICO, PNG, SVG ou WebP para o favicon.");
   }
   if (file.size > maxSize) {
-    throw new Error(kind === "logo" ? "A logo deve ter ate 5 MB." : "O favicon deve ter ate 1 MB.");
+    throw new Error(kind === "logo" ? "A logo deve ter até 5 MB." : "O favicon deve ter até 1 MB.");
   }
 }
 
