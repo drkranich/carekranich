@@ -1,113 +1,274 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
-import { GraduationCap, ShieldCheck } from "lucide-react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useState } from "react";
+import { BookOpen, CheckCircle2, GraduationCap, Plus } from "lucide-react";
+import { toast } from "sonner";
 import { Card, EmptyState, PageHeader, Pill, Stat } from "@/components/app/primitives";
-import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/use-auth";
 
 export const Route = createFileRoute("/app/academy")({ component: Academy });
 
 function Academy() {
-  const { profile, isSuperAdmin } = useAuth();
+  const { profile, user, hasAnyRole } = useAuth();
+  const qc = useQueryClient();
+  const canManage = hasAnyRole(["clinic_admin", "super_admin"]);
+  const [selectedCourse, setSelectedCourse] = useState<string | null>(null);
+  const [newCourse, setNewCourse] = useState({ title: "", description: "", duration: "20" });
+  const [newLesson, setNewLesson] = useState({ title: "", body: "" });
 
-  const academy = useQuery({
-    queryKey: ["academy-real-records", profile?.tenant_id, isSuperAdmin],
-    enabled: !!profile?.tenant_id || isSuperAdmin,
+  const courses = useQuery({
+    queryKey: ["academy-courses"],
     queryFn: async () => {
-      const db = supabase as any;
-      const [documents, identities, roles] = await Promise.all([
-        db.from("documents").select("id,title,document_type,status,file_size,created_at").in("document_type", ["certification", "training", "license"]).order("created_at", { ascending: false }).limit(200),
-        db.from("identity_verifications").select("id,user_id,status,required,created_at,reviewed_at").order("created_at", { ascending: false }).limit(200),
-        db.from("user_roles").select("id,user_id,role,tenant_id").in("role", ["caregiver", "nurse", "doctor"]).limit(400),
-      ]);
-      const errors = [documents, identities, roles].map((item) => item.error?.message).filter(Boolean);
-      if (errors.length) throw new Error(errors.join(" | "));
-      return {
-        documents: documents.data ?? [],
-        identities: identities.data ?? [],
-        roles: roles.data ?? [],
-      };
+      const { data, error } = await (supabase as any)
+        .from("academy_courses")
+        .select("*")
+        .eq("active", true)
+        .order("created_at");
+      if (error) throw error;
+      return data ?? [];
     },
   });
 
-  const certificates = academy.data?.documents ?? [];
-  const verified = (academy.data?.identities ?? []).filter((item: any) => item.status === "verified").length;
+  const lessons = useQuery({
+    queryKey: ["academy-lessons"],
+    queryFn: async () => {
+      const { data, error } = await (supabase as any)
+        .from("academy_lessons")
+        .select("*")
+        .order("position");
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  const progress = useQuery({
+    queryKey: ["academy-progress", user?.id],
+    enabled: !!user,
+    queryFn: async () => {
+      const { data, error } = await (supabase as any)
+        .from("academy_progress")
+        .select("lesson_id, completed_at")
+        .eq("user_id", user!.id);
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  const completedIds = new Set((progress.data ?? []).map((item: any) => item.lesson_id));
+  const lessonsFor = (courseId: string) => (lessons.data ?? []).filter((lesson: any) => lesson.course_id === courseId);
+  const courseProgress = (courseId: string) => {
+    const list = lessonsFor(courseId);
+    if (!list.length) return 0;
+    const done = list.filter((lesson: any) => completedIds.has(lesson.id)).length;
+    return Math.round((done / list.length) * 100);
+  };
+
+  const toggleLesson = useMutation({
+    mutationFn: async (lessonId: string) => {
+      if (!user) throw new Error("Sessão expirada");
+      if (completedIds.has(lessonId)) {
+        const { error } = await (supabase as any)
+          .from("academy_progress")
+          .delete()
+          .eq("user_id", user.id)
+          .eq("lesson_id", lessonId);
+        if (error) throw error;
+      } else {
+        const { error } = await (supabase as any)
+          .from("academy_progress")
+          .insert({ user_id: user.id, lesson_id: lessonId });
+        if (error) throw error;
+      }
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["academy-progress", user?.id] }),
+    onError: (error: any) => toast.error(error.message ?? "Não foi possível atualizar o progresso"),
+  });
+
+  const createCourse = useMutation({
+    mutationFn: async () => {
+      const { error } = await (supabase as any).from("academy_courses").insert({
+        tenant_id: profile?.tenant_id ?? null,
+        title: newCourse.title.trim(),
+        description: newCourse.description.trim() || null,
+        duration_minutes: Number(newCourse.duration || 20),
+        created_by: user?.id,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Curso criado");
+      setNewCourse({ title: "", description: "", duration: "20" });
+      qc.invalidateQueries({ queryKey: ["academy-courses"] });
+    },
+    onError: (error: any) => toast.error(error.message ?? "Não foi possível criar o curso"),
+  });
+
+  const createLesson = useMutation({
+    mutationFn: async () => {
+      if (!selectedCourse) throw new Error("Selecione um curso");
+      const position = lessonsFor(selectedCourse).length + 1;
+      const { error } = await (supabase as any).from("academy_lessons").insert({
+        course_id: selectedCourse,
+        title: newLesson.title.trim(),
+        body: newLesson.body.trim() || null,
+        position,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Lição adicionada");
+      setNewLesson({ title: "", body: "" });
+      qc.invalidateQueries({ queryKey: ["academy-lessons"] });
+    },
+    onError: (error: any) => toast.error(error.message ?? "Não foi possível adicionar a lição"),
+  });
+
+  const activeCourse = (courses.data ?? []).find((course: any) => course.id === selectedCourse) ?? null;
+  const totalLessons = lessons.data?.length ?? 0;
+  const totalDone = (lessons.data ?? []).filter((lesson: any) => completedIds.has(lesson.id)).length;
 
   return (
     <>
       <PageHeader
-        title="Caregiver academy"
-        subtitle="Certification and training records from uploaded documents, identity checks and future learning modules."
-        action={<Pill tone={academy.isError ? "wine" : "olive"}>{academy.isError ? "Read error" : "Real records"}</Pill>}
+        title="Academia de cuidadores"
+        subtitle="Cursos práticos com progresso real por lição. Conteúdo global da plataforma e cursos próprios da sua organização."
+        action={<Pill tone="olive">Progresso salvo</Pill>}
       />
 
-      {academy.isLoading ? (
-        <p className="text-sm text-muted-foreground">Loading academy records...</p>
-      ) : academy.isError ? (
-        <Card className="border-wine/25 bg-wine/5">
-          <p className="font-medium text-wine">Could not load academy records.</p>
-          <p className="mt-2 text-sm text-muted-foreground">{(academy.error as Error).message}</p>
-        </Card>
-      ) : (
-        <>
-          <div className="grid gap-4 md:grid-cols-4">
-            <Stat label="Care staff roles" value={academy.data?.roles.length ?? 0} sub="Caregiver/nurse/doctor" tone="olive" />
-            <Stat label="Certificates" value={certificates.length} sub="Uploaded documents" tone="gold" />
-            <Stat label="Verified identities" value={verified} sub="Identity table" tone="moss" />
-            <Stat label="LMS modules" value="0" sub="Ready for learning schema" tone="wine" />
-          </div>
+      <div className="grid gap-4 md:grid-cols-3">
+        <Stat label="Cursos" value={courses.data?.length ?? "-"} sub="Disponíveis para você" tone="olive" />
+        <Stat label="Lições concluídas" value={`${totalDone}/${totalLessons}`} sub="Seu progresso" tone="moss" />
+        <Stat
+          label="Conclusão geral"
+          value={`${totalLessons ? Math.round((totalDone / totalLessons) * 100) : 0}%`}
+          sub="Todas as trilhas"
+          tone="gold"
+        />
+      </div>
 
-          <div className="mt-6 grid gap-6 lg:grid-cols-[1.2fr_.8fr]">
-            <Card>
-              <div className="flex items-center gap-3">
-                <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-olive/10 text-olive">
-                  <GraduationCap className="h-5 w-5" />
-                </span>
+      {canManage && (
+        <Card className="mt-6">
+          <div className="flex items-center gap-2">
+            <Plus className="h-4 w-4 text-olive" />
+            <h2 className="text-lg font-semibold text-foreground">Novo curso</h2>
+          </div>
+          <div className="mt-3 grid gap-3 md:grid-cols-4">
+            <input value={newCourse.title} onChange={(e) => setNewCourse({ ...newCourse, title: e.target.value })} placeholder="Título do curso *" className="rounded-xl border border-border bg-ivory px-3 py-2 text-sm md:col-span-2" />
+            <input value={newCourse.duration} onChange={(e) => setNewCourse({ ...newCourse, duration: e.target.value.replace(/\D/g, "") })} placeholder="Duração (min)" className="rounded-xl border border-border bg-ivory px-3 py-2 text-sm" />
+            <button onClick={() => createCourse.mutate()} disabled={!newCourse.title.trim() || createCourse.isPending} className="rounded-xl bg-olive px-4 py-2 text-sm text-ivory disabled:opacity-50">Criar curso</button>
+            <input value={newCourse.description} onChange={(e) => setNewCourse({ ...newCourse, description: e.target.value })} placeholder="Descrição" className="rounded-xl border border-border bg-ivory px-3 py-2 text-sm md:col-span-4" />
+          </div>
+        </Card>
+      )}
+
+      <div className="mt-6 grid gap-6 xl:grid-cols-[380px_1fr]">
+        <div className="space-y-3">
+          {(courses.data ?? []).map((course: any) => {
+            const pct = courseProgress(course.id);
+            const active = selectedCourse === course.id;
+            return (
+              <button
+                key={course.id}
+                onClick={() => setSelectedCourse(course.id)}
+                className={`w-full rounded-2xl border p-4 text-left shadow-soft backdrop-blur-xl transition ${
+                  active ? "border-olive/40 bg-olive/10" : "border-white/70 bg-white/50 hover:bg-white/70"
+                }`}
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <span className="flex h-9 w-9 flex-none items-center justify-center rounded-xl bg-olive/10 text-olive">
+                    <GraduationCap className="h-4.5 w-4.5" />
+                  </span>
+                  <Pill tone={pct === 100 ? "moss" : "muted"}>{pct}%</Pill>
+                </div>
+                <p className="mt-3 font-semibold text-foreground">{course.title}</p>
+                {course.description && <p className="mt-1 line-clamp-2 text-xs leading-5 text-muted-foreground">{course.description}</p>}
+                <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-white/70">
+                  <div className="h-full rounded-full bg-olive transition-all" style={{ width: `${pct}%` }} />
+                </div>
+                <p className="mt-2 text-[11px] text-muted-foreground">
+                  {lessonsFor(course.id).length} lições · ~{course.duration_minutes} min {course.tenant_id ? "· da sua organização" : "· Care Kranich"}
+                </p>
+              </button>
+            );
+          })}
+          {(courses.data ?? []).length === 0 && (
+            <EmptyState title="Nenhum curso disponível" hint="Os administradores podem criar cursos acima." />
+          )}
+        </div>
+
+        <Card>
+          {activeCourse ? (
+            <>
+              <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
-                  <h2 className="text-xl font-semibold text-foreground">Certification vault</h2>
-                  <p className="text-xs text-muted-foreground">Only uploaded certification/training/license files appear here.</p>
+                  <p className="text-xs uppercase text-muted-foreground">Curso</p>
+                  <h2 className="mt-1 text-2xl font-semibold text-foreground">{activeCourse.title}</h2>
                 </div>
+                <Pill tone={courseProgress(activeCourse.id) === 100 ? "moss" : "gold"}>
+                  {courseProgress(activeCourse.id) === 100 ? "Concluído" : `${courseProgress(activeCourse.id)}% concluído`}
+                </Pill>
               </div>
-              {certificates.length === 0 ? (
-                <div className="mt-5">
-                  <EmptyState title="No certifications uploaded" hint="Upload certification documents in Documents to populate Academy." />
-                </div>
-              ) : (
-                <div className="mt-5 space-y-3">
-                  {certificates.map((doc: any) => (
-                    <div key={doc.id} className="rounded-2xl border border-border/60 bg-cream/40 p-4">
-                      <div className="flex flex-wrap items-center justify-between gap-2">
-                        <p className="font-medium text-foreground">{doc.title}</p>
-                        <Pill tone="olive">{doc.document_type}</Pill>
+              {activeCourse.description && <p className="mt-2 text-sm leading-6 text-muted-foreground">{activeCourse.description}</p>}
+
+              <div className="mt-5 space-y-3">
+                {lessonsFor(activeCourse.id).map((lesson: any) => {
+                  const done = completedIds.has(lesson.id);
+                  return (
+                    <div key={lesson.id} className={`rounded-2xl border p-4 ${done ? "border-moss/30 bg-moss/5" : "border-white/70 bg-white/50"}`}>
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex items-start gap-3">
+                          <span className={`mt-0.5 flex h-7 w-7 flex-none items-center justify-center rounded-full text-xs font-bold ${done ? "bg-moss text-ivory" : "bg-olive/10 text-olive"}`}>
+                            {lesson.position}
+                          </span>
+                          <div>
+                            <p className="font-medium text-foreground">{lesson.title}</p>
+                            {lesson.body && <p className="mt-1 text-sm leading-6 text-foreground/75">{lesson.body}</p>}
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => toggleLesson.mutate(lesson.id)}
+                          disabled={toggleLesson.isPending}
+                          className={`flex-none rounded-full px-3 py-1.5 text-xs font-semibold transition ${
+                            done ? "border border-moss/40 bg-white/60 text-moss" : "bg-olive text-ivory hover:opacity-90"
+                          }`}
+                        >
+                          <span className="inline-flex items-center gap-1.5">
+                            <CheckCircle2 className="h-3.5 w-3.5" />
+                            {done ? "Concluída" : "Marcar concluída"}
+                          </span>
+                        </button>
                       </div>
-                      <p className="mt-1 text-xs text-muted-foreground">
-                        {doc.status} · {new Date(doc.created_at).toLocaleDateString()}
-                      </p>
                     </div>
-                  ))}
+                  );
+                })}
+                {lessonsFor(activeCourse.id).length === 0 && (
+                  <p className="text-sm text-muted-foreground">Este curso ainda não tem lições.</p>
+                )}
+              </div>
+
+              {canManage && (
+                <div className="mt-6 rounded-2xl border border-dashed border-olive/30 bg-baby/10 p-4">
+                  <p className="text-xs font-semibold uppercase text-muted-foreground">Adicionar lição a este curso</p>
+                  <div className="mt-3 grid gap-3">
+                    <input value={newLesson.title} onChange={(e) => setNewLesson({ ...newLesson, title: e.target.value })} placeholder="Título da lição *" className="rounded-xl border border-border bg-ivory px-3 py-2 text-sm" />
+                    <textarea value={newLesson.body} onChange={(e) => setNewLesson({ ...newLesson, body: e.target.value })} rows={3} placeholder="Conteúdo da lição" className="rounded-xl border border-border bg-ivory px-3 py-2 text-sm" />
+                    <button onClick={() => createLesson.mutate()} disabled={!newLesson.title.trim() || createLesson.isPending} className="justify-self-start rounded-full bg-olive px-4 py-2 text-xs font-semibold text-ivory disabled:opacity-50">
+                      Adicionar lição
+                    </button>
+                  </div>
                 </div>
               )}
-            </Card>
-
-            <Card>
-              <div className="flex items-center gap-3">
-                <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-moss/10 text-moss">
-                  <ShieldCheck className="h-5 w-5" />
-                </span>
-                <div>
-                  <h2 className="text-xl font-semibold text-foreground">What is still needed</h2>
-                  <p className="text-xs text-muted-foreground">Learning depth expands with module, attempt and certificate records.</p>
-                </div>
-              </div>
-              <div className="mt-5 space-y-2 text-sm text-muted-foreground">
-                <p className="rounded-2xl border border-border/60 bg-cream/40 p-3">Create LMS tables for modules, lessons, attempts and certificates.</p>
-                <p className="rounded-2xl border border-border/60 bg-cream/40 p-3">Attach certificate expiration dates to uploaded documents.</p>
-                <p className="rounded-2xl border border-border/60 bg-cream/40 p-3">Require verified identity before certifications unlock platform badges.</p>
-              </div>
-            </Card>
-          </div>
-        </>
-      )}
+            </>
+          ) : (
+            <div className="grid place-items-center py-20 text-center">
+              <BookOpen className="h-10 w-10 text-olive/50" />
+              <p className="mt-4 text-lg font-semibold text-foreground">Escolha um curso ao lado</p>
+              <p className="mt-1 text-sm text-muted-foreground">Seu progresso é salvo lição por lição.</p>
+            </div>
+          )}
+        </Card>
+      </div>
     </>
   );
 }

@@ -1,189 +1,302 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { useMemo } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { CheckCircle2, Clock, MapPin, UserCheck } from "lucide-react";
+import { createFileRoute, Navigate } from "@tanstack/react-router";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useState } from "react";
+import { CheckCircle2, Clock, LogIn, LogOut, MapPin } from "lucide-react";
 import { toast } from "sonner";
-import { Avatar, Card, EmptyState, PageHeader, Pill, Stat } from "@/components/app/primitives";
-import { useAuth } from "@/hooks/use-auth";
+import { Card, EmptyState, PageHeader, Pill, Stat } from "@/components/app/primitives";
+import { GlassSelect } from "@/components/app/GlassSelect";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/use-auth";
 
-export const Route = createFileRoute("/app/caregiver")({
-  component: CaregiverApp,
-});
+export const Route = createFileRoute("/app/caregiver")({ component: CaregiverApp });
+
+function getPosition(): Promise<GeolocationPosition | null> {
+  return new Promise((resolve) => {
+    if (!navigator.geolocation) return resolve(null);
+    navigator.geolocation.getCurrentPosition(
+      (position) => resolve(position),
+      () => resolve(null),
+      { enableHighAccuracy: true, timeout: 8000 },
+    );
+  });
+}
+
+function elapsed(from: string) {
+  const ms = Date.now() - new Date(from).getTime();
+  const hours = Math.floor(ms / 3600000);
+  const minutes = Math.floor((ms % 3600000) / 60000);
+  return `${hours}h ${String(minutes).padStart(2, "0")}min`;
+}
 
 function CaregiverApp() {
+  const { profile, user, hasAnyRole, isSuperAdmin } = useAuth();
   const qc = useQueryClient();
-  const { profile, user, isSuperAdmin } = useAuth();
+  const canUse = hasAnyRole(["caregiver", "nurse", "doctor", "clinic_admin", "super_admin"]);
+  const [residentId, setResidentId] = useState("");
+  const [notes, setNotes] = useState("");
+  if (!canUse) return <Navigate to="/app" />;
 
-  const workspace = useQuery({
-    queryKey: ["caregiver-workspace", profile?.tenant_id, user?.id, isSuperAdmin],
-    enabled: (!!profile?.tenant_id || isSuperAdmin) && !!user,
+  const residents = useQuery({
+    queryKey: ["caregiver-residents", profile?.tenant_id],
+    enabled: !!profile?.tenant_id || isSuperAdmin,
     queryFn: async () => {
-      const db = supabase as any;
-      const [tasks, residents, alerts, locations] = await Promise.all([
-        db.from("care_tasks").select("id,resident_id,title,status,priority,due_at,notes,assigned_to,created_at").order("due_at", { ascending: true, nullsFirst: false }).limit(200),
-        db.from("residents").select("id,full_name,preferred_name,photo_url").order("full_name", { ascending: true }).limit(200),
-        db.from("alerts").select("id,resident_id,title,severity,status,created_at").order("created_at", { ascending: false }).limit(100),
-        db.from("address_locations").select("id,entity_type,entity_id,label,address,city,state,country,latitude,longitude").eq("entity_type", "resident").limit(200),
-      ]);
-      const errors = [tasks, residents, alerts, locations].map((item) => item.error?.message).filter(Boolean);
-      if (errors.length) throw new Error(errors.join(" | "));
-      return {
-        tasks: tasks.data ?? [],
-        residents: residents.data ?? [],
-        alerts: alerts.data ?? [],
-        locations: locations.data ?? [],
-      };
+      const { data, error } = await supabase
+        .from("residents")
+        .select("id, full_name, preferred_name")
+        .order("full_name");
+      if (error) throw error;
+      return data ?? [];
     },
   });
 
-  const residentMap = useMemo(() => {
-    const map = new Map<string, any>();
-    (workspace.data?.residents ?? []).forEach((resident: any) => map.set(resident.id, resident));
-    return map;
-  }, [workspace.data?.residents]);
+  const shifts = useQuery({
+    queryKey: ["caregiver-shifts", user?.id],
+    enabled: !!user,
+    queryFn: async () => {
+      const { data, error } = await (supabase as any)
+        .from("caregiver_shifts")
+        .select("*")
+        .eq("caregiver_id", user!.id)
+        .order("started_at", { ascending: false })
+        .limit(30);
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
 
-  const openTasks = (workspace.data?.tasks ?? []).filter((task: any) => !["completed", "cancelled"].includes(task.status));
-  const myTasks = openTasks.filter((task: any) => !task.assigned_to || task.assigned_to === user?.id);
-  const completedToday = (workspace.data?.tasks ?? []).filter((task: any) => task.status === "completed").length;
-  const openAlerts = (workspace.data?.alerts ?? []).filter((alert: any) => !["resolved", "closed"].includes(alert.status));
+  const tasks = useQuery({
+    queryKey: ["caregiver-tasks-today", profile?.tenant_id, user?.id],
+    enabled: !!profile?.tenant_id || isSuperAdmin,
+    queryFn: async () => {
+      const start = new Date();
+      start.setHours(0, 0, 0, 0);
+      const end = new Date();
+      end.setHours(23, 59, 59, 999);
+      const { data, error } = await (supabase as any)
+        .from("care_tasks")
+        .select("id,title,status,priority,due_at,resident_id")
+        .in("status", ["pending"])
+        .gte("due_at", start.toISOString())
+        .lte("due_at", end.toISOString())
+        .order("due_at");
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
 
-  const completeTask = async (task: any) => {
+  const activeShift = (shifts.data ?? []).find((shift: any) => !shift.ended_at) ?? null;
+
+  const checkIn = useMutation({
+    mutationFn: async () => {
+      if (!user || !profile?.tenant_id) throw new Error("Entre em uma organização primeiro.");
+      const position = await getPosition();
+      const { error } = await (supabase as any).from("caregiver_shifts").insert({
+        tenant_id: profile.tenant_id,
+        caregiver_id: user.id,
+        resident_id: residentId || null,
+        checkin_latitude: position?.coords.latitude ?? null,
+        checkin_longitude: position?.coords.longitude ?? null,
+      });
+      if (error) throw error;
+      return !!position;
+    },
+    onSuccess: (hasGps) => {
+      toast.success(hasGps ? "Check-in registrado com localização" : "Check-in registrado (sem GPS)");
+      qc.invalidateQueries({ queryKey: ["caregiver-shifts", user?.id] });
+    },
+    onError: (error: any) => toast.error(error.message ?? "Não foi possível fazer check-in"),
+  });
+
+  const checkOut = useMutation({
+    mutationFn: async () => {
+      if (!activeShift) throw new Error("Nenhum plantão ativo.");
+      const position = await getPosition();
+      const { error } = await (supabase as any)
+        .from("caregiver_shifts")
+        .update({
+          ended_at: new Date().toISOString(),
+          checkout_latitude: position?.coords.latitude ?? null,
+          checkout_longitude: position?.coords.longitude ?? null,
+          notes: notes.trim() || null,
+        })
+        .eq("id", activeShift.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Check-out registrado — bom descanso!");
+      setNotes("");
+      qc.invalidateQueries({ queryKey: ["caregiver-shifts", user?.id] });
+    },
+    onError: (error: any) => toast.error(error.message ?? "Não foi possível fazer check-out"),
+  });
+
+  const completeTask = async (taskId: string) => {
     const { error } = await (supabase as any)
       .from("care_tasks")
-      .update({ status: "completed", completed_at: new Date().toISOString(), completed_by: user?.id ?? null })
-      .eq("id", task.id);
-    if (error) return toast.error(error.message);
-    toast.success("Task completed");
-    qc.invalidateQueries({ queryKey: ["caregiver-workspace"] });
+      .update({ status: "done", completed_at: new Date().toISOString(), completed_by: user?.id })
+      .eq("id", taskId);
+    if (error) toast.error(error.message);
+    else {
+      toast.success("Tarefa concluída");
+      qc.invalidateQueries({ queryKey: ["caregiver-tasks-today", profile?.tenant_id, user?.id] });
+    }
+  };
+
+  const residentName = (id: string | null) => {
+    const resident = (residents.data ?? []).find((item: any) => item.id === id);
+    return resident ? resident.preferred_name || resident.full_name : null;
   };
 
   return (
     <>
       <PageHeader
-        title="Caregiver app"
-        subtitle="Field workspace backed by real care tasks, residents, alerts and geocoded addresses."
-        action={<Pill tone={workspace.isError ? "wine" : "olive"}>{workspace.isError ? "Read error" : "Live care queue"}</Pill>}
+        title="App do cuidador"
+        subtitle="Plantões com check-in/check-out geolocalizado, tarefas do dia e registro rápido — pensado para o celular."
+        action={<Pill tone={activeShift ? "moss" : "muted"}>{activeShift ? "Em plantão" : "Fora de plantão"}</Pill>}
       />
 
-      {workspace.isLoading ? (
-        <p className="text-sm text-muted-foreground">Loading caregiver workspace...</p>
-      ) : workspace.isError ? (
-        <Card className="border-wine/25 bg-wine/5">
-          <p className="font-medium text-wine">Could not load caregiver data.</p>
-          <p className="mt-2 text-sm text-muted-foreground">{(workspace.error as Error).message}</p>
-        </Card>
-      ) : (
-        <>
-          <div className="grid gap-4 md:grid-cols-4">
-            <Stat label="Open tasks" value={myTasks.length} sub="Assigned to you or unassigned" tone="olive" />
-            <Stat label="Completed" value={completedToday} sub="Completed records visible" tone="moss" />
-            <Stat label="Open alerts" value={openAlerts.length} sub="Resident-linked alerts" tone="wine" />
-            <Stat label="Residents" value={workspace.data?.residents.length ?? 0} sub="Tenant scope" tone="gold" />
-          </div>
+      <div className="grid gap-4 md:grid-cols-3">
+        <Stat
+          label="Plantão atual"
+          value={activeShift ? elapsed(activeShift.started_at) : "—"}
+          sub={activeShift ? `Início ${new Date(activeShift.started_at).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}` : "Faça check-in para começar"}
+          tone={activeShift ? "moss" : "olive"}
+        />
+        <Stat label="Tarefas de hoje" value={tasks.data?.length ?? "-"} sub="Pendentes com vencimento hoje" tone="gold" />
+        <Stat label="Plantões registrados" value={shifts.data?.length ?? "-"} sub="Últimos 30" tone="olive" />
+      </div>
 
-          <div className="mt-6 grid gap-6 lg:grid-cols-[1.2fr_.8fr]">
-            <Card>
-              <div className="flex items-center gap-3">
-                <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-olive/10 text-olive">
-                  <CheckCircle2 className="h-5 w-5" />
-                </span>
-                <div>
-                  <h2 className="text-xl font-semibold text-foreground">Task queue</h2>
-                  <p className="text-xs text-muted-foreground">Completing a task updates Supabase.</p>
-                </div>
-              </div>
-              {myTasks.length === 0 ? (
-                <div className="mt-5">
-                  <EmptyState title="No open tasks" hint="Create care tasks in Care plan to populate the caregiver app." />
-                </div>
-              ) : (
-                <div className="mt-5 space-y-3">
-                  {myTasks.map((task: any) => {
-                    const resident = task.resident_id ? residentMap.get(task.resident_id) : null;
-                    return (
-                      <div key={task.id} className="rounded-2xl border border-border/60 bg-white/50 p-4">
-                        <div className="flex flex-wrap items-start justify-between gap-3">
-                          <div className="flex min-w-0 items-center gap-3">
-                            <Avatar name={resident?.preferred_name || resident?.full_name || "Resident"} src={resident?.photo_url} />
-                            <div className="min-w-0">
-                              <p className="font-medium text-foreground">{task.title}</p>
-                              <p className="text-xs text-muted-foreground">
-                                {resident?.preferred_name || resident?.full_name || "No resident"} · {task.due_at ? new Date(task.due_at).toLocaleString() : "No due time"}
-                              </p>
-                            </div>
-                          </div>
-                          <Pill tone={priorityTone(task.priority)}>{task.priority}</Pill>
-                        </div>
-                        {task.notes && <p className="mt-3 text-sm leading-6 text-muted-foreground">{task.notes}</p>}
-                        <button onClick={() => completeTask(task)} className="mt-3 rounded-full bg-olive px-4 py-2 text-xs text-ivory">
-                          Mark completed
-                        </button>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </Card>
-
-            <div className="space-y-6">
-              <Card>
-                <div className="flex items-center gap-3">
-                  <Clock className="h-5 w-5 text-olive" />
-                  <h2 className="text-xl font-semibold text-foreground">Open alerts</h2>
-                </div>
-                <div className="mt-4 space-y-3">
-                  {openAlerts.slice(0, 6).map((alert: any) => (
-                    <div key={alert.id} className="rounded-2xl border border-border/60 bg-cream/40 p-3">
-                      <div className="flex items-center justify-between gap-2">
-                        <p className="text-sm font-medium text-foreground">{alert.title}</p>
-                        <Pill tone={priorityTone(alert.severity)}>{alert.severity}</Pill>
-                      </div>
-                      <p className="mt-1 text-xs text-muted-foreground">
-                        {alert.resident_id ? residentMap.get(alert.resident_id)?.full_name ?? alert.resident_id : "No resident"}
-                      </p>
-                    </div>
-                  ))}
-                  {openAlerts.length === 0 && <p className="text-sm text-muted-foreground">No open alerts.</p>}
-                </div>
-              </Card>
-
-              <Card>
-                <div className="flex items-center gap-3">
-                  <MapPin className="h-5 w-5 text-olive" />
-                  <h2 className="text-xl font-semibold text-foreground">Known addresses</h2>
-                </div>
-                <div className="mt-4 space-y-3">
-                  {(workspace.data?.locations ?? []).slice(0, 6).map((location: any) => (
-                    <div key={location.id} className="rounded-2xl border border-border/60 bg-cream/40 p-3">
-                      <p className="text-sm text-foreground">{location.address}</p>
-                      <p className="text-xs text-muted-foreground">{[location.city, location.state, location.country].filter(Boolean).join(", ")}</p>
-                    </div>
-                  ))}
-                  {(workspace.data?.locations ?? []).length === 0 && (
-                    <p className="text-sm text-muted-foreground">No resident addresses saved yet.</p>
-                  )}
-                </div>
-              </Card>
-
-              <Card>
-                <div className="flex items-center gap-3">
-                  <UserCheck className="h-5 w-5 text-olive" />
-                  <p className="text-sm text-muted-foreground">Offline mode, voice capture and mobile push require native/mobile infrastructure; this page only shows persisted web records.</p>
-                </div>
-              </Card>
+      <div className="mt-6 grid gap-6 lg:grid-cols-2">
+        <Card>
+          <div className="flex items-center gap-3">
+            <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-olive/10 text-olive">
+              <Clock className="h-5 w-5" />
+            </span>
+            <div>
+              <h2 className="text-xl font-semibold text-foreground">Plantão</h2>
+              <p className="text-xs text-muted-foreground">Check-in e check-out com localização e observações.</p>
             </div>
           </div>
-        </>
-      )}
+
+          {activeShift ? (
+            <div className="mt-5 space-y-4">
+              <div className="rounded-2xl border border-moss/30 bg-moss/5 p-4">
+                <p className="text-sm font-medium text-foreground">
+                  Em plantão há {elapsed(activeShift.started_at)}
+                  {activeShift.resident_id && residentName(activeShift.resident_id) ? ` · ${residentName(activeShift.resident_id)}` : ""}
+                </p>
+                <p className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
+                  <MapPin className="h-3 w-3" />
+                  {activeShift.checkin_latitude
+                    ? `Check-in em ${activeShift.checkin_latitude.toFixed(5)}, ${activeShift.checkin_longitude.toFixed(5)}`
+                    : "Check-in sem GPS"}
+                </p>
+              </div>
+              <textarea
+                value={notes}
+                onChange={(event) => setNotes(event.target.value)}
+                rows={3}
+                placeholder="Observações do plantão (opcional): intercorrências, entregas, recados..."
+                className="w-full rounded-xl border border-border bg-ivory px-3 py-2 text-sm"
+              />
+              <button
+                onClick={() => checkOut.mutate()}
+                disabled={checkOut.isPending}
+                className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-wine px-4 py-3 text-sm font-semibold text-ivory disabled:opacity-50"
+              >
+                <LogOut className="h-4 w-4" />
+                {checkOut.isPending ? "Registrando..." : "Fazer check-out"}
+              </button>
+            </div>
+          ) : (
+            <div className="mt-5 space-y-4">
+              <GlassSelect
+                value={residentId}
+                onChange={setResidentId}
+                placeholder="Residente do plantão (opcional)"
+                options={[
+                  { value: "", label: "Sem residente específico" },
+                  ...(residents.data ?? []).map((resident: any) => ({
+                    value: resident.id,
+                    label: resident.preferred_name || resident.full_name,
+                  })),
+                ]}
+              />
+              <button
+                onClick={() => checkIn.mutate()}
+                disabled={checkIn.isPending}
+                className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-olive px-4 py-3 text-sm font-semibold text-ivory disabled:opacity-50"
+              >
+                <LogIn className="h-4 w-4" />
+                {checkIn.isPending ? "Registrando..." : "Fazer check-in"}
+              </button>
+              <p className="text-xs leading-5 text-muted-foreground">
+                O navegador vai pedir sua localização para registrar onde o plantão começou. Se negar, o check-in é registrado sem GPS.
+              </p>
+            </div>
+          )}
+        </Card>
+
+        <Card>
+          <h2 className="text-xl font-semibold text-foreground">Tarefas de hoje</h2>
+          {(tasks.data ?? []).length === 0 ? (
+            <div className="mt-4"><EmptyState title="Nenhuma tarefa pendente hoje" hint="As tarefas do plano de cuidado com vencimento hoje aparecem aqui." /></div>
+          ) : (
+            <div className="mt-4 space-y-2">
+              {(tasks.data ?? []).map((task: any) => (
+                <div key={task.id} className="flex items-center justify-between gap-3 rounded-2xl border border-white/70 bg-white/50 px-4 py-3">
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-medium text-foreground">{task.title}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {task.due_at ? new Date(task.due_at).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }) : "Sem hora"}
+                      {residentName(task.resident_id) ? ` · ${residentName(task.resident_id)}` : ""}
+                      {task.priority === "high" ? " · prioridade alta" : ""}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => completeTask(task.id)}
+                    className="flex-none rounded-full bg-olive px-3 py-1.5 text-xs font-semibold text-ivory hover:opacity-90"
+                  >
+                    <span className="inline-flex items-center gap-1">
+                      <CheckCircle2 className="h-3.5 w-3.5" /> Concluir
+                    </span>
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </Card>
+      </div>
+
+      <Card className="mt-6">
+        <h2 className="text-xl font-semibold text-foreground">Histórico de plantões</h2>
+        {(shifts.data ?? []).length === 0 ? (
+          <p className="mt-3 text-sm text-muted-foreground">Nenhum plantão registrado ainda.</p>
+        ) : (
+          <div className="mt-4 space-y-2">
+            {(shifts.data ?? []).map((shift: any) => (
+              <div key={shift.id} className="flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-white/70 bg-white/50 px-4 py-3">
+                <div>
+                  <p className="text-sm font-medium text-foreground">
+                    {new Date(shift.started_at).toLocaleDateString("pt-BR")} ·{" "}
+                    {new Date(shift.started_at).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
+                    {shift.ended_at ? ` → ${new Date(shift.ended_at).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}` : " (em andamento)"}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {residentName(shift.resident_id) ?? "Sem residente"}
+                    {shift.notes ? ` · ${shift.notes}` : ""}
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  {shift.checkin_latitude && <Pill tone="olive">GPS in</Pill>}
+                  {shift.checkout_latitude && <Pill tone="moss">GPS out</Pill>}
+                  <Pill tone={shift.ended_at ? "muted" : "moss"}>{shift.ended_at ? "encerrado" : "ativo"}</Pill>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </Card>
     </>
   );
-}
-
-function priorityTone(value: string | null | undefined): "moss" | "wine" | "gold" | "muted" {
-  const priority = String(value ?? "").toLowerCase();
-  if (["critical", "high"].includes(priority)) return "wine";
-  if (["warning", "medium", "normal"].includes(priority)) return "gold";
-  if (["low", "info"].includes(priority)) return "moss";
-  return "muted";
 }
