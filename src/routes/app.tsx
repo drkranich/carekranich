@@ -161,6 +161,13 @@ const ALL_SECTIONS: NavSection[] = [
         userKinds: ["clinic", "staff"],
       },
       {
+        to: "/app/home-collection",
+        label: "Coleta domiciliar",
+        icon: "M1 3h15v13H1z M16 8h4l3 3v5h-7 M5.5 21a2 2 0 1 0 0-4 2 2 0 0 0 0 4z M18.5 21a2 2 0 1 0 0-4 2 2 0 0 0 0 4z",
+        roles: ["caregiver", "nurse", "doctor", "clinic_admin", "super_admin"],
+        userKinds: ["clinic", "staff"],
+      },
+      {
         to: "/app/genetics",
         label: "Genética (kits)",
         icon: "M4 2c0 5 3 6 8 10s8 5 8 10 M20 2c0 5-3 6-8 10S4 17 4 22 M6 5h12 M6 19h12 M8.5 9h7 M8.5 15h7",
