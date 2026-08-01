@@ -91,8 +91,14 @@ function Emergency() {
   };
 
   const updateAlert = async (id: string, patch: Record<string, unknown>, message: string) => {
-    const { error } = await (supabase as any).from("alerts").update(patch).eq("id", id);
+    const { data, error } = await (supabase as any)
+      .from("alerts")
+      .update(patch)
+      .eq("id", id)
+      .select("id")
+      .maybeSingle();
     if (error) return toast.error(error.message);
+    if (!data) return toast.error("Alerta nÃ£o foi atualizado. Verifique suas permissÃµes.");
     toast.success(message);
     setEditingId(null);
     setDelegatingId(null);

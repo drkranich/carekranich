@@ -51,11 +51,14 @@ function SmartHome() {
   const deviceSources = new Set(observations.map((item: any) => item.source).filter(Boolean));
 
   const resolveAlert = async (alertId: string) => {
-    const { error } = await (supabase as any)
+    const { data, error } = await (supabase as any)
       .from("alerts")
       .update({ status: "resolved", resolved_by: user?.id ?? null, resolved_at: new Date().toISOString() })
-      .eq("id", alertId);
+      .eq("id", alertId)
+      .select("id")
+      .maybeSingle();
     if (error) return toast.error(error.message);
+    if (!data) return toast.error("Alerta nÃ£o foi resolvido. Verifique suas permissÃµes.");
     toast.success("Alerta residencial resolvido");
     qc.invalidateQueries({ queryKey: ["smart-home-real"] });
   };
