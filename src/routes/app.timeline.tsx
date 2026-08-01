@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { Card, PageHeader, Pill, Avatar } from "@/components/app/primitives";
 import { GlassSelect } from "@/components/app/GlassSelect";
+import { GlassDatePicker } from "@/components/app/GlassDatePicker";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/app/timeline")({ component: TimelinePage });
@@ -157,26 +158,7 @@ function TimelinePage() {
         >
           Ontem
         </button>
-        <label className="group relative flex items-center gap-2 rounded-full border border-white/70 bg-white/55 px-3 py-1.5 shadow-soft backdrop-blur-xl transition hover:bg-white/75">
-          <svg
-            viewBox="0 0 24 24"
-            className="h-3.5 w-3.5 text-olive"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <rect x="3" y="4" width="18" height="18" rx="2" />
-            <path d="M16 2v4 M8 2v4 M3 10h18" />
-          </svg>
-          <input
-            type="date"
-            value={date}
-            onChange={(e) => setDate(e.target.value)}
-            className="bg-transparent text-xs text-foreground outline-none [color-scheme:light] [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:opacity-60"
-          />
-        </label>
+        <GlassDatePicker value={date} onChange={setDate} />
         <button
           onClick={() => shiftDay(1)}
           className="rounded-full border border-white/70 bg-white/55 px-3 py-1.5 text-xs shadow-soft backdrop-blur-xl transition hover:bg-white/75 hover:text-olive"
