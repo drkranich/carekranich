@@ -62,10 +62,10 @@ const DIMENSIONS = [
 ] as const;
 const SOURCE_OPTIONS = [
   { value: "manual", label: "Manual" },
-  { value: "caregiver", label: "Observacao do cuidador" },
-  { value: "nurse", label: "Observacao de enfermagem" },
-  { value: "doctor", label: "Avaliacao medica" },
-  { value: "assessment", label: "Avaliacao padronizada" },
+  { value: "caregiver", label: "Observação do cuidador" },
+  { value: "nurse", label: "Observação de enfermagem" },
+  { value: "doctor", label: "Avaliação medica" },
+  { value: "assessment", label: "Avaliação padronizada" },
   { value: "ai", label: "IA" },
 ];
 
