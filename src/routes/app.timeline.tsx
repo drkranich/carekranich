@@ -23,24 +23,24 @@ type EventRow = {
 };
 
 const CATEGORIES = [
-  { value: "all", label: "Todas" },
-  { value: "general", label: "Geral" },
-  { value: "medication", label: "Medicação" },
-  { value: "vitals", label: "Sinais vitais" },
-  { value: "nutrition", label: "Nutrição" },
-  { value: "hydration", label: "Hidratação" },
-  { value: "mobility", label: "Mobilidade" },
-  { value: "mood", label: "Humor" },
-  { value: "incident", label: "Incidente" },
+  { value: "all", label: "All" },
+  { value: "general", label: "General" },
+  { value: "medication", label: "Medication" },
+  { value: "vitals", label: "Vital signs" },
+  { value: "nutrition", label: "Nutrition" },
+  { value: "hydration", label: "Hydration" },
+  { value: "mobility", label: "Mobility" },
+  { value: "mood", label: "Mood" },
+  { value: "incident", label: "Incident" },
   { value: "memory", label: "Memory" },
-  { value: "alert", label: "Alerta" },
+  { value: "alert", label: "Alert" },
 ];
 const SEVERITIES = [
-  { value: "all", label: "Todas" },
-  { value: "info", label: "Informação" },
-  { value: "success", label: "Sucesso" },
-  { value: "warning", label: "Aviso" },
-  { value: "critical", label: "Crítico" },
+  { value: "all", label: "All" },
+  { value: "info", label: "Information" },
+  { value: "success", label: "Success" },
+  { value: "warning", label: "Warning" },
+  { value: "critical", label: "Critical" },
 ];
 
 const sevTone = (s: string) =>
@@ -52,9 +52,9 @@ function toDayKey(d: Date) {
 function dayLabel(key: string) {
   const today = toDayKey(new Date());
   const yest = toDayKey(new Date(Date.now() - 86400000));
-  if (key === today) return "Hoje";
-  if (key === yest) return "Ontem";
-  return new Date(key + "T12:00:00").toLocaleDateString("pt-BR", {
+  if (key === today) return "Today";
+  if (key === yest) return "Yesterday";
+  return new Date(key + "T12:00:00").toLocaleDateString("en-US", {
     weekday: "long",
     month: "short",
     day: "numeric",
@@ -137,15 +137,15 @@ function TimelinePage() {
   return (
     <>
       <PageHeader
-        title="Linha do tempo"
-        subtitle="Um fluxo unificado and em tempo real de cada momento de cuidado."
+        title="Timeline"
+        subtitle="A unified, real-time stream of every care moment."
         action={
           canLog && profile?.tenant_id && (
             <button
               onClick={() => setShowForm((v) => !v)}
               className="rounded-full bg-olive px-4 py-2 text-xs text-ivory hover:opacity-90"
             >
-              {showForm ? "Cancel" : "+ Registrar evento"}
+              {showForm ? "Cancel" : "+ Log event"}
             </button>
           )
         }
@@ -156,20 +156,20 @@ function TimelinePage() {
           onClick={() => shiftDay(-1)}
           className="rounded-full border border-white/70 bg-white/55 px-3 py-1.5 text-xs shadow-soft backdrop-blur-xl transition hover:bg-white/75 hover:text-olive"
         >
-          Ontem
+          Yesterday
         </button>
         <GlassDatePicker value={date} onChange={setDate} />
         <button
           onClick={() => shiftDay(1)}
           className="rounded-full border border-white/70 bg-white/55 px-3 py-1.5 text-xs shadow-soft backdrop-blur-xl transition hover:bg-white/75 hover:text-olive"
         >
-          Amanhã
+          Tomorrow
         </button>
         <button
           onClick={() => setDate(toDayKey(new Date()))}
           className="rounded-full bg-olive/90 px-3 py-1.5 text-xs font-semibold text-ivory shadow-soft backdrop-blur-xl transition hover:bg-olive"
         >
-          Hoje
+          Today
         </button>
 
         <span className="mx-2 h-4 w-px bg-white/70" />
@@ -188,7 +188,7 @@ function TimelinePage() {
         />
 
         <span className="ml-auto flex items-center gap-1.5 text-xs text-muted-foreground">
-          <span className="h-2 w-2 animate-pulse rounded-full bg-moss" /> Ao vivo
+          <span className="h-2 w-2 animate-pulse rounded-full bg-moss" /> Live
         </span>
       </div>
 
@@ -213,7 +213,7 @@ function TimelinePage() {
             <input
               name="title"
               required
-              placeholder="O que aconteceu?"
+              placeholder="What happened?"
               className="rounded-lg border border-border bg-card px-2 py-1.5 text-sm md:col-span-2"
             />
             <GlassSelect
@@ -230,7 +230,7 @@ function TimelinePage() {
             />
             <textarea
               name="description"
-              placeholder="Observações (opcional)"
+              placeholder="Notes (optional)"
               rows={2}
               className="rounded-lg border border-border bg-card px-2 py-1.5 text-sm md:col-span-3"
             />
@@ -238,7 +238,7 @@ function TimelinePage() {
               disabled={createEvent.isPending}
               className="rounded-lg bg-olive py-1.5 text-xs text-ivory hover:opacity-90 disabled:opacity-50"
             >
-              {createEvent.isPending ? "Registrando..." : "Registrar evento"}
+              {createEvent.isPending ? "Logging..." : "Log event"}
             </button>
           </form>
         </Card>
@@ -252,9 +252,9 @@ function TimelinePage() {
         </div>
       ) : events.length === 0 ? (
         <Card className="p-10 text-center">
-          <p className="text-lg font-semibold text-foreground">Um dia tranquilo.</p>
+          <p className="text-lg font-semibold text-foreground">A quiet day.</p>
           <p className="mt-1 text-sm text-muted-foreground">
-            No event recorded em {dayLabel(date)}.
+            No event recorded on {dayLabel(date)}.
           </p>
         </Card>
       ) : (
@@ -279,7 +279,7 @@ function TimelinePage() {
                       )}
                     </div>
                     <span className="flex-none text-xs text-muted-foreground">
-                      {new Date(e.occurred_at).toLocaleTimeString("pt-BR", {
+                      {new Date(e.occurred_at).toLocaleTimeString("en-US", {
                         hour: "2-digit",
                         minute: "2-digit",
                       })}

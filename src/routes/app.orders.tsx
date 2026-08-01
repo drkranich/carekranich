@@ -39,8 +39,8 @@ type ItemRow = {
 const STATUS_LABEL: Record<string, string> = {
   cart: "Carrinho",
   quote: "Quote",
-  ordered: "Pedido confirmado",
-  paid: "Pago",
+  ordered: "Order confirmed",
+  paid: "Paid",
   canceled: "Cancelado",
 };
 
@@ -53,7 +53,7 @@ const STATUS_TONE: Record<string, "moss" | "gold" | "olive" | "wine" | "muted"> 
 };
 
 function brl(cents: number | null | undefined) {
-  return ((cents ?? 0) / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+  return ((cents ?? 0) / 100).toLocaleString("en-US", { style: "currency", currency: "BRL" });
 }
 
 function Orders() {
@@ -235,7 +235,7 @@ function Orders() {
   const setStatus = async (order: OrderRow, status: string) => {
     const { error } = await (supabase as any).from("exam_orders").update({ status }).eq("id", order.id);
     if (error) return toast.error(error.message);
-    toast.success(`Pedido: ${STATUS_LABEL[status] ?? status}`);
+    toast.success(`Order: ${STATUS_LABEL[status] ?? status}`);
     refresh();
   };
 
@@ -265,7 +265,7 @@ function Orders() {
       `Patient: ${patientName(order.patient_id)}`,
       `Insurance: ${patientInsurance(order.patient_id) ?? "Private"}`,
       `Status: ${STATUS_LABEL[order.status] ?? order.status}`,
-      `Date: ${new Date(order.created_at).toLocaleString("pt-BR")}`,
+      `Date: ${new Date(order.created_at).toLocaleString("en-US")}`,
       "",
       "Exams:",
       ...list.map((i) => {
@@ -278,7 +278,7 @@ function Orders() {
       `Desconto: ${brl(order.discount_cents)}`,
       `Total a pagar: ${brl(order.total_cents)}`,
       "",
-      "Quote válido por 15 days. Care Kranich.",
+      "Quote valid for 15 days. Care Kranich.",
     ];
     downloadPdf(`quote-${patientName(order.patient_id)}.pdf`, "Exam quote", lines);
   };
@@ -304,7 +304,7 @@ function Orders() {
         <Stat label="Carrinhos abertos" value={stats.carts} sub="Em montagem" tone="gold" />
         <Stat label="Quotes" value={stats.quotes} sub="Awaiting decision" tone="olive" />
         <Stat label="Confirmed orders" value={stats.confirmed} sub="Confirmed + paid" tone="moss" />
-        <Stat label="Receita paga" value={brl(stats.revenue)} sub="Pedidos pagos" tone="wine" />
+        <Stat label="Paid revenue" value={brl(stats.revenue)} sub="Paid orders" tone="wine" />
       </div>
 
       <Card className="space-y-3 p-6">
@@ -337,7 +337,7 @@ function Orders() {
 
       <div className="grid gap-6 xl:grid-cols-[360px_1fr]">
         <Card className="space-y-2 p-5">
-          <h3 className="text-sm font-semibold text-foreground">Pedidos recentes</h3>
+          <h3 className="text-sm font-semibold text-foreground">Recent orders</h3>
           {(orders.data ?? []).length === 0 && (
             <p className="text-sm text-muted-foreground">No orders yet.</p>
           )}
@@ -357,7 +357,7 @@ function Orders() {
               </div>
               <p className="mt-1 text-xs text-muted-foreground">
                 {itemsOf(order.id).length} exam(s) · {brl(order.total_cents)} ·{" "}
-                {new Date(order.created_at).toLocaleDateString("pt-BR")}
+                {new Date(order.created_at).toLocaleDateString("en-US")}
               </p>
             </button>
           ))}
@@ -372,7 +372,7 @@ function Orders() {
                   {patientInsurance(selectedOrder.patient_id)
                     ? `Insurance: ${patientInsurance(selectedOrder.patient_id)}`
                     : "Private"}{" "}
-                  · criado em {new Date(selectedOrder.created_at).toLocaleString("pt-BR")}
+                  · created at {new Date(selectedOrder.created_at).toLocaleString("en-US")}
                 </p>
               </div>
               <Pill tone={STATUS_TONE[selectedOrder.status] ?? "muted"}>
@@ -397,7 +397,7 @@ function Orders() {
                   disabled={addItem.isPending}
                   className="rounded-full bg-olive px-4 py-2 text-sm font-medium text-ivory shadow-soft hover:opacity-90 disabled:opacity-60"
                 >
-                  Adicionar
+                  Add
                 </button>
               </div>
             )}

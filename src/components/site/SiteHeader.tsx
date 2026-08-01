@@ -3,14 +3,14 @@ import { useAuth } from "@/hooks/use-auth";
 
 export function SiteHeader() {
   const { user, loading } = useAuth();
-  const primaryCta = user ? { to: "/app", label: "Abrir painel" } : { to: "/signup", label: "Começar agora" };
+  const primaryCta = user ? { to: "/app", label: "Open dashboard" } : { to: "/signup", label: "Start now" };
   const navItems = [
     { to: "/exames", label: "Exames" },
-    { to: "/family-center", label: "Famílias" },
+    { to: "/family-center", label: "Families" },
     { to: "/caregiver-app", label: "Cuidadores" },
-    { to: "/medical-office", label: "Clínicas" },
-    { to: "/solutions/home-care", label: "Soluções" },
-    { to: "/about", label: "Empresa" },
+    { to: "/medical-office", label: "Clinics" },
+    { to: "/solutions/home-care", label: "Solutions" },
+    { to: "/about", label: "Company" },
   ];
   return (
     <header className="sticky top-0 z-50 border-b border-white/60 bg-white/45 shadow-soft backdrop-blur-2xl">

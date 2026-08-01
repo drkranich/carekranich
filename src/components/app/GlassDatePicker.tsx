@@ -1,6 +1,6 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { ptBR } from "date-fns/locale";
+import { enUS } from "date-fns/locale";
 import { Calendar } from "@/components/ui/calendar";
 
 function toDayKey(d: Date) {
@@ -65,7 +65,7 @@ export function GlassDatePicker({
   }, [open]);
 
   const label = selected
-    ? selected.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" })
+    ? selected.toLocaleDateString("en-US", { day: "2-digit", month: "2-digit", year: "numeric" })
     : "Select date";
 
   return (
@@ -103,7 +103,7 @@ export function GlassDatePicker({
           >
             <Calendar
               mode="single"
-              locale={ptBR}
+              locale={enUS}
               selected={selected}
               defaultMonth={selected}
               onSelect={(day) => {
@@ -116,7 +116,14 @@ export function GlassDatePicker({
               }}
               className="bg-transparent"
               classNames={{
-                today: "rounded-md bg-baby/40 text-olive",
+                root: "w-fit text-foreground",
+                month_caption: "flex h-8 items-center justify-center text-sm font-semibold text-foreground",
+                weekdays: "mt-2 grid grid-cols-7 gap-1",
+                weekday: "text-center text-[11px] font-medium uppercase text-muted-foreground",
+                week: "mt-1 grid grid-cols-7 gap-1",
+                day: "h-8 w-8 rounded-lg text-center text-sm",
+                today: "rounded-lg bg-baby/35 text-olive",
+                selected: "rounded-lg bg-olive text-ivory",
               }}
             />
           </div>,
@@ -128,16 +135,18 @@ export function GlassDatePicker({
 
 /**
  * Date + time variant (replaces the native datetime-local input).
- * value/onChange usam o formato "yyyy-MM-ddTHH:mm" (vazio = sem agendamento).
+ * value/onChange use the "yyyy-MM-ddTHH:mm" format.
  */
 export function GlassDateTimePicker({
   value,
   onChange,
+  name,
   className = "",
   disabled = false,
 }: {
   value: string;
   onChange: (value: string) => void;
+  name?: string;
   className?: string;
   disabled?: boolean;
 }) {
@@ -145,6 +154,7 @@ export function GlassDateTimePicker({
 
   return (
     <div className={`flex flex-wrap items-center gap-2 ${className}`}>
+      {name && <input type="hidden" name={name} value={value} />}
       <GlassDatePicker
         value={datePart}
         disabled={disabled}
@@ -179,7 +189,7 @@ export function GlassDateTimePicker({
           onClick={() => onChange("")}
           className="rounded-full border border-white/70 bg-white/55 px-2.5 py-1.5 text-[11px] text-muted-foreground shadow-soft backdrop-blur-xl transition hover:text-wine"
         >
-          Limpar
+          Clear
         </button>
       )}
     </div>

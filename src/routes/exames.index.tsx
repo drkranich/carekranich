@@ -21,15 +21,15 @@ type PublicExam = {
 };
 
 const CATEGORIES = [
-  { value: "all", label: "Todos" },
+  { value: "all", label: "All" },
   { value: "laboratorial", label: "Laboratoriais" },
   { value: "imagem", label: "Imagem" },
-  { value: "genetica", label: "Genéticos" },
+  { value: "genetica", label: "Genetics" },
 ];
 
 function brl(cents: number | null) {
-  if (cents === null || cents === undefined) return "Sob consulta";
-  return (cents / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+  if (cents === null || cents === undefined) return "On request";
+  return (cents / 100).toLocaleString("en-US", { style: "currency", currency: "BRL" });
 }
 
 function ExamesPublic() {
@@ -67,16 +67,16 @@ function ExamesPublic() {
 
   return (
     <MarketingPage
-      eyebrow="Exames e diagnóstico"
+      eyebrow="Exams and diagnostics"
       title={
         <>
           Encontre, compare e agende <span className="text-olive">seus exames</span>
         </>
       }
-      lede="Exames laboratoriais, diagnóstico por imagem e testes genéticos com preparo claro, prazos transparentes e opção de coleta domiciliar."
+      lede="Laboratory exams, diagnostic imaging and genetic tests with clear preparation, transparent turnaround and optional home collection."
       crumbs={[{ label: "Exames" }]}
       primaryCta={{ label: "Criar minha conta", to: "/signup" }}
-      secondaryCta={{ label: "Já tenho conta", to: "/login" }}
+      secondaryCta={{ label: "I already have an account", to: "/login" }}
     >
       <div className="flex flex-wrap items-center gap-2">
         {CATEGORIES.map((c) => (
@@ -94,17 +94,17 @@ function ExamesPublic() {
         ))}
         <input
           className="ml-auto w-full max-w-xs rounded-full border border-border bg-ivory/60 px-5 py-2.5 text-sm backdrop-blur outline-none focus:border-olive/40"
-          placeholder="Buscar exame..."
+          placeholder="Search exam..."
           value={query}
           onChange={(e) => setQuery(e.target.value)}
         />
       </div>
 
-      {exams.isLoading && <p className="mt-10 text-sm text-muted-foreground">Carregando catálogo...</p>}
+      {exams.isLoading && <p className="mt-10 text-sm text-muted-foreground">Loading catalog...</p>}
 
       {!exams.isLoading && filtered.length === 0 && (
         <p className="mt-10 text-sm text-muted-foreground">
-          Nenhum exame encontrado. Ajuste a busca ou fale com a gente pelo chat.
+          No exam found. Adjust the search or talk to us through chat.
         </p>
       )}
 
@@ -132,12 +132,12 @@ function ExamesPublic() {
                 <span className="rounded-full border border-border bg-ivory/60 px-2.5 py-1">Jejum {e.fasting_hours}h</span>
               ) : null}
               {e.home_collection ? (
-                <span className="rounded-full border border-moss/30 bg-moss/10 px-2.5 py-1 text-moss">Coleta domiciliar</span>
+                <span className="rounded-full border border-moss/30 bg-moss/10 px-2.5 py-1 text-moss">Home collection</span>
               ) : null}
             </div>
             <div className="mt-auto flex items-center justify-between pt-5">
               <span className="font-display text-lg text-olive">{brl(e.price_cents)}</span>
-              <span className="text-sm text-olive transition-transform group-hover:translate-x-0.5">Ver exame →</span>
+                <span className="text-sm text-olive transition-transform group-hover:translate-x-0.5">View exam →</span>
             </div>
           </Link>
         ))}

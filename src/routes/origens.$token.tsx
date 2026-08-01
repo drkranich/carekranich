@@ -10,17 +10,17 @@ import { downloadAncestryPdf } from "@/lib/ancestryPdf";
 export const Route = createFileRoute("/origens/$token")({ component: SharedOrigins });
 
 const ERROR_LABEL: Record<string, string> = {
-  link_invalido: "Este link não é válido.",
-  link_revogado: "Este link foi revogado pelo laboratório.",
+  link_invalido: "This link is not valid.",
+  link_revogado: "This link was revoked by the laboratory.",
   link_expirado: "Este link expirou.",
-  resultado_indisponivel: "O resultado não está mais disponível.",
+  resultado_indisponivel: "The result is no longer available.",
 };
 
 const CONFIDENCE_LABEL: Record<string, string> = {
-  alta: "Alta confiança",
-  moderada: "Confiança moderada",
+  alta: "High confidence",
+  moderada: "Moderate confidence",
   ampla: "Estimativa ampla",
-  revisao: "Em revisão",
+  revisao: "In review",
 };
 
 function SharedOrigins() {
@@ -43,7 +43,7 @@ function SharedOrigins() {
 
   const exportPremiumPdf = () => {
     if (!payload) return;
-    downloadAncestryPdf(`minhas-origens-${payload.patient_name ?? "paciente"}.pdf`, {
+    downloadAncestryPdf(`my-origins-${payload.patient_name ?? "patient"}.pdf`, {
       patientName: payload.patient_name ?? "Paciente",
       version: payload.result?.version ?? "-",
       publishedAt: payload.result?.published_at,
@@ -58,7 +58,7 @@ function SharedOrigins() {
         percentage: Number(r.percentage ?? 0),
         rangeMin: r.range_min !== null && r.range_min !== undefined ? Number(r.range_min) : null,
         rangeMax: r.range_max !== null && r.range_max !== undefined ? Number(r.range_max) : null,
-        confidence: CONFIDENCE_LABEL[r.confidence ?? "moderada"] ?? "Confiança moderada",
+        confidence: CONFIDENCE_LABEL[r.confidence ?? "moderada"] ?? "Moderate confidence",
         color: r.color ?? "#c98a3a",
         latitude: r.latitude !== null && r.latitude !== undefined ? Number(r.latitude) : null,
         longitude: r.longitude !== null && r.longitude !== undefined ? Number(r.longitude) : null,
@@ -89,8 +89,8 @@ function SharedOrigins() {
 
         {payload?.error && (
           <div className="rounded-2xl border border-wine/25 bg-wine/5 p-8 text-center">
-            <p className="font-display text-2xl text-foreground">Atlas indisponível</p>
-            <p className="mt-2 text-sm text-muted-foreground">{ERROR_LABEL[payload.error] ?? "Link indisponível."}</p>
+            <p className="font-display text-2xl text-foreground">Atlas unavailable</p>
+            <p className="mt-2 text-sm text-muted-foreground">{ERROR_LABEL[payload.error] ?? "Link unavailable."}</p>
           </div>
         )}
 
@@ -98,10 +98,10 @@ function SharedOrigins() {
           <div className="space-y-8">
             <header>
               <p className="text-xs uppercase tracking-widest text-moss">Atlas ancestral compartilhado</p>
-              <h1 className="mt-2 font-display text-4xl text-foreground">Minhas Origens</h1>
+              <h1 className="mt-2 font-display text-4xl text-foreground">My Origins</h1>
               <p className="mt-2 text-sm text-muted-foreground">
-                {payload.patient_name} · versão {payload.result?.version}
-                {payload.result?.published_at ? ` · publicado em ${new Date(payload.result.published_at).toLocaleDateString("pt-BR")}` : ""}
+                {payload.patient_name} · version {payload.result?.version}
+                {payload.result?.published_at ? ` · published on ${new Date(payload.result.published_at).toLocaleDateString("en-US")}` : ""}
               </p>
             </header>
 
@@ -118,7 +118,7 @@ function SharedOrigins() {
                 onClick={() => setShowRoutes(!showRoutes)}
                 className={`rounded-full border px-4 py-2 ${showRoutes ? "border-olive bg-olive text-ivory" : "border-border bg-ivory/60"}`}
               >
-                Rotas migratórias
+                Migration routes
               </button>
               {payload.allow_download && (
                 <button onClick={exportPremiumPdf} className="rounded-full border border-border bg-ivory/60 px-4 py-2">
@@ -129,7 +129,7 @@ function SharedOrigins() {
 
             <div className="grid gap-6 md:grid-cols-2">
               <div className="space-y-2">
-                <h2 className="font-display text-2xl text-foreground">Composição</h2>
+                <h2 className="font-display text-2xl text-foreground">Composition</h2>
                 {regions.map((r) => (
                   <button key={r.id} onClick={() => setActiveId(r.id)} className="block w-full text-left">
                     <div className="flex items-center justify-between text-xs">
@@ -162,23 +162,23 @@ function SharedOrigins() {
                     )}
                     {active.limitations && (
                       <p className="mt-4 rounded-xl border border-terracotta/30 bg-terracotta/5 p-3 text-xs text-terracotta">
-                        Limitações: {active.limitations}
+                        Limitations: {active.limitations}
                       </p>
                     )}
                   </div>
                 ) : (
                   <div className="rounded-2xl border border-border bg-card p-6 text-sm text-muted-foreground">
-                    Toque em um ponto do mapa ou em uma barra da composição para conhecer cada origem.
+                    Tap a map point or a composition bar to explore each origin.
                   </div>
                 )}
               </div>
             </div>
 
             <p className="rounded-2xl border border-border bg-ivory/60 p-6 text-xs leading-5 text-muted-foreground">
-              Estes percentuais representam estimativas construídas a partir da comparação entre o DNA do titular e
-              grupos populacionais de referência. Semelhança genética com uma região não determina pertencimento
-              cultural, e predisposição genética não significa diagnóstico. Este atlas é uma visualização educativa e
-              não substitui orientação profissional.
+              These percentages represent estimates built from the comparison between the holder's DNA and
+              reference population groups. Genetic similarity with a region does not determine cultural belonging
+              cultural belonging, and genetic predisposition does not mean diagnosis. This atlas is an educational
+              visualization and does not replace professional guidance.
             </p>
           </div>
         )}

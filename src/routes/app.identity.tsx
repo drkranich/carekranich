@@ -45,21 +45,21 @@ function Identity() {
         metadata: {
           selfie_path: path,
           captured_at: new Date().toISOString(),
-          next_step: "Selfie capturada. Aguardando revisão do administrador.",
+          next_step: "Selfie captured. Awaiting administrator review.",
         },
       },
       { onConflict: "user_id,provider" },
     );
     if (error) return toast.error(error.message);
     await (supabase as any).from("profiles").update({ verification_status: "pending" }).eq("id", user.id);
-    toast.success("Selfie enviada para verificação");
+    toast.success("Selfie sent for verification");
     setCameraOpen(false);
     refresh();
   };
 
   const viewSelfie = async (path: string) => {
     const { data, error } = await supabase.storage.from("identity").createSignedUrl(path, 300);
-    if (error || !data?.signedUrl) return toast.error(error?.message ?? "Não foi possível abrir a selfie");
+    if (error || !data?.signedUrl) return toast.error(error?.message ?? "Could not open the selfie");
     window.open(data.signedUrl, "_blank", "noopener,noreferrer");
   };
 
@@ -75,19 +75,19 @@ function Identity() {
   return (
     <>
       <PageHeader
-        title="Verificação de identidade"
-        subtitle="Cada pessoa ou administrador de empresa envia uma selfie simples junto com o aceite. As imagens ficam em storage privado com acesso restrito."
-        action={<Pill tone="olive">Selfie + aceite</Pill>}
+        title="Identity verification"
+        subtitle="Each person or company administrator sends a simple selfie with acceptance. Images stay in private storage with restricted access."
+        action={<Pill tone="olive">Selfie + acceptance</Pill>}
       />
       <div className="grid gap-4 md:grid-cols-3">
-        <Stat label="Verificações" value={checks.data?.length ?? "-"} sub="Visíveis por permissão" tone="olive" />
-        <Stat label="Verificadas" value={(checks.data ?? []).filter((c: any) => c.status === "verified").length} sub="Identidade aprovada" tone="moss" />
-        <Stat label="Pendentes" value={(checks.data ?? []).filter((c: any) => c.status !== "verified").length} sub="Aguardando revisão" tone="gold" />
+        <Stat label="Verifications" value={checks.data?.length ?? "-"} sub="Visible by permission" tone="olive" />
+        <Stat label="Verified" value={(checks.data ?? []).filter((c: any) => c.status === "verified").length} sub="Identity approved" tone="moss" />
+        <Stat label="Pending" value={(checks.data ?? []).filter((c: any) => c.status !== "verified").length} sub="Awaiting review" tone="gold" />
       </div>
       <Card className="mt-6">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
-            <h2 className="text-xl font-semibold text-foreground">Minha verificação</h2>
+            <h2 className="text-xl font-semibold text-foreground">My verification</h2>
             <p className="mt-1 text-sm text-muted-foreground">
               Take a selfie now. By submitting it, you declare that you are the account holder (electronic acceptance).
             </p>
@@ -106,24 +106,24 @@ function Identity() {
           <Card key={check.id}>
             <div className="flex items-start justify-between gap-3">
               <div>
-                <h3 className="font-semibold text-foreground">{check.subject_type === "company_admin" ? "Administrador de empresa" : "Pessoa física"}</h3>
+                <h3 className="font-semibold text-foreground">{check.subject_type === "company_admin" ? "Company administrator" : "Individual person"}</h3>
                 <p className="mt-1 text-xs text-muted-foreground">
-                  {check.metadata?.captured_at ? `Selfie de ${new Date(check.metadata.captured_at).toLocaleString("pt-BR")}` : "Sem selfie enviada"}
+                  {check.metadata?.captured_at ? `Selfie from ${new Date(check.metadata.captured_at).toLocaleString("en-US")}` : "No selfie submitted"}
                 </p>
               </div>
-              <Pill tone={check.status === "verified" ? "moss" : "gold"}>{check.status === "verified" ? "verificada" : "pendente"}</Pill>
+              <Pill tone={check.status === "verified" ? "moss" : "gold"}>{check.status === "verified" ? "verified" : "pending"}</Pill>
             </div>
-            <p className="mt-4 text-sm leading-6 text-foreground/80">{check.metadata?.next_step ?? "Aguardando resultado da verificação."}</p>
+            <p className="mt-4 text-sm leading-6 text-foreground/80">{check.metadata?.next_step ?? "Awaiting verification result."}</p>
             <div className="mt-4 flex flex-wrap gap-2">
               {check.metadata?.selfie_path && (isSuperAdmin || check.user_id === user?.id) && (
                 <button onClick={() => viewSelfie(check.metadata.selfie_path)} className="rounded-full border border-border bg-white/55 px-3 py-1.5 text-xs hover:bg-cream">
-                  Ver selfie
+                  View selfie
                 </button>
               )}
               {isSuperAdmin && check.status !== "verified" && (
                 <button onClick={() => markVerified(check.id)} className="inline-flex items-center gap-2 rounded-full bg-olive px-3 py-1.5 text-xs text-ivory">
                   <ShieldCheck className="h-3 w-3" />
-                  Marcar como verificada
+                  Mark as verified
                 </button>
               )}
             </div>
@@ -145,7 +145,7 @@ function SelfieDialog({ onClose, onCapture }: { onClose: () => void; onCapture: 
   const sendFile = (file: File | null) => {
     if (!file) return;
     if (!file.type.startsWith("image/")) {
-      toast.error("Envie um arquivo de imagem (JPG ou PNG).");
+      toast.error("Send an image file (JPG or PNG).");
       return;
     }
     setSending(true);
@@ -168,7 +168,7 @@ function SelfieDialog({ onClose, onCapture }: { onClose: () => void; onCapture: 
         }
         setReady(true);
       })
-      .catch(() => setError("Câmera não encontrada neste dispositivo. Envie uma foto usando o botão abaixo."));
+      .catch(() => setError("Camera not found on this device. Send a photo using the button below."));
     return () => {
       active = false;
       streamRef.current?.getTracks().forEach((track) => track.stop());
@@ -188,7 +188,7 @@ function SelfieDialog({ onClose, onCapture }: { onClose: () => void; onCapture: 
         if (blob) onCapture(blob);
         else {
           setSending(false);
-          toast.error("Falha ao capturar a imagem");
+          toast.error("Failed to capture the image");
         }
       },
       "image/jpeg",
@@ -200,7 +200,7 @@ function SelfieDialog({ onClose, onCapture }: { onClose: () => void; onCapture: 
     <div className="fixed inset-0 z-50 grid place-items-center bg-foreground/40 px-4 backdrop-blur-sm">
       <div className="w-full max-w-md overflow-hidden rounded-2xl border border-white/75 bg-white/85 shadow-elevated backdrop-blur-2xl">
         <div className="flex items-center justify-between border-b border-white/60 px-5 py-4">
-          <h3 className="text-lg font-semibold text-foreground">Selfie de verificação</h3>
+          <h3 className="text-lg font-semibold text-foreground">Verification selfie</h3>
           <button onClick={onClose} className="text-muted-foreground hover:text-foreground">
             <X className="h-4 w-4" />
           </button>
@@ -229,7 +229,7 @@ function SelfieDialog({ onClose, onCapture }: { onClose: () => void; onCapture: 
               disabled={sending}
               className="rounded-full border border-border bg-white/55 px-4 py-2 text-xs disabled:opacity-50"
             >
-              {sending ? "Sending..." : "Enviar foto do dispositivo"}
+              {sending ? "Sending..." : "Send device photo"}
             </button>
             {!error && (
               <button

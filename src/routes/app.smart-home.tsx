@@ -13,10 +13,10 @@ export const Route = createFileRoute("/app/smart-home")({
 });
 
 const HOME_DOMAIN_OPTIONS = [
-  { value: "environment", label: "Ambiente" },
-  { value: "routine", label: "Rotina" },
-  { value: "mobility", label: "Movimento" },
-  { value: "sleep", label: "Sono" },
+  { value: "environment", label: "Environment" },
+  { value: "routine", label: "Routine" },
+  { value: "mobility", label: "Movement" },
+  { value: "sleep", label: "Sleep" },
 ];
 
 function SmartHome() {
@@ -137,7 +137,7 @@ function SmartHome() {
       `Home observation: ${item.metric}`,
       `Value: ${value}`,
       `Domain: ${item.domain}`,
-      `Registrado em: ${new Date(item.observed_at).toLocaleString("pt-BR")}`,
+      `Recorded at: ${new Date(item.observed_at).toLocaleString("en-US")}`,
       `${window.location.origin}/app/smart-home?observation=${item.id}`,
     ].join("\n");
     try {
@@ -171,7 +171,7 @@ function SmartHome() {
       />
 
       {home.isLoading ? (
-        <p className="text-sm text-muted-foreground">Carregando registros da casa...</p>
+        <p className="text-sm text-muted-foreground">Loading home records...</p>
       ) : home.isError ? (
         <Card className="border-wine/25 bg-wine/5">
           <p className="font-medium text-wine">Could not load home records.</p>
@@ -201,14 +201,14 @@ function SmartHome() {
 
           <div className="grid gap-4 md:grid-cols-4">
             <Stat label="Observations" value={observations.length} sub="Digital twin observations" tone="olive" />
-            <Stat label="Sources" value={deviceSources.size} sub="Sources distintas" tone="moss" />
+            <Stat label="Sources" value={deviceSources.size} sub="Distinct sources" tone="moss" />
             <Stat label="Security alerts" value={alerts.length} sub="Home/security category" tone="wine" />
             <Stat label="Residents" value={home.data?.residents.length ?? 0} sub="In the organization" tone="gold" />
           </div>
 
           <div className="mt-6 grid gap-4 lg:grid-cols-2">
             <Card>
-              <h2 className="text-xl font-semibold text-foreground">Sources de sinal conectadas</h2>
+              <h2 className="text-xl font-semibold text-foreground">Connected signal sources</h2>
               {deviceSources.size === 0 ? (
                 <div className="mt-4">
                   <EmptyState
@@ -225,7 +225,7 @@ function SmartHome() {
               )}
             </Card>
             <Card>
-              <h2 className="text-xl font-semibold text-foreground">Security alerts do lar</h2>
+              <h2 className="text-xl font-semibold text-foreground">Home security alerts</h2>
               {alerts.length === 0 ? (
                 <div className="mt-4">
                   <EmptyState title="No home alert" hint="Security alerts from the Alert center appear here." />
@@ -237,13 +237,13 @@ function SmartHome() {
                       <div className="flex flex-wrap items-center justify-between gap-2">
                         <div>
                           <p className="font-medium text-foreground">{alert.title}</p>
-                          <p className="text-xs text-muted-foreground">{alert.category} · {new Date(alert.created_at).toLocaleString("pt-BR")}</p>
+                          <p className="text-xs text-muted-foreground">{alert.category} - {new Date(alert.created_at).toLocaleString("en-US")}</p>
                         </div>
                         <div className="flex items-center gap-2">
                           <Pill tone={alert.severity === "critical" ? "wine" : "gold"}>{alert.status === "open" ? "open" : alert.status}</Pill>
                           {alert.status !== "resolved" && (
                             <button onClick={() => resolveAlert(alert.id)} className="rounded-full border border-border px-3 py-1 text-xs">
-                              Resolver
+                              Resolve
                             </button>
                           )}
                         </div>
@@ -259,7 +259,7 @@ function SmartHome() {
             <Card>
               <div className="flex items-center gap-3">
                 <Home className="h-5 w-5 text-olive" />
-                <h2 className="text-xl font-semibold text-foreground">Observations da casa</h2>
+                <h2 className="text-xl font-semibold text-foreground">Home observations</h2>
               </div>
               {observations.length === 0 ? (
                 <div className="mt-5">
@@ -308,7 +308,7 @@ function SmartHome() {
                             <Pill tone="olive">{HOME_DOMAIN_OPTIONS.find((option) => option.value === item.domain)?.label ?? item.domain}</Pill>
                           </div>
                           <p className="mt-1 text-sm text-muted-foreground">{item.value_numeric ?? item.value_text ?? "-"} {item.unit ?? ""}</p>
-                          <p className="mt-1 text-xs text-muted-foreground">{sourceLabel(item.source)} · {new Date(item.observed_at).toLocaleString("pt-BR")}</p>
+                          <p className="mt-1 text-xs text-muted-foreground">{sourceLabel(item.source)} - {new Date(item.observed_at).toLocaleString("en-US")}</p>
                           {stripArchiveMarker(item.notes ?? "").trim() && (
                             <p className="mt-2 rounded-xl border border-border/60 bg-white/45 p-3 text-xs text-muted-foreground">{stripArchiveMarker(item.notes ?? "")}</p>
                           )}
@@ -367,8 +367,8 @@ function stripArchiveMarker(notes: string) {
 }
 
 function sourceLabel(source: string | null) {
-  if (source === "manual" || source === "manual_home_entry") return "registro manual";
-  if (source === "device") return "dispositivo";
+  if (source === "manual" || source === "manual_home_entry") return "manual record";
+  if (source === "device") return "device";
   if (source === "family") return "family";
   return source ?? "source not informed";
 }

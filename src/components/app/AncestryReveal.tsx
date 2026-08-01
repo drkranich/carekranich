@@ -111,7 +111,7 @@ export function AncestryReveal({
             className="mt-10 rounded-full bg-[#c98a3a] px-8 py-3.5 text-sm font-medium text-[#0b1512] shadow-elevated transition hover:opacity-90"
             style={{ animation: "ck-fade-in 1s ease 2.6s both" }}
           >
-            Descobrir minhas origens
+            Discover my origins
           </button>
           {reducedMotion && (
             <p className="mt-4 text-xs text-[#8f9a8e]">Accessible mode: the animation will be skipped.</p>

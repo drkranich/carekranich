@@ -501,7 +501,7 @@ function AccountStatusControls({
     { status: "active", label: "Ativar", tone: "bg-olive text-ivory" },
     { status: "suspended", label: "Suspender", tone: "border border-gold/35 text-wine" },
     { status: "rejected", label: "Rejeitar", tone: "border border-wine/35 text-wine" },
-    { status: "pending", label: "Pendente", tone: "border border-border text-foreground" },
+    { status: "pending", label: "Pending", tone: "border border-border text-foreground" },
   ];
 
   return (

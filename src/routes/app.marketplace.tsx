@@ -13,8 +13,8 @@ export const Route = createFileRoute("/app/marketplace")({
 
 const categories = [
   { value: "all", label: "All" },
-  { value: "service_provider", label: "Prestador de serviços" },
-  { value: "staff", label: "Funcionário" },
+  { value: "service_provider", label: "Service provider" },
+  { value: "staff", label: "Staff" },
   { value: "clinic", label: "Clinic" },
   { value: "family", label: "Family" },
 ];

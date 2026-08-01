@@ -11,15 +11,15 @@ import { downloadPdf } from "@/lib/pdf";
 export const Route = createFileRoute("/app/patient-portal")({ component: PatientPortal });
 
 function brl(cents: number | null | undefined) {
-  return ((cents ?? 0) / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+  return ((cents ?? 0) / 100).toLocaleString("en-US", { style: "currency", currency: "BRL" });
 }
 
 const ORDER_LABEL: Record<string, string> = {
-  cart: "Em montagem",
-  quote: "Orçamento disponível",
-  ordered: "Pedido confirmado",
-  paid: "Pago",
-  canceled: "Cancelado",
+  cart: "In progress",
+  quote: "Quote available",
+  ordered: "Order confirmed",
+  paid: "Paid",
+  canceled: "Canceled",
 };
 
 function PatientPortal() {
@@ -93,15 +93,15 @@ function PatientPortal() {
 
   const exportSummary = () => {
     if (!selected) return;
-    downloadPdf(`portal-${selected.full_name}.pdf`, `Resumo — ${selected.social_name || selected.full_name}`, [
-      `Convênio: ${selected.insurance_plan ?? "Particular"}`,
+    downloadPdf(`portal-${selected.full_name}.pdf`, `Summary - ${selected.social_name || selected.full_name}`, [
+      `Insurance: ${selected.insurance_plan ?? "Private"}`,
       "",
       "Upcoming appointments:",
-      ...upcoming.map((a: any) => `- ${new Date(a.starts_at).toLocaleString("pt-BR")} · ${a.kind}`),
+      ...upcoming.map((a: any) => `- ${new Date(a.starts_at).toLocaleString("en-US")} - ${a.kind}`),
       "",
-      "Pedidos de exams:",
+      "Exam orders:",
       ...(orders.data ?? []).map(
-        (o: any) => `- ${new Date(o.created_at).toLocaleDateString("pt-BR")} · ${ORDER_LABEL[o.status] ?? o.status} · ${brl(o.total_cents)}`,
+        (o: any) => `- ${new Date(o.created_at).toLocaleDateString("en-US")} - ${ORDER_LABEL[o.status] ?? o.status} - ${brl(o.total_cents)}`,
       ),
     ]);
   };
@@ -128,7 +128,7 @@ function PatientPortal() {
         subtitle="Appointments, orders and quotes - yours and those of authorized family members you follow."
         action={
           <button onClick={exportSummary} className="inline-flex items-center gap-1.5 rounded-full border border-border bg-white/55 px-4 py-2 text-xs">
-            <FileDown className="h-3.5 w-3.5" /> Resumo em PDF
+            <FileDown className="h-3.5 w-3.5" /> PDF summary
           </button>
         }
       />
@@ -137,14 +137,14 @@ function PatientPortal() {
         <Card className="p-5">
           <div className="flex flex-wrap items-center gap-3">
             <HeartHandshake className="h-5 w-5 text-olive" />
-            <p className="text-sm text-muted-foreground">Você está vendo o perfil de:</p>
+            <p className="text-sm text-muted-foreground">You are viewing the profile of:</p>
             <GlassSelect
               value={selected?.id ?? ""}
               onChange={setProfileId}
               className="min-w-72"
               options={(myPatients.data ?? []).map((p: any) => ({
                 value: p.id,
-                label: `${p.social_name || p.full_name}${p._relationship ? ` (${p._relationship})` : " (você)"}`,
+                label: `${p.social_name || p.full_name}${p._relationship ? ` (${p._relationship})` : " (you)"}`,
               }))}
             />
           </div>
@@ -155,11 +155,11 @@ function PatientPortal() {
         <>
           <div className="grid gap-4 md:grid-cols-3">
             <Stat label="Upcoming appointments" value={upcoming.length} sub="Confirmed and scheduled" tone="olive" />
-            <Stat label="Pedidos de exams" value={(orders.data ?? []).length} sub="Histórico completo" tone="moss" />
+            <Stat label="Exam orders" value={(orders.data ?? []).length} sub="Full history" tone="moss" />
             <Stat
-              label="Orçamentos abertos"
+              label="Open quotes"
               value={(orders.data ?? []).filter((o: any) => o.status === "quote").length}
-              sub="Aguardando sua decisão"
+              sub="Waiting for your decision"
               tone="gold"
             />
           </div>
@@ -167,7 +167,7 @@ function PatientPortal() {
           <div className="grid gap-6 lg:grid-cols-2">
             <Card className="space-y-3 p-6">
               <h3 className="flex items-center gap-2 text-sm font-semibold text-foreground">
-                <CalendarDays className="h-4 w-4" /> Agendamentos
+                <CalendarDays className="h-4 w-4" /> Appointments
               </h3>
               {(appointments.data ?? []).length === 0 && (
                 <p className="text-sm text-muted-foreground">No appointments yet.</p>
@@ -178,13 +178,13 @@ function PatientPortal() {
                   <div key={a.id} className="flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-white/70 bg-white/50 px-4 py-3">
                     <div>
                       <p className="text-sm font-medium text-foreground">
-                        {new Date(a.starts_at).toLocaleDateString("pt-BR")} ·{" "}
-                        {new Date(a.starts_at).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
+                        {new Date(a.starts_at).toLocaleDateString("en-US")} -{" "}
+                        {new Date(a.starts_at).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })}
                       </p>
                       <p className="text-xs text-muted-foreground">{a.kind}</p>
                     </div>
                     <Pill tone={a.status === "canceled" ? "wine" : future ? "moss" : "muted"}>
-                      {a.status === "canceled" ? "cancelado" : future ? "agendado" : "realizado"}
+                      {a.status === "canceled" ? "canceled" : future ? "scheduled" : "completed"}
                     </Pill>
                   </div>
                 );
@@ -193,7 +193,7 @@ function PatientPortal() {
 
             <Card className="space-y-3 p-6">
               <h3 className="flex items-center gap-2 text-sm font-semibold text-foreground">
-                <ShoppingCart className="h-4 w-4" /> Pedidos and orçamentos
+                <ShoppingCart className="h-4 w-4" /> Orders and quotes
               </h3>
               {(orders.data ?? []).length === 0 && (
                 <p className="text-sm text-muted-foreground">No exam orders yet.</p>
@@ -202,7 +202,7 @@ function PatientPortal() {
                 <div key={o.id} className="flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-white/70 bg-white/50 px-4 py-3">
                   <div>
                     <p className="text-sm font-medium text-foreground">{brl(o.total_cents)}</p>
-                    <p className="text-xs text-muted-foreground">{new Date(o.created_at).toLocaleDateString("pt-BR")}</p>
+                    <p className="text-xs text-muted-foreground">{new Date(o.created_at).toLocaleDateString("en-US")}</p>
                   </div>
                   <Pill tone={o.status === "paid" || o.status === "ordered" ? "moss" : o.status === "canceled" ? "wine" : "gold"}>
                     {ORDER_LABEL[o.status] ?? o.status}
@@ -210,7 +210,7 @@ function PatientPortal() {
                 </div>
               ))}
               <p className="text-xs text-muted-foreground">
-                Resultados de exams aparecem aqui assim que forem liberados pelo laboratório.
+                Exam results appear here as soon as the laboratory releases them.
               </p>
             </Card>
           </div>

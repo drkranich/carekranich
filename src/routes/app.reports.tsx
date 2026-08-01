@@ -13,15 +13,15 @@ export const Route = createFileRoute("/app/reports")({ component: Reports });
 
 const STATUS_FLOW = ["draft", "review", "validated", "signed", "released"] as const;
 const STATUS_LABEL: Record<string, string> = {
-  draft: "Rascunho",
-  review: "Em revisão",
-  validated: "Validado",
-  signed: "Assinado",
-  released: "Liberado",
+  draft: "Draft",
+  review: "In review",
+  validated: "Validated",
+  signed: "Signed",
+  released: "Released",
 };
 const NEXT_ACTION: Record<string, string> = {
-  draft: "Enviar para revisão",
-  review: "Validar tecnicamente",
+  draft: "Send for review",
+  review: "Validate technically",
   validated: "Sign report",
   signed: "Release to patient",
 };
@@ -155,7 +155,7 @@ function Reports() {
       if (!effTenant) throw new Error("No organization available.");
       if (!draft.patient_id) throw new Error("Select the patient.");
       if (!draft.title.trim()) throw new Error("Enter the report title.");
-      if (!draft.result_text.trim()) throw new Error("Informe o resultado técnico.");
+      if (!draft.result_text.trim()) throw new Error("Enter the technical result.");
       const base: Record<string, unknown> = {
         tenant_id: effTenant,
         patient_id: draft.patient_id,
@@ -184,8 +184,8 @@ function Reports() {
         });
         await (supabase as any).from("alerts").insert({
           tenant_id: effTenant,
-          title: `Resultado crítico — ${patientName(draft.patient_id)}`,
-          description: `Laudo "${draft.title.trim()}" marcado como crítico. Protocolo de comunicação aberto.`,
+          title: `Critical result - ${patientName(draft.patient_id)}`,
+          description: `Report "${draft.title.trim()}" was marked as critical. Communication protocol opened.`,
           severity: "critical",
           category: "lab",
           status: "open",
@@ -195,7 +195,7 @@ function Reports() {
       return data.id as string;
     },
     onSuccess: (id) => {
-      toast.success(amending ? "Retificação criada como nova versão" : "Laudo criado como rascunho");
+      toast.success(amending ? "Correction created as a new version" : "Report created as draft");
       setDraft({ patient_id: "", exam_id: "", sample_id: "", title: "", result_text: "", reference_values: "", comments: "", is_critical: false });
       setOpenForm(false);
       setAmending(false);
@@ -216,7 +216,7 @@ function Reports() {
         const c = critical.data;
         const attempts = Array.isArray(c?.contact_attempts) ? c.contact_attempts : [];
         if (!c || (c.status !== "closed" && attempts.length === 0)) {
-          throw new Error("Resultado crítico: registre ao menos um contato realizado antes de liberar.");
+          throw new Error("Critical result: register at least one completed contact before release.");
         }
       }
       const patch: Record<string, unknown> = { status: next };
@@ -233,7 +233,7 @@ function Reports() {
       return next;
     },
     onSuccess: (next) => {
-      if (next) toast.success(`Laudo: ${STATUS_LABEL[next]}`);
+      if (next) toast.success(`Report: ${STATUS_LABEL[next]}`);
       refresh();
     },
     onError: (e: any) => toast.error(e.message),
@@ -241,7 +241,7 @@ function Reports() {
 
   const registerContact = useMutation({
     mutationFn: async () => {
-      if (!selected || !critical.data) throw new Error("Protocolo crítico não encontrado.");
+      if (!selected || !critical.data) throw new Error("Critical protocol not found.");
       if (!contactNote.trim()) throw new Error("Describe the contact (who was notified and how).");
       const attempts = Array.isArray(critical.data.contact_attempts) ? critical.data.contact_attempts : [];
       const { error } = await (supabase as any)
@@ -257,7 +257,7 @@ function Reports() {
       if (error) throw error;
     },
     onSuccess: () => {
-      toast.success("Contato registrado no protocolo crítico");
+      toast.success("Contact registered in the critical protocol");
       setContactNote("");
       refresh();
     },
@@ -274,7 +274,7 @@ function Reports() {
       if (error) throw error;
     },
     onSuccess: () => {
-      toast.success("Protocolo crítico ended");
+      toast.success("Critical protocol closed");
       refresh();
     },
     onError: (e: any) => toast.error(e.message),
@@ -300,19 +300,19 @@ function Reports() {
   const exportPdf = (r: any) => {
     downloadPdf(`report-${r.title}.pdf`, r.title, [
       `Patient: ${patientName(r.patient_id)}`,
-      r.exam_id ? `Exame: ${examName(r.exam_id)}` : "",
-      `Versão: ${r.version}${r.kind === "retificacao" ? " (retificação)" : ""}`,
-      `Status: ${STATUS_LABEL[r.status] ?? r.status}${r.is_critical ? " · RESULTADO CRÍTICO" : ""}`,
-      `Emitido em: ${new Date(r.created_at).toLocaleString("pt-BR")}`,
-      r.signed_at ? `Assinado em: ${new Date(r.signed_at).toLocaleString("pt-BR")}` : "",
+      r.exam_id ? `Exam: ${examName(r.exam_id)}` : "",
+      `Version: ${r.version}${r.kind === "retificacao" || r.kind === "correction" ? " (correction)" : ""}`,
+      `Status: ${STATUS_LABEL[r.status] ?? r.status}${r.is_critical ? " · CRITICAL RESULT" : ""}`,
+      `Issued at: ${new Date(r.created_at).toLocaleString("en-US")}`,
+      r.signed_at ? `Signed at: ${new Date(r.signed_at).toLocaleString("en-US")}` : "",
       "",
-      "Resultado:",
+      "Result:",
       ...(r.result_text ?? "").split("\n"),
       "",
-      r.reference_values ? `Valores de referência: ${r.reference_values}` : "",
-      r.comments ? `Comentários: ${r.comments}` : "",
+      r.reference_values ? `Reference values: ${r.reference_values}` : "",
+      r.comments ? `Comments: ${r.comments}` : "",
       "",
-      r.signed_hash ? `Verificação (SHA-256): ${r.signed_hash}` : "",
+      r.signed_hash ? `Verification (SHA-256): ${r.signed_hash}` : "",
       "This report does not replace your doctor interpretation.",
     ].filter((l) => l !== ""));
   };
@@ -348,7 +348,7 @@ function Reports() {
       <div className="grid gap-4 md:grid-cols-4">
         <Stat label="In progress" value={stats.drafts} sub="Drafts and review" tone="gold" />
         <Stat label="Awaiting signature" value={stats.toSign} sub="Validated" tone="olive" />
-        <Stat label="Críticos pendentes" value={stats.critical} sub="Protocolo aberto" tone="wine" />
+        <Stat label="Pending criticals" value={stats.critical} sub="Open protocol" tone="wine" />
         <Stat label="Released" value={stats.released} sub="Visible to the patient" tone="moss" />
       </div>
 
@@ -367,14 +367,14 @@ function Reports() {
             <GlassSelect
               value={draft.exam_id}
               onChange={(v) => setDraft({ ...draft, exam_id: v })}
-              placeholder="Exame (opcional)"
+              placeholder="Exam (optional)"
               options={[{ value: "", label: "No linked exam" }, ...(exams.data ?? []).map((e: any) => ({ value: e.id, label: e.commercial_name || e.name }))]}
             />
             <GlassSelect
               value={draft.sample_id}
               onChange={(v) => setDraft({ ...draft, sample_id: v })}
-              placeholder="Amostra (opcional)"
-              options={[{ value: "", label: "Sem amostra vinculada" }, ...(samples.data ?? []).filter((s: any) => !draft.patient_id || s.patient_id === draft.patient_id).map((s: any) => ({ value: s.id, label: s.barcode }))]}
+              placeholder="Sample (optional)"
+              options={[{ value: "", label: "No linked sample" }, ...(samples.data ?? []).filter((s: any) => !draft.patient_id || s.patient_id === draft.patient_id).map((s: any) => ({ value: s.id, label: s.barcode }))]}
             />
           </div>
           <input
@@ -387,7 +387,7 @@ function Reports() {
             value={draft.result_text}
             onChange={(e) => setDraft({ ...draft, result_text: e.target.value })}
             rows={6}
-            placeholder={"Resultado técnico *\nUma linha por analito, ex.:\nHemoglobina: 14,2 g/dL\nLeucócitos: 6.800/mm³"}
+            placeholder={"Technical result *\nOne line per analyte, e.g.:\nHemoglobin: 14.2 g/dL\nLeukocytes: 6,800/mm3"}
             className="w-full rounded-2xl border border-white/70 bg-white/55 px-4 py-2.5 text-sm shadow-soft backdrop-blur-xl outline-none focus:border-olive/40"
           />
           <div className="grid gap-3 md:grid-cols-2">
@@ -395,7 +395,7 @@ function Reports() {
               value={draft.reference_values}
               onChange={(e) => setDraft({ ...draft, reference_values: e.target.value })}
               rows={3}
-              placeholder="Valores de referência"
+              placeholder="Reference values"
               className="w-full rounded-2xl border border-white/70 bg-white/55 px-4 py-2.5 text-sm shadow-soft backdrop-blur-xl outline-none focus:border-olive/40"
             />
             <textarea
@@ -416,7 +416,7 @@ function Reports() {
             }`}
           >
             <ShieldAlert className="h-3.5 w-3.5" />
-            {draft.is_critical ? "Resultado crítico — protocolo será aberto" : "Marcar como resultado crítico"}
+            {draft.is_critical ? "Critical result - protocol will open" : "Mark as critical result"}
           </button>
           <div className="flex gap-2">
             <button
@@ -424,7 +424,7 @@ function Reports() {
               disabled={createReport.isPending}
               className="rounded-full bg-olive px-5 py-2 text-sm font-medium text-ivory shadow-soft hover:opacity-90 disabled:opacity-60"
             >
-              {createReport.isPending ? "Saving..." : amending ? "Criar retificação" : "Create report"}
+              {createReport.isPending ? "Saving..." : amending ? "Create correction" : "Create report"}
             </button>
             <button onClick={() => { setOpenForm(false); setAmending(false); }} className="rounded-full border border-white/70 bg-white/55 px-5 py-2 text-sm backdrop-blur-xl">
               Cancel
@@ -435,7 +435,7 @@ function Reports() {
 
       <div className="grid gap-6 xl:grid-cols-[360px_1fr]">
         <Card className="space-y-2 p-5">
-          <h3 className="text-sm font-semibold text-foreground">Laudos recentes</h3>
+          <h3 className="text-sm font-semibold text-foreground">Recent reports</h3>
           {(reports.data ?? []).length === 0 && <p className="text-sm text-muted-foreground">No reports yet.</p>}
           {(reports.data ?? []).map((r: any) => (
             <button
@@ -453,7 +453,7 @@ function Reports() {
               </div>
               <p className="mt-1 text-xs text-muted-foreground">
                 {patientName(r.patient_id)} · v{r.version}
-                {r.kind === "retificacao" ? " (retificação)" : ""}
+                {r.kind === "retificacao" || r.kind === "correction" ? " (correction)" : ""}
               </p>
             </button>
           ))}
@@ -466,12 +466,12 @@ function Reports() {
                 <h3 className="text-lg font-semibold text-foreground">{selected.title}</h3>
                 <p className="text-xs text-muted-foreground">
                   {patientName(selected.patient_id)}
-                  {selected.exam_id ? ` · ${examName(selected.exam_id)}` : ""} · versão {selected.version}
-                  {selected.kind === "retificacao" ? " (retificação)" : ""}
+                  {selected.exam_id ? ` · ${examName(selected.exam_id)}` : ""} · version {selected.version}
+                  {selected.kind === "retificacao" || selected.kind === "correction" ? " (correction)" : ""}
                 </p>
               </div>
               <div className="flex items-center gap-2">
-                {selected.is_critical && <Pill tone="wine">Crítico</Pill>}
+                {selected.is_critical && <Pill tone="wine">Critical</Pill>}
                 <Pill tone={selected.status === "released" ? "moss" : "gold"}>{STATUS_LABEL[selected.status]}</Pill>
               </div>
             </div>
@@ -495,14 +495,14 @@ function Reports() {
             <div className="rounded-2xl border border-white/70 bg-white/45 p-4">
               <p className="whitespace-pre-wrap text-sm leading-6 text-foreground">{selected.result_text}</p>
               {selected.reference_values && (
-                <p className="mt-3 text-xs text-muted-foreground">Referência: {selected.reference_values}</p>
+                <p className="mt-3 text-xs text-muted-foreground">Reference: {selected.reference_values}</p>
               )}
               {selected.comments && (
-                <p className="mt-1 text-xs text-muted-foreground">Comentários: {selected.comments}</p>
+                <p className="mt-1 text-xs text-muted-foreground">Comments: {selected.comments}</p>
               )}
               {selected.signed_hash && (
                 <p className="mt-3 break-all font-mono text-[10px] text-muted-foreground">
-                  Assinatura SHA-256: {selected.signed_hash}
+                  SHA-256 signature: {selected.signed_hash}
                 </p>
               )}
             </div>
@@ -510,13 +510,13 @@ function Reports() {
             {selected.is_critical && (
               <div className="space-y-3 rounded-2xl border border-wine/25 bg-wine/5 p-4">
                 <p className="flex items-center gap-2 text-sm font-semibold text-wine">
-                  <AlertTriangle className="h-4 w-4" /> Protocolo de resultado crítico —{" "}
-                  {critical.data?.status === "closed" ? "ended" : critical.data?.status === "contacting" ? "em contato" : "aberto"}
+                  <AlertTriangle className="h-4 w-4" /> Critical result protocol -{" "}
+                  {critical.data?.status === "closed" ? "closed" : critical.data?.status === "contacting" ? "contacting" : "open"}
                 </p>
                 {(Array.isArray(critical.data?.contact_attempts) ? critical.data.contact_attempts : []).map(
                   (a: any, i: number) => (
                     <p key={i} className="text-xs text-muted-foreground">
-                      {new Date(a.at).toLocaleString("pt-BR")} — {a.note}
+                      {new Date(a.at).toLocaleString("en-US")} - {a.note}
                     </p>
                   ),
                 )}
@@ -529,10 +529,10 @@ function Reports() {
                       className="min-w-64 flex-1 rounded-xl border border-border bg-ivory px-3 py-2 text-xs"
                     />
                     <button onClick={() => registerContact.mutate()} className="rounded-full bg-wine px-4 py-1.5 text-xs font-medium text-ivory">
-                      Registrar contato
+                      Register contact
                     </button>
                     <button onClick={() => closeCritical.mutate()} className="rounded-full border border-wine/30 px-4 py-1.5 text-xs text-wine">
-                      Encerrar protocolo
+                      Close protocol
                     </button>
                   </div>
                 )}
@@ -551,11 +551,11 @@ function Reports() {
               )}
               {["signed", "released"].includes(selected.status) && (
                 <button onClick={startAmend} className="rounded-full border border-border bg-white/55 px-4 py-2 text-xs">
-                  Criar retificação (nova versão)
+                  Create correction (new version)
                 </button>
               )}
               <button onClick={() => exportPdf(selected)} className="inline-flex items-center gap-1.5 rounded-full border border-border bg-white/55 px-4 py-2 text-xs">
-                <FileDown className="h-3.5 w-3.5" /> Laudo em PDF
+                <FileDown className="h-3.5 w-3.5" /> Report PDF
               </button>
             </div>
             <p className="text-xs text-muted-foreground">

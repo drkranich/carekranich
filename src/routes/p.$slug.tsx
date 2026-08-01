@@ -41,8 +41,8 @@ function PublicPage() {
 
   if (page.isLoading) {
     return (
-      <MarketingPage title="Carregando..." crumbs={[{ label: "Conteúdo" }]}>
-        <p className="text-sm text-muted-foreground">Buscando a página.</p>
+      <MarketingPage title="Loading..." crumbs={[{ label: "Content" }]}>
+        <p className="text-sm text-muted-foreground">Fetching the page.</p>
       </MarketingPage>
     );
   }
@@ -50,12 +50,12 @@ function PublicPage() {
   if (!page.data) {
     return (
       <MarketingPage
-        title="Página não encontrada"
-        crumbs={[{ label: "Conteúdo" }]}
-        primaryCta={{ label: "Voltar ao início", to: "/" }}
+        title="Page not found"
+        crumbs={[{ label: "Content" }]}
+        primaryCta={{ label: "Back to home", to: "/" }}
       >
         <p className="text-sm text-muted-foreground">
-          Esta página pode ter sido despublicada. Explore o site ou fale conosco pelo chat.
+          This page may have been unpublished. Explore the site or talk to us through chat.
         </p>
       </MarketingPage>
     );

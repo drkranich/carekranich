@@ -15,11 +15,11 @@ export const Route = createFileRoute("/app/medications")({ component: Medication
 const ROUTES = [
   { value: "oral", label: "Oral" },
   { value: "sublingual", label: "Sublingual" },
-  { value: "topica", label: "Tópica" },
-  { value: "injetavel", label: "Injetável" },
-  { value: "inalatoria", label: "Inalatória" },
+  { value: "topica", label: "Topical" },
+  { value: "injetavel", label: "Injectable" },
+  { value: "inalatoria", label: "Inhaled" },
   { value: "ocular", label: "Ocular" },
-  { value: "outra", label: "Outra" },
+  { value: "outra", label: "Other" },
 ];
 
 function todayKey() {
@@ -83,7 +83,7 @@ function Medications() {
   const prescribe = useMutation({
     mutationFn: async () => {
       if (!resident) throw new Error("Select a resident.");
-      if (!form.name.trim()) throw new Error("Informe o medicamento.");
+      if (!form.name.trim()) throw new Error("Enter the medication.");
       const times = form.times.split(",").map((t) => t.trim()).filter((t) => /^\d{1,2}:\d{2}$/.test(t));
       const { error } = await (supabase as any).from("medications").insert({
         tenant_id: resident.tenant_id,
@@ -101,18 +101,18 @@ function Medications() {
       if (error) throw error;
     },
     onSuccess: () => {
-      toast.success("Medicamento prescrito");
+      toast.success("Medication prescribed");
       setForm({ name: "", dose: "", route: "oral", frequency: "", times: "08:00, 20:00", instructions: "", start_date: "", end_date: "" });
       qc.invalidateQueries({ queryKey: ["medications", residentId] });
     },
-    onError: (error: any) => toast.error(error.message ?? "Não foi possível prescrever"),
+    onError: (error: any) => toast.error(error.message ?? "Could not prescribe"),
   });
 
   const deactivate = async (id: string) => {
     const { error } = await (supabase as any).from("medications").update({ active: false, end_date: todayKey() }).eq("id", id);
     if (error) toast.error(error.message);
     else {
-      toast.success("Medicamento suspenso");
+      toast.success("Medication suspended");
       qc.invalidateQueries({ queryKey: ["medications", residentId] });
     }
   };
@@ -132,10 +132,10 @@ function Medications() {
       return status;
     },
     onSuccess: (status) => {
-      toast.success(status === "given" ? "Administração registrada" : status === "refused" ? "Recusa registrada" : "Dose pulada registrada");
+      toast.success(status === "given" ? "Administration recorded" : status === "refused" ? "Refusal recorded" : "Skipped dose recorded");
       qc.invalidateQueries({ queryKey: ["med-administrations", residentId, day] });
     },
-    onError: (error: any) => toast.error(error.message ?? "Não foi possível registrar"),
+    onError: (error: any) => toast.error(error.message ?? "Could not record"),
   });
 
   const recordFor = (medicationId: string, time: string) =>
@@ -152,16 +152,16 @@ function Medications() {
   const exportMap = () => {
     if (!resident) return;
     const lines = (medications.data ?? []).flatMap((med: any) => [
-      `${med.name} ${med.dose ?? ""} (${ROUTES.find((r) => r.value === med.route)?.label ?? med.route})${med.frequency ? ` — ${med.frequency}` : ""}`,
+      `${med.name} ${med.dose ?? ""} (${ROUTES.find((r) => r.value === med.route)?.label ?? med.route})${med.frequency ? ` - ${med.frequency}` : ""}`,
       ...((med.schedule_times ?? []) as string[]).map((time) => {
         const record = recordFor(med.id, time);
-        return `  ${time} — ${record ? (record.status === "given" ? `administrado às ${new Date(record.administered_at).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}` : record.status === "refused" ? "recusado" : "pulado") : "pendente"}`;
+        return `  ${time} - ${record ? (record.status === "given" ? `given at ${new Date(record.administered_at).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })}` : record.status === "refused" ? "refused" : "skipped") : "pending"}`;
       }),
       "",
     ]);
-    downloadPdf(`emar-${residentLabel}-${day}`, `Mapa de medicação — ${residentLabel} (${new Date(day + "T12:00:00").toLocaleDateString("pt-BR")})`, [
+    downloadPdf(`emar-${residentLabel}-${day}`, `Medication map - ${residentLabel} (${new Date(day + "T12:00:00").toLocaleDateString("en-US")})`, [
       ...lines,
-      `Gerado em ${new Date().toLocaleString("pt-BR")} - Care Kranich`,
+      `Generated on ${new Date().toLocaleString("en-US")} - Care Kranich`,
     ]);
   };
 
@@ -174,14 +174,14 @@ function Medications() {
   return (
     <>
       <PageHeader
-        title="Gestão medicamentosa (eMAR)"
-        subtitle="Prescrições ativas, mapa de horários do dia and confirmação de administração dose a dose."
+        title="Medication management (eMAR)"
+        subtitle="Active prescriptions, daily schedule map and dose-by-dose administration confirmation."
         action={
           <div className="flex items-center gap-2">
             <Pill tone="olive">eMAR</Pill>
             {resident && (
               <button onClick={exportMap} className="rounded-full border border-moss/40 bg-white/60 px-4 py-2 text-xs font-medium hover:bg-moss/15">
-                Mapa em PDF
+                PDF map
               </button>
             )}
           </div>
@@ -190,8 +190,8 @@ function Medications() {
 
       <div className="grid gap-4 md:grid-cols-3">
         <Stat label="Active medications" value={residentId ? medications.data?.length ?? "-" : "—"} sub={residentLabel || "Select a resident"} tone="olive" />
-        <Stat label="Doses do dia" value={residentId ? `${doneSlots}/${totalSlots}` : "—"} sub="Registradas / previstas" tone={doneSlots === totalSlots && totalSlots > 0 ? "moss" : "gold"} />
-        <Stat label="Records today" value={residentId ? administrations.data?.length ?? "-" : "—"} sub={new Date(day + "T12:00:00").toLocaleDateString("pt-BR")} tone="moss" />
+        <Stat label="Today's doses" value={residentId ? `${doneSlots}/${totalSlots}` : "—"} sub="Recorded / planned" tone={doneSlots === totalSlots && totalSlots > 0 ? "moss" : "gold"} />
+        <Stat label="Records today" value={residentId ? administrations.data?.length ?? "-" : "—"} sub={new Date(day + "T12:00:00").toLocaleDateString("en-US")} tone="moss" />
       </div>
 
       <Card className="mt-6">
@@ -208,26 +208,26 @@ function Medications() {
       </Card>
 
       {!resident ? (
-        <div className="mt-6"><EmptyState title="Choose a resident" hint="O mapa de medicação é individual and registrado dose a dose." /></div>
+        <div className="mt-6"><EmptyState title="Choose a resident" hint="The medication map is individual and recorded dose by dose." /></div>
       ) : (
         <>
           {canPrescribe && (
             <Card className="mt-6">
               <div className="flex items-center gap-2">
                 <Plus className="h-4 w-4 text-olive" />
-                <h2 className="text-lg font-semibold text-foreground">Prescribe medicamento</h2>
+                <h2 className="text-lg font-semibold text-foreground">Prescribe medication</h2>
               </div>
               <div className="mt-3 grid gap-3 md:grid-cols-3 xl:grid-cols-6">
-                <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Medicamento *" className="rounded-xl border border-border bg-ivory px-3 py-2 text-sm xl:col-span-2" />
-                <input value={form.dose} onChange={(e) => setForm({ ...form, dose: e.target.value })} placeholder="Dose (ex.: 50mg)" className="rounded-xl border border-border bg-ivory px-3 py-2 text-sm" />
+                <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Medication *" className="rounded-xl border border-border bg-ivory px-3 py-2 text-sm xl:col-span-2" />
+                <input value={form.dose} onChange={(e) => setForm({ ...form, dose: e.target.value })} placeholder="Dose (e.g. 50mg)" className="rounded-xl border border-border bg-ivory px-3 py-2 text-sm" />
                 <GlassSelect value={form.route} onChange={(value) => setForm({ ...form, route: value })} options={ROUTES} />
-                <input value={form.frequency} onChange={(e) => setForm({ ...form, frequency: e.target.value })} placeholder="Frequência (ex.: 12/12h)" className="rounded-xl border border-border bg-ivory px-3 py-2 text-sm" />
-                <input value={form.times} onChange={(e) => setForm({ ...form, times: e.target.value })} placeholder="Horários (08:00, 20:00)" className="rounded-xl border border-border bg-ivory px-3 py-2 text-sm" />
-                <input value={form.instructions} onChange={(e) => setForm({ ...form, instructions: e.target.value })} placeholder="Instruções (ex.: com alimentos)" className="rounded-xl border border-border bg-ivory px-3 py-2 text-sm xl:col-span-3" />
+                <input value={form.frequency} onChange={(e) => setForm({ ...form, frequency: e.target.value })} placeholder="Frequency (e.g. every 12h)" className="rounded-xl border border-border bg-ivory px-3 py-2 text-sm" />
+                <input value={form.times} onChange={(e) => setForm({ ...form, times: e.target.value })} placeholder="Times (08:00, 20:00)" className="rounded-xl border border-border bg-ivory px-3 py-2 text-sm" />
+                <input value={form.instructions} onChange={(e) => setForm({ ...form, instructions: e.target.value })} placeholder="Instructions (e.g. with food)" className="rounded-xl border border-border bg-ivory px-3 py-2 text-sm xl:col-span-3" />
                 <div className="flex items-center gap-2 xl:col-span-2">
-                  <span className="text-xs text-muted-foreground">Início</span>
+                  <span className="text-xs text-muted-foreground">Start</span>
                   <GlassDatePicker value={form.start_date} onChange={(value) => setForm({ ...form, start_date: value })} />
-                  <span className="text-xs text-muted-foreground">Fim</span>
+                  <span className="text-xs text-muted-foreground">End</span>
                   <GlassDatePicker value={form.end_date} onChange={(value) => setForm({ ...form, end_date: value })} />
                 </div>
                 <button onClick={() => prescribe.mutate()} disabled={prescribe.isPending || !form.name.trim()} className="rounded-xl bg-olive px-4 py-2 text-sm font-semibold text-ivory disabled:opacity-50">
@@ -240,7 +240,7 @@ function Medications() {
           <Card className="mt-6">
             <div className="flex items-center gap-2">
               <PillIcon className="h-4 w-4 text-olive" />
-              <h2 className="text-lg font-semibold text-foreground">Mapa de medicação — {residentLabel}</h2>
+              <h2 className="text-lg font-semibold text-foreground">Medication map - {residentLabel}</h2>
             </div>
             {(medications.data ?? []).length === 0 ? (
               <p className="mt-4 text-sm text-muted-foreground">No active medications for this resident.</p>
@@ -251,17 +251,17 @@ function Medications() {
                     <div className="flex flex-wrap items-start justify-between gap-2">
                       <div>
                         <p className="font-semibold text-foreground">
-                          {med.name} {med.dose && <span className="font-normal text-muted-foreground">· {med.dose}</span>}
+                          {med.name} {med.dose && <span className="font-normal text-muted-foreground">- {med.dose}</span>}
                         </p>
                         <p className="text-xs text-muted-foreground">
                           {ROUTES.find((r) => r.value === med.route)?.label ?? med.route}
-                          {med.frequency ? ` · ${med.frequency}` : ""}
-                          {med.instructions ? ` · ${med.instructions}` : ""}
+                          {med.frequency ? ` - ${med.frequency}` : ""}
+                          {med.instructions ? ` - ${med.instructions}` : ""}
                         </p>
                       </div>
                       {canPrescribe && (
                         <button onClick={() => window.confirm(`Suspender ${med.name}?`) && deactivate(med.id)} className="rounded-full border border-wine/30 px-2.5 py-1 text-[11px] text-wine">
-                          Suspender
+                          Suspend
                         </button>
                       )}
                     </div>
@@ -284,21 +284,21 @@ function Medications() {
                           >
                             <p className="text-sm font-semibold text-foreground">
                               {time}
-                              {late && !record && <span className="ml-1 text-[10px] font-bold uppercase text-wine">atrasada</span>}
+                              {late && !record && <span className="ml-1 text-[10px] font-bold uppercase text-wine">late</span>}
                             </p>
                             {record ? (
                               <p className="mt-0.5 text-[11px] text-muted-foreground">
-                                {record.status === "given" ? `✓ ${new Date(record.administered_at).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}` : record.status === "refused" ? "recusado" : "pulado"}
+                                {record.status === "given" ? `✓ ${new Date(record.administered_at).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })}` : record.status === "refused" ? "refused" : "skipped"}
                               </p>
                             ) : (
                               <div className="mt-1.5 flex gap-1">
-                                <button title="Administrado" onClick={() => register.mutate({ medication: med, time, status: "given" })} className="rounded-full bg-moss p-1.5 text-ivory hover:opacity-90">
+                                <button title="Given" onClick={() => register.mutate({ medication: med, time, status: "given" })} className="rounded-full bg-moss p-1.5 text-ivory hover:opacity-90">
                                   <Check className="h-3 w-3" />
                                 </button>
-                                <button title="Recusado" onClick={() => register.mutate({ medication: med, time, status: "refused" })} className="rounded-full border border-wine/40 bg-white/70 p-1.5 text-wine">
+                                <button title="Refused" onClick={() => register.mutate({ medication: med, time, status: "refused" })} className="rounded-full border border-wine/40 bg-white/70 p-1.5 text-wine">
                                   <XCircle className="h-3 w-3" />
                                 </button>
-                                <button title="Pular dose" onClick={() => register.mutate({ medication: med, time, status: "skipped" })} className="rounded-full border border-border bg-white/70 p-1.5 text-muted-foreground">
+                                <button title="Skip dose" onClick={() => register.mutate({ medication: med, time, status: "skipped" })} className="rounded-full border border-border bg-white/70 p-1.5 text-muted-foreground">
                                   <CircleSlash className="h-3 w-3" />
                                 </button>
                               </div>
@@ -306,7 +306,7 @@ function Medications() {
                           </div>
                         );
                       })}
-                      {(med.schedule_times ?? []).length === 0 && <p className="text-xs text-muted-foreground">Sem horários definidos.</p>}
+                      {(med.schedule_times ?? []).length === 0 && <p className="text-xs text-muted-foreground">No times defined.</p>}
                     </div>
                   </div>
                 ))}

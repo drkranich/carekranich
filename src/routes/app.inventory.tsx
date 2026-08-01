@@ -14,19 +14,19 @@ export const Route = createFileRoute("/app/inventory")({ component: Inventory })
 
 const CATEGORIES = [
   { value: "material", label: "Collection material" },
-  { value: "reagente", label: "Reagentes" },
+  { value: "reagente", label: "Reagents" },
   { value: "kit", label: "Kits" },
   { value: "epi", label: "EPIs" },
-  { value: "embalagem", label: "Embalagens / transporte" },
-  { value: "descartavel", label: "Descartáveis" },
+  { value: "embalagem", label: "Packaging / transport" },
+  { value: "descartavel", label: "Disposables" },
 ];
 
 const MOVE_KINDS = [
-  { value: "entrada", label: "Entrada" },
-  { value: "saida", label: "Saída / consumo" },
-  { value: "perda", label: "Perda" },
-  { value: "descarte", label: "Descarte" },
-  { value: "transferencia", label: "Transferência" },
+  { value: "entrada", label: "Inbound" },
+  { value: "saida", label: "Outbound / consumption" },
+  { value: "perda", label: "Loss" },
+  { value: "descarte", label: "Disposal" },
+  { value: "transferencia", label: "Transfer" },
 ];
 
 const glassInput =
@@ -110,7 +110,7 @@ function Inventory() {
       setOpen(false);
       refresh();
     },
-    onError: (e: any) => toast.error(e.message ?? "Não foi possível salvar"),
+    onError: (e: any) => toast.error(e.message ?? "Could not save"),
   });
 
   const registerMove = useMutation({
@@ -121,7 +121,7 @@ function Inventory() {
       if (!qty || qty <= 0) throw new Error("Enter the quantity.");
       const delta = move.kind === "entrada" ? qty : -qty;
       const newQty = Number(item.quantity) + delta;
-      if (newQty < 0) throw new Error("Quantidade insuficiente em estoque.");
+      if (newQty < 0) throw new Error("Insufficient stock quantity.");
       const { error } = await (supabase as any).from("inventory_moves").insert({
         tenant_id: item.tenant_id,
         item_id: item.id,
@@ -139,8 +139,8 @@ function Inventory() {
       if (newQty <= Number(item.min_quantity) && delta < 0) {
         await (supabase as any).from("alerts").insert({
           tenant_id: item.tenant_id,
-          title: `Low stock — ${item.name}`,
-          description: `Remaining ${newQty} ${item.unit_label} (mínimo: ${item.min_quantity}). Programar reposição.`,
+          title: `Low stock - ${item.name}`,
+          description: `Remaining ${newQty} ${item.unit_label} (minimum: ${item.min_quantity}). Schedule replenishment.`,
           severity: "high",
           category: "inventory",
           status: "open",
@@ -151,7 +151,7 @@ function Inventory() {
       return "ok";
     },
     onSuccess: (flag) => {
-      toast.success(flag === "low" ? "Movimentação registrada — alerta de reposição criado" : "Movimentação registrada");
+      toast.success(flag === "low" ? "Movement recorded - replenishment alert created" : "Movement recorded");
       setMove({ kind: "saida", quantity: "", notes: "" });
       setMoveFor(null);
       refresh();
@@ -189,12 +189,12 @@ function Inventory() {
   }, [items.data]);
 
   const exportPdf = () => {
-    downloadPdf("inventario-insumos.pdf", "Inventário de insumos", [
-      `Emitido em: ${new Date().toLocaleString("pt-BR")}`,
+    downloadPdf("supply-inventory.pdf", "Supply inventory", [
+      `Issued on: ${new Date().toLocaleString("en-US")}`,
       "",
       ...(items.data ?? []).map((i: any) => {
         const d = daysTo(i.expiry_date);
-        return `- ${i.name} (${CATEGORIES.find((c) => c.value === i.category)?.label ?? i.category}) · ${i.quantity} ${i.unit_label} · mínimo ${i.min_quantity}${i.lot ? ` · lot ${i.lot}` : ""}${i.expiry_date ? ` · expires ${new Date(i.expiry_date + "T00:00:00").toLocaleDateString("pt-BR")}${d !== null && d < 0 ? " (EXPIRED)" : ""}` : ""}`;
+        return `- ${i.name} (${CATEGORIES.find((c) => c.value === i.category)?.label ?? i.category}) - ${i.quantity} ${i.unit_label} - minimum ${i.min_quantity}${i.lot ? ` - lot ${i.lot}` : ""}${i.expiry_date ? ` - expires ${new Date(i.expiry_date + "T00:00:00").toLocaleDateString("en-US")}${d !== null && d < 0 ? " (EXPIRED)" : ""}` : ""}`;
       }),
     ]);
   };
@@ -203,45 +203,45 @@ function Inventory() {
     <div className="space-y-6">
       <PageHeader
         title="Stock and supplies"
-        subtitle="Tubos, reagentes, kits, EPIs and materiais com lot, expires, estoque mínimo and alerta automático de reposição."
+        subtitle="Tubes, reagents, kits, PPE and materials with lot, expiry, minimum stock and automatic replenishment alerts."
         action={
           <div className="flex gap-2">
             <button onClick={exportPdf} className="inline-flex items-center gap-1.5 rounded-full border border-border bg-white/55 px-4 py-2 text-xs">
-              <FileDown className="h-3.5 w-3.5" /> Inventário PDF
+              <FileDown className="h-3.5 w-3.5" /> Inventory PDF
             </button>
             <button
               onClick={() => setOpen(!open)}
               className="inline-flex items-center gap-2 rounded-full bg-olive px-4 py-2 text-sm font-medium text-ivory shadow-soft hover:opacity-90"
             >
-              <Plus className="h-4 w-4" /> Novo insumo
+              <Plus className="h-4 w-4" /> New supply
             </button>
           </div>
         }
       />
 
       <div className="grid gap-4 md:grid-cols-4">
-        <Stat label="Registered items" value={stats.total} sub="No inventário" tone="olive" />
-        <Stat label="Low stock" value={stats.low} sub="No mínimo ou abaixo" tone="wine" />
-        <Stat label="Vencendo em 30 days" value={stats.expiring} sub="Priorizar uso" tone="gold" />
-        <Stat label="Vencidos" value={stats.expired} sub="Descartar" tone="terracotta" />
+        <Stat label="Registered items" value={stats.total} sub="In inventory" tone="olive" />
+        <Stat label="Low stock" value={stats.low} sub="At or below minimum" tone="wine" />
+        <Stat label="Expiring in 30 days" value={stats.expiring} sub="Prioritize use" tone="gold" />
+        <Stat label="Expired" value={stats.expired} sub="Discard" tone="terracotta" />
       </div>
 
       {open && (
         <Card className="space-y-3 p-6">
-          <h3 className="text-sm font-semibold text-foreground">Novo insumo</h3>
+          <h3 className="text-sm font-semibold text-foreground">New supply</h3>
           <div className="grid gap-3 md:grid-cols-4">
-            <input className={`${glassInput} md:col-span-2`} placeholder="Nome (ex.: Tubo EDTA 4mL) *" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
+            <input className={`${glassInput} md:col-span-2`} placeholder="Name (e.g. EDTA tube 4mL) *" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
             <GlassSelect value={form.category} onChange={(v) => setForm({ ...form, category: v })} options={CATEGORIES} />
-            <input className={glassInput} placeholder="Fornecedor" value={form.supplier} onChange={(e) => setForm({ ...form, supplier: e.target.value })} />
-            <input className={glassInput} placeholder="Lote" value={form.lot} onChange={(e) => setForm({ ...form, lot: e.target.value })} />
+            <input className={glassInput} placeholder="Supplier" value={form.supplier} onChange={(e) => setForm({ ...form, supplier: e.target.value })} />
+            <input className={glassInput} placeholder="Lot" value={form.lot} onChange={(e) => setForm({ ...form, lot: e.target.value })} />
             <div>
-              <p className="mb-1 text-xs font-medium text-muted-foreground">Validade</p>
+              <p className="mb-1 text-xs font-medium text-muted-foreground">Expiry</p>
               <GlassDatePicker value={form.expiry_date} onChange={(v) => setForm({ ...form, expiry_date: v })} />
             </div>
-            <input className={glassInput} placeholder="Quantidade inicial" inputMode="decimal" value={form.quantity} onChange={(e) => setForm({ ...form, quantity: e.target.value })} />
+            <input className={glassInput} placeholder="Initial quantity" inputMode="decimal" value={form.quantity} onChange={(e) => setForm({ ...form, quantity: e.target.value })} />
             <input className={glassInput} placeholder="Minimum stock" inputMode="decimal" value={form.min_quantity} onChange={(e) => setForm({ ...form, min_quantity: e.target.value })} />
-            <input className={glassInput} placeholder="Unidade (un, cx, mL...)" value={form.unit_label} onChange={(e) => setForm({ ...form, unit_label: e.target.value })} />
-            <input className={glassInput} placeholder="Custo unitário (R$)" value={form.cost} onChange={(e) => setForm({ ...form, cost: e.target.value })} />
+            <input className={glassInput} placeholder="Unit (ea, box, mL...)" value={form.unit_label} onChange={(e) => setForm({ ...form, unit_label: e.target.value })} />
+            <input className={glassInput} placeholder="Unit cost (BRL)" value={form.cost} onChange={(e) => setForm({ ...form, cost: e.target.value })} />
           </div>
           <div className="flex gap-2">
             <button onClick={() => save.mutate()} disabled={save.isPending} className="rounded-full bg-olive px-5 py-2 text-sm font-medium text-ivory shadow-soft hover:opacity-90 disabled:opacity-60">
@@ -258,7 +258,7 @@ function Inventory() {
         {[
           { value: "all", label: "All" },
           { value: "low", label: "Low stock" },
-          { value: "expiring", label: "Vencendo" },
+          { value: "expiring", label: "Expiring" },
           ...CATEGORIES,
         ].map((f) => (
           <button
@@ -293,7 +293,7 @@ function Inventory() {
                       <p className="text-sm font-semibold text-foreground">{i.name}</p>
                       <p className="text-xs text-muted-foreground">
                         {CATEGORIES.find((c) => c.value === i.category)?.label ?? i.category}
-                        {i.supplier ? ` · ${i.supplier}` : ""}
+                        {i.supplier ? ` - ${i.supplier}` : ""}
                       </p>
                     </div>
                   </div>
@@ -302,11 +302,11 @@ function Inventory() {
                   </Pill>
                 </div>
                 <div className="flex flex-wrap gap-1.5 text-xs">
-                  <Pill tone="muted">mín. {i.min_quantity}</Pill>
+                  <Pill tone="muted">min. {i.min_quantity}</Pill>
                   {i.lot && <Pill tone="muted">lot {i.lot}</Pill>}
                   {i.expiry_date && (
                     <Pill tone={d !== null && d < 0 ? "terracotta" : d !== null && d <= 30 ? "gold" : "muted"}>
-                      {d !== null && d < 0 ? "vencido" : `expires ${new Date(i.expiry_date + "T00:00:00").toLocaleDateString("pt-BR")}`}
+                      {d !== null && d < 0 ? "expired" : `expires ${new Date(i.expiry_date + "T00:00:00").toLocaleDateString("en-US")}`}
                     </Pill>
                   )}
                 </div>
@@ -315,12 +315,12 @@ function Inventory() {
                   <div className="space-y-2 rounded-2xl border border-white/70 bg-white/45 p-3">
                     <div className="grid gap-2 md:grid-cols-2">
                       <GlassSelect value={move.kind} onChange={(v) => setMove({ ...move, kind: v })} options={MOVE_KINDS} />
-                      <input className={glassInput} placeholder={`Quantidade (${i.unit_label})`} inputMode="decimal" value={move.quantity} onChange={(e) => setMove({ ...move, quantity: e.target.value })} />
+                      <input className={glassInput} placeholder={`Quantity (${i.unit_label})`} inputMode="decimal" value={move.quantity} onChange={(e) => setMove({ ...move, quantity: e.target.value })} />
                     </div>
-                    <input className={glassInput} placeholder="Observação (destino, motivo...)" value={move.notes} onChange={(e) => setMove({ ...move, notes: e.target.value })} />
+                    <input className={glassInput} placeholder="Note (destination, reason...)" value={move.notes} onChange={(e) => setMove({ ...move, notes: e.target.value })} />
                     <div className="flex gap-2">
                       <button onClick={() => registerMove.mutate()} disabled={registerMove.isPending} className="rounded-full bg-olive px-4 py-1.5 text-xs font-medium text-ivory disabled:opacity-60">
-                        Registrar
+                        Record
                       </button>
                       <button onClick={() => setMoveFor(null)} className="rounded-full border border-border px-4 py-1.5 text-xs">
                         Cancel
@@ -329,7 +329,7 @@ function Inventory() {
                   </div>
                 ) : (
                   <button onClick={() => setMoveFor(i.id)} className="rounded-full border border-white/70 bg-white/55 px-3 py-1.5 text-xs backdrop-blur-xl hover:bg-white/80">
-                    Movimentar estoque
+                    Move stock
                   </button>
                 )}
               </Card>

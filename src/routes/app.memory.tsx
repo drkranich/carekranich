@@ -41,15 +41,15 @@ type MemoryRow = {
 };
 
 const memoryTypes = [
-  { value: "photo", label: "Foto" },
-  { value: "audio", label: "Áudio" },
-  { value: "video", label: "Vídeo" },
-  { value: "journal", label: "Diário" },
-  { value: "letter", label: "Carta" },
-  { value: "document", label: "Documento" },
+  { value: "photo", label: "Photo" },
+  { value: "audio", label: "Audio" },
+  { value: "video", label: "Video" },
+  { value: "journal", label: "Journal" },
+  { value: "letter", label: "Letter" },
+  { value: "document", label: "Document" },
 ];
 const visibilityOptions = [
-  { value: "private", label: "Privado" },
+  { value: "private", label: "Private" },
   { value: "family", label: "Family" },
   { value: "tenant", label: "Organization" },
 ];
@@ -135,11 +135,11 @@ function Memory() {
     const selectedResident = residents.data?.find((resident) => resident.id === draft.resident_id);
     const tenantId = profile?.tenant_id ?? selectedResident?.tenant_id;
     if (!tenantId || !user) {
-      toast.error("Select a resident com organização antes de criar memórias.");
+      toast.error("Select a resident with an organization before creating memories.");
       return;
     }
     if (!draft.title.trim() && !file) {
-      toast.error("Adicione um título ou escolha um arquivo.");
+      toast.error("Add a title or choose a file.");
       return;
     }
 
@@ -193,7 +193,7 @@ function Memory() {
       toast.success("Memory saved to the private archive");
       qc.invalidateQueries({ queryKey: ["legacy-memories", profile?.tenant_id] });
     } catch (err: any) {
-      toast.error(err.message ?? "Não foi possível salvar a memória");
+      toast.error(err.message ?? "Could not save the memory");
     } finally {
       setUploading(false);
     }
@@ -201,14 +201,14 @@ function Memory() {
 
   const openMemory = async (memory: MemoryRow) => {
     if (!memory.storage_path) {
-      toast.info("Esta memória é somente texto.");
+      toast.info("This memory is text only.");
       return;
     }
     const { data, error } = await supabase.storage
       .from(memory.bucket)
       .createSignedUrl(memory.storage_path, 60 * 5);
     if (error || !data?.signedUrl) {
-      toast.error(error?.message ?? "Não foi possível abrir o arquivo da memória");
+      toast.error(error?.message ?? "Could not open the memory file");
       return;
     }
     window.open(data.signedUrl, "_blank", "noopener,noreferrer");
@@ -216,13 +216,13 @@ function Memory() {
 
   const exportMemory = (memory: MemoryRow) => {
     downloadPdf(`${memory.title}-legado.pdf`, memory.title, [
-      `Tipo: ${memory.memory_type}`,
-      `Resident: ${memory.resident_id ? residentName.get(memory.resident_id) ?? memory.resident_id : "Não vinculado"}`,
-      `Date: ${memory.memory_date ?? memory.memory_year ?? "Não definida"}`,
-      `Visibilidade: ${memory.visibility}`,
-      `Prompt: ${memory.prompt ?? "Sem prompt"}`,
-      `Descrição: ${memory.description ?? "Sem descrição"}`,
-      `Arquivo: ${memory.storage_path ?? "Somente texto"}`,
+      `Type: ${memory.memory_type}`,
+      `Resident: ${memory.resident_id ? residentName.get(memory.resident_id) ?? memory.resident_id : "Not linked"}`,
+      `Date: ${memory.memory_date ?? memory.memory_year ?? "Not defined"}`,
+      `Visibility: ${memory.visibility}`,
+      `Prompt: ${memory.prompt ?? "No prompt"}`,
+      `Description: ${memory.description ?? "No description"}`,
+      `File: ${memory.storage_path ?? "Text only"}`,
     ]);
   };
 
@@ -300,8 +300,8 @@ function Memory() {
     <>
       <PageHeader
         title="Memory and legacy"
-        subtitle="Arquivo privado para fotos reais, áudios, cartas, diários and documentos de legado."
-        action={<Pill tone="olive">Storage privado + RLS</Pill>}
+        subtitle="Private archive for real photos, audio, letters, journals and legacy documents."
+        action={<Pill tone="olive">Private storage + RLS</Pill>}
       />
 
       <div className="grid gap-6 xl:grid-cols-[420px_1fr]">
@@ -311,9 +311,9 @@ function Memory() {
               <Upload className="h-5 w-5" />
             </span>
             <div>
-              <h2 className="text-xl font-semibold text-foreground">Adicionar memória real</h2>
+              <h2 className="text-xl font-semibold text-foreground">Add real memory</h2>
               <p className="text-xs text-muted-foreground">
-                Envie imagem, áudio, vídeo, PDF ou salve um registro somente de texto.
+                Upload an image, audio, video, PDF or save a text-only journal entry.
               </p>
             </div>
           </div>
@@ -322,7 +322,7 @@ function Memory() {
             <input
               value={draft.title}
               onChange={(event) => setDraft({ ...draft, title: event.target.value })}
-              placeholder="Título"
+              placeholder="Title"
               className="w-full rounded-xl border border-border bg-ivory px-3 py-2 text-sm"
             />
 
@@ -350,7 +350,7 @@ function Memory() {
                 onChange={(event) =>
                   setDraft({ ...draft, memory_year: event.target.value.replace(/\D/g, "").slice(0, 4) })
                 }
-                placeholder="Ano"
+                placeholder="Year"
                 className="rounded-xl border border-border bg-ivory px-3 py-2 text-sm"
               />
             </div>
@@ -371,19 +371,19 @@ function Memory() {
               value={draft.prompt}
               onChange={(event) => setDraft({ ...draft, prompt: event.target.value })}
               rows={2}
-              placeholder="Pergunta ou inspiração desta memória"
+              placeholder="Question or inspiration for this memory"
               className="w-full rounded-xl border border-border bg-ivory px-3 py-2 text-sm"
             />
             <textarea
               value={draft.description}
               onChange={(event) => setDraft({ ...draft, description: event.target.value })}
               rows={4}
-              placeholder="Descrição, transcrição ou contexto"
+              placeholder="Description, transcript or context"
               className="w-full rounded-xl border border-border bg-ivory px-3 py-2 text-sm"
             />
 
             <label className="flex cursor-pointer items-center justify-between gap-3 rounded-xl border border-border bg-ivory px-3 py-3 text-sm">
-              <span className="min-w-0 truncate">{file ? file.name : "Escolher arquivo"}</span>
+              <span className="min-w-0 truncate">{file ? file.name : "Choose file"}</span>
               <FileArchive className="h-4 w-4 flex-none text-muted-foreground" />
               <input
                 type="file"
@@ -398,7 +398,7 @@ function Memory() {
               disabled={uploading || !(profile?.tenant_id || draft.resident_id)}
               className="w-full rounded-xl bg-olive px-4 py-2.5 text-sm font-medium text-ivory disabled:opacity-50"
             >
-              {uploading ? "Saving..." : "Salvar memória"}
+              {uploading ? "Saving..." : "Save memory"}
             </button>
           </div>
         </Card>
@@ -416,7 +416,7 @@ function Memory() {
                 />
               </div>
               <div className="flex flex-wrap gap-2">
-                {[{ value: "all", label: "Todas" }, ...memoryTypes].map((type) => (
+                {[{ value: "all", label: "All" }, ...memoryTypes].map((type) => (
                   <button
                     key={type.value}
                     onClick={() => setTypeFilter(type.value)}
@@ -436,18 +436,18 @@ function Memory() {
           {!profile?.tenant_id && !isSuperAdmin ? (
             <EmptyState title="Join an approved organization first" hint="Memories are restricted to the organization for privacy." />
           ) : memories.isLoading ? (
-            <p className="text-sm text-muted-foreground">Carregando memórias...</p>
+            <p className="text-sm text-muted-foreground">Loading memories...</p>
           ) : memories.isError ? (
             <Card className="border-wine/25 bg-wine/5">
-              <p className="font-medium text-wine">Não foi possível carregar as memórias.</p>
+              <p className="font-medium text-wine">Could not load memories.</p>
               <p className="mt-2 text-sm text-muted-foreground">
                 {(memories.error as Error).message}
               </p>
             </Card>
           ) : filteredMemories.length === 0 ? (
             <EmptyState
-              title="Ainda não há memórias"
-              hint="Envie a primeira foto, áudio, carta ou registro de diário."
+              title="No memories yet"
+              hint="Upload the first photo, audio, letter or journal entry."
             />
           ) : (
             <div className="grid gap-6 lg:grid-cols-[1fr_340px]">
@@ -475,13 +475,13 @@ function Memory() {
                     <Pill tone="olive">{selectedMemory.memory_type}</Pill>
                     <Pill tone="muted">{selectedMemory.visibility}</Pill>
                     <Pill tone={selectedMemory.storage_path ? "moss" : "gold"}>
-                      {selectedMemory.storage_path ? "com arquivo" : "somente texto"}
+                      {selectedMemory.storage_path ? "with file" : "text only"}
                     </Pill>
                   </div>
                   <dl className="mt-5 space-y-3 text-sm">
-                    <Detail label="Residente" value={selectedMemory.resident_id ? residentName.get(selectedMemory.resident_id) ?? selectedMemory.resident_id : "Não vinculado"} />
-                    <Detail label="Data" value={selectedMemory.memory_date ?? String(selectedMemory.memory_year ?? "Não definida")} />
-                    <Detail label="Tamanho" value={formatBytes(selectedMemory.file_size)} />
+                    <Detail label="Resident" value={selectedMemory.resident_id ? residentName.get(selectedMemory.resident_id) ?? selectedMemory.resident_id : "Not linked"} />
+                    <Detail label="Date" value={selectedMemory.memory_date ?? String(selectedMemory.memory_year ?? "Not defined")} />
+                    <Detail label="Size" value={formatBytes(selectedMemory.file_size)} />
                     <Detail label="Status" value={selectedMemory.status} />
                   </dl>
                   {selectedMemory.prompt && (
@@ -499,14 +499,14 @@ function Memory() {
                       onClick={() => openMemory(selectedMemory)}
                       className="rounded-full bg-olive px-4 py-2 text-xs text-ivory"
                     >
-                      Abrir arquivo assinado
+                      Open signed file
                     </button>
                     <button
                       onClick={() => exportMemory(selectedMemory)}
                       className="inline-flex items-center gap-2 rounded-full border border-border px-4 py-2 text-xs"
                     >
                       <Download className="h-3.5 w-3.5" />
-                      Exportar PDF
+                      Export PDF
                     </button>
                   </div>
                   {canModify(selectedMemory) ? (
@@ -516,11 +516,11 @@ function Memory() {
                           <input
                             value={newTitle}
                             onChange={(event) => setNewTitle(event.target.value)}
-                            placeholder="Novo nome da memória"
+                            placeholder="New memory name"
                             className="min-w-0 flex-1 rounded-xl border border-border bg-ivory px-3 py-2 text-xs"
                           />
                           <button onClick={() => renameMemory(selectedMemory)} className="rounded-full bg-olive px-4 py-2 text-xs text-ivory">
-                            Salvar
+                            Save
                           </button>
                           <button onClick={() => setRenaming(false)} className="rounded-full border border-border px-4 py-2 text-xs">
                             Cancel
@@ -533,7 +533,7 @@ function Memory() {
                             setNewTitle(selectedMemory.title);
                           }}
                           onArchive={() => archiveMemory(selectedMemory)}
-                          archiveLabel={selectedMemory.status === "archived" ? "Restaurar" : "Archive"}
+                          archiveLabel={selectedMemory.status === "archived" ? "Restore" : "Archive"}
                           onShare={() => shareMemory(selectedMemory)}
                           onDelete={() => deleteMemory(selectedMemory)}
                         />
@@ -541,7 +541,7 @@ function Memory() {
                     </div>
                   ) : (
                     <p className="mt-3 text-xs text-muted-foreground">
-                      Somente quem criou a memória ou administradores podem editar, arquivar ou excluir.
+                      Only the memory creator or administrators can edit, archive or delete.
                     </p>
                   )}
                 </Card>
@@ -594,7 +594,7 @@ function MemoryCard({
         )}
         <div className="absolute left-3 top-3">
           <Pill tone={memory.storage_path ? "moss" : "gold"}>
-            {memory.storage_path ? memory.memory_type : "diário"}
+            {memory.storage_path ? memory.memory_type : "journal"}
           </Pill>
         </div>
       </div>
@@ -622,7 +622,7 @@ function Detail({ label, value }: { label: string; value: string }) {
 
 function formatDate(value: string | null | undefined) {
   if (!value) return "-";
-  return new Date(value).toLocaleDateString("pt-BR");
+  return new Date(value).toLocaleDateString("en-US");
 }
 
 function formatBytes(value: number | null | undefined) {

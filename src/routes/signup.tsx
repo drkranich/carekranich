@@ -24,7 +24,7 @@ function Signup() {
     e.preventDefault();
     setError(null); setInfo(null);
     if (!validPhone(phone)) {
-      return setError("Informe um telefone válido com DDD (ex.: +55 11 99999-9999).");
+      return setError("Enter a valid phone number, e.g. +1 202 555 0182.");
     }
     setLoading(true);
     const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
@@ -47,7 +47,7 @@ function Signup() {
       navigate({ to: "/onboarding" });
     } else {
       setLoading(false);
-      setInfo("Confira seu e-mail para confirmar a conta e depois faça login.");
+      setInfo("Check your email to confirm the account, then log in.");
     }
   };
 
@@ -60,20 +60,20 @@ function Signup() {
           </div>
           <span className="font-display text-xl text-olive">Care Kranich</span>
         </Link>
-        <h1 className="mt-6 font-display text-2xl text-foreground">Crie sua conta</h1>
-        <p className="mt-1 text-sm text-muted-foreground">Depois do cadastro você escolhe como vai usar a plataforma — com 15 dias de teste grátis.</p>
+        <h1 className="mt-6 font-display text-2xl text-foreground">Create your account</h1>
+        <p className="mt-1 text-sm text-muted-foreground">After signup, choose how you will use the platform - with a 15-day free trial.</p>
 
         <form onSubmit={onSubmit} className="mt-6 space-y-4">
           <label className="block text-sm">
-            <span className="text-foreground/80">Nome completo *</span>
+            <span className="text-foreground/80">Full name *</span>
             <input required value={fullName} onChange={(e) => setFullName(e.target.value)} className="mt-1 w-full rounded-xl border border-border bg-ivory px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-olive/40" />
           </label>
           <label className="block text-sm">
-            <span className="text-foreground/80">Nome preferido <span className="text-muted-foreground">(como vamos te chamar)</span></span>
-            <input value={preferredName} onChange={(e) => setPreferredName(e.target.value)} placeholder={fullName.trim().split(" ")[0] || "ex.: Inês"} className="mt-1 w-full rounded-xl border border-border bg-ivory px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-olive/40" />
+            <span className="text-foreground/80">Preferred name <span className="text-muted-foreground">(how we should call you)</span></span>
+            <input value={preferredName} onChange={(e) => setPreferredName(e.target.value)} placeholder={fullName.trim().split(" ")[0] || "e.g. Nina"} className="mt-1 w-full rounded-xl border border-border bg-ivory px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-olive/40" />
           </label>
           <label className="block text-sm">
-            <span className="text-foreground/80">Telefone (com DDD) *</span>
+            <span className="text-foreground/80">Phone *</span>
             <input
               required
               type="tel"
@@ -88,17 +88,17 @@ function Signup() {
             <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} className="mt-1 w-full rounded-xl border border-border bg-ivory px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-olive/40" />
           </label>
           <label className="block text-sm">
-            <span className="text-foreground/80">Senha *</span>
+            <span className="text-foreground/80">Password *</span>
             <input type="password" required minLength={8} value={password} onChange={(e) => setPassword(e.target.value)} className="mt-1 w-full rounded-xl border border-border bg-ivory px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-olive/40" />
           </label>
           {error && <p className="rounded-lg bg-wine/10 px-3 py-2 text-xs text-wine">{error}</p>}
           {info && <p className="rounded-lg bg-moss/10 px-3 py-2 text-xs text-moss">{info}</p>}
           <button disabled={loading} className="w-full rounded-full bg-olive px-4 py-2.5 text-sm text-ivory hover:opacity-90 disabled:opacity-50">
-            {loading ? "Criando..." : "Criar conta"}
+            {loading ? "Creating..." : "Create account"}
           </button>
         </form>
         <p className="mt-4 text-center text-xs text-muted-foreground">
-          Já tem conta? <Link to="/login" className="text-olive hover:underline">Entrar</Link>
+          Already have an account? <Link to="/login" className="text-olive hover:underline">Log in</Link>
         </p>
       </div>
     </div>

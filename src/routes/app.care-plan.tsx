@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { Card, PageHeader, Pill } from "@/components/app/primitives";
 import { GlassSelect } from "@/components/app/GlassSelect";
-import { GlassDatePicker } from "@/components/app/GlassDatePicker";
+import { GlassDatePicker, GlassDateTimePicker } from "@/components/app/GlassDatePicker";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/app/care-plan")({ component: CarePlanPage });
@@ -35,20 +35,20 @@ type Task = {
 };
 
 const CATEGORIES = [
-  { value: "general", label: "Em geral" },
-  { value: "medication", label: "Medicamento" },
-  { value: "vitals", label: "Sinais vitais" },
-  { value: "nutrition", label: "Nutrição" },
-  { value: "hydration", label: "Hidratação" },
-  { value: "mobility", label: "Mobilidade" },
-  { value: "cognition", label: "Cognicao" },
-  { value: "emotional", label: "Emocional" },
+  { value: "general", label: "General" },
+  { value: "medication", label: "Medication" },
+  { value: "vitals", label: "Vital signs" },
+  { value: "nutrition", label: "Nutrition" },
+  { value: "hydration", label: "Hydration" },
+  { value: "mobility", label: "Mobility" },
+  { value: "cognition", label: "Cognition" },
+  { value: "emotional", label: "Emotional" },
 ];
 const PRIORITIES = [
-  { value: "low", label: "Baixa" },
+  { value: "low", label: "Low" },
   { value: "normal", label: "Normal" },
-  { value: "high", label: "Alta" },
-  { value: "critical", label: "Critica" },
+  { value: "high", label: "High" },
+  { value: "critical", label: "Critical" },
 ];
 
 function CarePlanPage() {
@@ -64,6 +64,7 @@ function CarePlanPage() {
   const [taskCategory, setTaskCategory] = useState("general");
   const [taskPriority, setTaskPriority] = useState("normal");
   const [taskPlanId, setTaskPlanId] = useState("");
+  const [taskDueAt, setTaskDueAt] = useState("");
 
   const { data: residents = [], isLoading: residentsLoading } = useQuery({
     queryKey: ["residents-list", profile?.tenant_id, isSuperAdmin],
@@ -394,7 +395,7 @@ function CarePlanPage() {
                   onSubmit={(e: FormEvent<HTMLFormElement>) => {
                     e.preventDefault();
                     const f = new FormData(e.currentTarget);
-                    const due = f.get("due_at") as string;
+                    const due = taskDueAt;
                     createTask.mutate({
                       care_plan_id: (f.get("care_plan_id") as string) || null,
                       title: String(f.get("title")),
@@ -406,6 +407,7 @@ function CarePlanPage() {
                     setTaskCategory("general");
                     setTaskPriority("normal");
                     setTaskPlanId("");
+                    setTaskDueAt("");
                     (e.target as HTMLFormElement).reset();
                   }}
                   className="mb-4 grid grid-cols-1 gap-2 rounded-2xl border border-border bg-ivory p-3 md:grid-cols-2"
@@ -428,11 +430,7 @@ function CarePlanPage() {
                     onChange={setTaskPriority}
                     options={PRIORITIES}
                   />
-                  <input
-                    type="datetime-local"
-                    name="due_at"
-                    className="rounded-lg border border-border bg-card px-2 py-1.5 text-sm"
-                  />
+                  <GlassDateTimePicker name="due_at" value={taskDueAt} onChange={setTaskDueAt} />
                   <GlassSelect
                     name="care_plan_id"
                     value={taskPlanId}

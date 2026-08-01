@@ -113,7 +113,7 @@ function MedicalRecords() {
       ...lines,
       "",
       `Autor: ${record.author_role ? ROLE_LABELS[record.author_role as AppRole] ?? record.author_role : "-"}`,
-      `Date: ${new Date(record.created_at).toLocaleString("pt-BR")}`,
+      `Date: ${new Date(record.created_at).toLocaleString("en-US")}`,
       `Hash de integridade: ${record.signed_hash ?? "-"}`,
     ]);
   };
@@ -121,17 +121,17 @@ function MedicalRecords() {
   const exportFullPdf = () => {
     if (!resident) return;
     const lines = (records.data ?? []).flatMap((record: any) => [
-      `${new Date(record.created_at).toLocaleString("pt-BR")} — ${TYPE_LABELS[record.record_type]} (${record.author_role ? ROLE_LABELS[record.author_role as AppRole] ?? record.author_role : "-"})`,
+      `${new Date(record.created_at).toLocaleString("en-US")} — ${TYPE_LABELS[record.record_type]} (${record.author_role ? ROLE_LABELS[record.author_role as AppRole] ?? record.author_role : "-"})`,
       ...(record.record_type === "soap"
         ? [`  S: ${record.subjective ?? "-"}`, `  O: ${record.objective ?? "-"}`, `  A: ${record.assessment ?? "-"}`, `  P: ${record.plan ?? "-"}`, record.cid_code ? `  CID: ${record.cid_code}` : ""]
         : [`  ${record.content ?? "-"}`]),
       "",
     ]);
     downloadPdf(`complete-chart-${residentLabel}`, `Chart - ${residentLabel}`, [
-      resident.date_of_birth ? `Nascimento: ${new Date(resident.date_of_birth + "T12:00:00").toLocaleDateString("pt-BR")}` : "",
+      resident.date_of_birth ? `Birth date: ${new Date(resident.date_of_birth + "T12:00:00").toLocaleDateString("en-US")}` : "",
       "",
       ...lines,
-      `Gerado em ${new Date().toLocaleString("pt-BR")} - Care Kranich`,
+      `Generated at ${new Date().toLocaleString("en-US")} - Care Kranich`,
     ]);
   };
 
@@ -156,8 +156,8 @@ function MedicalRecords() {
         <Stat label="Records" value={residentId ? records.data?.length ?? "-" : "—"} sub={residentLabel || "Select a resident"} tone="olive" />
         <Stat
           label="Latest progress note"
-          value={records.data?.[0] ? new Date(records.data[0].created_at).toLocaleDateString("pt-BR") : "—"}
-          sub={records.data?.[0] ? TYPE_LABELS[records.data[0].record_type] : "Sem registros"}
+          value={records.data?.[0] ? new Date(records.data[0].created_at).toLocaleDateString("en-US") : "—"}
+          sub={records.data?.[0] ? TYPE_LABELS[records.data[0].record_type] : "No records"}
           tone="moss"
         />
         <Stat
@@ -184,7 +184,7 @@ function MedicalRecords() {
           <Card>
             <div className="flex items-center gap-2">
               <Stethoscope className="h-4 w-4 text-olive" />
-              <h2 className="text-lg font-semibold text-foreground">Novo registro</h2>
+              <h2 className="text-lg font-semibold text-foreground">New record</h2>
             </div>
             <div className="mt-3 space-y-3">
               <GlassSelect
@@ -235,7 +235,7 @@ function MedicalRecords() {
                         {record.cid_code && <Pill tone="muted">CID {record.cid_code}</Pill>}
                       </div>
                       <span className="text-xs text-muted-foreground">
-                        {new Date(record.created_at).toLocaleString("pt-BR")} · {record.author_role ? ROLE_LABELS[record.author_role as AppRole] ?? record.author_role : "-"}
+                        {new Date(record.created_at).toLocaleString("en-US")} · {record.author_role ? ROLE_LABELS[record.author_role as AppRole] ?? record.author_role : "-"}
                       </span>
                     </div>
                     {record.record_type === "soap" ? (

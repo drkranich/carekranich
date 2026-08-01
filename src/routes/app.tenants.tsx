@@ -303,7 +303,7 @@ function Tenants() {
       );
     },
     onSuccess: (_, variables) => {
-      toast.success(variables.kind === "logo" ? "Logo publicada" : "Favicon publicado");
+      toast.success(variables.kind === "logo" ? "Logo published" : "Favicon published");
     },
     onError: (error: any) => toast.error(error.message ?? "Upload did not finish"),
   });
@@ -358,28 +358,28 @@ function Tenants() {
       `organization-${tenant.slug ?? tenant.id}`,
       stripAccents(`Organization report - ${tenant.name}`),
       [
-        line("Nome", tenant.name),
+        line("Name", tenant.name),
         line("Razao social", tenant.legal_name),
         line("CNPJ", tenant.cnpj),
         line("E-mail", tenant.email),
         line("Phone", tenant.phone),
         line("Responsavel", tenant.responsible_name),
-        line("Endereco", tenant.address),
+        line("Address", tenant.address),
         line("City/UF", [tenant.city, tenant.state].filter(Boolean).join(" / ")),
         line("CEP", tenant.postal_code),
-        line("Pais", tenant.country),
+        line("Country", tenant.country),
         "",
         line("Status", tenant.status),
         line("Cobranca", tenant.billing_status),
-        line("Archived", tenant.archived_at ? new Date(tenant.archived_at).toLocaleDateString("pt-BR") : "Nao"),
+        line("Archived", tenant.archived_at ? new Date(tenant.archived_at).toLocaleDateString("en-US") : "No"),
         line("Codigo de convite", tenant.invite_code),
-        line("Criada em", tenant.created_at ? new Date(tenant.created_at).toLocaleDateString("pt-BR") : "-"),
+        line("Created at", tenant.created_at ? new Date(tenant.created_at).toLocaleDateString("en-US") : "-"),
         "",
         line("Members", memberCount ?? 0),
         line("Residents", residentCount ?? 0),
         line("Observacoes", tenant.notes),
         "",
-        `Generated at ${new Date().toLocaleString("pt-BR")} - Care Kranich`,
+        `Generated at ${new Date().toLocaleString("en-US")} - Care Kranich`,
       ].map((item) => stripAccents(String(item))),
     );
   };
@@ -545,7 +545,7 @@ function Tenants() {
                 <Avatar name={member.full_name ?? "?"} src={member.avatar_url} tone="olive" />
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm text-foreground">
-                    {member.preferred_name || member.full_name || "Sem nome"}
+                    {member.preferred_name || member.full_name || "No name"}
                   </p>
                   <p className="text-xs text-muted-foreground">
                     {member.user_kind ?? "user"} - {member.account_status ?? "unknown"}
@@ -714,7 +714,7 @@ function BrandingPanel({
           </p>
         </div>
         <Pill tone={branding?.logo_url || branding?.favicon_url ? "moss" : "gold"}>
-          {loading ? "Carregando" : branding?.logo_url || branding?.favicon_url ? "Publicado" : "Sem arquivos"}
+          {loading ? "Loading" : branding?.logo_url || branding?.favicon_url ? "Published" : "No files"}
         </Pill>
       </div>
 
@@ -740,7 +740,7 @@ function BrandingPanel({
         </div>
 
         <div className="rounded-2xl border border-white/70 bg-white/45 p-4">
-          <p className="text-xs font-semibold uppercase text-muted-foreground">Nome da marca</p>
+          <p className="text-xs font-semibold uppercase text-muted-foreground">Brand name</p>
           <div className="mt-3 flex gap-2">
             <input
               value={brandName}
@@ -862,10 +862,10 @@ function TenantStatusControls({
       className: "border border-olive/25 text-olive",
     },
     {
-      label: "Payment pendente",
+      label: "Payment pending",
       status: "active",
       billing: "past_due",
-      reason: "Payment em atraso; acesso mantido sob monitoramento.",
+      reason: "Payment overdue; access kept under monitoring.",
       className: "border border-gold/35 text-wine",
     },
     {

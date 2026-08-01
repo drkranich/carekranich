@@ -13,14 +13,14 @@ import { downloadPdf } from "@/lib/pdf";
 export const Route = createFileRoute("/app/equipment")({ component: Equipment });
 
 const STATUS_LABEL: Record<string, string> = {
-  operational: "Operacional",
+  operational: "Operational",
   maintenance: "Under maintenance",
   inactive: "Inactive",
 };
 
 const KIND_LABEL: Record<string, string> = {
-  preventiva: "Preventiva",
-  corretiva: "Corretiva",
+  preventiva: "Preventive",
+  corretiva: "Corrective",
   calibracao: "Calibration",
 };
 
@@ -28,7 +28,7 @@ const glassInput =
   "w-full rounded-2xl border border-white/70 bg-white/55 px-4 py-2.5 text-sm shadow-soft backdrop-blur-xl outline-none focus:border-olive/40";
 
 function brl(cents: number | null | undefined) {
-  return ((cents ?? 0) / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+  return ((cents ?? 0) / 100).toLocaleString("en-US", { style: "currency", currency: "BRL" });
 }
 
 const EMPTY = {
@@ -109,7 +109,7 @@ function Equipment() {
     },
   });
 
-  const unitName = (id: string | null) => (units.data ?? []).find((u: any) => u.id === id)?.name ?? "Sem unidade";
+  const unitName = (id: string | null) => (units.data ?? []).find((u: any) => u.id === id)?.name ?? "No unit";
 
   const refresh = () => {
     qc.invalidateQueries({ queryKey: ["equipment", tenantId] });
@@ -209,7 +209,7 @@ function Equipment() {
         .update({ last_calibration: new Date().toISOString().slice(0, 10) })
         .eq("id", selected.id);
     }
-    toast.success("Manutenção completed");
+    toast.success("Maintenance completed");
     refresh();
   };
 
@@ -233,18 +233,18 @@ function Equipment() {
   const exportPdf = (eq: any) => {
     const list = eq.id === selected?.id ? (maintenances.data ?? []) : [];
     downloadPdf(`equipment-${eq.name}.pdf`, eq.name, [
-      `Fabricante: ${eq.manufacturer ?? "-"}  Modelo: ${eq.model ?? "-"}`,
+      `Manufacturer: ${eq.manufacturer ?? "-"}  Model: ${eq.model ?? "-"}`,
       `Serial number: ${eq.serial_number ?? "-"}`,
-      `Unidade: ${unitName(eq.unit_id)}  Sala: ${eq.room ?? "-"}`,
+      `Unit: ${unitName(eq.unit_id)}  Room: ${eq.room ?? "-"}`,
       `Status: ${STATUS_LABEL[eq.status] ?? eq.status}`,
-      `Warranty until: ${eq.warranty_until ? new Date(eq.warranty_until + "T00:00:00").toLocaleDateString("pt-BR") : "-"}`,
-      `Last calibration: ${eq.last_calibration ? new Date(eq.last_calibration + "T00:00:00").toLocaleDateString("pt-BR") : "-"}`,
-      `Next maintenance: ${eq.next_maintenance ? new Date(eq.next_maintenance + "T00:00:00").toLocaleDateString("pt-BR") : "-"}`,
+      `Warranty until: ${eq.warranty_until ? new Date(eq.warranty_until + "T00:00:00").toLocaleDateString("en-US") : "-"}`,
+      `Last calibration: ${eq.last_calibration ? new Date(eq.last_calibration + "T00:00:00").toLocaleDateString("en-US") : "-"}`,
+      `Next maintenance: ${eq.next_maintenance ? new Date(eq.next_maintenance + "T00:00:00").toLocaleDateString("en-US") : "-"}`,
       "",
       "Maintenance history:",
       ...list.map(
         (m: any) =>
-          `- ${KIND_LABEL[m.kind] ?? m.kind} · ${m.status === "done" ? "completed" : "scheduled"} · ${m.scheduled_for ? new Date(m.scheduled_for + "T00:00:00").toLocaleDateString("pt-BR") : "-"} · ${brl(m.cost_cents)}${m.provider ? ` · ${m.provider}` : ""}`,
+          `- ${KIND_LABEL[m.kind] ?? m.kind} · ${m.status === "done" ? "completed" : "scheduled"} · ${m.scheduled_for ? new Date(m.scheduled_for + "T00:00:00").toLocaleDateString("en-US") : "-"} · ${brl(m.cost_cents)}${m.provider ? ` · ${m.provider}` : ""}`,
       ),
     ]);
   };
@@ -280,7 +280,7 @@ function Equipment() {
       />
 
       <div className="grid gap-4 md:grid-cols-4">
-        <Stat label="Equipment" value={stats.total} sub="Cadastrados" tone="olive" />
+        <Stat label="Equipment" value={stats.total} sub="Registered" tone="olive" />
         <Stat label="Operational" value={stats.operational} sub="Available for scheduling" tone="moss" />
         <Stat label="Under maintenance" value={stats.maintenance} sub="Impacted schedules" tone="wine" />
         <Stat label="Overdue maintenance" value={stats.overdue} sub="Expected date overdue" tone="terracotta" />
@@ -290,17 +290,17 @@ function Equipment() {
         <Card className="space-y-3 p-6">
           <h3 className="text-sm font-semibold text-foreground">{editingId ? "Edit equipment" : "New equipment"}</h3>
           <div className="grid gap-3 md:grid-cols-3">
-            <input className={glassInput} placeholder="Nome (ex.: Ultrassom GE Logiq) *" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
-            <input className={glassInput} placeholder="Fabricante" value={form.manufacturer} onChange={(e) => setForm({ ...form, manufacturer: e.target.value })} />
-            <input className={glassInput} placeholder="Modelo" value={form.model} onChange={(e) => setForm({ ...form, model: e.target.value })} />
+            <input className={glassInput} placeholder="Name (e.g. GE Logiq ultrasound) *" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
+            <input className={glassInput} placeholder="Manufacturer" value={form.manufacturer} onChange={(e) => setForm({ ...form, manufacturer: e.target.value })} />
+            <input className={glassInput} placeholder="Model" value={form.model} onChange={(e) => setForm({ ...form, model: e.target.value })} />
             <input className={glassInput} placeholder="Serial number" value={form.serial_number} onChange={(e) => setForm({ ...form, serial_number: e.target.value })} />
             <GlassSelect
               value={form.unit_id}
               onChange={(v) => setForm({ ...form, unit_id: v })}
-              placeholder="Unidade"
-              options={[{ value: "", label: "Sem unidade" }, ...(units.data ?? []).map((u: any) => ({ value: u.id, label: u.name }))]}
+              placeholder="Unit"
+              options={[{ value: "", label: "No unit" }, ...(units.data ?? []).map((u: any) => ({ value: u.id, label: u.name }))]}
             />
-            <input className={glassInput} placeholder="Sala" value={form.room} onChange={(e) => setForm({ ...form, room: e.target.value })} />
+            <input className={glassInput} placeholder="Room" value={form.room} onChange={(e) => setForm({ ...form, room: e.target.value })} />
             <div>
               <p className="mb-1 text-xs font-medium text-muted-foreground">Warranty until</p>
               <GlassDatePicker value={form.warranty_until} onChange={(v) => setForm({ ...form, warranty_until: v })} />
@@ -313,7 +313,7 @@ function Equipment() {
           </div>
           <div className="flex gap-2">
             <button onClick={() => save.mutate()} disabled={save.isPending} className="rounded-full bg-olive px-5 py-2 text-sm font-medium text-ivory shadow-soft hover:opacity-90 disabled:opacity-60">
-              {save.isPending ? "Saving..." : editingId ? "Salvar alterações" : "Register"}
+              {save.isPending ? "Saving..." : editingId ? "Save changes" : "Register"}
             </button>
             <button onClick={() => { setOpen(false); setEditingId(null); }} className="rounded-full border border-white/70 bg-white/55 px-5 py-2 text-sm backdrop-blur-xl">
               Cancel
@@ -362,21 +362,21 @@ function Equipment() {
                   <Pencil className="h-3 w-3" /> Edit
                 </button>
                 <button onClick={() => exportPdf(selected)} className="inline-flex items-center gap-1 rounded-full border border-border bg-white/55 px-3 py-1.5 text-xs">
-                  <FileDown className="h-3 w-3" /> Ficha PDF
+                  <FileDown className="h-3 w-3" /> PDF record
                 </button>
               </div>
             </div>
 
             <div className="flex flex-wrap gap-2 text-xs">
               {selected.warranty_until && (
-                <Pill tone="olive">Warranty until {new Date(selected.warranty_until + "T00:00:00").toLocaleDateString("pt-BR")}</Pill>
+                <Pill tone="olive">Warranty until {new Date(selected.warranty_until + "T00:00:00").toLocaleDateString("en-US")}</Pill>
               )}
               {selected.last_calibration && (
-                <Pill tone="moss">Calibrado em {new Date(selected.last_calibration + "T00:00:00").toLocaleDateString("pt-BR")}</Pill>
+                <Pill tone="moss">Calibrated at {new Date(selected.last_calibration + "T00:00:00").toLocaleDateString("en-US")}</Pill>
               )}
               {selected.next_maintenance && (
                 <Pill tone={selected.next_maintenance < new Date().toISOString().slice(0, 10) ? "wine" : "gold"}>
-                  Next maintenance {new Date(selected.next_maintenance + "T00:00:00").toLocaleDateString("pt-BR")}
+                  Next maintenance {new Date(selected.next_maintenance + "T00:00:00").toLocaleDateString("en-US")}
                 </Pill>
               )}
             </div>
@@ -384,7 +384,7 @@ function Equipment() {
             <div className="flex flex-wrap gap-2">
               {selected.status !== "operational" && (
                 <button onClick={() => setStatus(selected, "operational")} className="rounded-full bg-moss px-4 py-2 text-xs font-medium text-ivory">
-                  Marcar operacional
+                  Mark operational
                 </button>
               )}
               {selected.status !== "maintenance" && (
@@ -394,7 +394,7 @@ function Equipment() {
               )}
               {selected.status !== "inactive" && (
                 <button onClick={() => setStatus(selected, "inactive")} className="rounded-full border border-border bg-white/55 px-4 py-2 text-xs">
-                  Desativar
+                  Deactivate
                 </button>
               )}
             </div>
@@ -411,11 +411,11 @@ function Equipment() {
                 />
                 <GlassDatePicker value={maint.scheduled_for} onChange={(v) => setMaint({ ...maint, scheduled_for: v })} />
                 <input className={glassInput} placeholder="Provider" value={maint.provider} onChange={(e) => setMaint({ ...maint, provider: e.target.value })} />
-                <input className={glassInput} placeholder="Custo (R$)" value={maint.cost} onChange={(e) => setMaint({ ...maint, cost: e.target.value })} />
+                <input className={glassInput} placeholder="Cost (BRL)" value={maint.cost} onChange={(e) => setMaint({ ...maint, cost: e.target.value })} />
               </div>
               <input className={glassInput} placeholder="Description (parts, failure, technical report...)" value={maint.description} onChange={(e) => setMaint({ ...maint, description: e.target.value })} />
               <button onClick={() => addMaintenance.mutate()} disabled={addMaintenance.isPending} className="rounded-full bg-olive px-4 py-1.5 text-xs font-medium text-ivory disabled:opacity-60">
-                Registrar
+                Register
               </button>
             </div>
 
@@ -433,13 +433,13 @@ function Equipment() {
                     </span>
                     <span className="flex items-center gap-2">
                       <span className="text-muted-foreground">
-                        {m.scheduled_for ? new Date(m.scheduled_for + "T00:00:00").toLocaleDateString("pt-BR") : "-"}
+                        {m.scheduled_for ? new Date(m.scheduled_for + "T00:00:00").toLocaleDateString("en-US") : "-"}
                       </span>
                       {m.status === "done" ? (
                         <Pill tone="moss">completed</Pill>
                       ) : (
                         <button onClick={() => completeMaintenance(m)} className="rounded-full bg-olive px-3 py-1 font-medium text-ivory">
-                          Concluir
+                          Complete
                         </button>
                       )}
                     </span>

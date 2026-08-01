@@ -93,7 +93,7 @@ function Overview() {
             <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">{workspace.body}</p>
           </div>
           <div className="border-t border-white/55 bg-white/30 p-5 lg:border-l lg:border-t-0">
-            <p className="text-xs uppercase text-muted-foreground">Sua área</p>
+            <p className="text-xs uppercase text-muted-foreground">Your area</p>
             <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-1">
               {workspace.links.map((link) => (
                 <QuickLink key={link.to} to={link.to} label={link.label} hint={link.hint} />
@@ -220,11 +220,11 @@ function workspaceFor(
   if (isSuperAdmin) {
     return {
       eyebrow: "Super admin",
-      title: "Ecossistema Care Kranich",
+      title: "Care Kranich ecosystem",
       subtitle: "Global dashboard to approve users, plans, contracts and operations.",
       body: "This is where platform decisions live: access, revenue, contracts, inbox, verifications and operational health.",
       links: [
-        { to: "/app/admin", label: "Super Admin", hint: "Visão global" },
+        { to: "/app/admin", label: "Super Admin", hint: "Global view" },
         { to: "/app/approvals", label: "Approvals", hint: "Users and clinics" },
         { to: "/app/billing", label: "Plans", hint: "Subscriptions and access" },
         { to: "/app/inbox", label: "Inbox", hint: "Ecosystem conversations" },
@@ -241,7 +241,7 @@ function workspaceFor(
         { to: "/app/residents", label: "Residents", hint: "Profiles and care" },
         { to: "/app/tenants", label: "Organization", hint: "Team and permissions" },
         { to: "/app/command", label: "Command", hint: "Daily operations" },
-        { to: "/app/care-plan", label: "Care plan", hint: "Rotina clínica" },
+        { to: "/app/care-plan", label: "Care plan", hint: "Clinical routine" },
       ],
     };
   }
@@ -255,7 +255,7 @@ function workspaceFor(
         { to: "/app/marketplace", label: "Marketplace", hint: "Public presence" },
         { to: "/app/inbox", label: "Inbox", hint: "Customer conversations" },
         { to: "/app/documents", label: "Documents", hint: "Certificates and contracts" },
-        { to: "/app/identity", label: "Verificação", hint: "Facial recognition" },
+        { to: "/app/identity", label: "Verification", hint: "Facial recognition" },
       ],
     };
   }
@@ -266,9 +266,9 @@ function workspaceFor(
       subtitle: "Space for tasks, records, alerts and resident progress.",
       body: "The team works with timeline, care plan, caregiver app, alerts and clinical documents according to permissions.",
       links: [
-        { to: "/app/caregiver", label: "Caregiver app", hint: "Tarefas do turno" },
+        { to: "/app/caregiver", label: "Caregiver app", hint: "Shift tasks" },
         { to: "/app/timeline", label: "Timeline", hint: "Log care" },
-        { to: "/app/alerts", label: "Alertas", hint: "Resolve incidents" },
+        { to: "/app/alerts", label: "Alerts", hint: "Resolve incidents" },
         { to: "/app/medical", label: "Doctor", hint: "Clinical notes" },
       ],
     };
@@ -279,7 +279,7 @@ function workspaceFor(
     subtitle: "Space to follow the people you love, memories, smart home and alerts.",
     body: "Common users see what matters to the family: linked residents, memories, routine, documents, alerts and team communication.",
     links: [
-      { to: "/app/residents", label: "Residents", hint: "Quem você acompanha" },
+      { to: "/app/residents", label: "Residents", hint: "People you follow" },
       { to: "/app/memory", label: "Memories", hint: "History and legacy" },
       { to: "/app/smart-home", label: "Smart home", hint: "Sensors and environment" },
       { to: "/app/inbox", label: "Inbox", hint: "Talk to the team" },

@@ -29,7 +29,7 @@ export function PublicChatBox() {
       if (value) window.sessionStorage.setItem("ck-public-chat", JSON.stringify(value));
       else window.sessionStorage.removeItem("ck-public-chat");
     } catch {
-      // sessionStorage indisponível — a conversa continua em memória
+      // sessionStorage is unavailable - the conversation continues in memory.
     }
   };
 
@@ -71,20 +71,20 @@ export function PublicChatBox() {
       toast.success("Mensagem enviada — a conversa fica aberta aqui, ao vivo");
     },
     onError: (error: any) => {
-      const subject = encodeURIComponent(`Chat Care Kranich - ${form.name || "Contato do site"}`);
-      const body = encodeURIComponent(`${form.message}\n\nNome: ${form.name}\nEmail: ${form.email}\nPagina: ${window.location.href}`);
+      const subject = encodeURIComponent(`Care Kranich chat - ${form.name || "Website contact"}`);
+      const body = encodeURIComponent(`${form.message}\n\nName: ${form.name}\nEmail: ${form.email}\nPage: ${window.location.href}`);
       if (String(error.message ?? "").toLowerCase().includes("function")) {
         window.location.href = `mailto:carekranich@gmail.com?subject=${subject}&body=${body}`;
-        toast.info("Inbox público aguardando ativação segura. Abrindo e-mail como alternativa.");
+        toast.info("Public inbox is waiting for secure activation. Opening email as a fallback.");
         return;
       }
-      toast.error(error.message ?? "Não foi possível enviar a mensagem");
+      toast.error(error.message ?? "Could not send the message");
     },
   });
 
   const sendReply = useMutation({
     mutationFn: async () => {
-      if (!session) throw new Error("Sessão de chat expirada");
+      if (!session) throw new Error("Chat session expired");
       const { error } = await (supabase as any).rpc("reply_public_chat_thread", {
         _thread_id: session.threadId,
         _email: session.email,
@@ -97,7 +97,7 @@ export function PublicChatBox() {
       setReply("");
       messages.refetch();
     },
-    onError: (error: any) => toast.error(error.message ?? "Não foi possível enviar"),
+    onError: (error: any) => toast.error(error.message ?? "Could not send"),
   });
 
   return (
@@ -129,7 +129,7 @@ export function PublicChatBox() {
                       {!item.is_visitor && <p className="mb-0.5 text-[10px] font-semibold uppercase text-olive">{item.sender_label}</p>}
                       <p className="whitespace-pre-wrap">{item.body}</p>
                       <p className={`mt-1 text-[10px] ${item.is_visitor ? "text-ivory/70" : "text-muted-foreground"}`}>
-                        {new Date(item.created_at).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
+                        {new Date(item.created_at).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })}
                       </p>
                     </div>
                   </div>
@@ -174,13 +174,13 @@ export function PublicChatBox() {
               <input
                 value={form.name}
                 onChange={(event) => setForm({ ...form, name: event.target.value })}
-                placeholder="Seu nome"
+                placeholder="Your name"
                 className="w-full rounded-xl border border-white/70 bg-ivory/75 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-olive/25"
               />
               <input
                 value={form.email}
                 onChange={(event) => setForm({ ...form, email: event.target.value })}
-                placeholder="Seu e-mail"
+                placeholder="Your email"
                 type="email"
                 className="w-full rounded-xl border border-white/70 bg-ivory/75 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-olive/25"
               />

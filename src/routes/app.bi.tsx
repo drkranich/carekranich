@@ -25,7 +25,7 @@ const glassInput =
   "w-full rounded-2xl border border-white/70 bg-white/55 px-4 py-2.5 text-sm shadow-soft backdrop-blur-xl outline-none focus:border-olive/40";
 
 function brl(cents: number) {
-  return (cents / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+  return (cents / 100).toLocaleString("en-US", { style: "currency", currency: "BRL" });
 }
 
 function BI() {
@@ -158,7 +158,7 @@ function BI() {
       if (error) throw error;
     },
     onSuccess: () => {
-      toast.success("Meta definida");
+      toast.success("Goal defined");
       setGoal({ metric: "exams_mes", target: "" });
       setOpen(false);
       qc.invalidateQueries({ queryKey: ["business-goals", tenantId] });
@@ -175,25 +175,25 @@ function BI() {
   const exportPdf = () => {
     if (!metrics) return;
     downloadPdf("bi-care-kranich.pdf", "Executive dashboard - current month", [
-      `Emitido em: ${new Date().toLocaleString("pt-BR")}`,
+      `Issued on: ${new Date().toLocaleString("en-US")}`,
       "",
       `Completed exams: ${metrics.exams_mes}`,
       `Paid revenue: ${brl(metrics.revenueCents)}`,
-      `Average ticket: ${metrics.ticket_medio.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}`,
+      `Average ticket: ${metrics.ticket_medio.toLocaleString("en-US", { style: "currency", currency: "BRL" })}`,
       `New patients: ${metrics.pacientes_novos}`,
       `Released reports: ${metrics.laudos_liberados}`,
       `No-show rate: ${metrics.taxa_no_show}%`,
       `Recollections: ${metrics.recoletas}`,
       `Open critical results: ${metrics.criticalsOpen}`,
       "",
-      "Metas:",
+      "Goals:",
       ...(goals.data ?? []).map((g: any) => {
         const current = (metrics as any)[g.metric] ?? 0;
         const pct = g.target ? Math.round((current / Number(g.target)) * 100) : 0;
-        return `- ${g.label}: ${current} de ${g.target} (${pct}%)`;
+        return `- ${g.label}: ${current} of ${g.target} (${pct}%)`;
       }),
       "",
-      "Exams mais vendidos:",
+      "Best-selling exams:",
       ...topExams.map((t) => `- ${t.name}: ${t.qty}`),
     ]);
   };
@@ -201,7 +201,7 @@ function BI() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="BI executivo"
+        title="Executive BI"
         subtitle="Operational, clinical and financial indicators for the month with goal tracking."
         action={
           <div className="flex gap-2">
@@ -209,13 +209,13 @@ function BI() {
               <FileDown className="h-3.5 w-3.5" /> PDF report
             </button>
             <button onClick={() => setOpen(!open)} className="inline-flex items-center gap-2 rounded-full bg-olive px-4 py-2 text-sm font-medium text-ivory shadow-soft hover:opacity-90">
-              <Plus className="h-4 w-4" /> Nova meta
+              <Plus className="h-4 w-4" /> New goal
             </button>
           </div>
         }
       />
 
-      {data.isLoading && <p className="text-sm text-muted-foreground">Calculando indicadores...</p>}
+      {data.isLoading && <p className="text-sm text-muted-foreground">Calculating indicators...</p>}
       {data.isError && (
         <Card className="border-wine/25 bg-wine/5">
           <p className="text-sm text-wine">{(data.error as Error).message}</p>
@@ -231,7 +231,7 @@ function BI() {
             <GlassSelect value={goal.metric} onChange={(v) => setGoal({ ...goal, metric: v })} options={METRICS} />
             <input className={glassInput} placeholder="Goal (number)" inputMode="decimal" value={goal.target} onChange={(e) => setGoal({ ...goal, target: e.target.value })} />
             <button onClick={() => saveGoal.mutate()} disabled={saveGoal.isPending} className="rounded-2xl bg-olive px-4 py-2.5 text-sm font-medium text-ivory shadow-soft hover:opacity-90 disabled:opacity-60">
-              Save meta
+              Save goal
             </button>
           </div>
         </Card>
@@ -241,7 +241,7 @@ function BI() {
         <>
           <div className="grid gap-4 md:grid-cols-4">
             <Stat label="Monthly exams" value={metrics.exams_mes} sub="Order items" tone="olive" />
-            <Stat label="Paid revenue" value={brl(metrics.revenueCents)} sub={`Average ticket ${metrics.ticket_medio.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}`} tone="moss" />
+            <Stat label="Paid revenue" value={brl(metrics.revenueCents)} sub={`Average ticket ${metrics.ticket_medio.toLocaleString("en-US", { style: "currency", currency: "BRL" })}`} tone="moss" />
             <Stat label="New patients" value={metrics.pacientes_novos} sub="Registered this month" tone="gold" />
             <Stat label="Released reports" value={metrics.laudos_liberados} sub="This month" tone="wine" />
           </div>
@@ -279,7 +279,7 @@ function BI() {
                       <span className="text-foreground">{g.label}</span>
                       <span className="flex items-center gap-2">
                         <span className="text-muted-foreground">
-                          {current.toLocaleString("pt-BR", { maximumFractionDigits: 2 })} / {target.toLocaleString("pt-BR")}
+                          {current.toLocaleString("en-US", { maximumFractionDigits: 2 })} / {target.toLocaleString("en-US")}
                         </span>
                         <Pill tone={good ? "moss" : pct >= 60 ? "gold" : "wine"}>{pct}%</Pill>
                         <button onClick={() => removeGoal(g.id)} className="text-wine">
@@ -300,7 +300,7 @@ function BI() {
           </div>
 
           <Card className="space-y-3 p-6">
-            <h3 className="text-sm font-semibold text-foreground">Exams mais vendidos</h3>
+            <h3 className="text-sm font-semibold text-foreground">Best-selling exams</h3>
             {topExams.length === 0 ? (
               <EmptyState title="No sales recorded" hint="Exams appear here as orders are created." />
             ) : (

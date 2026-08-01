@@ -185,8 +185,8 @@ function Patients() {
   const grantAuth = useMutation({
     mutationFn: async () => {
       if (!authFor) return;
-      if (!authDraft.granted_to) throw new Error("Selecione a pessoa autorizada.");
-      if (!authDraft.relationship.trim()) throw new Error("Informe o vínculo (ex.: filha, responsável legal).");
+      if (!authDraft.granted_to) throw new Error("Select the authorized person.");
+      if (!authDraft.relationship.trim()) throw new Error("Enter the relationship, e.g. daughter or legal guardian.");
       const { error } = await (supabase as any).from("patient_authorizations").insert({
         tenant_id: tenantId,
         patient_id: authFor,
@@ -198,11 +198,11 @@ function Patients() {
       if (error) throw error;
     },
     onSuccess: () => {
-      toast.success("Autorização registrada");
+      toast.success("Authorization registered");
       setAuthDraft({ granted_to: "", relationship: "", valid_until: "" });
       qc.invalidateQueries({ queryKey: ["patient-authorizations", authFor] });
     },
-    onError: (e: any) => toast.error(e.message ?? "Não foi possível registrar a autorização"),
+    onError: (e: any) => toast.error(e.message ?? "Could not register the authorization"),
   });
 
   const revokeAuth = useMutation({
@@ -214,7 +214,7 @@ function Patients() {
       if (error) throw error;
     },
     onSuccess: () => {
-      toast.success("Autorização revogada");
+      toast.success("Authorization revoked");
       qc.invalidateQueries({ queryKey: ["patient-authorizations", authFor] });
     },
     onError: (e: any) => toast.error(e.message),
@@ -222,7 +222,7 @@ function Patients() {
 
   const memberName = (id: string) => {
     const m = (members.data ?? []).find((x) => x.id === id);
-    return m?.preferred_name || m?.full_name || "Usuário";
+    return m?.preferred_name || m?.full_name || "User";
   };
 
   const startEdit = (p: PatientRow) => {
@@ -247,14 +247,14 @@ function Patients() {
 
   const exportPdf = (p: PatientRow) => {
     downloadPdf(`patient-${p.full_name}.pdf`, `Patient record — ${p.full_name}`, [
-      `Nome social: ${p.social_name ?? "-"}`,
-      `Nascimento: ${p.birth_date ? new Date(p.birth_date + "T00:00:00").toLocaleDateString("pt-BR") : "-"}  Idade: ${age(p.birth_date) ?? "-"}`,
-      `Sexo: ${p.sex ?? "-"}  CPF: ${p.cpf ?? "-"}`,
-      `Telefone: ${p.phone ?? "-"}  E-mail: ${p.email ?? "-"}`,
-      `Cidade: ${p.city ?? "-"} / ${p.state ?? "-"}`,
-      `Convênio: ${p.insurance_plan ?? "Particular"}  Carteirinha: ${p.insurance_number ?? "-"}`,
+      `Preferred name: ${p.social_name ?? "-"}`,
+      `Birth date: ${p.birth_date ? new Date(p.birth_date + "T00:00:00").toLocaleDateString("en-US") : "-"}  Age: ${age(p.birth_date) ?? "-"}`,
+      `Sex: ${p.sex ?? "-"}  Tax ID: ${p.cpf ?? "-"}`,
+      `Phone: ${p.phone ?? "-"}  Email: ${p.email ?? "-"}`,
+      `City: ${p.city ?? "-"} / ${p.state ?? "-"}`,
+      `Insurance: ${p.insurance_plan ?? "Private"}  Member ID: ${p.insurance_number ?? "-"}`,
       `Status: ${p.status === "active" ? "Active" : "Inactive"}`,
-      `Observações: ${p.notes ?? "-"}`,
+      `Notes: ${p.notes ?? "-"}`,
     ]);
   };
 
@@ -281,7 +281,7 @@ function Patients() {
         <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
         <input
           className={`${glassInput} pl-11`}
-          placeholder="Buscar por nome, CPF, telefone, convênio..."
+          placeholder="Search by name, tax ID, phone, insurance..."
           value={query}
           onChange={(e) => setQuery(e.target.value)}
         />
@@ -293,44 +293,44 @@ function Patients() {
             {editingId ? "Edit patient" : "New patient"}
           </h3>
           <div className="grid gap-3 md:grid-cols-3">
-            <input className={`${glassInput} md:col-span-2`} placeholder="Nome completo *" value={form.full_name} onChange={(e) => setForm({ ...form, full_name: e.target.value })} />
-            <input className={glassInput} placeholder="Nome social" value={form.social_name} onChange={(e) => setForm({ ...form, social_name: e.target.value })} />
+            <input className={`${glassInput} md:col-span-2`} placeholder="Full name *" value={form.full_name} onChange={(e) => setForm({ ...form, full_name: e.target.value })} />
+            <input className={glassInput} placeholder="Preferred name" value={form.social_name} onChange={(e) => setForm({ ...form, social_name: e.target.value })} />
             <div>
-              <p className="mb-1 text-xs font-medium text-muted-foreground">Data de nascimento</p>
+              <p className="mb-1 text-xs font-medium text-muted-foreground">Birth date</p>
               <GlassDatePicker value={form.birth_date} onChange={(v) => setForm({ ...form, birth_date: v })} />
             </div>
             <div>
-              <p className="mb-1 text-xs font-medium text-muted-foreground">Sexo biológico</p>
+              <p className="mb-1 text-xs font-medium text-muted-foreground">Biological sex</p>
               <GlassSelect
                 value={form.sex}
                 onChange={(v) => setForm({ ...form, sex: v })}
                 options={[
-                  { value: "", label: "Não informar" },
-                  { value: "feminino", label: "Feminino" },
-                  { value: "masculino", label: "Masculino" },
-                  { value: "intersexo", label: "Intersexo" },
+                  { value: "", label: "Prefer not to say" },
+                  { value: "feminino", label: "Female" },
+                  { value: "masculino", label: "Male" },
+                  { value: "intersexo", label: "Intersex" },
                 ]}
               />
             </div>
             <div>
-              <p className="mb-1 text-xs font-medium text-muted-foreground">Unidade preferencial</p>
+              <p className="mb-1 text-xs font-medium text-muted-foreground">Preferred unit</p>
               <GlassSelect
                 value={form.unit_id}
                 onChange={(v) => setForm({ ...form, unit_id: v })}
                 options={[
-                  { value: "", label: "Sem unidade" },
+                  { value: "", label: "No unit" },
                   ...(units.data ?? []).map((u) => ({ value: u.id, label: u.name })),
                 ]}
               />
             </div>
             <input className={glassInput} placeholder="CPF" value={form.cpf} onChange={(e) => setForm({ ...form, cpf: e.target.value })} />
-            <input className={glassInput} placeholder="Telefone" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
+            <input className={glassInput} placeholder="Phone" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
             <input className={glassInput} placeholder="E-mail" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
-            <input className={glassInput} placeholder="Cidade" value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} />
-            <input className={glassInput} placeholder="Estado (UF)" value={form.state} onChange={(e) => setForm({ ...form, state: e.target.value })} />
-            <input className={glassInput} placeholder="Convênio" value={form.insurance_plan} onChange={(e) => setForm({ ...form, insurance_plan: e.target.value })} />
-            <input className={glassInput} placeholder="Nº da carteirinha" value={form.insurance_number} onChange={(e) => setForm({ ...form, insurance_number: e.target.value })} />
-            <input className={`${glassInput} md:col-span-2`} placeholder="Observações clínicas ou administrativas" value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} />
+            <input className={glassInput} placeholder="City" value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} />
+            <input className={glassInput} placeholder="State / region" value={form.state} onChange={(e) => setForm({ ...form, state: e.target.value })} />
+            <input className={glassInput} placeholder="Insurance" value={form.insurance_plan} onChange={(e) => setForm({ ...form, insurance_plan: e.target.value })} />
+            <input className={glassInput} placeholder="Member ID" value={form.insurance_number} onChange={(e) => setForm({ ...form, insurance_number: e.target.value })} />
+            <input className={`${glassInput} md:col-span-2`} placeholder="Clinical or administrative notes" value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} />
           </div>
           <div className="flex gap-2">
             <button
@@ -338,7 +338,7 @@ function Patients() {
               disabled={save.isPending}
               className="rounded-full bg-olive px-5 py-2 text-sm font-medium text-ivory shadow-soft hover:opacity-90 disabled:opacity-60"
             >
-              {save.isPending ? "Saving..." : editingId ? "Salvar alterações" : "Register patient"}
+              {save.isPending ? "Saving..." : editingId ? "Save changes" : "Register patient"}
             </button>
             <button onClick={() => { setOpen(false); setEditingId(null); }} className="rounded-full border border-white/70 bg-white/55 px-5 py-2 text-sm backdrop-blur-xl">
               Cancel
@@ -361,8 +361,8 @@ function Patients() {
                   <div>
                     <p className="font-semibold text-foreground">{p.social_name || p.full_name}</p>
                     <p className="text-xs text-muted-foreground">
-                      {age(p.birth_date) !== null ? `${age(p.birth_date)} years old` : "Idade não informada"}
-                      {p.insurance_plan ? ` · ${p.insurance_plan}` : " · Particular"}
+                      {age(p.birth_date) !== null ? `${age(p.birth_date)} years old` : "Age not provided"}
+                      {p.insurance_plan ? ` · ${p.insurance_plan}` : " · Private"}
                     </p>
                   </div>
                 </div>
@@ -370,13 +370,13 @@ function Patients() {
               </div>
               <div className="flex flex-wrap gap-2 text-xs">
                 <button onClick={() => startEdit(p)} className="inline-flex items-center gap-1 rounded-full border border-white/70 bg-white/55 px-3 py-1.5 backdrop-blur-xl hover:bg-white/80">
-                  <Pencil className="h-3.5 w-3.5" /> Editar
+                  <Pencil className="h-3.5 w-3.5" /> Edit
                 </button>
                 <button onClick={() => setAuthFor(authFor === p.id ? null : p.id)} className="inline-flex items-center gap-1 rounded-full border border-white/70 bg-white/55 px-3 py-1.5 backdrop-blur-xl hover:bg-white/80">
-                  <ShieldCheck className="h-3.5 w-3.5" /> Autorizações
+                  <ShieldCheck className="h-3.5 w-3.5" /> Authorizations
                 </button>
                 <button onClick={() => exportPdf(p)} className="inline-flex items-center gap-1 rounded-full border border-white/70 bg-white/55 px-3 py-1.5 backdrop-blur-xl hover:bg-white/80">
-                  <FileDown className="h-3.5 w-3.5" /> Ficha PDF
+                  <FileDown className="h-3.5 w-3.5" /> PDF record
                 </button>
               </div>
 
@@ -392,15 +392,15 @@ function Patients() {
                     <div key={a.id} className="flex items-center justify-between gap-2 text-xs">
                       <span>
                         {memberName(a.granted_to)} — {a.relationship}
-                        {a.valid_until ? ` (até ${new Date(a.valid_until + "T00:00:00").toLocaleDateString("pt-BR")})` : ""}
+                        {a.valid_until ? ` (until ${new Date(a.valid_until + "T00:00:00").toLocaleDateString("en-US")})` : ""}
                       </span>
                       <span className="flex items-center gap-2">
                         <Pill tone={a.status === "active" ? "moss" : "muted"}>
-                          {a.status === "active" ? "Ativa" : "Revogada"}
+                          {a.status === "active" ? "Active" : "Revoked"}
                         </Pill>
                         {a.status === "active" && (
                           <button onClick={() => revokeAuth.mutate(a.id)} className="text-wine hover:underline">
-                            Revogar
+                            Revoke
                           </button>
                         )}
                       </span>
@@ -411,16 +411,16 @@ function Patients() {
                       value={authDraft.granted_to}
                       onChange={(v) => setAuthDraft({ ...authDraft, granted_to: v })}
                       options={[
-                        { value: "", label: "Selecionar pessoa" },
+                        { value: "", label: "Select person" },
                         ...(members.data ?? []).map((m) => ({
                           value: m.id,
-                          label: m.preferred_name || m.full_name || "Usuário",
+                          label: m.preferred_name || m.full_name || "User",
                         })),
                       ]}
                     />
                     <input
                       className={glassInput}
-                      placeholder="Vínculo (ex.: filha)"
+                      placeholder="Relationship, e.g. daughter"
                       value={authDraft.relationship}
                       onChange={(e) => setAuthDraft({ ...authDraft, relationship: e.target.value })}
                     />
@@ -434,7 +434,7 @@ function Patients() {
                     disabled={grantAuth.isPending}
                     className="rounded-full bg-olive px-4 py-1.5 text-xs font-medium text-ivory shadow-soft hover:opacity-90 disabled:opacity-60"
                   >
-                    Registrar autorização
+                    Register authorization
                   </button>
                 </div>
               )}

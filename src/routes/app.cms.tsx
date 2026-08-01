@@ -189,7 +189,7 @@ function Cms() {
                 <Eye className="h-3.5 w-3.5" /> View on site
               </a>
               <button onClick={togglePublish} className={`rounded-full px-4 py-2 text-xs font-medium ${selected.published ? "border border-border bg-white/55" : "bg-moss text-ivory"}`}>
-                {selected.published ? "Despublicar" : "Publicar"}
+                {selected.published ? "Unpublish" : "Publish"}
               </button>
               <button onClick={deletePage} className="inline-flex items-center gap-1 rounded-full border border-wine/30 bg-wine/5 px-3 py-2 text-xs text-wine">
                 <Trash2 className="h-3.5 w-3.5" /> Delete
@@ -229,7 +229,7 @@ function Cms() {
             >
               <div className="flex items-center justify-between gap-2">
                 <p className="truncate text-sm font-medium text-foreground">{p.title}</p>
-                <Pill tone={p.published ? "moss" : "muted"}>{p.published ? "publicada" : "rascunho"}</Pill>
+                <Pill tone={p.published ? "moss" : "muted"}>{p.published ? "published" : "draft"}</Pill>
               </div>
               <p className="text-xs text-muted-foreground">/{p.slug}</p>
             </button>
@@ -301,7 +301,7 @@ function Cms() {
                         </div>
                       ))}
                       <button onClick={() => patchSection(s.id, { items: [...(s.items ?? []), { title: "", body: "" }] })} className="rounded-full border border-border bg-white/55 px-3 py-1.5 text-xs">
-                        + Adicionar item
+                        + Add item
                       </button>
                     </div>
                   )}

@@ -28,7 +28,7 @@ const CATEGORIES = [
   { value: "medication", label: "Medicamento" },
   { value: "vitals", label: "Sinais vitais" },
   { value: "mobility", label: "Mobilidade" },
-  { value: "hydration", label: "Hidratação" },
+  { value: "hydration", label: "Hydration" },
   { value: "emotional", label: "Emocional" },
   { value: "inactivity", label: "Inatividade" },
   { value: "environmental", label: "Ambiente" },
@@ -37,7 +37,7 @@ const CATEGORIES = [
   { value: "ai-predictive", label: "IA preditiva" },
 ];
 const SEVERITIES = [
-  { value: "info", label: "Informações" },
+  { value: "info", label: "Information" },
   { value: "warning", label: "Aviso" },
   { value: "critical", label: "Critico" },
 ];

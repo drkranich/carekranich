@@ -12,7 +12,7 @@ import { downloadPdf } from "@/lib/pdf";
 export const Route = createFileRoute("/app/genetics")({ component: Genetics });
 
 const KIT_STATUS: Array<{ key: string; label: string }> = [
-  { key: "created", label: "Kit criado" },
+  { key: "created", label: "Kit created" },
   { key: "shipped", label: "Enviado" },
   { key: "delivered", label: "Entregue" },
   { key: "activated", label: "Activated by patient" },
@@ -240,7 +240,7 @@ function Genetics() {
       await logEvent(
         selected.id,
         "consentimento",
-        `Termo aceito. Sample storage: ${storage ? "authorized" : "negado"}. Uso de dados: ${dataUse ? "authorized" : "negado"}.`,
+        `Consent accepted. Sample storage: ${storage ? "authorized" : "denied"}. Data use: ${dataUse ? "authorized" : "denied"}.`,
       );
     },
     onSuccess: () => {
@@ -272,14 +272,14 @@ function Genetics() {
     const exam = examOf(k.exam_id);
     downloadPdf(`kit-${k.kit_code}.pdf`, `Genetic kit ${k.kit_code}`, [
       `Patient: ${patientName(k.patient_id)}`,
-      `Teste: ${examName(k.exam_id)}`,
-      exam?.genes_analyzed ? `Genes analisados: ${exam.genes_analyzed}` : "",
+      `Test: ${examName(k.exam_id)}`,
+      exam?.genes_analyzed ? `Analyzed genes: ${exam.genes_analyzed}` : "",
       `Logistics status: ${KIT_STATUS[statusIndex(k.status)].label}`,
       `Pipeline: ${k.pipeline_step ? PIPELINE[pipelineIndex(k.pipeline_step)].label : "not started"}`,
-      `Consent: ${k.consent_accepted ? `aceito em ${new Date(k.consent_at).toLocaleString("pt-BR")}` : "PENDENTE"}`,
+      `Consent: ${k.consent_accepted ? `accepted at ${new Date(k.consent_at).toLocaleString("en-US")}` : "PENDING"}`,
       `Sample storage: ${k.storage_authorized ? "authorized" : "not authorized"}`,
       `Data use for research: ${k.data_use_authorized ? "authorized" : "not authorized"}`,
-      k.deletion_requested ? `DELETION REQUESTED at ${new Date(k.deletion_requested_at).toLocaleString("pt-BR")}` : "",
+      k.deletion_requested ? `DELETION REQUESTED at ${new Date(k.deletion_requested_at).toLocaleString("en-US")}` : "",
       "",
       "Genetic predisposition does not mean diagnosis. Results require professional interpretation.",
     ].filter((l) => l !== ""));
@@ -298,7 +298,7 @@ function Genetics() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Genetics — kits and pipeline"
+        title="Genetics - kits and pipeline"
         subtitle="Kits with code activation, explicit consent, logistics tracking and pipeline through the report. Access restricted to doctors and administrators."
         action={<Pill tone="wine">Sensitive data</Pill>}
       />
@@ -307,7 +307,7 @@ function Genetics() {
         <Stat label="Kits in logistics" value={stats.logistics} sub="From shipping to arrival" tone="olive" />
         <Stat label="In pipeline" value={stats.inPipeline} sub="Extraction to report" tone="gold" />
         <Stat label="Pending consents" value={stats.consentPending} sub="Block collection" tone="wine" />
-        <Stat label="Deletion requests" value={stats.deletions} sub="LGPD / descarte" tone="terracotta" />
+        <Stat label="Deletion requests" value={stats.deletions} sub="Privacy / disposal" tone="terracotta" />
       </div>
 
       <Card className="space-y-3 p-6">
@@ -324,7 +324,7 @@ function Genetics() {
           <GlassSelect
             value={draft.exam_id}
             onChange={(v) => setDraft({ ...draft, exam_id: v })}
-            placeholder="Genetic test do catálogo"
+            placeholder="Catalog genetic test"
             options={(geneticExams.data ?? []).map((e: any) => ({ value: e.id, label: e.commercial_name || e.name }))}
           />
           <button
@@ -378,7 +378,7 @@ function Genetics() {
                 </p>
               </div>
               <button onClick={() => exportKit(selected)} className="inline-flex items-center gap-1.5 rounded-full border border-border bg-white/55 px-4 py-2 text-xs">
-                <FileDown className="h-3.5 w-3.5" /> Ficha do kit (PDF)
+                <FileDown className="h-3.5 w-3.5" /> Kit record (PDF)
               </button>
             </div>
 
@@ -392,24 +392,24 @@ function Genetics() {
                 </p>
                 <div className="flex flex-wrap gap-2">
                   <button onClick={() => registerConsent.mutate({ storage: true, dataUse: true })} className="rounded-full bg-olive px-4 py-1.5 text-xs font-medium text-ivory">
-                    Aceite + armazenamento + uso de dados
+                    Accept + storage + data use
                   </button>
                   <button onClick={() => registerConsent.mutate({ storage: true, dataUse: false })} className="rounded-full border border-border bg-white/55 px-4 py-1.5 text-xs">
-                    Aceite + armazenamento
+                    Accept + storage
                   </button>
                   <button onClick={() => registerConsent.mutate({ storage: false, dataUse: false })} className="rounded-full border border-border bg-white/55 px-4 py-1.5 text-xs">
-                    Somente aceite do teste
+                    Test consent only
                   </button>
                 </div>
               </div>
             ) : (
               <div className="flex flex-wrap gap-2 text-xs">
-                <Pill tone="moss">Consent aceito {new Date(selected.consent_at).toLocaleDateString("pt-BR")}</Pill>
+                <Pill tone="moss">Consent accepted {new Date(selected.consent_at).toLocaleDateString("en-US")}</Pill>
                 <Pill tone={selected.storage_authorized ? "moss" : "muted"}>
-                  Armazenamento {selected.storage_authorized ? "authorized" : "negado"}
+                  Storage {selected.storage_authorized ? "authorized" : "denied"}
                 </Pill>
                 <Pill tone={selected.data_use_authorized ? "moss" : "muted"}>
-                  Uso de dados {selected.data_use_authorized ? "authorized" : "negado"}
+                  Data use {selected.data_use_authorized ? "authorized" : "denied"}
                 </Pill>
                 {selected.deletion_requested && <Pill tone="terracotta">Deletion requested</Pill>}
               </div>
@@ -501,7 +501,7 @@ function Genetics() {
             </div>
 
             <div>
-              <h4 className="text-sm font-semibold text-foreground">Trilha de auditoria</h4>
+              <h4 className="text-sm font-semibold text-foreground">Audit trail</h4>
               <div className="mt-2 space-y-1.5">
                 {(events.data ?? []).map((e: any) => (
                   <div key={e.id} className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-white/70 bg-white/45 px-3 py-2 text-xs">
@@ -510,7 +510,7 @@ function Genetics() {
                         PIPELINE.find((x) => x.key === e.step)?.label ??
                         (e.step === "consentimento" ? "Consent" : e.step === "deletion_requested" ? "Deletion requested" : e.step)}
                     </span>
-                    <span className="text-muted-foreground">{new Date(e.performed_at).toLocaleString("pt-BR")}</span>
+                    <span className="text-muted-foreground">{new Date(e.performed_at).toLocaleString("en-US")}</span>
                     {e.notes && <span className="w-full text-muted-foreground">{e.notes}</span>}
                   </div>
                 ))}

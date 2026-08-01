@@ -13,18 +13,18 @@ import { downloadPdf } from "@/lib/pdf";
 export const Route = createFileRoute("/app/home-collection")({ component: HomeCollection });
 
 const FLOW: Array<{ key: string; label: string }> = [
-  { key: "scheduled", label: "Agendada" },
-  { key: "en_route", label: "Em rota" },
-  { key: "arrived", label: "No local" },
-  { key: "collected", label: "Coletada" },
-  { key: "delivered_lab", label: "Entregue no laboratório" },
+  { key: "scheduled", label: "Scheduled" },
+  { key: "en_route", label: "En route" },
+  { key: "arrived", label: "On site" },
+  { key: "collected", label: "Collected" },
+  { key: "delivered_lab", label: "Delivered to lab" },
 ];
 
 const NEXT_LABEL: Record<string, string> = {
-  scheduled: "Iniciar rota",
-  en_route: "Cheguei ao local",
+  scheduled: "Start route",
+  en_route: "Arrived on site",
   arrived: "Register collection",
-  collected: "Entregar no laboratório",
+  collected: "Deliver to lab",
 };
 
 function flowIndex(key: string) {
@@ -44,7 +44,7 @@ function getPosition(): Promise<GeolocationPosition | null> {
 }
 
 function brl(cents: number | null | undefined) {
-  return ((cents ?? 0) / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+  return ((cents ?? 0) / 100).toLocaleString("en-US", { style: "currency", currency: "BRL" });
 }
 
 function HomeCollection() {
@@ -89,11 +89,11 @@ function HomeCollection() {
         db.from("user_roles").select("user_id, role").in("role", ["caregiver", "nurse", "clinic_admin"]),
         db.from("profiles").select("id, full_name, preferred_name"),
       ]);
-      const nameOf = new Map((profiles ?? []).map((p: any) => [p.id, p.preferred_name || p.full_name || "Coletador"]));
+      const nameOf = new Map((profiles ?? []).map((p: any) => [p.id, p.preferred_name || p.full_name || "Collector"]));
       const seen = new Set<string>();
       return (roles ?? [])
         .filter((r: any) => (seen.has(r.user_id) ? false : (seen.add(r.user_id), true)))
-        .map((r: any) => ({ id: r.user_id, name: nameOf.get(r.user_id) ?? "Coletador" }));
+        .map((r: any) => ({ id: r.user_id, name: nameOf.get(r.user_id) ?? "Collector" }));
     },
   });
 
@@ -177,23 +177,23 @@ function HomeCollection() {
         .select("id")
         .single();
       if (error) throw error;
-      await logEvent(data.id, "scheduled", "Coleta domiciliar agendada.");
+      await logEvent(data.id, "scheduled", "Home collection scheduled.");
       return data.id as string;
     },
     onSuccess: (id) => {
-      toast.success("Coleta domiciliar agendada");
+      toast.success("Home collection scheduled");
       setDraft({ patient_id: "", collector_id: "", scheduled_at: "", address: "", fee: "" });
       setSelectedId(id);
       refresh();
     },
-    onError: (e: any) => toast.error(e.message ?? "Não foi possível agendar"),
+    onError: (e: any) => toast.error(e.message ?? "Could not schedule"),
   });
 
   const advance = useMutation({
     mutationFn: async () => {
       if (!selected) return;
       const idx = flowIndex(selected.status);
-      if (idx >= FLOW.length - 1) throw new Error("Coleta já entregue no laboratório.");
+      if (idx >= FLOW.length - 1) throw new Error("Collection already delivered to the lab.");
       const next = FLOW[idx + 1];
       const patch: Record<string, unknown> = { status: next.key };
       let pos: GeolocationPosition | null = null;
@@ -216,14 +216,14 @@ function HomeCollection() {
         selected.id,
         next.key,
         next.key === "collected"
-          ? `Material: ${collect.material}. Assinado por ${collect.signature_name.trim()}.${collect.temperature ? ` Temperatura: ${collect.temperature}.` : ""}`
+          ? `Material: ${collect.material}. Signed by ${collect.signature_name.trim()}.${collect.temperature ? ` Temperature: ${collect.temperature}.` : ""}`
           : undefined,
         pos,
       );
       return next.label;
     },
     onSuccess: (label) => {
-      if (label) toast.success(`Coleta: ${label}`);
+      if (label) toast.success(`Collection: ${label}`);
       setCollect({ signature_name: "", material: "Sangue total", temperature: "", identity: false });
       refresh();
     },
@@ -233,8 +233,8 @@ function HomeCollection() {
   const fail = useMutation({
     mutationFn: async () => {
       if (!selected) return;
-      const reason = window.prompt("Motivo da tentativa sem sucesso (ausente, endereço não localizado, recusa...):");
-      if (!reason || !reason.trim()) throw new Error("Informe o motivo.");
+      const reason = window.prompt("Reason for unsuccessful attempt (absent, address not found, refusal...):");
+      if (!reason || !reason.trim()) throw new Error("Enter the reason.");
       const { error } = await (supabase as any)
         .from("home_collections")
         .update({ status: "failed", failure_reason: reason.trim() })
@@ -243,8 +243,8 @@ function HomeCollection() {
       await logEvent(selected.id, "failed", reason.trim());
       await (supabase as any).from("alerts").insert({
         tenant_id: selected.tenant_id,
-        title: `Coleta domiciliar sem sucesso — ${patientName(selected.patient_id)}`,
-        description: `Motivo: ${reason.trim()}. Necessário reagendar.`,
+        title: `Unsuccessful home collection - ${patientName(selected.patient_id)}`,
+        description: `Reason: ${reason.trim()}. Rescheduling required.`,
         severity: "high",
         category: "lab",
         status: "open",
@@ -252,7 +252,7 @@ function HomeCollection() {
       });
     },
     onSuccess: () => {
-      toast.success("Intercorrência registrada — alerta de reagendamento criado");
+      toast.success("Issue recorded - rescheduling alert created");
       refresh();
     },
     onError: (e: any) => toast.error(e.message),
@@ -262,18 +262,18 @@ function HomeCollection() {
     const evts = c.id === selected?.id ? (events.data ?? []) : [];
     downloadPdf(`collection-${patientName(c.patient_id)}.pdf`, "Home collection receipt", [
       `Patient: ${patientName(c.patient_id)}`,
-      `Coletador: ${collectorName(c.collector_id)}`,
-      `Endereço: ${c.address ?? "-"}${c.city ? `, ${c.city}` : ""}`,
-      `Agendada para: ${new Date(c.scheduled_at).toLocaleString("pt-BR")}`,
-      `Taxa de deslocamento: ${brl(c.fee_cents)}`,
+      `Collector: ${collectorName(c.collector_id)}`,
+      `Address: ${c.address ?? "-"}${c.city ? `, ${c.city}` : ""}`,
+      `Scheduled for: ${new Date(c.scheduled_at).toLocaleString("en-US")}`,
+      `Travel fee: ${brl(c.fee_cents)}`,
       `Status: ${c.status === "failed" ? `SEM SUCESSO (${c.failure_reason})` : FLOW[flowIndex(c.status)].label}`,
-      c.identity_confirmed ? `Identity confirmed · assinado por ${c.signature_name}` : "",
-      c.material ? `Material: ${c.material}${c.temperature ? ` · temperatura ${c.temperature}` : ""}` : "",
+      c.identity_confirmed ? `Identity confirmed - signed by ${c.signature_name}` : "",
+      c.material ? `Material: ${c.material}${c.temperature ? ` - temperature ${c.temperature}` : ""}` : "",
       "",
-      "Cadeia de custódia:",
+      "Chain of custody:",
       ...evts.map(
         (e: any) =>
-          `- ${new Date(e.performed_at).toLocaleString("pt-BR")} · ${FLOW.find((f) => f.key === e.status)?.label ?? e.status}${e.notes ? ` · ${e.notes}` : ""}${e.latitude ? ` · GPS ${e.latitude.toFixed(5)}, ${e.longitude.toFixed(5)}` : ""}`,
+          `- ${new Date(e.performed_at).toLocaleString("en-US")} - ${FLOW.find((f) => f.key === e.status)?.label ?? e.status}${e.notes ? ` - ${e.notes}` : ""}${e.latitude ? ` - GPS ${e.latitude.toFixed(5)}, ${e.longitude.toFixed(5)}` : ""}`,
       ),
     ].filter((l) => l !== ""));
   };
@@ -292,15 +292,15 @@ function HomeCollection() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Coleta domiciliar"
+        title="Home collection"
         subtitle="Collector schedule, GPS route, identity confirmation, signature and chain of custody through the laboratory."
       />
 
       <div className="grid gap-4 md:grid-cols-4">
-        <Stat label="Coletas de hoje" value={stats.today} sub="Agendadas para hoje" tone="olive" />
-        <Stat label="En route / on site" value={stats.enRoute} sub="Acontecendo agora" tone="gold" />
-        <Stat label="Coletadas" value={stats.collected} sub="Incluindo entregues" tone="moss" />
-        <Stat label="Sem sucesso" value={stats.failed} sub="Aguardando reagendamento" tone="wine" />
+        <Stat label="Today's collections" value={stats.today} sub="Scheduled for today" tone="olive" />
+        <Stat label="En route / on site" value={stats.enRoute} sub="Happening now" tone="gold" />
+        <Stat label="Collected" value={stats.collected} sub="Including delivered" tone="moss" />
+        <Stat label="Unsuccessful" value={stats.failed} sub="Waiting for reschedule" tone="wine" />
       </div>
 
       <Card className="space-y-3 p-6">
@@ -320,8 +320,8 @@ function HomeCollection() {
           <GlassSelect
             value={draft.collector_id}
             onChange={(v) => setDraft({ ...draft, collector_id: v })}
-            placeholder="Coletador"
-            options={[{ value: "", label: "Definir depois" }, ...(members.data ?? []).map((m: any) => ({ value: m.id, label: m.name }))]}
+            placeholder="Collector"
+            options={[{ value: "", label: "Define later" }, ...(members.data ?? []).map((m: any) => ({ value: m.id, label: m.name }))]}
           />
           <GlassDateTimePicker value={draft.scheduled_at} onChange={(v) => setDraft({ ...draft, scheduled_at: v })} />
           <input
@@ -333,7 +333,7 @@ function HomeCollection() {
           <input
             value={draft.fee}
             onChange={(e) => setDraft({ ...draft, fee: e.target.value })}
-            placeholder="Taxa de deslocamento (R$)"
+            placeholder="Travel fee (BRL)"
             className="rounded-2xl border border-white/70 bg-white/55 px-4 py-2.5 text-sm shadow-soft backdrop-blur-xl outline-none focus:border-olive/40"
           />
         </div>
@@ -348,7 +348,7 @@ function HomeCollection() {
 
       <div className="grid gap-6 xl:grid-cols-[360px_1fr]">
         <Card className="space-y-2 p-5">
-          <h3 className="text-sm font-semibold text-foreground">Coletas</h3>
+          <h3 className="text-sm font-semibold text-foreground">Collections</h3>
           {(collections.data ?? []).length === 0 && <p className="text-sm text-muted-foreground">No home collections scheduled.</p>}
           {(collections.data ?? []).map((c: any) => (
             <button
@@ -361,11 +361,11 @@ function HomeCollection() {
               <div className="flex items-center justify-between gap-2">
                 <p className="truncate text-sm font-medium text-foreground">{patientName(c.patient_id)}</p>
                 <Pill tone={c.status === "failed" ? "wine" : c.status === "delivered_lab" ? "moss" : "gold"}>
-                  {c.status === "failed" ? "sem sucesso" : FLOW[flowIndex(c.status)].label}
+                  {c.status === "failed" ? "unsuccessful" : FLOW[flowIndex(c.status)].label}
                 </Pill>
               </div>
               <p className="mt-1 text-xs text-muted-foreground">
-                {new Date(c.scheduled_at).toLocaleString("pt-BR")} · {collectorName(c.collector_id)}
+                {new Date(c.scheduled_at).toLocaleString("en-US")} - {collectorName(c.collector_id)}
               </p>
             </button>
           ))}
@@ -377,12 +377,12 @@ function HomeCollection() {
               <div>
                 <h3 className="text-lg font-semibold text-foreground">{patientName(selected.patient_id)}</h3>
                 <p className="flex items-center gap-1 text-xs text-muted-foreground">
-                  <MapPin className="h-3 w-3" /> {selected.address ?? "Endereço não informado"}
-                  {selected.city ? `, ${selected.city}` : ""} · {collectorName(selected.collector_id)} · taxa {brl(selected.fee_cents)}
+                  <MapPin className="h-3 w-3" /> {selected.address ?? "Address not provided"}
+                  {selected.city ? `, ${selected.city}` : ""} - {collectorName(selected.collector_id)} - fee {brl(selected.fee_cents)}
                 </p>
               </div>
               <button onClick={() => exportPdf(selected)} className="inline-flex items-center gap-1.5 rounded-full border border-border bg-white/55 px-4 py-2 text-xs">
-                <FileDown className="h-3.5 w-3.5" /> Comprovante (PDF)
+                <FileDown className="h-3.5 w-3.5" /> Receipt (PDF)
               </button>
             </div>
 
@@ -420,7 +420,7 @@ function HomeCollection() {
                   <input
                     value={collect.signature_name}
                     onChange={(e) => setCollect({ ...collect, signature_name: e.target.value })}
-                    placeholder="Nome de quem assina *"
+                    placeholder="Signer name *"
                     className="rounded-xl border border-border bg-ivory px-3 py-2 text-sm"
                   />
                   <input
@@ -432,7 +432,7 @@ function HomeCollection() {
                   <input
                     value={collect.temperature}
                     onChange={(e) => setCollect({ ...collect, temperature: e.target.value })}
-                    placeholder="Temperatura (ex.: 2-8°C)"
+                    placeholder="Temperature (e.g. 2-8°C)"
                     className="rounded-xl border border-border bg-ivory px-3 py-2 text-sm"
                   />
                 </div>
@@ -445,7 +445,7 @@ function HomeCollection() {
                       : "border-white/70 bg-white/55 text-muted-foreground"
                   }`}
                 >
-                  {collect.identity ? "Identity confirmed ✓" : "Confirm patient identity"}
+                  {collect.identity ? "Identity confirmed" : "Confirm patient identity"}
                 </button>
               </div>
             )}
@@ -457,7 +457,7 @@ function HomeCollection() {
                   disabled={advance.isPending}
                   className="rounded-full bg-olive px-5 py-2 text-sm font-medium text-ivory shadow-soft hover:opacity-90 disabled:opacity-60"
                 >
-                  {NEXT_LABEL[selected.status] ?? "Avançar"} →
+                  {NEXT_LABEL[selected.status] ?? "Advance"} →
                 </button>
                 <button
                   onClick={() => fail.mutate()}
@@ -469,16 +469,16 @@ function HomeCollection() {
             )}
 
             <div>
-              <h4 className="text-sm font-semibold text-foreground">Cadeia de custódia</h4>
+              <h4 className="text-sm font-semibold text-foreground">Chain of custody</h4>
               <div className="mt-2 space-y-1.5">
                 {(events.data ?? []).map((e: any) => (
                   <div key={e.id} className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-white/70 bg-white/45 px-3 py-2 text-xs">
                     <span className="font-medium text-foreground">
-                      {FLOW.find((f) => f.key === e.status)?.label ?? (e.status === "failed" ? "Sem sucesso" : e.status)}
+                      {FLOW.find((f) => f.key === e.status)?.label ?? (e.status === "failed" ? "Unsuccessful" : e.status)}
                     </span>
                     <span className="text-muted-foreground">
-                      {new Date(e.performed_at).toLocaleString("pt-BR")}
-                      {e.latitude ? ` · GPS ${e.latitude.toFixed(4)}, ${e.longitude.toFixed(4)}` : ""}
+                      {new Date(e.performed_at).toLocaleString("en-US")}
+                      {e.latitude ? ` - GPS ${e.latitude.toFixed(4)}, ${e.longitude.toFixed(4)}` : ""}
                     </span>
                     {e.notes && <span className="w-full text-muted-foreground">{e.notes}</span>}
                   </div>

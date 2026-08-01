@@ -167,10 +167,10 @@ function CaregiverApp() {
         <Stat
           label="Current shift"
           value={activeShift ? elapsed(activeShift.started_at) : "—"}
-          sub={activeShift ? `Started ${new Date(activeShift.started_at).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}` : "Check in to start"}
+          sub={activeShift ? `Started ${new Date(activeShift.started_at).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })}` : "Check in to start"}
           tone={activeShift ? "moss" : "olive"}
         />
-        <Stat label="Tarefas de hoje" value={tasks.data?.length ?? "-"} sub="Pendentes com vencimento hoje" tone="gold" />
+        <Stat label="Today's tasks" value={tasks.data?.length ?? "-"} sub="Pending and due today" tone="gold" />
         <Stat label="Registered shifts" value={shifts.data?.length ?? "-"} sub="Last 30" tone="olive" />
       </div>
 
@@ -246,7 +246,7 @@ function CaregiverApp() {
         </Card>
 
         <Card>
-          <h2 className="text-xl font-semibold text-foreground">Tarefas de hoje</h2>
+          <h2 className="text-xl font-semibold text-foreground">Today's tasks</h2>
           {(tasks.data ?? []).length === 0 ? (
             <div className="mt-4"><EmptyState title="No pending tasks today" hint="Care plan tasks due today appear here." /></div>
           ) : (
@@ -256,7 +256,7 @@ function CaregiverApp() {
                   <div className="min-w-0">
                     <p className="truncate text-sm font-medium text-foreground">{task.title}</p>
                     <p className="text-xs text-muted-foreground">
-                      {task.due_at ? new Date(task.due_at).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }) : "Sem hora"}
+                      {task.due_at ? new Date(task.due_at).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" }) : "No time"}
                       {residentName(task.resident_id) ? ` · ${residentName(task.resident_id)}` : ""}
                       {task.priority === "high" ? " · prioridade alta" : ""}
                     </p>
@@ -286,9 +286,9 @@ function CaregiverApp() {
               <div key={shift.id} className="flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-white/70 bg-white/50 px-4 py-3">
                 <div>
                   <p className="text-sm font-medium text-foreground">
-                    {new Date(shift.started_at).toLocaleDateString("pt-BR")} ·{" "}
-                    {new Date(shift.started_at).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
-                    {shift.ended_at ? ` → ${new Date(shift.ended_at).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}` : " (em andamento)"}
+                    {new Date(shift.started_at).toLocaleDateString("en-US")} ·{" "}
+                    {new Date(shift.started_at).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })}
+                    {shift.ended_at ? ` → ${new Date(shift.ended_at).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })}` : " (in progress)"}
                   </p>
                   <p className="text-xs text-muted-foreground">
                     {residentName(shift.resident_id) ?? "No resident"}

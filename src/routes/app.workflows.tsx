@@ -13,21 +13,21 @@ type WorkflowKey = "critical_alert_escalation" | "overdue_task_follow_up" | "inb
 const WORKFLOWS: { key: WorkflowKey; title: string; description: string; steps: string[] }[] = [
   {
     key: "critical_alert_escalation",
-    title: "Escalonamento de alertas críticos",
-    description: "Alertas abertos críticos/altos notificam toda a equipe da organização imediatamente.",
+    title: "Critical alert escalation",
+    description: "Open critical and high alerts notify the entire organization team immediately.",
     steps: ["Find open critical alerts", "Notify team and admins", "Register auditable run"],
   },
   {
     key: "overdue_task_follow_up",
-    title: "Cobrança de tarefas vencidas",
-    description: "Tarefas de cuidado vencidas sobem para prioridade alta and notificam os responsáveis.",
-    steps: ["Localizar tarefas vencidas", "Elevar prioridade para alta", "Notificar responsável and criador"],
+    title: "Overdue task follow-up",
+    description: "Overdue care tasks are raised to high priority and notify the responsible users.",
+    steps: ["Find overdue tasks", "Raise priority to high", "Notify assignee and creator"],
   },
   {
     key: "inbox_triage",
-    title: "Triagem do inbox",
-    description: "Conversas abertas sem resposta há mais de 24h são marcadas como prioridade alta.",
-    steps: ["Localizar conversas paradas +24h", "Elevar prioridade", "Notificar a equipe"],
+    title: "Inbox triage",
+    description: "Open conversations without a reply for more than 24 hours are marked as high priority.",
+    steps: ["Find conversations stalled for 24h+", "Raise priority", "Notify the team"],
   },
 ];
 
@@ -67,7 +67,7 @@ function Workflows() {
   const execute = useMutation({
     mutationFn: async (key: WorkflowKey) => {
       const tenantId = profile?.tenant_id;
-      if (!tenantId && !isSuperAdmin) throw new Error("Entre em uma organização para executar automações.");
+      if (!tenantId && !isSuperAdmin) throw new Error("Join an organization to run automations.");
       const db = supabase as any;
       let processed = 0;
       const details: Record<string, unknown> = {};
@@ -83,8 +83,8 @@ function Workflows() {
         for (const alert of alerts ?? []) {
           const notified = await notifyStaff(
             alert.tenant_id,
-            `Alerta ${alert.severity === "critical" ? "crítico" : "de atenção"}: ${alert.title}`,
-            "Escalonado automaticamente pelo workflow de alertas.",
+            `${alert.severity === "critical" ? "Critical" : "Attention"} alert: ${alert.title}`,
+            "Automatically escalated by the alert workflow.",
             "/app/alerts",
           );
           details[alert.id] = { notified };
@@ -110,8 +110,8 @@ function Workflows() {
               targets.map((userId: string) => ({
                 tenant_id: task.tenant_id,
                 user_id: userId,
-                title: `Tarefa vencida: ${task.title}`,
-                body: `Overdue at ${new Date(task.due_at).toLocaleString("pt-BR")} — priority raised to high.`,
+                title: `Overdue task: ${task.title}`,
+                body: `Overdue at ${new Date(task.due_at).toLocaleString("en-US")} - priority raised to high.`,
                 link: "/app/care-plan",
                 severity: "warning",
               })),
@@ -138,8 +138,8 @@ function Workflows() {
           if (thread.tenant_id) {
             await notifyStaff(
               thread.tenant_id,
-              `Conversa sem resposta: ${thread.subject}`,
-              "Sem resposta há mais de 24h — prioridade elevada.",
+              `Unanswered conversation: ${thread.subject}`,
+              "No reply for more than 24h - priority raised.",
               "/app/inbox",
             );
           }
@@ -160,10 +160,10 @@ function Workflows() {
       return { key, processed };
     },
     onSuccess: ({ processed }) => {
-      toast.success(processed > 0 ? `Automação executada — ${processed} item(s) processado(s)` : "Nada pendente para processar");
+      toast.success(processed > 0 ? `Automation completed - ${processed} item(s) processed` : "Nothing pending to process");
       qc.invalidateQueries({ queryKey: ["workflow-runs", profile?.tenant_id] });
     },
-    onError: (error: any) => toast.error(error.message ?? "Falha ao executar a automação"),
+    onError: (error: any) => toast.error(error.message ?? "Could not run the automation"),
   });
 
   const runsFor = (key: string) => (runs.data ?? []).filter((run: any) => run.workflow_key === key);
@@ -171,23 +171,23 @@ function Workflows() {
   return (
     <>
       <PageHeader
-        title="Automação de cuidados"
+        title="Care automation"
         subtitle="Executable workflows over real data: alerts, tasks and conversations. Every run is registered and auditable."
         action={<Pill tone="olive">Motor active</Pill>}
       />
 
       <div className="grid gap-4 md:grid-cols-3">
-        <Stat label="Execuções registradas" value={runs.data?.length ?? "-"} sub="Latests 40" tone="olive" />
+        <Stat label="Registered runs" value={runs.data?.length ?? "-"} sub="Latest 40" tone="olive" />
         <Stat
-          label="Itens processados"
+          label="Processed items"
           value={(runs.data ?? []).reduce((total: number, run: any) => total + (run.processed ?? 0), 0)}
-          sub="Total recente"
+          sub="Recent total"
           tone="moss"
         />
         <Stat
           label="Latest run"
-          value={runs.data?.[0] ? new Date(runs.data[0].created_at).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }) : "-"}
-          sub={runs.data?.[0] ? new Date(runs.data[0].created_at).toLocaleDateString("pt-BR") : "None yet"}
+          value={runs.data?.[0] ? new Date(runs.data[0].created_at).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" }) : "-"}
+          sub={runs.data?.[0] ? new Date(runs.data[0].created_at).toLocaleDateString("en-US") : "None yet"}
           tone="gold"
         />
       </div>
@@ -202,7 +202,7 @@ function Workflows() {
                   <Zap className="h-5 w-5" />
                 </span>
                 <Pill tone={history[0]?.status === "completed" ? "moss" : "muted"}>
-                  {history.length ? `${history.length} execuções` : "nunca executado"}
+                  {history.length ? `${history.length} runs` : "never run"}
                 </Pill>
               </div>
               <h2 className="mt-4 text-lg font-semibold text-foreground">{workflow.title}</h2>
@@ -224,12 +224,12 @@ function Workflows() {
                   className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-full bg-olive px-4 py-2 text-xs font-semibold text-ivory disabled:opacity-50"
                 >
                   <Play className="h-3.5 w-3.5" />
-                  {execute.isPending ? "Executando..." : "Executar agora"}
+                  {execute.isPending ? "Running..." : "Run now"}
                 </button>
               )}
               {history[0] && (
                 <p className="mt-3 text-[11px] text-muted-foreground">
-                  Latest: {new Date(history[0].created_at).toLocaleString("pt-BR")} · {history[0].processed} item(s)
+                  Latest: {new Date(history[0].created_at).toLocaleString("en-US")} · {history[0].processed} item(s)
                 </p>
               )}
             </Card>
@@ -238,7 +238,7 @@ function Workflows() {
       </div>
 
       <Card className="mt-6">
-        <h2 className="text-xl font-semibold text-foreground">Histórico de execuções</h2>
+        <h2 className="text-xl font-semibold text-foreground">Run history</h2>
         {(runs.data ?? []).length === 0 ? (
           <div className="mt-4"><EmptyState title="No runs yet" hint="Run an automation above to record the first one." /></div>
         ) : (
@@ -249,11 +249,11 @@ function Workflows() {
                   <p className="text-sm font-medium text-foreground">
                     {WORKFLOWS.find((w) => w.key === run.workflow_key)?.title ?? run.workflow_key}
                   </p>
-                  <p className="text-xs text-muted-foreground">{new Date(run.created_at).toLocaleString("pt-BR")}</p>
+                  <p className="text-xs text-muted-foreground">{new Date(run.created_at).toLocaleString("en-US")}</p>
                 </div>
                 <div className="flex items-center gap-2">
                   <Pill tone={run.status === "completed" ? "moss" : run.status === "failed" ? "wine" : "muted"}>
-                    {run.status === "completed" ? "concluída" : run.status === "failed" ? "falhou" : "sem pendências"}
+                    {run.status === "completed" ? "completed" : run.status === "failed" ? "failed" : "no pending items"}
                   </Pill>
                   <Pill tone="olive">{run.processed} item(s)</Pill>
                 </div>

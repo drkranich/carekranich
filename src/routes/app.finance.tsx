@@ -26,7 +26,7 @@ const CATEGORIES = [
 ];
 
 function brl(cents: number) {
-  return (cents / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+  return (cents / 100).toLocaleString("en-US", { style: "currency", currency: "BRL" });
 }
 
 function Finance() {
@@ -112,7 +112,7 @@ function Finance() {
       .update({ paid_at: new Date().toISOString() })
       .eq("id", entry.id);
     if (error) return toast.error(error.message);
-    toast.success(entry.kind === "receivable" ? "Recebimento confirmado" : "Pagamento confirmado");
+    toast.success(entry.kind === "receivable" ? "Receivable confirmed" : "Payment confirmed");
     refresh();
   };
 
@@ -148,14 +148,14 @@ function Finance() {
 
   const exportDre = () => {
     downloadPdf("dre-care-kranich.pdf", "Demonstractive financeiro", [
-      `Issued at: ${new Date().toLocaleString("pt-BR")}`,
+      `Issued at: ${new Date().toLocaleString("en-US")}`,
       "",
       `Paid exam revenue (orders): ${brl((orders.data ?? []).reduce((a: number, o: any) => a + (o.total_cents ?? 0), 0))}`,
       `Outros recebimentos confirmados: ${brl((entries.data ?? []).filter((e: any) => e.kind === "receivable" && e.paid_at).reduce((a: number, e: any) => a + e.amount_cents, 0))}`,
       `Paid expenses: ${brl(summary.expenses)}`,
-      `Resultado: ${brl(summary.result)}`,
+      `Result: ${brl(summary.result)}`,
       "",
-      `A receber (aberto): ${brl(summary.toReceive)}`,
+      `Open receivables: ${brl(summary.toReceive)}`,
       `A pagar (aberto): ${brl(summary.toPay)}`,
       `Overdue entries: ${summary.overdue.length}`,
       "",
@@ -164,7 +164,7 @@ function Finance() {
         .filter((e: any) => !e.paid_at)
         .map(
           (e: any) =>
-            `- ${e.kind === "receivable" ? "RECEIVE" : "PAY"} · ${e.description} · ${brl(e.amount_cents)}${e.due_date ? ` · due ${new Date(e.due_date + "T00:00:00").toLocaleDateString("pt-BR")}` : ""}`,
+            `- ${e.kind === "receivable" ? "RECEIVE" : "PAY"} · ${e.description} · ${brl(e.amount_cents)}${e.due_date ? ` · due ${new Date(e.due_date + "T00:00:00").toLocaleDateString("en-US")}` : ""}`,
         ),
     ]);
   };
@@ -190,10 +190,10 @@ function Finance() {
       />
 
       <div className="grid gap-4 md:grid-cols-4">
-        <Stat label="Receita confirmada" value={brl(summary.revenue)} sub="Pedidos pagos + recebimentos" tone="moss" />
+        <Stat label="Confirmed revenue" value={brl(summary.revenue)} sub="Paid orders + receivables" tone="moss" />
         <Stat label="Paid expenses" value={brl(summary.expenses)} sub="Confirmed outflows" tone="wine" />
-        <Stat label="Resultado" value={brl(summary.result)} sub="Receita menos despesas" tone="olive" />
-        <Stat label="Vencidos" value={summary.overdue.length} sub={`${brl(summary.overdue.reduce((a: number, e: any) => a + e.amount_cents, 0))} em atraso`} tone="terracotta" />
+        <Stat label="Result" value={brl(summary.result)} sub="Revenue minus expenses" tone="olive" />
+        <Stat label="Overdue" value={summary.overdue.length} sub={`${brl(summary.overdue.reduce((a: number, e: any) => a + e.amount_cents, 0))} overdue`} tone="terracotta" />
       </div>
 
       <div className="flex flex-wrap items-center gap-2">
@@ -203,7 +203,7 @@ function Finance() {
             tab === "receivable" ? "bg-olive text-ivory shadow-soft" : "border border-white/70 bg-white/55 text-muted-foreground backdrop-blur-xl"
           }`}
         >
-          A receber · {brl(summary.toReceive)}
+          Receivables · {brl(summary.toReceive)}
         </button>
         <button
           onClick={() => setTab("payable")}
@@ -218,7 +218,7 @@ function Finance() {
       {open && (
         <Card className="space-y-3 p-6">
           <h3 className="flex items-center gap-2 text-sm font-semibold text-foreground">
-            <Landmark className="h-4 w-4" /> {tab === "receivable" ? "Nova conta a receber" : "Nova conta a pagar"}
+            <Landmark className="h-4 w-4" /> {tab === "receivable" ? "New receivable" : "New payable"}
           </h3>
           <div className="grid gap-3 md:grid-cols-4">
             <input className={`${glassInput} md:col-span-2`} placeholder="Description *" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
@@ -257,7 +257,7 @@ function Finance() {
                   <p className="text-xs text-muted-foreground">
                     {CATEGORIES.find((c) => c.value === e.category)?.label ?? e.category}
                     {e.counterparty ? ` · ${e.counterparty}` : ""}
-                    {e.due_date ? ` · due ${new Date(e.due_date + "T00:00:00").toLocaleDateString("pt-BR")}` : ""}
+                    {e.due_date ? ` · due ${new Date(e.due_date + "T00:00:00").toLocaleDateString("en-US")}` : ""}
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
@@ -268,7 +268,7 @@ function Finance() {
                     <>
                       {overdue && <Pill tone="wine">vencido</Pill>}
                       <button onClick={() => markPaid(e)} className="rounded-full bg-olive px-3 py-1.5 text-xs font-medium text-ivory">
-                        {e.kind === "receivable" ? "Confirmar recebimento" : "Confirmar pagamento"}
+                        {e.kind === "receivable" ? "Confirm receivable" : "Confirm payment"}
                       </button>
                     </>
                   )}

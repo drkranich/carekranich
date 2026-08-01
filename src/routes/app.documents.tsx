@@ -30,7 +30,7 @@ const documentTypeOptions = [
   { value: "contract", label: "Contract" },
   { value: "insurance", label: "Insurance" },
   { value: "certification", label: "Certification" },
-  { value: "identity", label: "Identidade" },
+  { value: "identity", label: "Identity" },
 ];
 
 const TAGS = [
@@ -133,7 +133,7 @@ function Documents() {
     downloadPdf(`${doc.title}-resumo.pdf`, doc.title, [
       `Tipo: ${documentTypeOptions.find((t) => t.value === doc.document_type)?.label ?? doc.document_type}`,
       `Status: ${doc.status}`,
-      `Enviado em: ${new Date(doc.created_at).toLocaleString("pt-BR")}`,
+      `Uploaded at: ${new Date(doc.created_at).toLocaleString("en-US")}`,
       `Summary: ${doc.ai_summary ?? "No summary available yet."}`,
       `Vault path: ${doc.storage_path}`,
     ]);
@@ -320,14 +320,14 @@ function Documents() {
                         {doc.status === "archived" && <Pill tone="gold">archived</Pill>}
                       </div>
                       <p className="mt-1 text-xs text-muted-foreground">
-                        {new Date(doc.created_at).toLocaleDateString("pt-BR")} · {formatBytes(doc.file_size)} · {doc.status}
+                        {new Date(doc.created_at).toLocaleDateString("en-US")} · {formatBytes(doc.file_size)} · {doc.status}
                       </p>
                       <p className="mt-3 rounded-xl border border-border/60 bg-cream/40 p-3 text-sm leading-6 text-foreground/85">
-                        {doc.ai_summary ?? "Sem resumo ainda."}
+                        {doc.ai_summary ?? "No summary yet."}
                       </p>
                       <div className="mt-3 flex flex-wrap gap-2">
                         <button onClick={() => openDocument(doc)} className="rounded-full bg-olive px-3 py-1.5 text-xs text-ivory">
-                          Abrir arquivo assinado
+                          Open signed file
                         </button>
                         <button onClick={() => startEditDocument(doc)} className="inline-flex items-center gap-1 rounded-full border border-border px-3 py-1.5 text-xs">
                           <Pencil className="h-3 w-3" /> Edit

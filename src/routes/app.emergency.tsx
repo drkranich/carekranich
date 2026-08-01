@@ -120,7 +120,7 @@ function Emergency() {
       `Emergency alert: ${alert.title}`,
       `Status: ${statusLabel(alert.status)}`,
       `Description: ${alert.description ?? "No description."}`,
-      `Criado em: ${new Date(alert.created_at).toLocaleString("pt-BR")}`,
+      `Created at: ${new Date(alert.created_at).toLocaleString("en-US")}`,
       `${window.location.origin}/app/emergency?alert=${alert.id}`,
     ].join("\n");
     try {
@@ -228,7 +228,7 @@ function Emergency() {
                         </div>
                         <p className="mt-1 text-sm text-muted-foreground">{alert.description ?? "No description."}</p>
                         <p className="mt-2 text-xs text-muted-foreground">
-                          {new Date(alert.created_at).toLocaleString("pt-BR")}
+                          {new Date(alert.created_at).toLocaleString("en-US")}
                           {alert.assigned_to && memberName(alert.assigned_to) ? ` · delegado a ${memberName(alert.assigned_to)}` : ""}
                         </p>
 
@@ -318,7 +318,7 @@ function Emergency() {
                 <div className="mt-2 space-y-2">
                   {archivedEmergencies.slice(0, 6).map((alert: any) => (
                     <div key={alert.id} className="flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-border/60 bg-cream/40 px-4 py-2.5 text-xs text-muted-foreground">
-                      <span>{alert.title} · {new Date(alert.created_at).toLocaleDateString("pt-BR")}</span>
+                      <span>{alert.title} · {new Date(alert.created_at).toLocaleDateString("en-US")}</span>
                       <span className="flex gap-2">
                         <button onClick={() => updateAlert(alert.id, { archived_at: null }, "Alert restored")} className="hover:underline">
                           Restore
@@ -344,7 +344,7 @@ function Emergency() {
                   <p className="text-sm font-medium text-foreground">{location.address}</p>
                   <p className="text-xs text-muted-foreground">{[location.city, location.state, location.country].filter(Boolean).join(", ")}</p>
                   <p className="mt-2 text-xs text-muted-foreground">
-                    {location.latitude && location.longitude ? `${location.latitude}, ${location.longitude}` : "Sem coordenadas GPS"}
+                    {location.latitude && location.longitude ? `${location.latitude}, ${location.longitude}` : "No GPS coordinates"}
                   </p>
                 </div>
               ))}

@@ -13,16 +13,16 @@ import { downloadAncestryPdf } from "@/lib/ancestryPdf";
 export const Route = createFileRoute("/app/origins")({ component: Origins });
 
 const CONFIDENCE_LABEL: Record<string, string> = {
-  alta: "Alta confiança",
-  moderada: "Confiança moderada",
-  ampla: "Estimativa ampla",
-  revisao: "Em revisão",
+  alta: "High confidence",
+  moderada: "Moderate confidence",
+  ampla: "Broad estimate",
+  revisao: "In review",
 };
 
 const CHART_MODES = [
-  { value: "circulo", label: "Círculo de ancestralidade" },
-  { value: "barras", label: "Barras territoriais" },
-  { value: "constelacao", label: "Constelação genética" },
+  { value: "circulo", label: "Ancestry circle" },
+  { value: "barras", label: "Territorial bars" },
+  { value: "constelacao", label: "Genetic constellation" },
 ];
 
 function Origins() {
@@ -124,7 +124,7 @@ function Origins() {
   const animation = result.data?.animation ?? {};
   const reducedMotion = reduced || !!animation.reduced_motion;
 
-  // revelação progressiva das regiões após a abertura
+  // Progressive region reveal after opening.
   useEffect(() => {
     if (!revealed || reducedMotion || list.length === 0) return;
     setProgress(0);
@@ -165,7 +165,7 @@ function Origins() {
   const exportPdf = () => {
     if (!result.data) return;
     const name = selectedPatient?.social_name || selectedPatient?.full_name || "Patient";
-    downloadAncestryPdf(`minhas-origens-${name}.pdf`, {
+    downloadAncestryPdf(`my-origins-${name}.pdf`, {
       patientName: name,
       version: result.data.version,
       publishedAt: result.data.published_at,
@@ -180,7 +180,7 @@ function Origins() {
         percentage: Number(r.percentage ?? 0),
         rangeMin: r.range_min !== null && r.range_min !== undefined ? Number(r.range_min) : null,
         rangeMax: r.range_max !== null && r.range_max !== undefined ? Number(r.range_max) : null,
-        confidence: CONFIDENCE_LABEL[r.confidence ?? "moderada"] ?? "Confiança moderada",
+        confidence: CONFIDENCE_LABEL[r.confidence ?? "moderada"] ?? "Moderate confidence",
         color: r.color ?? "#c98a3a",
         latitude: r.latitude !== null && r.latitude !== undefined ? Number(r.latitude) : null,
         longitude: r.longitude !== null && r.longitude !== undefined ? Number(r.longitude) : null,
@@ -206,7 +206,7 @@ function Origins() {
   if (myPatients.isLoading || result.isLoading) {
     return (
       <>
-        <PageHeader title="Minhas Origens" subtitle="Carregando sua jornada ancestral..." />
+        <PageHeader title="My Origins" subtitle="Loading your ancestral journey..." />
       </>
     );
   }
@@ -215,12 +215,12 @@ function Origins() {
     return (
       <>
         <PageHeader
-          title="Minhas Origens"
-          subtitle="Seu atlas ancestral aparecerá aqui assim que o resultado do teste genético for liberado."
+          title="My Origins"
+          subtitle="Your ancestral atlas will appear here as soon as the genetic test result is released."
         />
         <EmptyState
           title="No ancestry result published"
-          hint="Quando o laboratório liberar seu resultado, você receberá uma notificação and poderá explorar o mapa das suas origens."
+          hint="When the lab releases your result, you will receive a notification and can explore your origins map."
         />
       </>
     );
@@ -240,12 +240,12 @@ function Origins() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Minhas Origens"
-        subtitle={`Atlas ancestral de ${selectedPatient.social_name || selectedPatient.full_name} · versão ${result.data.version}`}
+        title="My Origins"
+        subtitle={`Ancestral atlas for ${selectedPatient.social_name || selectedPatient.full_name} - version ${result.data.version}`}
         action={
           <div className="flex flex-wrap gap-2">
             <button onClick={journey} className="inline-flex items-center gap-1.5 rounded-full bg-olive px-4 py-2 text-xs font-medium text-ivory">
-              <Play className="h-3.5 w-3.5" /> Assistir à minha jornada
+              <Play className="h-3.5 w-3.5" /> Watch my journey
             </button>
             <button
               onClick={() => {
@@ -254,7 +254,7 @@ function Origins() {
               }}
               className="rounded-full border border-border bg-white/55 px-4 py-2 text-xs"
             >
-              Rever a revelação
+              Replay reveal
             </button>
             <button onClick={exportPdf} className="inline-flex items-center gap-1.5 rounded-full border border-border bg-white/55 px-4 py-2 text-xs">
               <FileDown className="h-3.5 w-3.5" /> PDF report
@@ -266,7 +266,7 @@ function Origins() {
       {(myPatients.data ?? []).length > 1 && (
         <Card className="p-4">
           <div className="flex flex-wrap items-center gap-3">
-            <p className="text-sm text-muted-foreground">Perfil:</p>
+            <p className="text-sm text-muted-foreground">Profile:</p>
             <GlassSelect
               value={selectedPatient.id}
               onChange={(v) => {
@@ -277,7 +277,7 @@ function Origins() {
               className="min-w-64"
               options={(myPatients.data ?? []).map((p: any) => ({
                 value: p.id,
-                label: `${p.social_name || p.full_name}${p._rel ? ` (${p._rel})` : " (você)"}`,
+                label: `${p.social_name || p.full_name}${p._rel ? ` (${p._rel})` : " (you)"}`,
               }))}
             />
           </div>
@@ -300,22 +300,22 @@ function Origins() {
               onClick={() => setShowRoutes(!showRoutes)}
               className={`rounded-full border px-3 py-1.5 ${showRoutes ? "border-olive bg-olive text-ivory" : "border-border bg-white/55"}`}
             >
-              Rotas migratórias {(routes.data ?? []).length ? `(${(routes.data ?? []).length})` : ""}
+              Migration routes {(routes.data ?? []).length ? `(${(routes.data ?? []).length})` : ""}
             </button>
             <button
               onClick={() => setReduced(!reduced)}
               className={`rounded-full border px-3 py-1.5 ${reduced ? "border-olive bg-olive text-ivory" : "border-border bg-white/55"}`}
             >
-              {reduced ? "Animações desativadas" : "Reduzir animações"}
+              {reduced ? "Animations off" : "Reduce animations"}
             </button>
-            <span className="text-muted-foreground">Toque em um ponto do mapa para abrir a origem.</span>
+            <span className="text-muted-foreground">Tap a map point to open the origin.</span>
           </div>
         </div>
 
         <Card className="space-y-4 p-6">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <h3 className="flex items-center gap-2 text-sm font-semibold text-foreground">
-              <Sparkles className="h-4 w-4" /> Composição ancestral
+              <Sparkles className="h-4 w-4" /> Ancestral composition
             </h3>
             <GlassSelect value={chartMode} onChange={setChartMode} options={CHART_MODES} className="min-w-56" />
           </div>
@@ -344,7 +344,7 @@ function Origins() {
                 })}
                 <circle cx="100" cy="100" r="48" fill="var(--card, #fff)" />
                 <text x="100" y="96" textAnchor="middle" fontSize="13" fill="currentColor" className="text-muted-foreground">
-                  origens
+                  origins
                 </text>
                 <text x="100" y="118" textAnchor="middle" fontSize="24" className="fill-current font-display">
                   {list.length}
@@ -401,8 +401,8 @@ function Origins() {
           )}
 
           <p className="text-xs leading-5 text-muted-foreground">
-            Estes percentuais são estimativas obtidas pela comparação do seu DNA com grupos populacionais de
-            referência. Semelhança genética com uma região não determina pertencimento cultural.
+            These percentages are estimates obtained by comparing your DNA with reference population groups.
+            Genetic similarity with a region does not determine cultural belonging.
           </p>
         </Card>
       </div>
@@ -418,7 +418,7 @@ function Origins() {
               <Pill tone="olive">{Number(active.percentage).toFixed(1)}%</Pill>
               {active.range_min !== null && (
                 <Pill tone="muted">
-                  faixa {active.range_min}–{active.range_max}%
+                  range {active.range_min}-{active.range_max}%
                 </Pill>
               )}
               <Pill tone={active.confidence === "alta" ? "moss" : active.confidence === "ampla" ? "gold" : "muted"}>
@@ -431,14 +431,14 @@ function Origins() {
           {active.full_text && <p className="text-sm leading-relaxed text-muted-foreground">{active.full_text}</p>}
           {active.historical_text && (
             <div className="rounded-2xl border border-white/70 bg-white/45 p-4">
-              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Contexto histórico</p>
+              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Historical context</p>
               <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{active.historical_text}</p>
             </div>
           )}
 
           {(timeline.data ?? []).filter((t: any) => t.region_id === active.id).length > 0 && (
             <div>
-              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Linha do tempo</p>
+              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Timeline</p>
               <div className="mt-2 space-y-2">
                 {(timeline.data ?? [])
                   .filter((t: any) => t.region_id === active.id)
@@ -455,7 +455,7 @@ function Origins() {
 
           {active.limitations && (
             <p className="rounded-2xl border border-terracotta/30 bg-terracotta/5 p-4 text-xs leading-5 text-terracotta">
-              Limitações: {active.limitations}
+              Limitations: {active.limitations}
             </p>
           )}
         </Card>
@@ -463,10 +463,10 @@ function Origins() {
 
       <Card className="p-5">
         <p className="text-xs text-muted-foreground">
-          Resultado processado por {result.data.lab_name ?? "laboratório parceiro"} · algoritmo{" "}
-          {result.data.algorithm_version ?? "não informado"} · população de referência{" "}
-          {result.data.reference_population ?? "não informada"}. Novas versões podem surgir conforme os bancos de
-          referência forem ampliados — você será avisado and poderá comparar com o resultado anterior.
+          Result processed by {result.data.lab_name ?? "partner laboratory"} - algorithm{" "}
+          {result.data.algorithm_version ?? "not informed"} - reference population{" "}
+          {result.data.reference_population ?? "not informed"}. New versions may appear as reference databases expand -
+          you will be notified and can compare with the previous result.
         </p>
       </Card>
     </div>

@@ -26,18 +26,18 @@ type CheckinRow = {
 };
 
 const PENDING_OPTIONS = [
-  "Termo de consentimento",
-  "Confirmação de jejum",
-  "Documento de identidade",
-  "Pedido médico",
-  "Pagamento",
-  "Autorização do convênio",
+  "Consent form",
+  "Fasting confirmation",
+  "Identity document",
+  "Medical order",
+  "Payment",
+  "Insurance authorization",
 ];
 
 const METHODS = [
-  { value: "presencial", label: "Presencial (balcão)" },
+  { value: "presencial", label: "In person (front desk)" },
   { value: "qr", label: "QR Code" },
-  { value: "tablet", label: "Tablet / totem" },
+  { value: "tablet", label: "Tablet / kiosk" },
 ];
 
 const glassInput =
@@ -129,12 +129,12 @@ function Reception() {
       return ticket;
     },
     onSuccess: (ticket) => {
-      toast.success(`Check-in realizado — senha ${ticket}`);
+      toast.success(`Check-in completed - ticket ${ticket}`);
       setDraft({ patient_id: "", unit_id: "", method: "presencial", priority: false });
       setPending([]);
       qc.invalidateQueries({ queryKey: ["reception-checkins"] });
     },
-    onError: (e: any) => toast.error(e.message ?? "Não foi possível realizar o check-in"),
+    onError: (e: any) => toast.error(e.message ?? "Could not complete check-in"),
   });
 
   const setStatus = useMutation({
@@ -170,20 +170,20 @@ function Reception() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Recepção and check-in"
+        title="Reception and check-in"
         subtitle="Daily queue, tickets, priorities and pending items before releasing each patient."
       />
 
       <div className="grid gap-4 md:grid-cols-4">
         <Stat label="Waiting" value={waiting.length} tone="olive" sub="patients in queue" />
-        <Stat label="Em atendimento" value={inService.length} tone="moss" sub="chamados agora" />
-        <Stat label="Atendidos hoje" value={done.length} tone="gold" sub="check-ins concluídos" />
-        <Stat label="Espera média" value={`${avgWait} min`} tone="wine" sub="fila atual" />
+        <Stat label="In service" value={inService.length} tone="moss" sub="called now" />
+        <Stat label="Served today" value={done.length} tone="gold" sub="completed check-ins" />
+        <Stat label="Average wait" value={`${avgWait} min`} tone="wine" sub="current queue" />
       </div>
 
       <Card className="space-y-4 p-6">
         <h3 className="flex items-center gap-2 text-sm font-semibold text-foreground">
-          <UserPlus className="h-4 w-4" /> Novo check-in
+          <UserPlus className="h-4 w-4" /> New check-in
         </h3>
         <div className="grid gap-3 md:grid-cols-4">
           <GlassSelect
@@ -195,9 +195,9 @@ function Reception() {
           <GlassSelect
             value={draft.unit_id}
             onChange={(v) => setDraft({ ...draft, unit_id: v })}
-            placeholder="Unidade"
+            placeholder="Unit"
             options={[
-              { value: "", label: "Sem unidade" },
+              { value: "", label: "No unit" },
               ...(units.data ?? []).map((u) => ({ value: u.id, label: u.name })),
             ]}
           />
@@ -215,7 +215,7 @@ function Reception() {
                 : "border-white/70 bg-white/55 text-foreground backdrop-blur-xl"
             }`}
           >
-            {draft.priority ? "Prioridade legal ativada" : "Marcar prioridade"}
+            {draft.priority ? "Priority enabled" : "Mark priority"}
           </button>
         </div>
         <div>
@@ -248,14 +248,14 @@ function Reception() {
           disabled={create.isPending}
           className="inline-flex items-center gap-2 rounded-full bg-olive px-5 py-2 text-sm font-medium text-ivory shadow-soft hover:opacity-90 disabled:opacity-60"
         >
-          <TicketCheck className="h-4 w-4" /> {create.isPending ? "Gerando senha..." : "Fazer check-in and gerar senha"}
+          <TicketCheck className="h-4 w-4" /> {create.isPending ? "Generating ticket..." : "Check in and generate ticket"}
         </button>
       </Card>
 
       <div className="grid gap-4 lg:grid-cols-2">
         <Card className="space-y-3 p-6">
-          <h3 className="text-sm font-semibold text-foreground">Fila de espera</h3>
-          {waiting.length === 0 && <p className="text-sm text-muted-foreground">Ninguém aguardando.</p>}
+          <h3 className="text-sm font-semibold text-foreground">Waiting queue</h3>
+          {waiting.length === 0 && <p className="text-sm text-muted-foreground">No one is waiting.</p>}
           {waiting.map((row) => (
             <div key={row.id} className="space-y-2 rounded-2xl border border-white/70 bg-white/45 p-4 backdrop-blur-xl">
               <div className="flex items-center justify-between gap-2">
@@ -266,11 +266,11 @@ function Reception() {
                   <div>
                     <p className="text-sm font-medium text-foreground">{patientName(row.patient_id)}</p>
                     <p className="text-xs text-muted-foreground">
-                      Chegou há {minutesSince(row.arrived_at)} min · {METHODS.find((m) => m.value === row.method)?.label ?? row.method}
+                      Arrived {minutesSince(row.arrived_at)} min ago · {METHODS.find((m) => m.value === row.method)?.label ?? row.method}
                     </p>
                   </div>
                 </div>
-                {row.priority && <Pill tone="wine">Prioridade</Pill>}
+                {row.priority && <Pill tone="wine">Priority</Pill>}
               </div>
               {(row.pending ?? []).length > 0 && (
                 <div className="flex flex-wrap gap-1.5">
@@ -278,10 +278,10 @@ function Reception() {
                     <button
                       key={item}
                       onClick={() => resolvePending.mutate({ row, item })}
-                      title="Clique para marcar como resolvida"
+                      title="Click to mark as resolved"
                       className="rounded-full border border-terracotta/40 bg-terracotta/10 px-2.5 py-1 text-xs text-terracotta hover:bg-terracotta/20"
                     >
-                      {item} ✕
+                      {item} x
                     </button>
                   ))}
                 </div>
@@ -290,16 +290,16 @@ function Reception() {
                 <button
                   onClick={() => setStatus.mutate({ id: row.id, status: "in_service" })}
                   disabled={(row.pending ?? []).length > 0}
-                  title={(row.pending ?? []).length > 0 ? "Resolva as pendências antes de chamar" : undefined}
+                  title={(row.pending ?? []).length > 0 ? "Resolve pending items before calling" : undefined}
                   className="inline-flex items-center gap-1 rounded-full bg-olive px-4 py-1.5 text-xs font-medium text-ivory shadow-soft hover:opacity-90 disabled:opacity-40"
                 >
-                  <BellRing className="h-3.5 w-3.5" /> Chamar
+                  <BellRing className="h-3.5 w-3.5" /> Call
                 </button>
                 <button
                   onClick={() => setStatus.mutate({ id: row.id, status: "no_show" })}
                   className="rounded-full border border-white/70 bg-white/55 px-4 py-1.5 text-xs backdrop-blur-xl"
                 >
-                  Não compareceu
+                  No-show
                 </button>
               </div>
             </div>
@@ -307,7 +307,7 @@ function Reception() {
         </Card>
 
         <Card className="space-y-3 p-6">
-          <h3 className="text-sm font-semibold text-foreground">Em atendimento</h3>
+          <h3 className="text-sm font-semibold text-foreground">In service</h3>
           {inService.length === 0 && <p className="text-sm text-muted-foreground">No patient currently in service.</p>}
           {inService.map((row) => (
             <div key={row.id} className="flex items-center justify-between gap-2 rounded-2xl border border-white/70 bg-white/45 p-4 backdrop-blur-xl">
@@ -318,7 +318,7 @@ function Reception() {
                 <div>
                   <p className="text-sm font-medium text-foreground">{patientName(row.patient_id)}</p>
                   <p className="text-xs text-muted-foreground">
-                    Chamado {row.called_at ? `há ${minutesSince(row.called_at)} min` : "agora"}
+                    Called {row.called_at ? `${minutesSince(row.called_at)} min ago` : "now"}
                   </p>
                 </div>
               </div>
@@ -326,18 +326,18 @@ function Reception() {
                 onClick={() => setStatus.mutate({ id: row.id, status: "done" })}
                 className="inline-flex items-center gap-1 rounded-full bg-moss px-4 py-1.5 text-xs font-medium text-ivory shadow-soft hover:opacity-90"
               >
-                <CheckCircle2 className="h-3.5 w-3.5" /> Concluir
+                <CheckCircle2 className="h-3.5 w-3.5" /> Complete
               </button>
             </div>
           ))}
 
           {done.length > 0 && (
             <>
-              <h3 className="pt-2 text-sm font-semibold text-foreground">Concluídos hoje</h3>
+              <h3 className="pt-2 text-sm font-semibold text-foreground">Completed today</h3>
               {done.slice(0, 8).map((row) => (
                 <div key={row.id} className="flex items-center justify-between text-xs text-muted-foreground">
                   <span>{row.ticket_number} · {patientName(row.patient_id)}</span>
-                  <span>{row.completed_at ? new Date(row.completed_at).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }) : ""}</span>
+                  <span>{row.completed_at ? new Date(row.completed_at).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" }) : ""}</span>
                 </div>
               ))}
             </>
@@ -348,7 +348,7 @@ function Reception() {
       {rows.length === 0 && (
         <EmptyState
           title="No check-ins today"
-          hint="Faça o primeiro check-in acima para iniciar a fila do dia."
+          hint="Create the first check-in above to start today's queue."
         />
       )}
     </div>

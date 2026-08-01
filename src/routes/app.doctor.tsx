@@ -12,10 +12,10 @@ import { downloadPdf } from "@/lib/pdf";
 export const Route = createFileRoute("/app/doctor")({ component: DoctorPortal });
 
 const STATUS_LABEL: Record<string, string> = {
-  requested: "Solicitado",
-  scheduled: "Agendado",
-  completed: "Concluído",
-  canceled: "Cancelado",
+  requested: "Requested",
+  scheduled: "Scheduled",
+  completed: "Completed",
+  canceled: "Canceled",
 };
 
 async function sha256Hex(value: string) {
@@ -175,62 +175,62 @@ function DoctorPortal() {
   const setStatus = async (order: any, status: string) => {
     const { error } = await (supabase as any).from("doctor_orders").update({ status }).eq("id", order.id);
     if (error) return toast.error(error.message);
-    toast.success(`Pedido: ${STATUS_LABEL[status]}`);
+    toast.success(`Order: ${STATUS_LABEL[status]}`);
     qc.invalidateQueries({ queryKey: ["doctor-orders", user?.id] });
   };
 
   const exportOrder = (o: any) => {
     downloadPdf(`order-${patientName(o.patient_id)}.pdf`, "Electronic medical order", [
       `Patient: ${patientName(o.patient_id)}`,
-      `Date: ${new Date(o.created_at).toLocaleString("pt-BR")}`,
-      `Urgência: ${o.urgent ? "YES" : "não"}`,
+      `Date: ${new Date(o.created_at).toLocaleString("en-US")}`,
+      `Urgency: ${o.urgent ? "YES" : "no"}`,
       `Status: ${STATUS_LABEL[o.status] ?? o.status}`,
       "",
-      "Exams solicitados:",
+      "Requested exams:",
       ...(o.exam_ids ?? []).map((id: string) => `- ${examName(id)}`),
       "",
-      o.clinical_notes ? `Observações clínicas: ${o.clinical_notes}` : "",
+      o.clinical_notes ? `Clinical notes: ${o.clinical_notes}` : "",
       "",
-      `Assinatura eletrônica (SHA-256): ${o.signed_hash ?? "-"}`,
+      `Electronic signature (SHA-256): ${o.signed_hash ?? "-"}`,
     ].filter((l) => l !== ""));
   };
 
   const exportReport = (r: any) => {
     downloadPdf(`report-${r.title}.pdf`, r.title, [
       `Patient: ${patientName(r.patient_id)}`,
-      `Versão: ${r.version} · Status: ${r.status}`,
+      `Version: ${r.version} - Status: ${r.status}`,
       "",
       ...(r.result_text ?? "").split("\n"),
-      r.reference_values ? `Referência: ${r.reference_values}` : "",
-      r.comments ? `Comentários: ${r.comments}` : "",
-      r.signed_hash ? `Verificação: ${r.signed_hash}` : "",
+      r.reference_values ? `Reference: ${r.reference_values}` : "",
+      r.comments ? `Comments: ${r.comments}` : "",
+      r.signed_hash ? `Verification: ${r.signed_hash}` : "",
     ].filter((l: string) => l !== ""));
   };
 
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Portal do médico"
+        title="Doctor portal"
         subtitle="Signed electronic orders, patient follow-up and critical result alerts."
       />
 
       <div className="grid gap-4 md:grid-cols-4">
         <Stat label="My orders" value={(orders.data ?? []).length} sub="Electronic orders" tone="olive" />
         <Stat label="Linked patients" value={myPatientIds.length} sub="Via orders" tone="moss" />
-        <Stat label="Laudos disponíveis" value={(reports.data ?? []).length} sub="For your patients" tone="gold" />
-        <Stat label="Críticos abertos" value={(criticals.data ?? []).length} sub="Exigem atenção" tone="wine" />
+        <Stat label="Available reports" value={(reports.data ?? []).length} sub="For your patients" tone="gold" />
+        <Stat label="Open criticals" value={(criticals.data ?? []).length} sub="Require attention" tone="wine" />
       </div>
 
       {(criticals.data ?? []).length > 0 && (
         <Card className="border-wine/25 bg-wine/5 p-5">
           <p className="flex items-center gap-2 text-sm font-semibold text-wine">
-            <AlertTriangle className="h-4 w-4" /> Resultados críticos em aberto
+            <AlertTriangle className="h-4 w-4" /> Open critical results
           </p>
           <div className="mt-2 space-y-1">
             {(criticals.data ?? []).map((c: any) => (
               <p key={c.id} className="text-xs text-muted-foreground">
-                {patientName(c.patient_id)} · protocolo {c.status === "contacting" ? "em contato" : "aberto"} desde{" "}
-                {new Date(c.created_at).toLocaleString("pt-BR")}
+                {patientName(c.patient_id)} - protocol {c.status === "contacting" ? "contacting" : "open"} since{" "}
+                {new Date(c.created_at).toLocaleString("en-US")}
               </p>
             ))}
           </div>
@@ -257,11 +257,11 @@ function DoctorPortal() {
                 : "border-white/70 bg-white/55 text-muted-foreground backdrop-blur-xl"
             }`}
           >
-            {draft.urgent ? "URGENTE — alerta será disparado" : "Mark as urgent"}
+            {draft.urgent ? "URGENT - alert will be triggered" : "Mark as urgent"}
           </button>
         </div>
         <div>
-          <p className="mb-2 text-xs font-medium text-muted-foreground">Exams solicitados ({examIds.length})</p>
+          <p className="mb-2 text-xs font-medium text-muted-foreground">Requested exams ({examIds.length})</p>
           <div className="flex max-h-44 flex-wrap gap-2 overflow-y-auto">
             {(exams.data ?? []).map((e: any) => (
               <button
@@ -285,7 +285,7 @@ function DoctorPortal() {
           value={draft.clinical_notes}
           onChange={(e) => setDraft({ ...draft, clinical_notes: e.target.value })}
           rows={3}
-          placeholder="Observações clínicas para o laboratório (hipótese diagnóstica, medicamentos em uso...)"
+          placeholder="Clinical notes for the laboratory (diagnostic hypothesis, current medications...)"
           className="w-full rounded-2xl border border-white/70 bg-white/55 px-4 py-2.5 text-sm shadow-soft backdrop-blur-xl outline-none focus:border-olive/40"
         />
         <button
@@ -309,14 +309,14 @@ function DoctorPortal() {
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <p className="text-sm font-medium text-foreground">{patientName(o.patient_id)}</p>
                 <span className="flex items-center gap-2">
-                  {o.urgent && <Pill tone="wine">Urgente</Pill>}
+                  {o.urgent && <Pill tone="wine">Urgent</Pill>}
                   <Pill tone={o.status === "completed" ? "moss" : o.status === "canceled" ? "muted" : "gold"}>
                     {STATUS_LABEL[o.status] ?? o.status}
                   </Pill>
                 </span>
               </div>
               <p className="text-xs text-muted-foreground">
-                {(o.exam_ids ?? []).map(examName).join(", ")} · {new Date(o.created_at).toLocaleDateString("pt-BR")}
+                {(o.exam_ids ?? []).map(examName).join(", ")} - {new Date(o.created_at).toLocaleDateString("en-US")}
               </p>
               <div className="flex flex-wrap gap-2 text-xs">
                 <button onClick={() => exportOrder(o)} className="inline-flex items-center gap-1 rounded-full border border-border bg-white/55 px-3 py-1.5">
@@ -324,13 +324,13 @@ function DoctorPortal() {
                 </button>
                 {o.status === "requested" && (
                   <button onClick={() => setStatus(o, "scheduled")} className="rounded-full border border-border bg-white/55 px-3 py-1.5">
-                    Marcar agendado
+                    Mark scheduled
                   </button>
                 )}
                 {["requested", "scheduled"].includes(o.status) && (
                   <>
                     <button onClick={() => setStatus(o, "completed")} className="rounded-full bg-moss px-3 py-1.5 font-medium text-ivory">
-                      Concluir
+                      Complete
                     </button>
                     <button onClick={() => setStatus(o, "canceled")} className="rounded-full border border-wine/30 bg-wine/5 px-3 py-1.5 text-wine">
                       Cancel
@@ -354,13 +354,13 @@ function DoctorPortal() {
               <div className="min-w-0">
                 <p className="truncate text-sm font-medium text-foreground">{r.title}</p>
                 <p className="text-xs text-muted-foreground">
-                  {patientName(r.patient_id)} · v{r.version} · {new Date(r.created_at).toLocaleDateString("pt-BR")}
+                  {patientName(r.patient_id)} - v{r.version} - {new Date(r.created_at).toLocaleDateString("en-US")}
                 </p>
               </div>
               <span className="flex items-center gap-2">
-                {r.is_critical && <Pill tone="wine">Crítico</Pill>}
+                {r.is_critical && <Pill tone="wine">Critical</Pill>}
                 <Pill tone={r.status === "released" ? "moss" : "gold"}>
-                  {r.status === "released" ? "liberado" : "em processamento"}
+                  {r.status === "released" ? "released" : "processing"}
                 </Pill>
                 <button onClick={() => exportReport(r)} className="rounded-full border border-border bg-white/55 p-1.5 text-xs">
                   <FileDown className="h-3 w-3" />

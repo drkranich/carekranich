@@ -97,7 +97,7 @@ function Academy() {
       if (error) throw error;
     },
     onSuccess: () => {
-      toast.success("Curso criado");
+      toast.success("Course created");
       setNewCourse({ title: "", description: "", duration: "20" });
       qc.invalidateQueries({ queryKey: ["academy-courses"] });
     },
@@ -133,7 +133,7 @@ function Academy() {
       <PageHeader
         title="Caregiver Academy"
         subtitle="Practical courses with real progress by lesson. Global platform content and courses from your organization."
-        action={<Pill tone="olive">Progresso salvo</Pill>}
+        action={<Pill tone="olive">Progress saved</Pill>}
       />
 
       <div className="grid gap-4 md:grid-cols-3">
@@ -151,7 +151,7 @@ function Academy() {
         <Card className="mt-6">
           <div className="flex items-center gap-2">
             <Plus className="h-4 w-4 text-olive" />
-            <h2 className="text-lg font-semibold text-foreground">Novo curso</h2>
+            <h2 className="text-lg font-semibold text-foreground">New course</h2>
           </div>
           <div className="mt-3 grid gap-3 md:grid-cols-4">
             <input value={newCourse.title} onChange={(e) => setNewCourse({ ...newCourse, title: e.target.value })} placeholder="Course title *" className="rounded-xl border border-border bg-ivory px-3 py-2 text-sm md:col-span-2" />
@@ -202,7 +202,7 @@ function Academy() {
             <>
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
-                  <p className="text-xs uppercase text-muted-foreground">Curso</p>
+                  <p className="text-xs uppercase text-muted-foreground">Course</p>
                   <h2 className="mt-1 text-2xl font-semibold text-foreground">{activeCourse.title}</h2>
                 </div>
                 <Pill tone={courseProgress(activeCourse.id) === 100 ? "moss" : "gold"}>

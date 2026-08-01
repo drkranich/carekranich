@@ -13,46 +13,46 @@ export const Route = createFileRoute("/app/geriatrics")({ component: Geriatrics 
 
 const SCALES: Record<string, { label: string; min: number; max: number; risk: (score: number) => { level: string; tone: "moss" | "gold" | "wine" } }> = {
   braden: {
-    label: "Braden (lesão por pressão)",
+    label: "Braden (pressure injury)",
     min: 6,
     max: 23,
-    risk: (s) => (s <= 12 ? { level: "Risco alto", tone: "wine" } : s <= 14 ? { level: "Risco moderado", tone: "gold" } : s <= 18 ? { level: "Risco leve", tone: "gold" } : { level: "Risco baixo", tone: "moss" }),
+    risk: (s) => (s <= 12 ? { level: "High risk", tone: "wine" } : s <= 14 ? { level: "Moderate risk", tone: "gold" } : s <= 18 ? { level: "Low risk", tone: "gold" } : { level: "Very low risk", tone: "moss" }),
   },
   morse: {
-    label: "Morse (risco de queda)",
+    label: "Morse (fall risk)",
     min: 0,
     max: 125,
-    risk: (s) => (s >= 45 ? { level: "Risco alto", tone: "wine" } : s >= 25 ? { level: "Risco moderado", tone: "gold" } : { level: "Risco baixo", tone: "moss" }),
+    risk: (s) => (s >= 45 ? { level: "High risk", tone: "wine" } : s >= 25 ? { level: "Moderate risk", tone: "gold" } : { level: "Low risk", tone: "moss" }),
   },
   barthel: {
-    label: "Barthel (independência funcional)",
+    label: "Barthel (functional independence)",
     min: 0,
     max: 100,
-    risk: (s) => (s < 20 ? { level: "Dependência total", tone: "wine" } : s < 40 ? { level: "Dependência grave", tone: "wine" } : s < 60 ? { level: "Dependência moderada", tone: "gold" } : s < 100 ? { level: "Dependência leve", tone: "gold" } : { level: "Independent", tone: "moss" }),
+    risk: (s) => (s < 20 ? { level: "Total dependence", tone: "wine" } : s < 40 ? { level: "Severe dependence", tone: "wine" } : s < 60 ? { level: "Moderate dependence", tone: "gold" } : s < 100 ? { level: "Mild dependence", tone: "gold" } : { level: "Independent", tone: "moss" }),
   },
   katz: {
-    label: "Katz (atividades da vida diária)",
+    label: "Katz (activities of daily living)",
     min: 0,
     max: 6,
-    risk: (s) => (s <= 2 ? { level: "Dependência importante", tone: "wine" } : s <= 4 ? { level: "Dependência parcial", tone: "gold" } : { level: "Independent", tone: "moss" }),
+    risk: (s) => (s <= 2 ? { level: "Major dependence", tone: "wine" } : s <= 4 ? { level: "Partial dependence", tone: "gold" } : { level: "Independent", tone: "moss" }),
   },
   minimental: {
-    label: "Mini Mental (rastreio cognitivo)",
+    label: "Mini Mental (cognitive screening)",
     min: 0,
     max: 30,
-    risk: (s) => (s < 24 ? { level: "Sugestivo de déficit — avaliar escolaridade", tone: "gold" } : { level: "Within expected range", tone: "moss" }),
+    risk: (s) => (s < 24 ? { level: "Suggestive of deficit - assess schooling", tone: "gold" } : { level: "Within expected range", tone: "moss" }),
   },
 };
 
 const CARE_TYPES: { value: string; label: string; icon: typeof ShowerHead; withQuantity?: string }[] = [
-  { value: "banho", label: "Banho", icon: ShowerHead },
-  { value: "alimentacao", label: "Alimentação", icon: Utensils },
-  { value: "hidratacao", label: "Hidratação", icon: Droplets, withQuantity: "ml" },
-  { value: "sono", label: "Sono", icon: Moon, withQuantity: "hours" },
-  { value: "mobilidade", label: "Mobilidade", icon: Activity },
-  { value: "fralda", label: "Troca de fralda", icon: HeartPulse },
-  { value: "visita", label: "Visita", icon: HeartPulse },
-  { value: "queda", label: "Queda (incidente)", icon: HeartPulse },
+  { value: "banho", label: "Bathing", icon: ShowerHead },
+  { value: "alimentacao", label: "Feeding", icon: Utensils },
+  { value: "hidratacao", label: "Hydration", icon: Droplets, withQuantity: "ml" },
+  { value: "sono", label: "Sleep", icon: Moon, withQuantity: "hours" },
+  { value: "mobilidade", label: "Mobility", icon: Activity },
+  { value: "fralda", label: "Diaper change", icon: HeartPulse },
+  { value: "visita", label: "Visit", icon: HeartPulse },
+  { value: "queda", label: "Fall incident", icon: HeartPulse },
 ];
 
 function Geriatrics() {
@@ -131,12 +131,12 @@ function Geriatrics() {
       if (error) throw error;
     },
     onSuccess: () => {
-      toast.success("Avaliação registrada");
+      toast.success("Assessment registered");
       setScore("");
       setScaleNotes("");
       qc.invalidateQueries({ queryKey: ["scale-assessments", residentId] });
     },
-    onError: (error: any) => toast.error(error.message ?? "Não foi possível registrar"),
+    onError: (error: any) => toast.error(error.message ?? "Could not register"),
   });
 
   const logCare = useMutation({
@@ -154,12 +154,12 @@ function Geriatrics() {
       return careType;
     },
     onSuccess: (careType) => {
-      toast.success(`${CARE_TYPES.find((item) => item.value === careType)?.label ?? "Cuidado"} registrado`);
+      toast.success(`${CARE_TYPES.find((item) => item.value === careType)?.label ?? "Care"} registered`);
       setCareDetail("");
       setCareQty("");
       qc.invalidateQueries({ queryKey: ["daily-care-logs", residentId] });
     },
-    onError: (error: any) => toast.error(error.message ?? "Não foi possível registrar"),
+    onError: (error: any) => toast.error(error.message ?? "Could not register"),
   });
 
   const latestByScale = (key: string) => (assessments.data ?? []).find((item: any) => item.scale === key) ?? null;
@@ -169,34 +169,34 @@ function Geriatrics() {
     const scaleLines = Object.entries(SCALES).map(([key, config]) => {
       const latest = latestByScale(key);
       return latest
-        ? `${config.label}: ${latest.score} — ${latest.risk_level} (${new Date(latest.assessed_at).toLocaleDateString("pt-BR")})`
-        : `${config.label}: sem avaliação`;
+        ? `${config.label}: ${latest.score} - ${latest.risk_level} (${new Date(latest.assessed_at).toLocaleDateString("en-US")})`
+        : `${config.label}: no assessment`;
     });
     const todayLines = (careLogs.data ?? []).map(
       (log: any) =>
-        `${new Date(log.logged_at).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })} - ${
+        `${new Date(log.logged_at).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })} - ${
           CARE_TYPES.find((item) => item.value === log.care_type)?.label ?? log.care_type
-        }${log.quantity ? ` (${log.quantity})` : ""}${log.detail ? ` — ${log.detail}` : ""}`,
+        }${log.quantity ? ` (${log.quantity})` : ""}${log.detail ? ` - ${log.detail}` : ""}`,
     );
     downloadPdf(`geriatria-${residentLabel}`, `Geriatric report — ${residentLabel}`, [
-      "ESCALAS CLÍNICAS (última avaliação)",
+      "CLINICAL SCALES (latest assessment)",
       ...scaleLines,
       "",
-      "ROTINA DE HOJE",
+      "TODAY'S ROUTINE",
       ...(todayLines.length ? todayLines : ["No care recorded today."]),
       "",
-      `Gerado em ${new Date().toLocaleString("pt-BR")} - Care Kranich`,
+      `Generated at ${new Date().toLocaleString("en-US")} - Care Kranich`,
     ]);
   };
 
   return (
     <>
       <PageHeader
-        title="Gestão geriátrica"
+        title="Geriatric management"
         subtitle="Validated clinical scales (Braden, Morse, Barthel, Katz, Mini Mental) and daily care routine by resident."
         action={
           <div className="flex items-center gap-2">
-            <Pill tone="olive">Módulo clínico</Pill>
+            <Pill tone="olive">Clinical module</Pill>
             {resident && (
               <button onClick={exportReport} className="rounded-full border border-moss/40 bg-white/60 px-4 py-2 text-xs font-medium hover:bg-moss/15">
                 PDF report
@@ -222,7 +222,7 @@ function Geriatrics() {
       </Card>
 
       {!resident ? (
-        <div className="mt-6"><EmptyState title="Choose a resident" hint="As escalas and a rotina diária são registradas por pessoa." /></div>
+        <div className="mt-6"><EmptyState title="Choose a resident" hint="Scales and daily routine are recorded per person." /></div>
       ) : (
         <>
           <div className="mt-6 grid gap-3 md:grid-cols-3 xl:grid-cols-5">
@@ -233,7 +233,7 @@ function Geriatrics() {
                 <div key={key} className="rounded-2xl border border-white/70 bg-white/50 p-4 shadow-soft backdrop-blur-xl">
                   <p className="text-[11px] font-semibold uppercase text-muted-foreground">{config.label.split(" (")[0]}</p>
                   <p className="mt-2 text-2xl font-semibold text-foreground">{latest ? latest.score : "—"}</p>
-                  {risk ? <Pill tone={risk.tone}>{risk.level}</Pill> : <p className="text-xs text-muted-foreground">Sem avaliação</p>}
+                  {risk ? <Pill tone={risk.tone}>{risk.level}</Pill> : <p className="text-xs text-muted-foreground">No assessment</p>}
                 </div>
               );
             })}
@@ -242,7 +242,7 @@ function Geriatrics() {
           <div className="mt-6 grid gap-6 lg:grid-cols-2">
             {canLog && (
               <Card>
-                <h2 className="text-xl font-semibold text-foreground">Registrar escala clínica</h2>
+                <h2 className="text-xl font-semibold text-foreground">Register clinical scale</h2>
                 <div className="mt-4 space-y-3">
                   <GlassSelect
                     value={scale}
@@ -263,7 +263,7 @@ function Geriatrics() {
                     value={scaleNotes}
                     onChange={(e) => setScaleNotes(e.target.value)}
                     rows={2}
-                    placeholder="Observações da avaliação"
+                    placeholder="Assessment observations"
                     className="w-full rounded-xl border border-border bg-ivory px-3 py-2 text-sm"
                   />
                   <button
@@ -271,7 +271,7 @@ function Geriatrics() {
                     disabled={saveScale.isPending || !score}
                     className="rounded-full bg-olive px-5 py-2 text-xs font-semibold text-ivory disabled:opacity-50"
                   >
-                    {saveScale.isPending ? "Saving..." : "Registrar avaliação"}
+                    {saveScale.isPending ? "Saving..." : "Register assessment"}
                   </button>
                 </div>
               </Card>
@@ -279,8 +279,8 @@ function Geriatrics() {
 
             {canLog && (
               <Card>
-                <h2 className="text-xl font-semibold text-foreground">Rotina diária</h2>
-                <p className="mt-1 text-xs text-muted-foreground">Um toque para registrar o cuidado agora.</p>
+                <h2 className="text-xl font-semibold text-foreground">Daily routine</h2>
+                <p className="mt-1 text-xs text-muted-foreground">One tap to register care now.</p>
                 <div className="mt-4 grid grid-cols-2 gap-2">
                   {CARE_TYPES.map((care) => {
                     const Icon = care.icon;
@@ -305,13 +305,13 @@ function Geriatrics() {
                   <input
                     value={careQty}
                     onChange={(e) => setCareQty(e.target.value.replace(/[^\d.]/g, ""))}
-                    placeholder="Quantidade (ml, hours...)"
+                    placeholder="Quantity (ml, hours...)"
                     className="rounded-xl border border-border bg-ivory px-3 py-2 text-sm"
                   />
                   <input
                     value={careDetail}
                     onChange={(e) => setCareDetail(e.target.value)}
-                    placeholder="Detalhe (opcional)"
+                    placeholder="Detail (optional)"
                     className="rounded-xl border border-border bg-ivory px-3 py-2 text-sm"
                   />
                 </div>
@@ -320,7 +320,7 @@ function Geriatrics() {
           </div>
 
           <Card className="mt-6">
-            <h2 className="text-xl font-semibold text-foreground">Hoje — {residentLabel}</h2>
+            <h2 className="text-xl font-semibold text-foreground">Today - {residentLabel}</h2>
             {(careLogs.data ?? []).length === 0 ? (
               <p className="mt-3 text-sm text-muted-foreground">No care recorded today yet.</p>
             ) : (
@@ -333,7 +333,7 @@ function Geriatrics() {
                       {log.detail ? ` · ${log.detail}` : ""}
                     </p>
                     <span className="text-xs text-muted-foreground">
-                      {new Date(log.logged_at).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
+                      {new Date(log.logged_at).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })}
                     </span>
                   </div>
                 ))}
@@ -342,7 +342,7 @@ function Geriatrics() {
           </Card>
 
           <Card className="mt-6">
-            <h2 className="text-xl font-semibold text-foreground">Histórico de escalas</h2>
+            <h2 className="text-xl font-semibold text-foreground">Scale history</h2>
             {(assessments.data ?? []).length === 0 ? (
               <p className="mt-3 text-sm text-muted-foreground">No assessment recorded.</p>
             ) : (
@@ -355,7 +355,7 @@ function Geriatrics() {
                     </p>
                     <div className="flex items-center gap-2">
                       <Pill tone={SCALES[item.scale]?.risk(Number(item.score)).tone ?? "muted"}>{item.risk_level}</Pill>
-                      <span className="text-xs text-muted-foreground">{new Date(item.assessed_at).toLocaleDateString("pt-BR")}</span>
+                      <span className="text-xs text-muted-foreground">{new Date(item.assessed_at).toLocaleDateString("en-US")}</span>
                     </div>
                   </div>
                 ))}

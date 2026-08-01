@@ -94,9 +94,9 @@ function Residents() {
   const shareResident = async (resident: Resident) => {
     const text = [
       `Resident: ${resident.full_name}`,
-      resident.preferred_name ? `Nome preferido: ${resident.preferred_name}` : "",
-      resident.date_of_birth ? `Nascimento: ${resident.date_of_birth}` : "",
-      resident.language ? `Idioma: ${resident.language}` : "",
+      resident.preferred_name ? `Preferred name: ${resident.preferred_name}` : "",
+      resident.date_of_birth ? `Birth date: ${resident.date_of_birth}` : "",
+      resident.language ? `Language: ${resident.language}` : "",
       resident.bio ? `Bio: ${resident.bio}` : "",
     ].filter(Boolean).join("\n");
     try {
@@ -118,7 +118,7 @@ function Residents() {
         action={
           <Gate
             roles={["caregiver", "nurse", "doctor", "clinic_admin", "super_admin"]}
-            fallback={<Pill tone="gold">Somente leitura - perfil família</Pill>}
+            fallback={<Pill tone="gold">Read-only - family profile</Pill>}
           >
             <button
               onClick={() => setCreating(true)}
@@ -135,8 +135,8 @@ function Residents() {
       {!profile?.tenant_id && !isSuperAdmin && (
         <Card className="mb-6 border-gold/30 bg-gold/5">
           <p className="text-sm text-foreground">
-            Você ainda não faz parte de uma organização. Visite{" "}
-            <span className="font-medium text-olive">Organizações</span> para criar ou entrar em uma
+            You are not part of an organization yet. Visit{" "}
+            <span className="font-medium text-olive">Organizations</span> to create or join one
             before adding residents.
           </p>
         </Card>
@@ -145,7 +145,7 @@ function Residents() {
       {!profile?.tenant_id && isSuperAdmin && (
         <Card className="mb-6 border-olive/25 bg-olive/5">
           <p className="text-sm text-foreground">
-            Visão global de super admin. Residents de organizações aprovadas aparecem aqui; criar um
+            Super admin global view. Residents from approved organizations appear here; creating a
             resident still requires an organization context.
           </p>
         </Card>
@@ -157,7 +157,7 @@ function Residents() {
         <Card className="text-center py-16">
           <p className="text-xl font-semibold text-foreground">No residents yet</p>
           <p className="mt-2 text-sm text-muted-foreground">
-            Quando você adicionar alguém, a história dessa pessoa começa aqui.
+            When you add someone, that person's story starts here.
           </p>
         </Card>
       ) : (
@@ -320,7 +320,7 @@ function ResidentDialog({
         </div>
 
         <div className="app-scrollbar overflow-y-auto px-8 pb-6 pr-6">
-        <p className="mt-4 text-sm text-muted-foreground">Cadastre a pessoa por trás do cuidado.</p>
+        <p className="mt-4 text-sm text-muted-foreground">Register the person behind the care.</p>
 
         {requireTenantPicker && (
           <div className="mt-5">
@@ -330,7 +330,7 @@ function ResidentDialog({
                 value={tenantId}
                 onChange={setTenantId}
                 className="mt-1"
-                placeholder="Selecione a organização"
+                placeholder="Select an organization"
                 options={tenantOptions.map((tenant) => ({ value: tenant.id, label: tenant.name }))}
               />
             </label>
@@ -344,36 +344,36 @@ function ResidentDialog({
 
         <div className="mt-6 grid gap-4 md:grid-cols-2">
           <Field
-            label="Nome completo"
+            label="Full name"
             required
             value={form.full_name}
             onChange={(v) => setForm({ ...form, full_name: v })}
           />
           <Field
-            label="Nome preferido"
+            label="Preferred name"
             value={form.preferred_name}
             onChange={(v) => setForm({ ...form, preferred_name: v })}
           />
           <Field
-            label="Data de nascimento"
+            label="Date of birth"
             type="date"
             value={form.date_of_birth}
             onChange={(v) => setForm({ ...form, date_of_birth: v })}
           />
           <Field
-            label="Pronomes"
+            label="Pronouns"
             value={form.pronouns}
             onChange={(v) => setForm({ ...form, pronouns: v })}
             placeholder="ela / dela"
           />
           <Field
-            label="Idioma"
+            label="Language"
             value={form.language}
             onChange={(v) => setForm({ ...form, language: v })}
-            placeholder="Português - Francês"
+            placeholder="Portuguese - French"
           />
           <Field
-            label="Hobbies (separados por vírgula)"
+            label="Hobbies (comma-separated)"
             value={form.hobbies}
             onChange={(v) => setForm({ ...form, hobbies: v })}
             placeholder="Jardinagem, Leitura"
@@ -381,11 +381,11 @@ function ResidentDialog({
         </div>
 
         <div className="mt-4">
-          <GeoAddressField label="Endereço de atendimento" value={address} onChange={setAddress} />
+          <GeoAddressField label="Care address" value={address} onChange={setAddress} />
         </div>
 
         <label className="mt-4 block text-sm">
-          <span className="text-foreground/80">Breve biografia</span>
+          <span className="text-foreground/80">Short biography</span>
           <textarea
             value={form.bio}
             onChange={(e) => setForm({ ...form, bio: e.target.value })}
@@ -394,13 +394,13 @@ function ResidentDialog({
           />
         </label>
         <label className="mt-4 block text-sm">
-          <span className="text-foreground/80">A história dela/dele</span>
+          <span className="text-foreground/80">Their story</span>
           <textarea
             value={form.story}
             onChange={(e) => setForm({ ...form, story: e.target.value })}
             rows={5}
             className="mt-1 w-full rounded-xl border border-border bg-ivory px-3 py-2 text-sm"
-            placeholder="Onde ela cresceu, o que ela ama, o que acalma, do que ela tem medo."
+            placeholder="Where they grew up, what they love, what calms them, and what they fear."
           />
         </label>
 
@@ -419,7 +419,7 @@ function ResidentDialog({
             disabled={saving || !tenantId}
             className="rounded-lg bg-olive px-5 py-2 text-sm text-ivory hover:opacity-90 disabled:opacity-50"
           >
-            {saving ? "Saving..." : resident ? "Salvar alterações" : "Create resident"}
+            {saving ? "Saving..." : resident ? "Save changes" : "Create resident"}
           </button>
         </div>
       </form>

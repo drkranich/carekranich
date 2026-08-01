@@ -12,9 +12,9 @@ import { useAuth } from "@/hooks/use-auth";
 export const Route = createFileRoute("/app/email-marketing")({ component: EmailMarketing });
 
 const campaignStatusOptions = [
-  { value: "draft", label: "Rascunho" },
+  { value: "draft", label: "Draft" },
   { value: "ready", label: "Pronta" },
-  { value: "scheduled", label: "Agendada" },
+  { value: "scheduled", label: "Scheduled" },
   { value: "sent", label: "Enviada" },
   { value: "archived", label: "Archived" },
 ];
@@ -303,7 +303,7 @@ function EmailMarketing() {
   });
 
   const shareTemplate = async (item: any) => {
-    const text = [`Template: ${item.name}`, `Assunto: ${item.subject}`, item.preview ?? "", item.body_html ?? ""]
+    const text = [`Template: ${item.name}`, `Subject: ${item.subject}`, item.preview ?? "", item.body_html ?? ""]
       .filter(Boolean)
       .join("\n\n");
     try {
@@ -316,10 +316,10 @@ function EmailMarketing() {
 
   const shareCampaign = async (item: any) => {
     const text = [
-      `Campanha: ${item.name}`,
+      `Campaign: ${item.name}`,
       `Audience: ${item.audience}`,
       `Status: ${item.status}`,
-      item.scheduled_at ? `Agendada: ${new Date(item.scheduled_at).toLocaleString("pt-BR")}` : "Sem agendamento",
+      item.scheduled_at ? `Scheduled: ${new Date(item.scheduled_at).toLocaleString("en-US")}` : "No schedule",
     ].join("\n");
     try {
       await navigator.clipboard.writeText(text);
@@ -388,9 +388,9 @@ function EmailMarketing() {
 
           <div className="rounded-2xl border border-white/70 bg-white/45 p-3 shadow-soft backdrop-blur-xl">
             <div className="flex items-center justify-between px-1 pb-2">
-              <p className="text-xs font-semibold uppercase text-muted-foreground">Preview ao vivo</p>
-              <button onClick={() => setFullPreview({ name: template.name || "Novo template", html: liveHtml })} className="inline-flex items-center gap-1 rounded-full border border-border bg-white/55 px-2.5 py-1 text-[11px] hover:bg-cream">
-                <Expand className="h-3 w-3" /> Tela cheia
+              <p className="text-xs font-semibold uppercase text-muted-foreground">Live preview</p>
+              <button onClick={() => setFullPreview({ name: template.name || "New template", html: liveHtml })} className="inline-flex items-center gap-1 rounded-full border border-border bg-white/55 px-2.5 py-1 text-[11px] hover:bg-cream">
+                <Expand className="h-3 w-3" /> Full screen
               </button>
             </div>
             <iframe title="Email preview" sandbox="" srcDoc={liveHtml} className="h-[480px] w-full rounded-xl border border-border/50 bg-white" />
@@ -416,7 +416,7 @@ function EmailMarketing() {
                   <MailPlus className="h-3.5 w-3.5" /> Create campaign
                 </button>
                 <button onClick={() => setFullPreview({ name: item.name, html: item.body_html })} className="inline-flex items-center gap-1 rounded-full border border-border bg-white/55 px-3 py-1.5 text-xs">
-                  <Expand className="h-3.5 w-3.5" /> Corpo inteiro
+                  <Expand className="h-3.5 w-3.5" /> Full body
                 </button>
                 <button onClick={() => shareTemplate(item)} className="inline-flex items-center gap-1 rounded-full border border-sky/30 bg-sky/10 px-3 py-1.5 text-xs">
                   <Share2 className="h-3.5 w-3.5" /> Share
@@ -458,7 +458,7 @@ function EmailMarketing() {
                   <div>
                     <p className="font-medium text-foreground">{item.name}</p>
                     <p className="text-xs text-muted-foreground">
-                      {item.audience} - {item.scheduled_at ? `agendada para ${new Date(item.scheduled_at).toLocaleString("pt-BR")}` : "sem agendamento"}
+                      {item.audience} - {item.scheduled_at ? `scheduled for ${new Date(item.scheduled_at).toLocaleString("en-US")}` : "no schedule"}
                     </p>
                   </div>
                   <div className="flex flex-wrap items-center gap-2">

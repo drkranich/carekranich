@@ -175,8 +175,8 @@ function Contracts() {
       "",
       "----------------------------------------",
       "ELECTRONIC SIGNATURE RECEIPT",
-      `Assinado por: ${signature.signer_name ?? "-"} (${signature.signer_email ?? "-"})`,
-      `Data/hora: ${new Date(signature.signed_at).toLocaleString("pt-BR")}`,
+      `Signed by: ${signature.signer_name ?? "-"} (${signature.signer_email ?? "-"})`,
+      `Date/time: ${new Date(signature.signed_at).toLocaleString("en-US")}`,
       `IP address: ${signature.ip_address ?? "-"}`,
       `Content SHA-256 hash: ${signature.content_hash}`,
       "This document integrity can be verified by comparing the hash above with the original content.",
@@ -214,7 +214,7 @@ function Contracts() {
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <h3 className="text-lg font-semibold text-foreground">{contract.title}</h3>
-                  <p className="mt-1 text-xs text-muted-foreground">{contract.contract_type} · {new Date(contract.created_at).toLocaleDateString("pt-BR")}</p>
+                  <p className="mt-1 text-xs text-muted-foreground">{contract.contract_type} · {new Date(contract.created_at).toLocaleDateString("en-US")}</p>
                 </div>
                 <Pill tone={contract.status === "signed" ? "moss" : contract.status === "active" ? "olive" : "gold"}>{contract.status}</Pill>
               </div>
@@ -251,7 +251,7 @@ function Contracts() {
                   {sigs.map((signature: any) => (
                     <div key={signature.id} className="flex flex-wrap items-center justify-between gap-2 text-xs">
                       <span className="min-w-0 truncate text-foreground">
-                        {signature.signer_name ?? signature.signer_email} · {new Date(signature.signed_at).toLocaleString("pt-BR")} · IP {signature.ip_address}
+                        {signature.signer_name ?? signature.signer_email} · {new Date(signature.signed_at).toLocaleString("en-US")} · IP {signature.ip_address}
                       </span>
                       <button
                         onClick={() => exportSignedPdf(contract, signature)}

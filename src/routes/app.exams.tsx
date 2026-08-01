@@ -11,12 +11,12 @@ import { downloadPdf } from "@/lib/pdf";
 export const Route = createFileRoute("/app/exams")({ component: Exams });
 
 const STATUS_LABELS: Record<string, string> = {
-  scheduled: "Agendado",
-  collected: "Coletado",
+  scheduled: "Scheduled",
+  collected: "Collected",
   processing: "Under analysis",
-  ready: "Pronto",
-  delivered: "Entregue",
-  canceled: "Cancelado",
+  ready: "Ready",
+  delivered: "Delivered",
+  canceled: "Canceled",
 };
 
 const STATUS_FLOW = ["scheduled", "collected", "processing", "ready", "delivered"];
@@ -25,7 +25,7 @@ const statusTone = (status: string) =>
   status === "ready" ? "moss" : status === "delivered" ? "olive" : status === "canceled" ? "wine" : "gold";
 
 function money(cents: number) {
-  return (cents / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+  return (cents / 100).toLocaleString("en-US", { style: "currency", currency: "BRL" });
 }
 
 function Exams() {
@@ -121,7 +121,7 @@ function Exams() {
       .from("exams")
       .upload(path, file, { contentType: file.type || "application/pdf", upsert: true });
     if (error) return toast.error(error.message);
-    await updateOrder(order.id, { result_path: path, status: "ready" }, "Resultado anexado — exam pronto");
+    await updateOrder(order.id, { result_path: path, status: "ready" }, "Result attached - exam ready");
   };
 
   const openResult = async (order: any) => {
@@ -129,7 +129,7 @@ function Exams() {
     const { data, error } = await supabase.storage.from("exams").createSignedUrl(order.result_path, 300);
     if (error || !data?.signedUrl) return toast.error(error?.message ?? "Could not open the result");
     window.open(data.signedUrl, "_blank", "noopener,noreferrer");
-    if (order.status === "ready") updateOrder(order.id, { status: "delivered" }, "Resultado entregue");
+    if (order.status === "ready") updateOrder(order.id, { status: "delivered" }, "Result delivered");
   };
 
   const nextStatus = (status: string) => STATUS_FLOW[STATUS_FLOW.indexOf(status) + 1];
@@ -141,13 +141,13 @@ function Exams() {
     downloadPdf("exam-report", "Exam Report", [
       `Total orders: ${tenantOrders.length}`,
       `Ready: ${tenantOrders.filter((o: any) => o.status === "ready").length}`,
-      `Pagos: ${tenantOrders.filter((o: any) => o.payment_status === "paid").length}`,
+      `Paid: ${tenantOrders.filter((o: any) => o.payment_status === "paid").length}`,
       "",
       ...tenantOrders.slice(0, 60).map((o: any) =>
-        `${o.exam?.name ?? "Exam"} - ${o.patient_name ?? o.patient_id.slice(0, 8)} - ${STATUS_LABELS[o.status] ?? o.status} - pagamento ${o.payment_status === "paid" ? "pago" : "pendente"} - ${o.scheduled_for ? new Date(o.scheduled_for).toLocaleString("pt-BR") : "no date"}`,
+        `${o.exam?.name ?? "Exam"} - ${o.patient_name ?? o.patient_id.slice(0, 8)} - ${STATUS_LABELS[o.status] ?? o.status} - payment ${o.payment_status === "paid" ? "paid" : "pending"} - ${o.scheduled_for ? new Date(o.scheduled_for).toLocaleString("en-US") : "no date"}`,
       ),
       "",
-      `Gerado em ${new Date().toLocaleString("pt-BR")} - Care Kranich`,
+      `Generated on ${new Date().toLocaleString("en-US")} - Care Kranich`,
     ]);
   };
 
@@ -158,7 +158,7 @@ function Exams() {
         subtitle="Clients view ready exams, schedule collections and complete payments. Results stay in private storage."
         action={
           <div className="flex items-center gap-2">
-            <Pill tone="olive">Resultados assinados</Pill>
+            <Pill tone="olive">Signed results</Pill>
             {isStaffClinic && (
               <button onClick={exportOrdersPdf} className="rounded-full border border-moss/40 bg-white/60 px-4 py-2 text-xs font-medium hover:bg-moss/15">
                 PDF report
@@ -172,18 +172,18 @@ function Exams() {
         <Stat label="Catalog" value={catalog.data?.length ?? "-"} sub="Active exams" tone="olive" />
         <Stat label="Scheduled" value={tenantOrders.filter((o: any) => o.status === "scheduled").length} sub="Awaiting collection" tone="gold" />
         <Stat label="Ready" value={tenantOrders.filter((o: any) => o.status === "ready").length} sub="Result available" tone="moss" />
-        <Stat label="Pagamentos pendentes" value={tenantOrders.filter((o: any) => o.payment_status === "pending").length} sub="A receber" tone="wine" />
+        <Stat label="Pending payments" value={tenantOrders.filter((o: any) => o.payment_status === "pending").length} sub="To receive" tone="wine" />
       </div>
 
       {isStaffClinic && (
         <Card className="mt-6">
-          <h2 className="text-xl font-semibold text-foreground">New exam no catálogo</h2>
+          <h2 className="text-xl font-semibold text-foreground">New exam in catalog</h2>
           <div className="mt-4 grid gap-3 md:grid-cols-4">
-            <input value={newExam.name} onChange={(e) => setNewExam({ ...newExam, name: e.target.value })} placeholder="Nome do exam *" className="rounded-xl border border-border bg-ivory px-3 py-2 text-sm md:col-span-2" />
+            <input value={newExam.name} onChange={(e) => setNewExam({ ...newExam, name: e.target.value })} placeholder="Exam name *" className="rounded-xl border border-border bg-ivory px-3 py-2 text-sm md:col-span-2" />
             <input value={newExam.price} onChange={(e) => setNewExam({ ...newExam, price: e.target.value })} placeholder="Price (BRL)" inputMode="decimal" className="rounded-xl border border-border bg-ivory px-3 py-2 text-sm" />
-            <input value={newExam.payment_link} onChange={(e) => setNewExam({ ...newExam, payment_link: e.target.value })} placeholder="Link de pagamento (Pix/Stripe)" className="rounded-xl border border-border bg-ivory px-3 py-2 text-sm" />
-            <input value={newExam.description} onChange={(e) => setNewExam({ ...newExam, description: e.target.value })} placeholder="Descrição" className="rounded-xl border border-border bg-ivory px-3 py-2 text-sm md:col-span-2" />
-            <input value={newExam.preparation} onChange={(e) => setNewExam({ ...newExam, preparation: e.target.value })} placeholder="Preparo (ex.: jejum de 8h)" className="rounded-xl border border-border bg-ivory px-3 py-2 text-sm" />
+            <input value={newExam.payment_link} onChange={(e) => setNewExam({ ...newExam, payment_link: e.target.value })} placeholder="Payment link (Pix/Stripe)" className="rounded-xl border border-border bg-ivory px-3 py-2 text-sm" />
+            <input value={newExam.description} onChange={(e) => setNewExam({ ...newExam, description: e.target.value })} placeholder="Description" className="rounded-xl border border-border bg-ivory px-3 py-2 text-sm md:col-span-2" />
+            <input value={newExam.preparation} onChange={(e) => setNewExam({ ...newExam, preparation: e.target.value })} placeholder="Preparation (e.g. 8h fasting)" className="rounded-xl border border-border bg-ivory px-3 py-2 text-sm" />
             <button onClick={() => createExam.mutate()} disabled={!newExam.name.trim() || createExam.isPending} className="rounded-xl bg-olive px-4 py-2 text-sm text-ivory disabled:opacity-50">
               Save exam
             </button>
@@ -234,7 +234,7 @@ function Exams() {
             <div className="flex gap-2">
               <button onClick={() => setScheduling(null)} className="rounded-full border border-border bg-white/55 px-4 py-2 text-xs">Cancel</button>
               <button onClick={() => scheduleExam.mutate()} disabled={scheduleExam.isPending || !scheduleAt} className="rounded-full bg-olive px-5 py-2 text-xs font-semibold text-ivory disabled:opacity-45">
-                {scheduleExam.isPending ? "Agendando..." : "Confirmar agendamento"}
+                {scheduleExam.isPending ? "Scheduling..." : "Confirm schedule"}
               </button>
             </div>
           </div>
@@ -252,19 +252,19 @@ function Exams() {
                 <div className="min-w-0">
                   <p className="font-medium text-foreground">{order.exam?.name ?? "Exam"}</p>
                   <p className="text-xs text-muted-foreground">
-                    {order.scheduled_for ? new Date(order.scheduled_for).toLocaleString("pt-BR") : "Sem data"} · pagamento {order.payment_status === "paid" ? "pago" : "pendente"}
+                    {order.scheduled_for ? new Date(order.scheduled_for).toLocaleString("en-US") : "No date"} - payment {order.payment_status === "paid" ? "paid" : "pending"}
                   </p>
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
                   <Pill tone={statusTone(order.status)}>{STATUS_LABELS[order.status] ?? order.status}</Pill>
                   {order.payment_status !== "paid" && order.exam?.payment_link && (
                     <a href={order.exam.payment_link} target="_blank" rel="noopener noreferrer" className="rounded-full bg-gold/80 px-3 py-1.5 text-xs font-semibold text-foreground hover:opacity-90">
-                      Pagar
+                      Pay
                     </a>
                   )}
                   {order.result_path && (
                     <button onClick={() => openResult(order)} className="rounded-full bg-moss px-3 py-1.5 text-xs font-semibold text-ivory">
-                      Ver resultado
+                      View result
                     </button>
                   )}
                 </div>
@@ -287,12 +287,12 @@ function Exams() {
                     <div className="min-w-0">
                       <p className="font-medium text-foreground">{order.exam?.name ?? "Exam"} · {order.patient_name ?? "Patient"}</p>
                       <p className="text-xs text-muted-foreground">
-                        {order.scheduled_for ? new Date(order.scheduled_for).toLocaleString("pt-BR") : "Sem data"} · {money(order.exam?.price_cents ?? 0)}
+                        {order.scheduled_for ? new Date(order.scheduled_for).toLocaleString("en-US") : "No date"} - {money(order.exam?.price_cents ?? 0)}
                       </p>
                     </div>
                     <div className="flex flex-wrap items-center gap-2">
                       <Pill tone={statusTone(order.status)}>{STATUS_LABELS[order.status] ?? order.status}</Pill>
-                      <Pill tone={order.payment_status === "paid" ? "moss" : "gold"}>{order.payment_status === "paid" ? "pago" : "pendente"}</Pill>
+                      <Pill tone={order.payment_status === "paid" ? "moss" : "gold"}>{order.payment_status === "paid" ? "paid" : "pending"}</Pill>
                     </div>
                   </div>
                   <div className="mt-3 flex flex-wrap gap-2">
@@ -306,14 +306,14 @@ function Exams() {
                     )}
                     {order.payment_status !== "paid" && (
                       <button
-                        onClick={() => updateOrder(order.id, { payment_status: "paid", paid_at: new Date().toISOString() }, "Pagamento confirmado")}
+                        onClick={() => updateOrder(order.id, { payment_status: "paid", paid_at: new Date().toISOString() }, "Payment confirmed")}
                         className="rounded-full border border-moss/40 bg-white/55 px-3 py-1.5 text-xs"
                       >
-                        Confirmar pagamento
+                        Confirm payment
                       </button>
                     )}
                     <label className="cursor-pointer rounded-full border border-olive/30 bg-white/55 px-3 py-1.5 text-xs text-olive">
-                      {order.result_path ? "Substituir resultado" : "Anexar resultado (PDF)"}
+                      {order.result_path ? "Replace result" : "Attach result (PDF)"}
                       <input
                         type="file"
                         accept="application/pdf,image/*"
@@ -327,7 +327,7 @@ function Exams() {
                     </label>
                     {order.result_path && (
                       <button onClick={() => openResult(order)} className="rounded-full border border-border bg-white/55 px-3 py-1.5 text-xs">
-                        Abrir resultado
+                        Open result
                       </button>
                     )}
                     {order.status !== "canceled" && (

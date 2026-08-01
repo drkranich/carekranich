@@ -126,7 +126,7 @@ function Billing() {
         access_status: next,
         revoked_at: next === "revoked" ? new Date().toISOString() : null,
         revoked_by: next === "revoked" ? user?.id : null,
-        revocation_reason: next === "revoked" ? "Controle manual de pagamento pelo super admin" : null,
+        revocation_reason: next === "revoked" ? "Manual payment control by super admin" : null,
       })
       .eq("id", subscription.id);
     if (error) toast.error(error.message);
@@ -195,7 +195,7 @@ function Billing() {
       "Included features:",
       ...(Array.isArray(p.features) ? p.features.map((f: string) => `- ${f}`) : []),
       "",
-      `Generated at ${new Date().toLocaleString("pt-BR")} - Care Kranich`,
+      `Generated at ${new Date().toLocaleString("en-US")} - Care Kranich`,
     ]);
   };
 
@@ -217,7 +217,7 @@ function Billing() {
       "SUBSCRIPTIONS",
       ...(subLines.length ? subLines : ["No subscriptions registered."]),
       "",
-      `Generated at ${new Date().toLocaleString("pt-BR")} - Care Kranich`,
+      `Generated at ${new Date().toLocaleString("en-US")} - Care Kranich`,
     ]);
   };
 

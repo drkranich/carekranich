@@ -63,10 +63,10 @@ const EMPTY: UnitForm = {
 };
 
 const FLAGS: Array<{ key: keyof UnitForm; label: string }> = [
-  { key: "accessibility", label: "Acessibilidade" },
-  { key: "parking", label: "Estacionamento" },
-  { key: "child_collection", label: "Coleta infantil" },
-  { key: "home_collection", label: "Coleta domiciliar" },
+  { key: "accessibility", label: "Accessibility" },
+  { key: "parking", label: "Parking" },
+  { key: "child_collection", label: "Child collection" },
+  { key: "home_collection", label: "Home collection" },
   { key: "imaging", label: "Diagnostic imaging" },
 ];
 
@@ -122,7 +122,7 @@ function Units() {
       }
     },
     onSuccess: () => {
-      toast.success(editingId ? "Unidade atualizada" : "Unidade criada");
+      toast.success(editingId ? "Unit updated" : "Unit created");
       setForm(EMPTY);
       setOpen(false);
       setEditingId(null);
@@ -164,14 +164,14 @@ function Units() {
   };
 
   const exportPdf = (unit: UnitRow) => {
-    downloadPdf(`unidade-${unit.name}.pdf`, `Unidade ${unit.name}`, [
+    downloadPdf(`unit-${unit.name}.pdf`, `Unit ${unit.name}`, [
       `Address: ${unit.address ?? "-"}, ${unit.city ?? "-"} / ${unit.state ?? "-"}`,
-      `CEP: ${unit.postal_code ?? "-"}`,
-      `Telefone: ${unit.phone ?? "-"}  E-mail: ${unit.email ?? "-"}`,
+      `Postal code: ${unit.postal_code ?? "-"}`,
+      `Phone: ${unit.phone ?? "-"}  Email: ${unit.email ?? "-"}`,
       `Accessibility: ${unit.accessibility ? "yes" : "no"}  Parking: ${unit.parking ? "yes" : "no"}`,
       `Child collection: ${unit.child_collection ? "yes" : "no"}  Home collection: ${unit.home_collection ? "yes" : "no"}`,
       `Diagnostic imaging: ${unit.imaging ? "yes" : "no"}`,
-      `Status: ${unit.status === "active" ? "Ativa" : "Inativa"}`,
+      `Status: ${unit.status === "active" ? "Active" : "Inactive"}`,
       `Notes: ${unit.notes ?? "-"}`,
     ]);
   };
@@ -179,8 +179,8 @@ function Units() {
   if (!isAdmin && !isSuperAdmin) {
     return (
       <EmptyState
-        title="Acesso restrito"
-        hint="Somente administradores podem gerenciar unidades."
+        title="Restricted access"
+        hint="Only administrators can manage units."
       />
     );
   }
@@ -207,14 +207,14 @@ function Units() {
       {open && (
         <Card className="space-y-4 p-6">
           <h3 className="text-sm font-semibold text-foreground">
-            {editingId ? "Edit unidade" : "New unit"}
+            {editingId ? "Edit unit" : "New unit"}
           </h3>
           <div className="grid gap-3 md:grid-cols-3">
-            <input className={glassInput} placeholder="Nome da unidade *" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
-            <input className={glassInput} placeholder="Telefone" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
+            <input className={glassInput} placeholder="Unit name *" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
+            <input className={glassInput} placeholder="Phone" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
             <input className={glassInput} placeholder="E-mail" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
             <input className={`${glassInput} md:col-span-2`} placeholder="Address" value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} />
-            <input className={glassInput} placeholder="CEP" value={form.postal_code} onChange={(e) => setForm({ ...form, postal_code: e.target.value })} />
+            <input className={glassInput} placeholder="Postal code" value={form.postal_code} onChange={(e) => setForm({ ...form, postal_code: e.target.value })} />
             <input className={glassInput} placeholder="City" value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} />
             <input className={glassInput} placeholder="State" value={form.state} onChange={(e) => setForm({ ...form, state: e.target.value })} />
             <input className={glassInput} placeholder="Notes" value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} />
@@ -241,7 +241,7 @@ function Units() {
               disabled={save.isPending}
               className="rounded-full bg-olive px-5 py-2 text-sm font-medium text-ivory shadow-soft hover:opacity-90 disabled:opacity-60"
             >
-              {save.isPending ? "Saving..." : editingId ? "Salvar alterações" : "Create unit"}
+              {save.isPending ? "Saving..." : editingId ? "Save changes" : "Create unit"}
             </button>
             <button
               onClick={() => {
@@ -278,7 +278,7 @@ function Units() {
                   </div>
                 </div>
                 <Pill tone={unit.status === "active" ? "moss" : "muted"}>
-                  {unit.status === "active" ? "Ativa" : "Inativa"}
+                  {unit.status === "active" ? "Active" : "Inactive"}
                 </Pill>
               </div>
               <div className="flex flex-wrap gap-1.5">
@@ -291,7 +291,7 @@ function Units() {
                   <Pencil className="h-3.5 w-3.5" /> Edit
                 </button>
                 <button onClick={() => toggleStatus.mutate(unit)} className="rounded-full border border-white/70 bg-white/55 px-3 py-1.5 backdrop-blur-xl hover:bg-white/80">
-                  {unit.status === "active" ? "Desativar" : "Reativar"}
+                  {unit.status === "active" ? "Deactivate" : "Reactivate"}
                 </button>
                 <button onClick={() => exportPdf(unit)} className="inline-flex items-center gap-1 rounded-full border border-white/70 bg-white/55 px-3 py-1.5 backdrop-blur-xl hover:bg-white/80">
                   <FileDown className="h-3.5 w-3.5" /> PDF

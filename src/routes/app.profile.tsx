@@ -13,7 +13,7 @@ export const Route = createFileRoute("/app/profile")({ component: Profile });
 type ProfileTab = "identity" | "location" | "preferences" | "security";
 
 const tabs: { id: ProfileTab; label: string; icon: typeof UserRound }[] = [
-  { id: "identity", label: "Identidade", icon: UserRound },
+  { id: "identity", label: "Identity", icon: UserRound },
   { id: "location", label: "Location", icon: MapPin },
   { id: "preferences", label: "Preferences", icon: Languages },
   { id: "security", label: "Security", icon: Lock },
@@ -23,10 +23,10 @@ const baseLanguageCodes =
   "af,am,ar,az,be,bg,bn,bs,ca,cs,cy,da,de,el,en,es,et,eu,fa,fi,fil,fr,ga,gl,gu,he,hi,hr,hu,hy,id,is,it,ja,ka,kk,km,kn,ko,ky,lo,lt,lv,mk,ml,mn,mr,ms,my,nb,ne,nl,pa,pl,pt,ro,ru,si,sk,sl,sq,sr,sv,sw,ta,te,th,tr,uk,ur,uz,vi,zh,zu".split(",");
 
 const featuredLocales = [
-  "pt-BR",
-  "pt-PT",
   "en-US",
   "en-GB",
+  "pt-BR",
+  "pt-PT",
   "es-ES",
   "es-MX",
   "fr-FR",
@@ -45,9 +45,9 @@ const countryCodes =
 
 function safeLocale(value: string) {
   try {
-    return Intl.DateTimeFormat.supportedLocalesOf([value])[0] || "pt-BR";
+    return Intl.DateTimeFormat.supportedLocalesOf([value])[0] || "en-US";
   } catch {
-    return "pt-BR";
+    return "en-US";
   }
 }
 
@@ -89,8 +89,8 @@ function Profile() {
   const [preferredName, setPreferredName] = useState("");
   const [phone, setPhone] = useState("");
   const [tz, setTz] = useState("");
-  const [language, setLanguage] = useState("pt-BR");
-  const [countryCode, setCountryCode] = useState("BR");
+  const [language, setLanguage] = useState("en-US");
+  const [countryCode, setCountryCode] = useState("US");
   const [city, setCity] = useState("");
   const [state, setState] = useState("");
   const [geo, setGeo] = useState<GeoAddress | null>(null);
@@ -122,8 +122,8 @@ function Profile() {
     setPreferredName(cleanDisplayNamePart(profile.preferred_name));
     setPhone(profile.phone ?? "");
     setTz(profile.time_zone ?? Intl.DateTimeFormat().resolvedOptions().timeZone);
-    setLanguage(profile.preferred_language ?? "pt-BR");
-    setCountryCode(profile.country_code ?? "BR");
+    setLanguage(profile.preferred_language ?? "en-US");
+    setCountryCode(profile.country_code ?? "US");
     setCity(profile.city ?? "");
     setState(profile.state ?? "");
     setGeo(
@@ -142,7 +142,7 @@ function Profile() {
     );
   }, [profile]);
 
-  if (loading) return <p className="text-sm text-muted-foreground">Carregando...</p>;
+  if (loading) return <p className="text-sm text-muted-foreground">Loading...</p>;
   if (!user || !profile) return <Navigate to="/login" />;
 
   const selectedCountry = countryOptions.find((item) => item.value === countryCode);

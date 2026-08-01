@@ -13,39 +13,39 @@ export const Route = createFileRoute("/app/lab")({ component: Lab });
 
 const STAGES: Array<{ key: string; label: string }> = [
   { key: "pedido_recebido", label: "Order received" },
-  { key: "cadastro_validado", label: "Cadastro validado" },
-  { key: "agendamento_confirmado", label: "Agendamento confirmado" },
+  { key: "cadastro_validado", label: "Registration validated" },
+  { key: "agendamento_confirmado", label: "Appointment confirmed" },
   { key: "paciente_identificado", label: "Patient identified" },
   { key: "coleta_realizada", label: "Collection completed" },
-  { key: "etiqueta_vinculada", label: "Etiqueta vinculada" },
-  { key: "amostra_transportada", label: "Transporte" },
+  { key: "etiqueta_vinculada", label: "Label linked" },
+  { key: "amostra_transportada", label: "Transport" },
   { key: "amostra_recebida", label: "Received by laboratory" },
   { key: "triagem_tecnica", label: "Technical screening" },
   { key: "centrifugacao", label: "Centrifugation" },
   { key: "separacao", label: "Separation" },
   { key: "aliquota", label: "Aliquot" },
-  { key: "processamento", label: "Processamento" },
-  { key: "controle_qualidade", label: "Controle de qualidade" },
+  { key: "processamento", label: "Processing" },
+  { key: "controle_qualidade", label: "Quality control" },
   { key: "analise", label: "Analysis" },
   { key: "revisao", label: "Review" },
   { key: "validacao_tecnica", label: "Technical validation" },
   { key: "validacao_clinica", label: "Clinical validation" },
-  { key: "assinatura", label: "Assinatura" },
+  { key: "assinatura", label: "Signature" },
   { key: "liberacao", label: "Release" },
   { key: "comunicacao", label: "Communication" },
-  { key: "arquivamento", label: "Arquivamento" },
-  { key: "descarte", label: "Descarte" },
+  { key: "arquivamento", label: "Archiving" },
+  { key: "descarte", label: "Disposal" },
 ];
 
 const MATERIALS = [
-  "Sangue total",
+  "Whole blood",
   "Soro",
   "Plasma",
-  "Urina",
-  "Fezes",
+  "Urine",
+  "Stool",
   "Saliva / swab",
-  "Tecido",
-  "Outro",
+  "Tissue",
+  "Other",
 ];
 
 function stageIndex(key: string) {
@@ -59,7 +59,7 @@ function Lab() {
   const tenantId = profile?.tenant_id ?? null;
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [search, setSearch] = useState("");
-  const [draft, setDraft] = useState({ patient_id: "", exam_id: "", material: "Sangue total" });
+  const [draft, setDraft] = useState({ patient_id: "", exam_id: "", material: "Whole blood" });
   const [stageNote, setStageNote] = useState("");
 
   const tenantsList = useQuery({
@@ -145,7 +145,7 @@ function Lab() {
 
   const memberName = (id: string | null) => {
     const m = (members.data ?? []).find((x: any) => x.id === id);
-    return m ? m.preferred_name || m.full_name || "User" : "—";
+    return m ? m.preferred_name || m.full_name || "User" : "-";
   };
 
   const patientName = (id: string | null) => {
@@ -186,14 +186,14 @@ function Lab() {
         tenant_id: effTenant,
         sample_id: data.id,
         stage: "pedido_recebido",
-        notes: "Amostra registrada no sistema.",
+        notes: "Sample registered in the system.",
         performed_by: user?.id ?? null,
       });
       return data.id as string;
     },
     onSuccess: (id) => {
       toast.success("Sample registered with barcode");
-      setDraft({ patient_id: "", exam_id: "", material: "Sangue total" });
+      setDraft({ patient_id: "", exam_id: "", material: "Whole blood" });
       setSelectedId(id);
       refresh();
     },
@@ -225,7 +225,7 @@ function Lab() {
       return next.label;
     },
     onSuccess: (label) => {
-      if (label) toast.success(`Etapa registrada: ${label}`);
+      if (label) toast.success(`Stage recorded: ${label}`);
       setStageNote("");
       refresh();
     },
@@ -253,7 +253,7 @@ function Lab() {
       await (supabase as any).from("alerts").insert({
         tenant_id: selected.tenant_id,
         title: `Recollection required - ${patientName(selected.patient_id)}`,
-        description: `Amostra ${selected.barcode} (${examName(selected.exam_id)}) rejected: ${reason.trim()}`,
+        description: `Sample ${selected.barcode} (${examName(selected.exam_id)}) rejected: ${reason.trim()}`,
         severity: "high",
         category: "lab",
         status: "open",
@@ -281,18 +281,18 @@ function Lab() {
 
   const exportSample = (s: any) => {
     const evts = s.id === selected?.id ? (events.data ?? []) : [];
-    downloadPdf(`amostra-${s.barcode}.pdf`, `Amostra ${s.barcode}`, [
+    downloadPdf(`sample-${s.barcode}.pdf`, `Sample ${s.barcode}`, [
       `Patient: ${patientName(s.patient_id)}`,
-      `Exame: ${examName(s.exam_id)}`,
+      `Exam: ${examName(s.exam_id)}`,
       `Material: ${s.material ?? "-"}`,
-      `Etapa atual: ${STAGES[stageIndex(s.current_stage)].label}`,
+      `Current stage: ${STAGES[stageIndex(s.current_stage)].label}`,
       `Status: ${s.status === "rejected" ? `REJECTED (${s.rejection_reason})` : s.status === "completed" ? "Completed" : "In progress"}`,
-      `Registrada em: ${new Date(s.created_at).toLocaleString("pt-BR")}`,
+      `Registered on: ${new Date(s.created_at).toLocaleString("en-US")}`,
       "",
       "Chain of custody:",
       ...evts.map(
         (e: any) =>
-          `- ${new Date(e.performed_at).toLocaleString("pt-BR")} · ${STAGES.find((x) => x.key === e.stage)?.label ?? e.stage} · ${memberName(e.performed_by)}${e.notes ? ` · ${e.notes}` : ""}`,
+          `- ${new Date(e.performed_at).toLocaleString("en-US")} - ${STAGES.find((x) => x.key === e.stage)?.label ?? e.stage} - ${memberName(e.performed_by)}${e.notes ? ` - ${e.notes}` : ""}`,
       ),
     ]);
   };
@@ -315,7 +315,7 @@ function Lab() {
       />
 
       <div className="grid gap-4 md:grid-cols-4">
-        <Stat label="In progress" value={stats.inProgress} sub="Amostras ativas" tone="olive" />
+        <Stat label="In progress" value={stats.inProgress} sub="Active samples" tone="olive" />
         <Stat label="Awaiting validation" value={stats.awaitingValidation} sub="Technical, clinical or signature" tone="gold" />
         <Stat label="Rejected" value={stats.rejected} sub="Recollection needed" tone="wine" />
         <Stat label="Released" value={stats.released} sub="Communicable result" tone="moss" />
@@ -323,7 +323,7 @@ function Lab() {
 
       <Card className="space-y-3 p-6">
         <h3 className="flex items-center gap-2 text-sm font-semibold text-foreground">
-          <FlaskConical className="h-4 w-4" /> Registrar nova amostra
+          <FlaskConical className="h-4 w-4" /> Register new sample
         </h3>
         <div className="grid gap-3 md:grid-cols-4">
           <GlassSelect
@@ -338,7 +338,7 @@ function Lab() {
               const exam = (exams.data ?? []).find((x: any) => x.id === v);
               setDraft({ ...draft, exam_id: v, material: exam?.biological_material || draft.material });
             }}
-            placeholder="Exame"
+            placeholder="Exam"
             options={(exams.data ?? []).map((e: any) => ({ value: e.id, label: e.commercial_name || e.name }))}
           />
           <GlassSelect
@@ -382,7 +382,7 @@ function Lab() {
                 </Pill>
               </div>
               <p className="mt-1 truncate text-sm font-medium text-foreground">{patientName(s.patient_id)}</p>
-              <p className="text-xs text-muted-foreground">{examName(s.exam_id)} · {s.material ?? "material n/d"}</p>
+              <p className="text-xs text-muted-foreground">{examName(s.exam_id)} - {s.material ?? "material n/a"}</p>
             </button>
           ))}
         </Card>
@@ -393,7 +393,7 @@ function Lab() {
               <div>
                 <h3 className="font-mono text-lg font-semibold text-foreground">{selected.barcode}</h3>
                 <p className="text-xs text-muted-foreground">
-                  {patientName(selected.patient_id)} · {examName(selected.exam_id)} · {selected.material ?? "material n/d"}
+                  {patientName(selected.patient_id)} - {examName(selected.exam_id)} - {selected.material ?? "material n/a"}
                 </p>
               </div>
               <div className="flex gap-2">
@@ -452,7 +452,7 @@ function Lab() {
                   disabled={reject.isPending}
                   className="inline-flex items-center gap-1.5 rounded-full border border-wine/30 bg-wine/5 px-4 py-2 text-sm text-wine"
                 >
-                  <AlertTriangle className="h-3.5 w-3.5" /> Rejeitar amostra
+                  <AlertTriangle className="h-3.5 w-3.5" /> Reject sample
                 </button>
               </div>
             )}
@@ -467,7 +467,7 @@ function Lab() {
                       {e.status === "rejected" ? " - REJECTION" : ""}
                     </span>
                     <span className="text-muted-foreground">
-                      {new Date(e.performed_at).toLocaleString("pt-BR")} · {memberName(e.performed_by)}
+                      {new Date(e.performed_at).toLocaleString("en-US")} - {memberName(e.performed_by)}
                     </span>
                     {e.notes && <span className="w-full text-muted-foreground">{e.notes}</span>}
                   </div>
