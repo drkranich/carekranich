@@ -1,7 +1,7 @@
 import { createFileRoute, Navigate } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Archive, Copy, Dna, FileDown, MessageSquare, Plus, RotateCcw, Send, Trash2 } from "lucide-react";
+import { Archive, Copy, Dna, FileDown, Link2, MessageSquare, Plus, RotateCcw, Route as RouteIcon, Send, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Card, EmptyState, PageHeader, Pill, Stat } from "@/components/app/primitives";
 import { GlassSelect } from "@/components/app/GlassSelect";
@@ -82,6 +82,9 @@ function AncestryStudio() {
   const [openRegion, setOpenRegion] = useState(false);
   const [comment, setComment] = useState("");
   const [dragIndex, setDragIndex] = useState<number | null>(null);
+  const [routeDraft, setRouteDraft] = useState({ label: "", from_lat: "", from_lng: "", to_lat: "", to_lng: "", period: "", description: "" });
+  const [eventDraft, setEventDraft] = useState({ region_id: "", period: "", title: "", description: "" });
+  const [shareDraft, setShareDraft] = useState({ recipient: "", days: "30", allow_download: true });
   if (!canUse) return <Navigate to="/app" />;
 
   const tenantsList = useQuery({
@@ -178,6 +181,39 @@ function AncestryStudio() {
     },
   });
 
+  const routesQ = useQuery({
+    queryKey: ["ancestry-routes-studio", selected?.id],
+    enabled: !!selected,
+    queryFn: async () => {
+      const { data, error } = await (supabase as any)
+        .from("ancestry_routes").select("*").eq("result_id", selected!.id).order("sort_order");
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  const eventsQ = useQuery({
+    queryKey: ["ancestry-events-studio", selected?.id],
+    enabled: !!selected,
+    queryFn: async () => {
+      const { data, error } = await (supabase as any)
+        .from("ancestry_timeline_events").select("*").eq("result_id", selected!.id).order("sort_order");
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  const sharesQ = useQuery({
+    queryKey: ["ancestry-shares", selected?.id],
+    enabled: !!selected,
+    queryFn: async () => {
+      const { data, error } = await (supabase as any)
+        .from("ancestry_shares").select("*").eq("result_id", selected!.id).order("created_at", { ascending: false });
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
   const patientName = (id: string | null) => {
     const p = (patients.data ?? []).find((x: any) => x.id === id);
     return p ? p.social_name || p.full_name : "Paciente";
@@ -188,6 +224,9 @@ function AncestryStudio() {
     qc.invalidateQueries({ queryKey: ["ancestry-regions", selected?.id] });
     qc.invalidateQueries({ queryKey: ["ancestry-comments", selected?.id] });
     qc.invalidateQueries({ queryKey: ["ancestry-versions", selected?.id] });
+    qc.invalidateQueries({ queryKey: ["ancestry-routes-studio", selected?.id] });
+    qc.invalidateQueries({ queryKey: ["ancestry-events-studio", selected?.id] });
+    qc.invalidateQueries({ queryKey: ["ancestry-shares", selected?.id] });
   };
 
   const audit = async (action: string, details?: string) => {
@@ -439,6 +478,96 @@ function AncestryStudio() {
     if (error) return toast.error(error.message);
     setComment("");
     qc.invalidateQueries({ queryKey: ["ancestry-comments", selected.id] });
+  };
+
+  const addRoute = async () => {
+    if (!selected) return;
+    if (!routeDraft.label.trim()) return toast.error("Informe o nome da rota.");
+    const { error } = await (supabase as any).from("ancestry_routes").insert({
+      tenant_id: selected.tenant_id,
+      result_id: selected.id,
+      label: routeDraft.label.trim(),
+      from_lat: routeDraft.from_lat ? Number(routeDraft.from_lat.replace(",", ".")) : null,
+      from_lng: routeDraft.from_lng ? Number(routeDraft.from_lng.replace(",", ".")) : null,
+      to_lat: routeDraft.to_lat ? Number(routeDraft.to_lat.replace(",", ".")) : null,
+      to_lng: routeDraft.to_lng ? Number(routeDraft.to_lng.replace(",", ".")) : null,
+      period: routeDraft.period.trim() || null,
+      description: routeDraft.description.trim() || null,
+      sort_order: (routesQ.data ?? []).length,
+    });
+    if (error) return toast.error(error.message);
+    setRouteDraft({ label: "", from_lat: "", from_lng: "", to_lat: "", to_lng: "", period: "", description: "" });
+    await audit("rota_adicionada", routeDraft.label.trim());
+    refresh();
+  };
+
+  const removeRoute = async (id: string) => {
+    const { error } = await (supabase as any).from("ancestry_routes").delete().eq("id", id);
+    if (error) return toast.error(error.message);
+    refresh();
+  };
+
+  const addEvent = async () => {
+    if (!selected) return;
+    if (!eventDraft.period.trim() || !eventDraft.title.trim()) return toast.error("Informe período e título do marco.");
+    const { error } = await (supabase as any).from("ancestry_timeline_events").insert({
+      tenant_id: selected.tenant_id,
+      result_id: selected.id,
+      region_id: eventDraft.region_id || null,
+      period: eventDraft.period.trim(),
+      title: eventDraft.title.trim(),
+      description: eventDraft.description.trim() || null,
+      sort_order: (eventsQ.data ?? []).length,
+    });
+    if (error) return toast.error(error.message);
+    setEventDraft({ region_id: "", period: "", title: "", description: "" });
+    await audit("linha_tempo", eventDraft.title.trim());
+    refresh();
+  };
+
+  const removeEvent = async (id: string) => {
+    const { error } = await (supabase as any).from("ancestry_timeline_events").delete().eq("id", id);
+    if (error) return toast.error(error.message);
+    refresh();
+  };
+
+  const createShare = async () => {
+    if (!selected) return;
+    if (selected.status !== "published") return toast.error("Publique o resultado antes de compartilhar.");
+    const token = `${Math.random().toString(36).slice(2, 10)}${Date.now().toString(36)}`;
+    const days = Number(shareDraft.days) || 30;
+    const { error } = await (supabase as any).from("ancestry_shares").insert({
+      tenant_id: selected.tenant_id,
+      result_id: selected.id,
+      token,
+      recipient: shareDraft.recipient.trim() || null,
+      allow_download: shareDraft.allow_download,
+      expires_at: new Date(Date.now() + days * 86400000).toISOString(),
+      created_by: user?.id ?? null,
+    });
+    if (error) return toast.error(error.message);
+    await audit("compartilhamento", `Link criado para ${shareDraft.recipient || "destinatário não informado"} (${days} dias)`);
+    toast.success("Link criado — copie e envie ao destinatário");
+    setShareDraft({ recipient: "", days: "30", allow_download: true });
+    refresh();
+  };
+
+  const revokeShare = async (id: string) => {
+    const { error } = await (supabase as any).from("ancestry_shares").update({ revoked_at: new Date().toISOString() }).eq("id", id);
+    if (error) return toast.error(error.message);
+    await audit("compartilhamento_revogado");
+    toast.success("Link revogado");
+    refresh();
+  };
+
+  const copyShare = async (token: string) => {
+    const url = `${window.location.origin}/origens/${token}`;
+    try {
+      await navigator.clipboard.writeText(url);
+      toast.success("Link copiado");
+    } catch {
+      window.prompt("Copie o link:", url);
+    }
   };
 
   const exportPdf = () => {
@@ -727,6 +856,101 @@ function AncestryStudio() {
             </Card>
 
             <div className="grid gap-6 lg:grid-cols-2">
+              <Card className="space-y-3 p-6">
+                <h3 className="flex items-center gap-2 text-sm font-semibold text-foreground">
+                  <RouteIcon className="h-4 w-4" /> Rotas migratórias ({(routesQ.data ?? []).length})
+                </h3>
+                <div className="grid gap-2 md:grid-cols-2">
+                  <input className={glassInput} placeholder="Nome da rota *" value={routeDraft.label} onChange={(e) => setRouteDraft({ ...routeDraft, label: e.target.value })} />
+                  <input className={glassInput} placeholder="Período (ex.: séc. XVIII-XIX)" value={routeDraft.period} onChange={(e) => setRouteDraft({ ...routeDraft, period: e.target.value })} />
+                  <input className={glassInput} placeholder="Origem — latitude" inputMode="decimal" value={routeDraft.from_lat} onChange={(e) => setRouteDraft({ ...routeDraft, from_lat: e.target.value })} />
+                  <input className={glassInput} placeholder="Origem — longitude" inputMode="decimal" value={routeDraft.from_lng} onChange={(e) => setRouteDraft({ ...routeDraft, from_lng: e.target.value })} />
+                  <input className={glassInput} placeholder="Destino — latitude" inputMode="decimal" value={routeDraft.to_lat} onChange={(e) => setRouteDraft({ ...routeDraft, to_lat: e.target.value })} />
+                  <input className={glassInput} placeholder="Destino — longitude" inputMode="decimal" value={routeDraft.to_lng} onChange={(e) => setRouteDraft({ ...routeDraft, to_lng: e.target.value })} />
+                </div>
+                <input className={glassInput} placeholder="Descrição histórica da rota" value={routeDraft.description} onChange={(e) => setRouteDraft({ ...routeDraft, description: e.target.value })} />
+                <button onClick={addRoute} className="rounded-full bg-olive px-4 py-1.5 text-xs font-medium text-ivory">
+                  Adicionar rota
+                </button>
+                {(routesQ.data ?? []).map((r: any) => (
+                  <div key={r.id} className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-white/70 bg-white/45 px-3 py-2 text-xs">
+                    <span className="text-foreground">{r.label}{r.period ? ` · ${r.period}` : ""}</span>
+                    <button onClick={() => removeRoute(r.id)} className="text-wine">Remover</button>
+                  </div>
+                ))}
+                <p className="text-xs text-muted-foreground">
+                  As rotas são referências populacionais e históricas, não a reconstrução exata da genealogia individual.
+                </p>
+              </Card>
+
+              <Card className="space-y-3 p-6">
+                <h3 className="text-sm font-semibold text-foreground">Linha do tempo ({(eventsQ.data ?? []).length})</h3>
+                <GlassSelect
+                  value={eventDraft.region_id}
+                  onChange={(v) => setEventDraft({ ...eventDraft, region_id: v })}
+                  placeholder="Vincular a uma origem (opcional)"
+                  options={[{ value: "", label: "Sem origem específica" }, ...(regions.data ?? []).map((r: any) => ({
+                    value: r.id,
+                    label: [r.genetic_region, r.country, r.macro_region].filter(Boolean)[0] ?? "Origem",
+                  }))]}
+                />
+                <div className="grid gap-2 md:grid-cols-2">
+                  <input className={glassInput} placeholder="Período * (ex.: 1850-1890)" value={eventDraft.period} onChange={(e) => setEventDraft({ ...eventDraft, period: e.target.value })} />
+                  <input className={glassInput} placeholder="Título do marco *" value={eventDraft.title} onChange={(e) => setEventDraft({ ...eventDraft, title: e.target.value })} />
+                </div>
+                <input className={glassInput} placeholder="Descrição do marco histórico" value={eventDraft.description} onChange={(e) => setEventDraft({ ...eventDraft, description: e.target.value })} />
+                <button onClick={addEvent} className="rounded-full bg-olive px-4 py-1.5 text-xs font-medium text-ivory">
+                  Adicionar marco
+                </button>
+                {(eventsQ.data ?? []).map((t: any) => (
+                  <div key={t.id} className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-white/70 bg-white/45 px-3 py-2 text-xs">
+                    <span className="text-foreground">{t.period} · {t.title}</span>
+                    <button onClick={() => removeEvent(t.id)} className="text-wine">Remover</button>
+                  </div>
+                ))}
+              </Card>
+
+              <Card className="space-y-3 p-6 lg:col-span-2">
+                <h3 className="flex items-center gap-2 text-sm font-semibold text-foreground">
+                  <Link2 className="h-4 w-4" /> Compartilhamento seguro
+                </h3>
+                <div className="grid gap-2 md:grid-cols-4">
+                  <input className={`${glassInput} md:col-span-2`} placeholder="Destinatário (nome ou e-mail)" value={shareDraft.recipient} onChange={(e) => setShareDraft({ ...shareDraft, recipient: e.target.value })} />
+                  <input className={glassInput} placeholder="Validade em dias" inputMode="numeric" value={shareDraft.days} onChange={(e) => setShareDraft({ ...shareDraft, days: e.target.value })} />
+                  <button
+                    onClick={() => setShareDraft({ ...shareDraft, allow_download: !shareDraft.allow_download })}
+                    className={`rounded-2xl border px-4 py-2.5 text-xs font-medium ${shareDraft.allow_download ? "border-olive bg-olive text-ivory" : "border-border bg-white/55"}`}
+                  >
+                    {shareDraft.allow_download ? "Download permitido" : "Sem download"}
+                  </button>
+                </div>
+                <button onClick={createShare} className="rounded-full bg-olive px-5 py-2 text-xs font-medium text-ivory">
+                  Gerar link temporário
+                </button>
+                {(sharesQ.data ?? []).map((sh: any) => (
+                  <div key={sh.id} className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-white/70 bg-white/45 px-3 py-2 text-xs">
+                    <span className="min-w-0 truncate text-foreground">
+                      {sh.recipient ?? "Sem destinatário"} · {sh.access_count} acesso(s)
+                      {sh.expires_at ? ` · expira ${new Date(sh.expires_at).toLocaleDateString("pt-BR")}` : ""}
+                      {sh.revoked_at ? " · REVOGADO" : ""}
+                    </span>
+                    <span className="flex gap-2">
+                      {!sh.revoked_at && (
+                        <>
+                          <button onClick={() => copyShare(sh.token)} className="rounded-full border border-border bg-white/55 px-3 py-1">
+                            Copiar link
+                          </button>
+                          <button onClick={() => revokeShare(sh.id)} className="text-wine">Revogar</button>
+                        </>
+                      )}
+                    </span>
+                  </div>
+                ))}
+                <p className="text-xs text-muted-foreground">
+                  O link abre uma versão pública somente leitura do atlas, com expiração e revogação imediata.
+                </p>
+              </Card>
+
               <Card className="space-y-3 p-6">
                 <h3 className="text-sm font-semibold text-foreground">Etapa 5 — animação da revelação</h3>
                 <GlassSelect
