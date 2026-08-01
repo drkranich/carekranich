@@ -106,6 +106,13 @@ const ALL_SECTIONS: NavSection[] = [
         roles: ["caregiver", "nurse", "doctor", "clinic_admin", "super_admin"],
         userKinds: ["clinic", "staff"],
       },
+      {
+        to: "/app/schedule",
+        label: "Agenda inteligente",
+        icon: "M8 2v4 M16 2v4 M3 10h18 M5 4h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z M12 14v3 M10.5 15.5h3",
+        roles: ["caregiver", "nurse", "doctor", "clinic_admin", "super_admin"],
+        userKinds: ["clinic", "staff"],
+      },
     ],
   },
   {
