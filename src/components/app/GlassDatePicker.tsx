@@ -16,16 +16,22 @@ function toDayKey(d: Date) {
  * value/onChange usam o formato "yyyy-MM-dd".
  */
 export function GlassDatePicker({
-  value,
+  value: controlledValue,
   onChange,
+  name,
+  defaultValue = "",
   className = "",
   disabled = false,
 }: {
-  value: string;
-  onChange: (value: string) => void;
+  value?: string;
+  onChange?: (value: string) => void;
+  name?: string;
+  defaultValue?: string;
   className?: string;
   disabled?: boolean;
 }) {
+  const [internalValue, setInternalValue] = useState(defaultValue);
+  const value = controlledValue ?? internalValue;
   const [open, setOpen] = useState(false);
   const btnRef = useRef<HTMLButtonElement | null>(null);
   const panelRef = useRef<HTMLDivElement | null>(null);
@@ -64,6 +70,7 @@ export function GlassDatePicker({
 
   return (
     <div className={`relative ${className}`}>
+      {name && <input type="hidden" name={name} value={value} />}
       <button
         ref={btnRef}
         type="button"
@@ -101,7 +108,9 @@ export function GlassDatePicker({
               defaultMonth={selected}
               onSelect={(day) => {
                 if (day) {
-                  onChange(toDayKey(day));
+                  const key = toDayKey(day);
+                  if (onChange) onChange(key);
+                  else setInternalValue(key);
                   setOpen(false);
                 }
               }}
@@ -113,6 +122,66 @@ export function GlassDatePicker({
           </div>,
           document.body,
         )}
+    </div>
+  );
+}
+
+/**
+ * Variante com data + hora (substitui input datetime-local nativo).
+ * value/onChange usam o formato "yyyy-MM-ddTHH:mm" (vazio = sem agendamento).
+ */
+export function GlassDateTimePicker({
+  value,
+  onChange,
+  className = "",
+  disabled = false,
+}: {
+  value: string;
+  onChange: (value: string) => void;
+  className?: string;
+  disabled?: boolean;
+}) {
+  const [datePart, timePart] = value ? value.split("T") : ["", ""];
+
+  return (
+    <div className={`flex flex-wrap items-center gap-2 ${className}`}>
+      <GlassDatePicker
+        value={datePart}
+        disabled={disabled}
+        onChange={(day) => onChange(day ? `${day}T${timePart || "09:00"}` : "")}
+      />
+      <label className="flex items-center gap-2 rounded-full border border-white/70 bg-white/55 px-3 py-1.5 text-xs text-foreground shadow-soft backdrop-blur-xl transition hover:bg-white/75">
+        <svg
+          viewBox="0 0 24 24"
+          className="h-3.5 w-3.5 text-olive"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <circle cx="12" cy="12" r="9" />
+          <path d="M12 7v5l3 2" />
+        </svg>
+        <input
+          type="time"
+          value={timePart || ""}
+          disabled={disabled}
+          onChange={(event) =>
+            onChange(datePart ? `${datePart}T${event.target.value || "00:00"}` : "")
+          }
+          className="bg-transparent text-xs text-foreground outline-none [color-scheme:light]"
+        />
+      </label>
+      {value && (
+        <button
+          type="button"
+          onClick={() => onChange("")}
+          className="rounded-full border border-white/70 bg-white/55 px-2.5 py-1.5 text-[11px] text-muted-foreground shadow-soft backdrop-blur-xl transition hover:text-wine"
+        >
+          Limpar
+        </button>
+      )}
     </div>
   );
 }
