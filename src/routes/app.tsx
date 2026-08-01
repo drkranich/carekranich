@@ -120,6 +120,13 @@ const ALL_SECTIONS: NavSection[] = [
         roles: ["nurse", "doctor", "clinic_admin", "super_admin"],
         userKinds: ["clinic", "staff"],
       },
+      {
+        to: "/app/medications",
+        label: "Medicação (eMAR)",
+        icon: "M10.5 3.5a5 5 0 0 1 7 7l-7 7a5 5 0 0 1-7-7z M7 7l7 7",
+        roles: ["caregiver", "nurse", "doctor", "clinic_admin", "super_admin"],
+        userKinds: ["clinic", "staff"],
+      },
     ],
   },
   {
