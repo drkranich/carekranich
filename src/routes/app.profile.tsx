@@ -333,7 +333,7 @@ function Profile() {
                     Enviar link
                   </button>
                 </SecurityCard>
-                <SecurityCard title="Autenticação de dois fatores" body="Será liberada quando TOTP/passkeys estiverem implementados no backend." />
+                <TotpCard />
                 <SecurityCard title="Sessões" body="Sessão atual ativa neste dispositivo." />
               </div>
             )}
@@ -418,6 +418,84 @@ function SecurityCard({ title, body, children }: { title: string; body: string; 
       <p className="font-medium text-foreground">{title}</p>
       <p className="mt-1 text-xs leading-5 text-muted-foreground">{body}</p>
       {children}
+    </div>
+  );
+}
+
+function TotpCard() {
+  const [factors, setFactors] = useState<any[]>([]);
+  const [enrolling, setEnrolling] = useState<any | null>(null);
+  const [code, setCode] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  const loadFactors = async () => {
+    const { data, error } = await supabase.auth.mfa.listFactors();
+    if (!error) setFactors(data?.totp ?? []);
+  };
+
+  useEffect(() => {
+    loadFactors();
+  }, []);
+
+  const verified = factors.find((factor) => factor.status === "verified");
+
+  const startEnroll = async () => {
+    setBusy(true);
+    const { data, error } = await supabase.auth.mfa.enroll({ factorType: "totp", friendlyName: "Autenticador Care Kranich" });
+    setBusy(false);
+    if (error) return toast.error(error.message);
+    setEnrolling(data);
+  };
+
+  const confirmEnroll = async () => {
+    if (!enrolling || code.trim().length < 6) return;
+    setBusy(true);
+    const challenge = await supabase.auth.mfa.challenge({ factorId: enrolling.id });
+    if (challenge.error) { setBusy(false); return toast.error(challenge.error.message); }
+    const verify = await supabase.auth.mfa.verify({ factorId: enrolling.id, challengeId: challenge.data.id, code: code.trim() });
+    setBusy(false);
+    if (verify.error) return toast.error(verify.error.message);
+    toast.success("Autenticação de dois fatores ativada");
+    setEnrolling(null);
+    setCode("");
+    loadFactors();
+  };
+
+  const disable = async (factorId: string) => {
+    setBusy(true);
+    const { error } = await supabase.auth.mfa.unenroll({ factorId });
+    setBusy(false);
+    if (error) return toast.error(error.message);
+    toast.success("Autenticação de dois fatores desativada");
+    loadFactors();
+  };
+
+  return (
+    <div className="rounded-lg border border-white/70 bg-white/38 p-5 shadow-soft backdrop-blur-xl">
+      <p className="font-medium text-foreground">Autenticação de dois fatores</p>
+      {verified ? (
+        <>
+          <p className="mt-1 text-xs leading-5 text-moss">Ativa — códigos gerados pelo seu aplicativo autenticador.</p>
+          <button onClick={() => disable(verified.id)} disabled={busy} className="mt-3 rounded-full border border-wine/30 bg-white/45 px-3 py-1.5 text-xs text-wine hover:bg-wine/5 disabled:opacity-50">Desativar 2FA</button>
+        </>
+      ) : enrolling ? (
+        <div className="mt-2 space-y-3">
+          <p className="text-xs leading-5 text-muted-foreground">Escaneie o QR code no Google Authenticator, 1Password ou similar e digite o código de 6 dígitos.</p>
+          {enrolling.totp?.qr_code && (
+            <img src={enrolling.totp.qr_code} alt="QR code 2FA" className="h-36 w-36 rounded-xl border border-white/70 bg-white p-2" />
+          )}
+          <input value={code} onChange={(event) => setCode(event.target.value.replace(/\D/g, "").slice(0, 6))} placeholder="000000" inputMode="numeric" className="w-full rounded-xl border border-white/70 bg-white/60 px-3 py-2 text-center font-mono text-lg tracking-[0.4em] shadow-soft outline-none focus:ring-2 focus:ring-olive/30" />
+          <div className="flex gap-2">
+            <button onClick={confirmEnroll} disabled={busy || code.length < 6} className="rounded-full bg-olive px-4 py-1.5 text-xs font-semibold text-ivory disabled:opacity-45">Confirmar</button>
+            <button onClick={() => { setEnrolling(null); setCode(""); }} className="rounded-full border border-border bg-white/45 px-3 py-1.5 text-xs">Cancelar</button>
+          </div>
+        </div>
+      ) : (
+        <>
+          <p className="mt-1 text-xs leading-5 text-muted-foreground">Proteja sua conta com códigos TOTP de um aplicativo autenticador.</p>
+          <button onClick={startEnroll} disabled={busy} className="mt-3 rounded-full bg-olive px-3 py-1.5 text-xs font-semibold text-ivory disabled:opacity-50">Ativar 2FA</button>
+        </>
+      )}
     </div>
   );
 }
