@@ -147,6 +147,13 @@ const ALL_SECTIONS: NavSection[] = [
         userKinds: ["clinic", "staff"],
       },
       {
+        to: "/app/lab-dashboard",
+        label: "Central do laboratório",
+        icon: "M3 3v18h18 M7 15l4-5 4 3 5-7",
+        roles: ["nurse", "doctor", "clinic_admin", "super_admin"],
+        userKinds: ["clinic", "staff"],
+      },
+      {
         to: "/app/lab",
         label: "Laboratório (amostras)",
         icon: "M10 2v7.5L4.5 19a2 2 0 0 0 1.8 3h11.4a2 2 0 0 0 1.8-3L14 9.5V2 M8.5 2h7 M7 15h10",
