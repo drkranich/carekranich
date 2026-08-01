@@ -22,6 +22,7 @@ type ResidentRow = {
 type MemoryRow = {
   id: string;
   tenant_id: string | null;
+  owner_id: string | null;
   resident_id: string | null;
   title: string;
   memory_type: string;
@@ -54,11 +55,13 @@ const visibilityOptions = [
 
 function Memory() {
   const qc = useQueryClient();
-  const { profile, user, isSuperAdmin } = useAuth();
+  const { profile, user, isSuperAdmin, isAdmin } = useAuth();
   const [query, setQuery] = useState("");
   const [typeFilter, setTypeFilter] = useState("all");
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [renaming, setRenaming] = useState(false);
+  const [newTitle, setNewTitle] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [draft, setDraft] = useState({
     title: "",
@@ -90,7 +93,7 @@ function Memory() {
     queryFn: async () => {
       const { data, error } = await (supabase as any)
         .from("legacy_memories")
-        .select("id,tenant_id,resident_id,title,memory_type,memory_date,memory_year,description,prompt,visibility,bucket,storage_path,mime_type,file_size,status,created_at")
+        .select("id,tenant_id,owner_id,resident_id,title,memory_type,memory_date,memory_year,description,prompt,visibility,bucket,storage_path,mime_type,file_size,status,created_at")
         .order("created_at", { ascending: false });
       if (error) throw error;
       return (data ?? []) as MemoryRow[];
@@ -220,6 +223,45 @@ function Memory() {
       `Descrição: ${memory.description ?? "Sem descrição"}`,
       `Arquivo: ${memory.storage_path ?? "Somente texto"}`,
     ]);
+  };
+
+  const canModify = (memory: MemoryRow) =>
+    isSuperAdmin || isAdmin || (!!user && memory.owner_id === user.id);
+
+  const renameMemory = async (memory: MemoryRow) => {
+    if (!newTitle.trim()) return toast.error("Informe o novo nome.");
+    const { error } = await (supabase as any)
+      .from("legacy_memories")
+      .update({ title: newTitle.trim() })
+      .eq("id", memory.id);
+    if (error) return toast.error(error.message);
+    toast.success("Memória renomeada");
+    setRenaming(false);
+    setNewTitle("");
+    qc.invalidateQueries({ queryKey: ["legacy-memories", profile?.tenant_id] });
+  };
+
+  const archiveMemory = async (memory: MemoryRow) => {
+    const archive = memory.status !== "archived";
+    const { error } = await (supabase as any)
+      .from("legacy_memories")
+      .update({ status: archive ? "archived" : "active" })
+      .eq("id", memory.id);
+    if (error) return toast.error(error.message);
+    toast.success(archive ? "Memória arquivada" : "Memória restaurada");
+    qc.invalidateQueries({ queryKey: ["legacy-memories", profile?.tenant_id] });
+  };
+
+  const deleteMemory = async (memory: MemoryRow) => {
+    if (!window.confirm("Excluir esta memória definitivamente? O arquivo também será removido.")) return;
+    if (memory.storage_path) {
+      await supabase.storage.from(memory.bucket).remove([memory.storage_path]);
+    }
+    const { error } = await (supabase as any).from("legacy_memories").delete().eq("id", memory.id);
+    if (error) return toast.error(error.message);
+    toast.success("Memória excluída");
+    setSelectedId(null);
+    qc.invalidateQueries({ queryKey: ["legacy-memories", profile?.tenant_id] });
   };
 
   return (
@@ -435,6 +477,48 @@ function Memory() {
                       Exportar PDF
                     </button>
                   </div>
+                  {canModify(selectedMemory) ? (
+                    <div className="mt-3 space-y-2">
+                      {renaming ? (
+                        <div className="flex flex-wrap gap-2">
+                          <input
+                            value={newTitle}
+                            onChange={(event) => setNewTitle(event.target.value)}
+                            placeholder="Novo nome da memória"
+                            className="min-w-0 flex-1 rounded-xl border border-border bg-ivory px-3 py-2 text-xs"
+                          />
+                          <button onClick={() => renameMemory(selectedMemory)} className="rounded-full bg-olive px-4 py-2 text-xs text-ivory">
+                            Salvar
+                          </button>
+                          <button onClick={() => setRenaming(false)} className="rounded-full border border-border px-4 py-2 text-xs">
+                            Cancelar
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="flex flex-wrap gap-2">
+                          <button
+                            onClick={() => {
+                              setRenaming(true);
+                              setNewTitle(selectedMemory.title);
+                            }}
+                            className="rounded-full border border-border px-4 py-2 text-xs"
+                          >
+                            Renomear
+                          </button>
+                          <button onClick={() => archiveMemory(selectedMemory)} className="rounded-full border border-border px-4 py-2 text-xs">
+                            {selectedMemory.status === "archived" ? "Restaurar" : "Arquivar"}
+                          </button>
+                          <button onClick={() => deleteMemory(selectedMemory)} className="rounded-full border border-wine/30 bg-wine/5 px-4 py-2 text-xs text-wine">
+                            Excluir
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <p className="mt-3 text-xs text-muted-foreground">
+                      Somente quem criou a memória ou administradores podem editar, arquivar ou excluir.
+                    </p>
+                  )}
                 </Card>
               )}
             </div>

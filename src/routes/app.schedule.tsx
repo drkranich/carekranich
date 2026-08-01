@@ -45,6 +45,17 @@ function Schedule() {
   const [wait, setWait] = useState({ patient_name: "", phone: "", notes: "" });
   if (!canManage) return <Navigate to="/app" />;
 
+  const tenantsList = useQuery({
+    queryKey: ["schedule-tenants", isSuperAdmin],
+    enabled: isSuperAdmin && !profile?.tenant_id,
+    queryFn: async () => {
+      const { data, error } = await (supabase as any).from("tenants").select("id,name").order("name");
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+  const effTenant = profile?.tenant_id ?? ((tenantsList.data ?? [])[0] as any)?.id ?? null;
+
   const team = useQuery({
     queryKey: ["schedule-team", profile?.tenant_id],
     enabled: !!profile?.tenant_id || isSuperAdmin,
@@ -109,7 +120,7 @@ function Schedule() {
       const starts = new Date(form.starts_at);
       const ends = new Date(starts.getTime() + Number(form.duration || 30) * 60000);
       const { error } = await (supabase as any).from("appointments").insert({
-        tenant_id: profile?.tenant_id,
+        tenant_id: effTenant,
         professional_id: form.professional_id,
         room_id: form.room_id || null,
         patient_name: form.patient_name.trim() || null,
@@ -137,7 +148,8 @@ function Schedule() {
 
   const addRoom = async () => {
     if (!newRoom.trim()) return;
-    const { error } = await (supabase as any).from("clinic_rooms").insert({ tenant_id: profile?.tenant_id, name: newRoom.trim() });
+    if (!effTenant) { toast.error("Selecione a organização antes de criar a sala."); return; }
+    const { error } = await (supabase as any).from("clinic_rooms").insert({ tenant_id: effTenant, name: newRoom.trim() });
     if (error) toast.error(error.message);
     else {
       setNewRoom("");
@@ -148,7 +160,7 @@ function Schedule() {
   const addWaitlist = async () => {
     if (!wait.patient_name.trim()) return toast.error("Informe o nome do paciente.");
     const { error } = await (supabase as any).from("schedule_waitlist").insert({
-      tenant_id: profile?.tenant_id,
+      tenant_id: effTenant,
       patient_name: wait.patient_name.trim(),
       phone: wait.phone.trim() || null,
       notes: wait.notes.trim() || null,

@@ -137,9 +137,20 @@ function Identity() {
 function SelfieDialog({ onClose, onCapture }: { onClose: () => void; onCapture: (blob: Blob) => void }) {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
+  const fileRef = useRef<HTMLInputElement | null>(null);
   const [ready, setReady] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
+
+  const sendFile = (file: File | null) => {
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      toast.error("Envie um arquivo de imagem (JPG ou PNG).");
+      return;
+    }
+    setSending(true);
+    onCapture(file);
+  };
 
   useEffect(() => {
     let active = true;
@@ -157,7 +168,7 @@ function SelfieDialog({ onClose, onCapture }: { onClose: () => void; onCapture: 
         }
         setReady(true);
       })
-      .catch((err) => setError(err.message ?? "Não foi possível acessar a câmera"));
+      .catch(() => setError("Câmera não encontrada neste dispositivo. Envie uma foto usando o botão abaixo."));
     return () => {
       active = false;
       streamRef.current?.getTracks().forEach((track) => track.stop());
@@ -203,16 +214,33 @@ function SelfieDialog({ onClose, onCapture }: { onClose: () => void; onCapture: 
           <p className="mt-3 text-xs leading-5 text-muted-foreground">
             Ao enviar a selfie, você aceita os termos da plataforma e declara ser o titular desta conta.
           </p>
-          <div className="mt-4 flex justify-end gap-2">
+          <div className="mt-4 flex flex-wrap justify-end gap-2">
+            <input
+              ref={fileRef}
+              type="file"
+              accept="image/*"
+              capture="user"
+              className="hidden"
+              onChange={(event) => sendFile(event.target.files?.[0] ?? null)}
+            />
             <button onClick={onClose} className="rounded-full border border-border bg-white/55 px-4 py-2 text-xs">Cancelar</button>
             <button
-              onClick={capture}
-              disabled={!ready || sending}
-              className="inline-flex items-center gap-2 rounded-full bg-olive px-4 py-2 text-xs font-semibold text-ivory disabled:opacity-50"
+              onClick={() => fileRef.current?.click()}
+              disabled={sending}
+              className="rounded-full border border-border bg-white/55 px-4 py-2 text-xs disabled:opacity-50"
             >
-              <Camera className="h-3.5 w-3.5" />
-              {sending ? "Enviando..." : "Capturar e enviar"}
+              {sending ? "Enviando..." : "Enviar foto do dispositivo"}
             </button>
+            {!error && (
+              <button
+                onClick={capture}
+                disabled={!ready || sending}
+                className="inline-flex items-center gap-2 rounded-full bg-olive px-4 py-2 text-xs font-semibold text-ivory disabled:opacity-50"
+              >
+                <Camera className="h-3.5 w-3.5" />
+                {sending ? "Enviando..." : "Capturar e enviar"}
+              </button>
+            )}
           </div>
         </div>
       </div>

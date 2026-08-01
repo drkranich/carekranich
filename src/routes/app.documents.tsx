@@ -28,9 +28,14 @@ const documentTypeOptions = [
   { value: "medical", label: "Médico" },
   { value: "prescription", label: "Prescrição" },
   { value: "contract", label: "Contrato" },
-  { value: "insurance", label: "Seguro" },
+  { value: "insurance", label: "Convênio/Seguro" },
   { value: "certification", label: "Certificação" },
   { value: "identity", label: "Identidade" },
+];
+
+const TAGS = [
+  { value: "All", label: "Todos" },
+  ...documentTypeOptions,
 ];
 
 function Documents() {
@@ -42,6 +47,17 @@ function Documents() {
   const [title, setTitle] = useState("");
   const [documentType, setDocumentType] = useState("medical");
   const [uploading, setUploading] = useState(false);
+
+  const tenantsList = useQuery({
+    queryKey: ["documents-tenants", isSuperAdmin],
+    enabled: isSuperAdmin && !profile?.tenant_id,
+    queryFn: async () => {
+      const { data, error } = await (supabase as any).from("tenants").select("id,name").order("name");
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+  const effTenant = profile?.tenant_id ?? ((tenantsList.data ?? [])[0] as any)?.id ?? null;
 
   const docs = useQuery({
     queryKey: ["documents", profile?.tenant_id, isSuperAdmin],
@@ -66,18 +82,21 @@ function Documents() {
   }, [docs.data, query, tag]);
 
   const uploadDocument = async () => {
-    if (!file || !profile?.tenant_id || !user) return;
+    if (!file || !effTenant || !user) {
+      toast.error("Escolha um arquivo antes de carregar.");
+      return;
+    }
     setUploading(true);
     try {
       const safeName = file.name.replace(/[^a-zA-Z0-9._-]+/g, "-").slice(0, 120);
-      const path = `${profile.tenant_id}/${user.id}/${Date.now()}-${safeName}`;
+      const path = `${effTenant}/${user.id}/${Date.now()}-${safeName}`;
       const { error: uploadError } = await supabase.storage
         .from("documents")
         .upload(path, file, { contentType: file.type, upsert: false });
       if (uploadError) throw uploadError;
 
       const { error: rowError } = await (supabase as any).from("documents").insert({
-        tenant_id: profile.tenant_id,
+        tenant_id: effTenant,
         owner_id: user.id,
         uploaded_by: user.id,
         title: title.trim() || file.name,
@@ -86,15 +105,15 @@ function Documents() {
         storage_path: path,
         mime_type: file.type || "application/octet-stream",
         file_size: file.size,
-        ai_summary: "Uploaded securely. OCR and AI extraction can run from a server job after provider setup.",
+        ai_summary: "Enviado com segurança. OCR e extração por IA rodam em um serviço dedicado após a conexão dos provedores.",
       });
       if (rowError) throw rowError;
       setFile(null);
       setTitle("");
-      toast.success("Document uploaded to private storage");
-      qc.invalidateQueries({ queryKey: ["documents", profile.tenant_id] });
+      toast.success("Documento enviado ao cofre privado");
+      qc.invalidateQueries({ queryKey: ["documents"] });
     } catch (err: any) {
-      toast.error(err.message ?? "Upload failed");
+      toast.error(err.message ?? "Falha no upload");
     } finally {
       setUploading(false);
     }
@@ -104,17 +123,17 @@ function Documents() {
     const { data, error } = await supabase.storage
       .from(doc.bucket)
       .createSignedUrl(doc.storage_path, 60 * 5);
-    if (error || !data?.signedUrl) return toast.error(error?.message ?? "Could not open document");
+    if (error || !data?.signedUrl) return toast.error(error?.message ?? "Não foi possível abrir o documento");
     window.open(data.signedUrl, "_blank", "noopener,noreferrer");
   };
 
   const exportSummary = (doc: DocumentRow) => {
-    downloadPdf(`${doc.title}-summary.pdf`, doc.title, [
-      `Type: ${doc.document_type}`,
+    downloadPdf(`${doc.title}-resumo.pdf`, doc.title, [
+      `Tipo: ${documentTypeOptions.find((t) => t.value === doc.document_type)?.label ?? doc.document_type}`,
       `Status: ${doc.status}`,
-      `Uploaded: ${new Date(doc.created_at).toLocaleString()}`,
-      `Summary: ${doc.ai_summary ?? "No summary available yet."}`,
-      `Storage path: ${doc.storage_path}`,
+      `Enviado em: ${new Date(doc.created_at).toLocaleString("pt-BR")}`,
+      `Resumo: ${doc.ai_summary ?? "Sem resumo disponível ainda."}`,
+      `Caminho no cofre: ${doc.storage_path}`,
     ]);
   };
 
@@ -123,7 +142,7 @@ function Documents() {
       <PageHeader
         title="Inteligência de documentos"
         subtitle="Uploads privados, acesso assinado, geração de PDFs e metadados prontos para auditoria."
-        action={<Pill tone="olive">Armazenamento privado Supabase</Pill>}
+        action={<Pill tone="olive">Armazenamento privado</Pill>}
       />
 
       <Card className="relative z-30 mb-6 overflow-visible">
@@ -146,7 +165,7 @@ function Documents() {
           </label>
           <button
             onClick={uploadDocument}
-            disabled={!file || !profile?.tenant_id || uploading}
+            disabled={!file || !effTenant || uploading}
             className="rounded-xl bg-olive px-4 py-2 text-sm text-ivory disabled:opacity-50"
           >
             {uploading ? "Carregando..." : "Carregar"}
@@ -158,7 +177,7 @@ function Documents() {
         <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-border bg-cream/40 px-4 py-3">
           <FileText className="h-5 w-5 text-muted-foreground" />
           <input
-            placeholder="Pesquisar receitas medicas, contratos, resultados de exames, datas..."
+            placeholder="Pesquisar receitas médicas, contratos, resultados de exames, datas..."
             value={query}
             onChange={(event) => setQuery(event.target.value)}
             className="min-w-52 flex-1 bg-transparent text-sm focus:outline-none"
@@ -166,15 +185,15 @@ function Documents() {
           <Pill tone="gold">Somente arquivos reais</Pill>
         </div>
         <div className="mt-3 flex flex-wrap gap-2 text-xs">
-          {["All", "medical", "prescription", "contract", "insurance", "certification", "identity"].map((t) => (
+          {TAGS.map((t) => (
             <button
-              key={t}
-              onClick={() => setTag(t)}
+              key={t.value}
+              onClick={() => setTag(t.value)}
               className={`rounded-full px-3 py-1 ${
-                tag === t ? "bg-olive text-ivory" : "border border-border text-muted-foreground"
+                tag === t.value ? "bg-olive text-ivory" : "border border-border text-muted-foreground"
               }`}
             >
-              {t}
+              {t.label}
             </button>
           ))}
         </div>
@@ -185,7 +204,7 @@ function Documents() {
       ) : docs.isLoading ? (
         <p className="text-sm text-muted-foreground">Carregando...</p>
       ) : filteredDocs.length === 0 ? (
-        <EmptyState title="Ainda não ha documentos." hint="Faca o upload do primeiro arquivo real para criar o cofre." />
+        <EmptyState title="Ainda não há documentos." hint="Faça o upload do primeiro arquivo real para criar o cofre." />
       ) : (
         <div className="grid gap-4 lg:grid-cols-2">
           {filteredDocs.map((doc) => (
@@ -197,13 +216,13 @@ function Documents() {
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-2">
                     <p className="truncate text-sm font-medium text-foreground">{doc.title}</p>
-                    <Pill tone="muted">{doc.document_type}</Pill>
+                    <Pill tone="muted">{documentTypeOptions.find((t) => t.value === doc.document_type)?.label ?? doc.document_type}</Pill>
                   </div>
                   <p className="mt-1 text-xs text-muted-foreground">
-                    {new Date(doc.created_at).toLocaleDateString()} · {formatBytes(doc.file_size)} · {doc.status}
+                    {new Date(doc.created_at).toLocaleDateString("pt-BR")} · {formatBytes(doc.file_size)} · {doc.status}
                   </p>
                   <p className="mt-3 rounded-xl border border-border/60 bg-cream/40 p-3 text-sm leading-6 text-foreground/85">
-                    {doc.ai_summary ?? "No summary yet."}
+                    {doc.ai_summary ?? "Sem resumo ainda."}
                   </p>
                   <div className="mt-3 flex flex-wrap gap-2">
                     <button onClick={() => openDocument(doc)} className="rounded-full bg-olive px-3 py-1.5 text-xs text-ivory">

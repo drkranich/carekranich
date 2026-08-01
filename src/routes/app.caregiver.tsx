@@ -42,7 +42,7 @@ function CaregiverApp() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("residents")
-        .select("id, full_name, preferred_name")
+        .select("id, tenant_id, full_name, preferred_name")
         .order("full_name");
       if (error) throw error;
       return data ?? [];
@@ -88,10 +88,18 @@ function CaregiverApp() {
 
   const checkIn = useMutation({
     mutationFn: async () => {
-      if (!user || !profile?.tenant_id) throw new Error("Entre em uma organização primeiro.");
+      const selectedResident = (residents.data ?? []).find((item: any) => item.id === residentId) as any;
+      const tenantId =
+        profile?.tenant_id ??
+        selectedResident?.tenant_id ??
+        ((residents.data ?? [])[0] as any)?.tenant_id ??
+        null;
+      if (!user || !tenantId) {
+        throw new Error("Selecione um residente do plantão para registrar o check-in.");
+      }
       const position = await getPosition();
       const { error } = await (supabase as any).from("caregiver_shifts").insert({
-        tenant_id: profile.tenant_id,
+        tenant_id: tenantId,
         caregiver_id: user.id,
         resident_id: residentId || null,
         checkin_latitude: position?.coords.latitude ?? null,

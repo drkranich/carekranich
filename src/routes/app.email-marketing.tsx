@@ -19,15 +19,61 @@ const campaignStatusOptions = [
   { value: "archived", label: "Arquivada" },
 ];
 
+type EmailBlock = {
+  id: string;
+  type: "heading" | "text" | "image" | "button" | "divider" | "spacer" | "symbols";
+  text?: string;
+  url?: string;
+  height?: number;
+  size?: number;
+};
+
 type Design = {
   headline: string;
   paragraphs: string;
   cta_text: string;
   cta_url: string;
   footer: string;
+  blocks?: EmailBlock[];
 };
 
-const EMPTY_DESIGN: Design = { headline: "", paragraphs: "", cta_text: "", cta_url: "", footer: "Care Kranich · cuidado que acompanha a vida" };
+const EMPTY_DESIGN: Design = { headline: "", paragraphs: "", cta_text: "", cta_url: "", footer: "Care Kranich · cuidado que acompanha a vida", blocks: [] };
+
+const SYMBOL_SETS = ["✦ ✦ ✦", "❦", "🌿 🌿 🌿", "♥", "★ ★ ★", "— ◆ —", "🕊️", "☀️ 🌙 ⭐"];
+
+function uid() {
+  return Math.random().toString(36).slice(2, 9);
+}
+
+function renderBlock(block: EmailBlock) {
+  switch (block.type) {
+    case "heading":
+      return `<h2 style="margin:24px 0 12px;font-size:21px;line-height:1.35;color:#2f3428;">${escapeHtml(block.text ?? "")}</h2>`;
+    case "text":
+      return (block.text ?? "")
+        .split("\n")
+        .map((line) => line.trim())
+        .filter(Boolean)
+        .map((line) => `<p style="margin:0 0 14px;font-size:15px;line-height:1.7;color:#3f4437;">${escapeHtml(line)}</p>`)
+        .join("");
+    case "image":
+      return block.url
+        ? `<img src="${block.url}" alt="" style="width:100%;max-height:${block.height ?? 240}px;object-fit:cover;display:block;border-radius:14px;margin:10px 0 18px;" />`
+        : "";
+    case "button":
+      return block.text && block.url
+        ? `<table role="presentation" cellpadding="0" cellspacing="0" style="margin:10px auto 22px;"><tr><td style="background:#5a6b46;border-radius:999px;"><a href="${block.url}" style="display:inline-block;padding:12px 32px;color:#faf7ef;font-size:14px;font-weight:600;text-decoration:none;">${escapeHtml(block.text)}</a></td></tr></table>`
+        : "";
+    case "divider":
+      return `<hr style="border:none;border-top:1px solid #e7e2d2;margin:22px 0;" />`;
+    case "spacer":
+      return `<div style="height:${block.height ?? 24}px;line-height:${block.height ?? 24}px;">&nbsp;</div>`;
+    case "symbols":
+      return `<p style="margin:14px 0;text-align:center;font-size:${block.size ?? 20}px;color:#5a6b46;letter-spacing:6px;">${escapeHtml(block.text ?? "✦ ✦ ✦")}</p>`;
+    default:
+      return "";
+  }
+}
 const EMPTY_TEMPLATE = { name: "", subject: "", image_url: "", preview: "" };
 
 function escapeHtml(value: string) {
@@ -56,6 +102,7 @@ ${image ? `<tr><td>${image}</td></tr>` : ""}
 <tr><td style="padding:36px 40px 8px;">
 <h1 style="margin:0 0 18px;font-size:26px;line-height:1.3;color:#2f3428;">${escapeHtml(design.headline || template.subject)}</h1>
 ${paragraphs}
+${(design.blocks ?? []).map(renderBlock).join("")}
 </td></tr>
 <tr><td align="center" style="padding:0 40px;">${cta}</td></tr>
 <tr><td style="padding:20px 40px 30px;border-top:1px solid #e7e2d2;">
@@ -272,6 +319,12 @@ function EmailMarketing() {
               <input value={design.cta_url} onChange={(e) => setDesign({ ...design, cta_url: e.target.value })} placeholder="Link do botão" className="rounded-xl border border-border bg-ivory px-3 py-2 text-sm" />
             </div>
             <input value={design.footer} onChange={(e) => setDesign({ ...design, footer: e.target.value })} placeholder="Rodapé" className="w-full rounded-xl border border-border bg-ivory px-3 py-2 text-sm" />
+
+            <BlockEditor
+              blocks={design.blocks ?? []}
+              onChange={(blocks) => setDesign({ ...design, blocks })}
+            />
+
             <div className="flex gap-2">
               <button onClick={() => saveTemplate.mutate()} disabled={!canSave || saveTemplate.isPending} className="rounded-full bg-olive px-5 py-2 text-sm font-semibold text-ivory disabled:opacity-50">
                 {saveTemplate.isPending ? "Salvando..." : editingTemplateId ? "Salvar alterações" : "Salvar template"}
@@ -401,4 +454,181 @@ function toDateTimeLocal(value: string | null | undefined) {
   if (Number.isNaN(date.getTime())) return "";
   const offset = date.getTimezoneOffset();
   return new Date(date.getTime() - offset * 60000).toISOString().slice(0, 16);
+}
+
+const BLOCK_LABEL: Record<string, string> = {
+  heading: "Título",
+  text: "Texto",
+  image: "Imagem",
+  button: "Botão",
+  divider: "Divisor",
+  spacer: "Espaço",
+  symbols: "Símbolos",
+};
+
+function BlockEditor({ blocks, onChange }: { blocks: EmailBlock[]; onChange: (blocks: EmailBlock[]) => void }) {
+  const [dragIndex, setDragIndex] = useState<number | null>(null);
+
+  const add = (type: EmailBlock["type"]) => {
+    const base: EmailBlock = { id: uid(), type };
+    if (type === "image") base.height = 240;
+    if (type === "spacer") base.height = 24;
+    if (type === "symbols") {
+      base.text = SYMBOL_SETS[0];
+      base.size = 20;
+    }
+    onChange([...blocks, base]);
+  };
+
+  const patch = (id: string, partial: Partial<EmailBlock>) =>
+    onChange(blocks.map((b) => (b.id === id ? { ...b, ...partial } : b)));
+
+  const remove = (id: string) => onChange(blocks.filter((b) => b.id !== id));
+
+  const move = (index: number, delta: number) => {
+    const next = [...blocks];
+    const target = index + delta;
+    if (target < 0 || target >= next.length) return;
+    const [item] = next.splice(index, 1);
+    next.splice(target, 0, item);
+    onChange(next);
+  };
+
+  const dropOn = (index: number) => {
+    if (dragIndex === null || dragIndex === index) return;
+    const next = [...blocks];
+    const [item] = next.splice(dragIndex, 1);
+    next.splice(index, 0, item);
+    onChange(next);
+    setDragIndex(null);
+  };
+
+  const inputCls = "w-full rounded-xl border border-border bg-ivory px-3 py-2 text-sm";
+
+  return (
+    <div className="rounded-2xl border border-white/70 bg-white/45 p-4 backdrop-blur-xl">
+      <p className="text-xs font-semibold uppercase text-muted-foreground">
+        Blocos do e-mail — adicione, edite e arraste para reordenar
+      </p>
+      <div className="mt-3 flex flex-wrap gap-2">
+        {(Object.keys(BLOCK_LABEL) as Array<EmailBlock["type"]>).map((type) => (
+          <button
+            key={type}
+            type="button"
+            onClick={() => add(type)}
+            className="rounded-full border border-border bg-white/55 px-3 py-1.5 text-xs hover:bg-cream"
+          >
+            + {BLOCK_LABEL[type]}
+          </button>
+        ))}
+      </div>
+
+      <div className="mt-4 space-y-3">
+        {blocks.length === 0 && (
+          <p className="text-xs text-muted-foreground">
+            Nenhum bloco extra ainda. Os blocos aparecem no e-mail depois dos parágrafos principais.
+          </p>
+        )}
+        {blocks.map((block, index) => (
+          <div
+            key={block.id}
+            draggable
+            onDragStart={() => setDragIndex(index)}
+            onDragOver={(event) => event.preventDefault()}
+            onDrop={() => dropOn(index)}
+            className={`space-y-2 rounded-2xl border p-3 transition ${
+              dragIndex === index ? "border-olive/60 bg-olive/10" : "border-border/70 bg-white/55"
+            }`}
+          >
+            <div className="flex items-center justify-between gap-2">
+              <span className="inline-flex cursor-grab items-center gap-2 text-xs font-medium text-muted-foreground">
+                <span aria-hidden>⠿</span> {BLOCK_LABEL[block.type]}
+              </span>
+              <span className="flex items-center gap-1 text-xs">
+                <button type="button" onClick={() => move(index, -1)} className="rounded-full border border-border px-2 py-0.5 hover:bg-cream">↑</button>
+                <button type="button" onClick={() => move(index, 1)} className="rounded-full border border-border px-2 py-0.5 hover:bg-cream">↓</button>
+                <button type="button" onClick={() => remove(block.id)} className="rounded-full border border-wine/30 px-2 py-0.5 text-wine hover:bg-wine/10">✕</button>
+              </span>
+            </div>
+
+            {block.type === "heading" && (
+              <input value={block.text ?? ""} onChange={(e) => patch(block.id, { text: e.target.value })} placeholder="Texto do título" className={inputCls} />
+            )}
+            {block.type === "text" && (
+              <textarea value={block.text ?? ""} onChange={(e) => patch(block.id, { text: e.target.value })} rows={3} placeholder={"Texto do bloco.\nCada linha vira um parágrafo."} className={inputCls} />
+            )}
+            {block.type === "image" && (
+              <div className="grid gap-2 md:grid-cols-[1fr_150px]">
+                <input value={block.url ?? ""} onChange={(e) => patch(block.id, { url: e.target.value })} placeholder="URL da imagem" className={inputCls} />
+                <label className="flex items-center gap-2 text-xs text-muted-foreground">
+                  Altura
+                  <input
+                    type="range"
+                    min={80}
+                    max={420}
+                    value={block.height ?? 240}
+                    onChange={(e) => patch(block.id, { height: Number(e.target.value) })}
+                    className="flex-1 accent-[color:var(--olive)]"
+                  />
+                  {block.height ?? 240}px
+                </label>
+              </div>
+            )}
+            {block.type === "button" && (
+              <div className="grid gap-2 md:grid-cols-2">
+                <input value={block.text ?? ""} onChange={(e) => patch(block.id, { text: e.target.value })} placeholder="Texto do botão" className={inputCls} />
+                <input value={block.url ?? ""} onChange={(e) => patch(block.id, { url: e.target.value })} placeholder="Link do botão" className={inputCls} />
+              </div>
+            )}
+            {block.type === "spacer" && (
+              <label className="flex items-center gap-2 text-xs text-muted-foreground">
+                Altura do espaço
+                <input
+                  type="range"
+                  min={8}
+                  max={96}
+                  value={block.height ?? 24}
+                  onChange={(e) => patch(block.id, { height: Number(e.target.value) })}
+                  className="flex-1 accent-[color:var(--olive)]"
+                />
+                {block.height ?? 24}px
+              </label>
+            )}
+            {block.type === "symbols" && (
+              <div className="space-y-2">
+                <div className="flex flex-wrap gap-1.5">
+                  {SYMBOL_SETS.map((set) => (
+                    <button
+                      key={set}
+                      type="button"
+                      onClick={() => patch(block.id, { text: set })}
+                      className={`rounded-full border px-2.5 py-1 text-xs ${
+                        block.text === set ? "border-olive bg-olive text-ivory" : "border-border bg-white/55 hover:bg-cream"
+                      }`}
+                    >
+                      {set}
+                    </button>
+                  ))}
+                </div>
+                <div className="grid gap-2 md:grid-cols-[1fr_150px]">
+                  <input value={block.text ?? ""} onChange={(e) => patch(block.id, { text: e.target.value })} placeholder="Ou digite símbolos/emoji" className={inputCls} />
+                  <label className="flex items-center gap-2 text-xs text-muted-foreground">
+                    Tamanho
+                    <input
+                      type="range"
+                      min={12}
+                      max={48}
+                      value={block.size ?? 20}
+                      onChange={(e) => patch(block.id, { size: Number(e.target.value) })}
+                      className="flex-1 accent-[color:var(--olive)]"
+                    />
+                  </label>
+                </div>
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
 }
