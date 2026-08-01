@@ -12,6 +12,17 @@ export type Profile = {
   tenant_id: string | null;
   time_zone: string | null;
   phone: string | null;
+  preferred_language: string | null;
+  country: string | null;
+  country_code: string | null;
+  state: string | null;
+  city: string | null;
+  address: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  account_status: "pending" | "active" | "rejected" | "suspended";
+  user_kind: "family" | "clinic" | "service_provider" | "staff";
+  verification_status: "not_started" | "pending" | "verified" | "rejected";
 };
 
 type AuthCtx = {
@@ -34,6 +45,19 @@ type AuthCtx = {
 const Ctx = createContext<AuthCtx | null>(null);
 
 const RANK: AppRole[] = ["super_admin", "clinic_admin", "doctor", "nurse", "caregiver", "family"];
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+export function cleanDisplayNamePart(value: string | null | undefined) {
+  const trimmed = value?.trim() ?? "";
+  if (!trimmed || EMAIL_RE.test(trimmed)) return "";
+  return trimmed;
+}
+
+export function getDisplayName(profile: Profile | null, email?: string | null) {
+  const preferred = cleanDisplayNamePart(profile?.preferred_name);
+  const full = cleanDisplayNamePart(profile?.full_name);
+  return preferred || full.split(" ")[0] || email?.split("@")[0] || "";
+}
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
@@ -43,7 +67,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const loadProfile = async (uid: string) => {
     const [{ data: p }, { data: r }] = await Promise.all([
-      supabase.from("profiles").select("id,full_name,preferred_name,avatar_url,tenant_id,time_zone,phone").eq("id", uid).maybeSingle(),
+      (supabase as any)
+        .from("profiles")
+        .select("id,full_name,preferred_name,avatar_url,tenant_id,time_zone,phone,preferred_language,country,country_code,state,city,address,latitude,longitude,account_status,user_kind,verification_status")
+        .eq("id", uid)
+        .maybeSingle(),
       supabase.from("user_roles").select("role").eq("user_id", uid),
     ]);
     setProfile((p as Profile) ?? null);
@@ -53,8 +81,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const { data: sub } = supabase.auth.onAuthStateChange((_evt, s) => {
       setSession(s);
-      if (s?.user) setTimeout(() => loadProfile(s.user.id), 0);
-      else { setProfile(null); setRoles([]); }
+      if (s?.user) {
+        setLoading(true);
+        setTimeout(() => loadProfile(s.user.id).finally(() => setLoading(false)), 0);
+      } else {
+        setProfile(null);
+        setRoles([]);
+        setLoading(false);
+      }
     });
     supabase.auth.getSession().then(({ data }) => {
       setSession(data.session);
@@ -66,11 +100,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const value = useMemo<AuthCtx>(() => {
     const primaryRole = RANK.find((r) => roles.includes(r)) ?? null;
-    const displayName =
-      profile?.preferred_name?.trim() ||
-      profile?.full_name?.split(" ")[0] ||
-      session?.user?.email?.split("@")[0] ||
-      "";
+    const displayName = getDisplayName(profile, session?.user?.email);
     return {
       user: session?.user ?? null,
       session,
@@ -81,11 +111,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       loading,
       hasRole: (r) => roles.includes(r),
       hasAnyRole: (rs) => rs.some((r) => roles.includes(r)),
-      isStaff: roles.some((r) => ["caregiver", "nurse", "doctor", "clinic_admin", "super_admin"].includes(r)),
+      isStaff: roles.some((r) =>
+        ["caregiver", "nurse", "doctor", "clinic_admin", "super_admin"].includes(r),
+      ),
       isAdmin: roles.some((r) => ["clinic_admin", "super_admin"].includes(r)),
       isSuperAdmin: roles.includes("super_admin"),
-      signOut: async () => { await supabase.auth.signOut(); },
-      refresh: async () => { if (session?.user) await loadProfile(session.user.id); },
+      signOut: async () => {
+        await supabase.auth.signOut();
+      },
+      refresh: async () => {
+        if (session?.user) await loadProfile(session.user.id);
+      },
     };
   }, [session, profile, roles, loading]);
 

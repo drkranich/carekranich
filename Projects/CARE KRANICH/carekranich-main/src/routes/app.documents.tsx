@@ -1,57 +1,251 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Card, PageHeader, Pill } from "@/components/app/primitives";
+import { useMemo, useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { Download, FileText, Upload } from "lucide-react";
+import { toast } from "sonner";
+import { Card, EmptyState, PageHeader, Pill } from "@/components/app/primitives";
+import { GlassSelect } from "@/components/app/GlassSelect";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/use-auth";
+import { downloadPdf } from "@/lib/pdf";
 
 export const Route = createFileRoute("/app/documents")({ component: Documents });
 
-const docs = [
-  { n: "Cardiology consultation · Dr. Costa", t: "PDF", tag: "Medical", date: "May 12", size: "1.2 MB", ai: "BP improving; continue Bisoprolol 2.5mg; review in 90d." },
-  { n: "Prescription · Metformin 500mg", t: "PDF", tag: "Prescription", date: "May 02", size: "240 KB", ai: "Renewed for 6 months · valid until Nov 2026" },
-  { n: "Caregiver contract · Sofia Mendes", t: "PDF", tag: "Contract", date: "Apr 22", size: "880 KB", ai: "Active · 32h/week · auto-renews Jun 30" },
-  { n: "Health insurance card · Médis", t: "PNG", tag: "Insurance", date: "Mar 10", size: "1.8 MB", ai: "Plan: Senior Complete · covers in-home care up to €800/mo" },
-  { n: "Dementia screening MMSE 2024", t: "PDF", tag: "Medical", date: "Dec 14", size: "560 KB", ai: "Score 26/30 · mild concerns in recall, otherwise stable" },
-  { n: "Certification · Sofia · CPR renewal", t: "PDF", tag: "Certification", date: "Feb 04", size: "320 KB", ai: "Valid until Feb 2027" },
+type DocumentRow = {
+  id: string;
+  title: string;
+  document_type: string;
+  bucket: string;
+  storage_path: string;
+  mime_type: string | null;
+  file_size: number | null;
+  ai_summary: string | null;
+  status: string;
+  created_at: string;
+};
+
+const documentTypeOptions = [
+  { value: "medical", label: "Médico" },
+  { value: "prescription", label: "Prescrição" },
+  { value: "contract", label: "Contrato" },
+  { value: "insurance", label: "Convênio/Seguro" },
+  { value: "certification", label: "Certificação" },
+  { value: "identity", label: "Identidade" },
 ];
 
-const tagTone: Record<string, string> = { Medical: "wine", Prescription: "terracotta", Contract: "olive", Insurance: "gold", Certification: "moss" };
+const TAGS = [
+  { value: "All", label: "Todos" },
+  ...documentTypeOptions,
+];
 
 function Documents() {
+  const qc = useQueryClient();
+  const { profile, user, isSuperAdmin } = useAuth();
+  const [query, setQuery] = useState("");
+  const [tag, setTag] = useState("All");
+  const [file, setFile] = useState<File | null>(null);
+  const [title, setTitle] = useState("");
+  const [documentType, setDocumentType] = useState("medical");
+  const [uploading, setUploading] = useState(false);
+
+  const tenantsList = useQuery({
+    queryKey: ["documents-tenants", isSuperAdmin],
+    enabled: isSuperAdmin && !profile?.tenant_id,
+    queryFn: async () => {
+      const { data, error } = await (supabase as any).from("tenants").select("id,name").order("name");
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+  const effTenant = profile?.tenant_id ?? ((tenantsList.data ?? [])[0] as any)?.id ?? null;
+
+  const docs = useQuery({
+    queryKey: ["documents", profile?.tenant_id, isSuperAdmin],
+    enabled: !!profile?.tenant_id || isSuperAdmin,
+    queryFn: async () => {
+      const { data, error } = await (supabase as any)
+        .from("documents")
+        .select("id,title,document_type,bucket,storage_path,mime_type,file_size,ai_summary,status,created_at")
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return (data ?? []) as DocumentRow[];
+    },
+  });
+
+  const filteredDocs = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    return (docs.data ?? []).filter((doc) => {
+      const tagMatch = tag === "All" || doc.document_type === tag;
+      const queryMatch = !q || `${doc.title} ${doc.document_type} ${doc.ai_summary ?? ""}`.toLowerCase().includes(q);
+      return tagMatch && queryMatch;
+    });
+  }, [docs.data, query, tag]);
+
+  const uploadDocument = async () => {
+    if (!file || !effTenant || !user) {
+      toast.error("Escolha um arquivo antes de carregar.");
+      return;
+    }
+    setUploading(true);
+    try {
+      const safeName = file.name.replace(/[^a-zA-Z0-9._-]+/g, "-").slice(0, 120);
+      const path = `${effTenant}/${user.id}/${Date.now()}-${safeName}`;
+      const { error: uploadError } = await supabase.storage
+        .from("documents")
+        .upload(path, file, { contentType: file.type, upsert: false });
+      if (uploadError) throw uploadError;
+
+      const { error: rowError } = await (supabase as any).from("documents").insert({
+        tenant_id: effTenant,
+        owner_id: user.id,
+        uploaded_by: user.id,
+        title: title.trim() || file.name,
+        document_type: documentType,
+        bucket: "documents",
+        storage_path: path,
+        mime_type: file.type || "application/octet-stream",
+        file_size: file.size,
+        ai_summary: "Enviado com segurança. OCR e extração por IA rodam em um serviço dedicado após a conexão dos provedores.",
+      });
+      if (rowError) throw rowError;
+      setFile(null);
+      setTitle("");
+      toast.success("Documento enviado ao cofre privado");
+      qc.invalidateQueries({ queryKey: ["documents"] });
+    } catch (err: any) {
+      toast.error(err.message ?? "Falha no upload");
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const openDocument = async (doc: DocumentRow) => {
+    const { data, error } = await supabase.storage
+      .from(doc.bucket)
+      .createSignedUrl(doc.storage_path, 60 * 5);
+    if (error || !data?.signedUrl) return toast.error(error?.message ?? "Não foi possível abrir o documento");
+    window.open(data.signedUrl, "_blank", "noopener,noreferrer");
+  };
+
+  const exportSummary = (doc: DocumentRow) => {
+    downloadPdf(`${doc.title}-resumo.pdf`, doc.title, [
+      `Tipo: ${documentTypeOptions.find((t) => t.value === doc.document_type)?.label ?? doc.document_type}`,
+      `Status: ${doc.status}`,
+      `Enviado em: ${new Date(doc.created_at).toLocaleString("pt-BR")}`,
+      `Resumo: ${doc.ai_summary ?? "Sem resumo disponível ainda."}`,
+      `Caminho no cofre: ${doc.storage_path}`,
+    ]);
+  };
+
   return (
     <>
-      <PageHeader title="Document intelligence" subtitle="OCR · search · AI summaries · secure sharing · version history" action={<button className="rounded-full bg-olive px-4 py-2 text-sm text-ivory">Upload</button>} />
+      <PageHeader
+        title="Inteligência de documentos"
+        subtitle="Uploads privados, acesso assinado, geração de PDFs e metadados prontos para auditoria."
+        action={<Pill tone="olive">Armazenamento privado</Pill>}
+      />
 
-      <Card className="mb-6">
-        <div className="flex items-center gap-3 rounded-2xl border border-border bg-cream/40 px-4 py-3">
-          <svg viewBox="0 0 24 24" className="h-5 w-5 text-muted-foreground" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg>
-          <input placeholder="Search prescriptions, contracts, lab results, dates…" className="flex-1 bg-transparent text-sm focus:outline-none"/>
-          <Pill tone="gold">AI semantic search</Pill>
+      <Card className="relative z-30 mb-6 overflow-visible">
+        <div className="grid gap-3 lg:grid-cols-[1fr_180px_180px_auto]">
+          <input
+            placeholder="Título do documento"
+            value={title}
+            onChange={(event) => setTitle(event.target.value)}
+            className="rounded-xl border border-border bg-ivory px-3 py-2 text-sm"
+          />
+          <GlassSelect
+            value={documentType}
+            onChange={setDocumentType}
+            options={documentTypeOptions}
+          />
+          <label className="flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-border bg-ivory px-3 py-2 text-sm">
+            <Upload className="h-4 w-4" />
+            {file ? file.name.slice(0, 22) : "Selecionar arquivo"}
+            <input type="file" className="hidden" onChange={(event) => setFile(event.target.files?.[0] ?? null)} />
+          </label>
+          <button
+            onClick={uploadDocument}
+            disabled={!file || !effTenant || uploading}
+            className="rounded-xl bg-olive px-4 py-2 text-sm text-ivory disabled:opacity-50"
+          >
+            {uploading ? "Carregando..." : "Carregar"}
+          </button>
+        </div>
+      </Card>
+
+      <Card className="relative z-0 mb-6">
+        <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-border bg-cream/40 px-4 py-3">
+          <FileText className="h-5 w-5 text-muted-foreground" />
+          <input
+            placeholder="Pesquisar receitas médicas, contratos, resultados de exames, datas..."
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            className="min-w-52 flex-1 bg-transparent text-sm focus:outline-none"
+          />
+          <Pill tone="gold">Somente arquivos reais</Pill>
         </div>
         <div className="mt-3 flex flex-wrap gap-2 text-xs">
-          {["All", "Medical", "Prescription", "Contract", "Insurance", "Certification"].map((t, i) => (
-            <button key={t} className={`rounded-full px-3 py-1 ${i === 0 ? "bg-olive text-ivory" : "border border-border text-muted-foreground"}`}>{t}</button>
+          {TAGS.map((t) => (
+            <button
+              key={t.value}
+              onClick={() => setTag(t.value)}
+              className={`rounded-full px-3 py-1 ${
+                tag === t.value ? "bg-olive text-ivory" : "border border-border text-muted-foreground"
+              }`}
+            >
+              {t.label}
+            </button>
           ))}
         </div>
       </Card>
 
-      <div className="grid gap-4 lg:grid-cols-2">
-        {docs.map((d) => (
-          <Card key={d.n}>
-            <div className="flex items-start gap-4">
-              <div className="flex h-12 w-12 flex-none items-center justify-center rounded-xl bg-gradient-olive text-ivory text-xs font-display">{d.t}</div>
-              <div className="flex-1 min-w-0">
-                <div className="flex flex-wrap items-center gap-2">
-                  <p className="text-sm font-medium text-foreground truncate">{d.n}</p>
-                  <Pill tone={tagTone[d.tag] as any}>{d.tag}</Pill>
+      {!profile?.tenant_id && !isSuperAdmin ? (
+        <EmptyState title="Entre em uma organização aprovada primeiro" hint="Documentos privados ficam vinculados a uma organização." />
+      ) : docs.isLoading ? (
+        <p className="text-sm text-muted-foreground">Carregando...</p>
+      ) : filteredDocs.length === 0 ? (
+        <EmptyState title="Ainda não há documentos." hint="Faça o upload do primeiro arquivo real para criar o cofre." />
+      ) : (
+        <div className="grid gap-4 lg:grid-cols-2">
+          {filteredDocs.map((doc) => (
+            <Card key={doc.id}>
+              <div className="flex items-start gap-4">
+                <div className="flex h-12 w-12 flex-none items-center justify-center rounded-xl bg-gradient-olive text-xs font-semibold text-ivory">
+                  {(doc.mime_type?.includes("pdf") ? "PDF" : doc.document_type.slice(0, 3)).toUpperCase()}
                 </div>
-                <p className="mt-1 text-xs text-muted-foreground">{d.date} · {d.size} · v3 · shared with Inês</p>
-                <div className="mt-3 rounded-xl border border-border/60 bg-cream/40 p-3">
-                  <p className="text-[10px] uppercase tracking-widest text-moss">AI summary</p>
-                  <p className="mt-1 text-sm text-foreground/85">{d.ai}</p>
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <p className="truncate text-sm font-medium text-foreground">{doc.title}</p>
+                    <Pill tone="muted">{documentTypeOptions.find((t) => t.value === doc.document_type)?.label ?? doc.document_type}</Pill>
+                  </div>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    {new Date(doc.created_at).toLocaleDateString("pt-BR")} · {formatBytes(doc.file_size)} · {doc.status}
+                  </p>
+                  <p className="mt-3 rounded-xl border border-border/60 bg-cream/40 p-3 text-sm leading-6 text-foreground/85">
+                    {doc.ai_summary ?? "Sem resumo ainda."}
+                  </p>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    <button onClick={() => openDocument(doc)} className="rounded-full bg-olive px-3 py-1.5 text-xs text-ivory">
+                      Abrir arquivo assinado
+                    </button>
+                    <button onClick={() => exportSummary(doc)} className="inline-flex items-center gap-1 rounded-full border border-border px-3 py-1.5 text-xs">
+                      <Download className="h-3 w-3" />
+                      Exportar PDF
+                    </button>
+                  </div>
                 </div>
               </div>
-            </div>
-          </Card>
-        ))}
-      </div>
+            </Card>
+          ))}
+        </div>
+      )}
     </>
   );
+}
+
+function formatBytes(value: number | null) {
+  if (!value) return "-";
+  if (value < 1024) return `${value} B`;
+  if (value < 1024 * 1024) return `${Math.round(value / 1024)} KB`;
+  return `${(value / (1024 * 1024)).toFixed(1)} MB`;
 }

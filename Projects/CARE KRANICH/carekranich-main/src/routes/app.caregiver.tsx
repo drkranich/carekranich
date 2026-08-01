@@ -1,138 +1,310 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { PageHeader, Pill, Avatar } from "@/components/app/primitives";
+import { createFileRoute, Navigate } from "@tanstack/react-router";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useState } from "react";
+import { CheckCircle2, Clock, LogIn, LogOut, MapPin } from "lucide-react";
+import { toast } from "sonner";
+import { Card, EmptyState, PageHeader, Pill, Stat } from "@/components/app/primitives";
+import { GlassSelect } from "@/components/app/GlassSelect";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/use-auth";
 
-export const Route = createFileRoute("/app/caregiver")({
-  component: CaregiverApp,
-});
+export const Route = createFileRoute("/app/caregiver")({ component: CaregiverApp });
+
+function getPosition(): Promise<GeolocationPosition | null> {
+  return new Promise((resolve) => {
+    if (!navigator.geolocation) return resolve(null);
+    navigator.geolocation.getCurrentPosition(
+      (position) => resolve(position),
+      () => resolve(null),
+      { enableHighAccuracy: true, timeout: 8000 },
+    );
+  });
+}
+
+function elapsed(from: string) {
+  const ms = Date.now() - new Date(from).getTime();
+  const hours = Math.floor(ms / 3600000);
+  const minutes = Math.floor((ms % 3600000) / 60000);
+  return `${hours}h ${String(minutes).padStart(2, "0")}min`;
+}
 
 function CaregiverApp() {
+  const { profile, user, hasAnyRole, isSuperAdmin } = useAuth();
+  const qc = useQueryClient();
+  const canUse = hasAnyRole(["caregiver", "nurse", "doctor", "clinic_admin", "super_admin"]);
+  const [residentId, setResidentId] = useState("");
+  const [notes, setNotes] = useState("");
+  if (!canUse) return <Navigate to="/app" />;
+
+  const residents = useQuery({
+    queryKey: ["caregiver-residents", profile?.tenant_id],
+    enabled: !!profile?.tenant_id || isSuperAdmin,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("residents")
+        .select("id, tenant_id, full_name, preferred_name")
+        .order("full_name");
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  const shifts = useQuery({
+    queryKey: ["caregiver-shifts", user?.id],
+    enabled: !!user,
+    queryFn: async () => {
+      const { data, error } = await (supabase as any)
+        .from("caregiver_shifts")
+        .select("*")
+        .eq("caregiver_id", user!.id)
+        .order("started_at", { ascending: false })
+        .limit(30);
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  const tasks = useQuery({
+    queryKey: ["caregiver-tasks-today", profile?.tenant_id, user?.id],
+    enabled: !!profile?.tenant_id || isSuperAdmin,
+    queryFn: async () => {
+      const start = new Date();
+      start.setHours(0, 0, 0, 0);
+      const end = new Date();
+      end.setHours(23, 59, 59, 999);
+      const { data, error } = await (supabase as any)
+        .from("care_tasks")
+        .select("id,title,status,priority,due_at,resident_id")
+        .in("status", ["pending"])
+        .gte("due_at", start.toISOString())
+        .lte("due_at", end.toISOString())
+        .order("due_at");
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  const activeShift = (shifts.data ?? []).find((shift: any) => !shift.ended_at) ?? null;
+
+  const checkIn = useMutation({
+    mutationFn: async () => {
+      const selectedResident = (residents.data ?? []).find((item: any) => item.id === residentId) as any;
+      const tenantId =
+        profile?.tenant_id ??
+        selectedResident?.tenant_id ??
+        ((residents.data ?? [])[0] as any)?.tenant_id ??
+        null;
+      if (!user || !tenantId) {
+        throw new Error("Selecione um residente do plantão para registrar o check-in.");
+      }
+      const position = await getPosition();
+      const { error } = await (supabase as any).from("caregiver_shifts").insert({
+        tenant_id: tenantId,
+        caregiver_id: user.id,
+        resident_id: residentId || null,
+        checkin_latitude: position?.coords.latitude ?? null,
+        checkin_longitude: position?.coords.longitude ?? null,
+      });
+      if (error) throw error;
+      return !!position;
+    },
+    onSuccess: (hasGps) => {
+      toast.success(hasGps ? "Check-in registrado com localização" : "Check-in registrado (sem GPS)");
+      qc.invalidateQueries({ queryKey: ["caregiver-shifts", user?.id] });
+    },
+    onError: (error: any) => toast.error(error.message ?? "Não foi possível fazer check-in"),
+  });
+
+  const checkOut = useMutation({
+    mutationFn: async () => {
+      if (!activeShift) throw new Error("Nenhum plantão ativo.");
+      const position = await getPosition();
+      const { error } = await (supabase as any)
+        .from("caregiver_shifts")
+        .update({
+          ended_at: new Date().toISOString(),
+          checkout_latitude: position?.coords.latitude ?? null,
+          checkout_longitude: position?.coords.longitude ?? null,
+          notes: notes.trim() || null,
+        })
+        .eq("id", activeShift.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Check-out registrado — bom descanso!");
+      setNotes("");
+      qc.invalidateQueries({ queryKey: ["caregiver-shifts", user?.id] });
+    },
+    onError: (error: any) => toast.error(error.message ?? "Não foi possível fazer check-out"),
+  });
+
+  const completeTask = async (taskId: string) => {
+    const { error } = await (supabase as any)
+      .from("care_tasks")
+      .update({ status: "done", completed_at: new Date().toISOString(), completed_by: user?.id })
+      .eq("id", taskId);
+    if (error) toast.error(error.message);
+    else {
+      toast.success("Tarefa concluída");
+      qc.invalidateQueries({ queryKey: ["caregiver-tasks-today", profile?.tenant_id, user?.id] });
+    }
+  };
+
+  const residentName = (id: string | null) => {
+    const resident = (residents.data ?? []).find((item: any) => item.id === id);
+    return resident ? resident.preferred_name || resident.full_name : null;
+  };
+
   return (
     <>
-      <PageHeader title="Caregiver app preview" subtitle="The mobile workspace caregivers actually love." />
+      <PageHeader
+        title="App do cuidador"
+        subtitle="Plantões com check-in/check-out geolocalizado, tarefas do dia e registro rápido — pensado para o celular."
+        action={<Pill tone={activeShift ? "moss" : "muted"}>{activeShift ? "Em plantão" : "Fora de plantão"}</Pill>}
+      />
 
-      <div className="grid gap-10 lg:grid-cols-3">
-        {/* Phone 1 - Shift */}
-        <Phone title="Today's shift">
-          <div className="flex items-center justify-between">
+      <div className="grid gap-4 md:grid-cols-3">
+        <Stat
+          label="Plantão atual"
+          value={activeShift ? elapsed(activeShift.started_at) : "—"}
+          sub={activeShift ? `Início ${new Date(activeShift.started_at).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}` : "Faça check-in para começar"}
+          tone={activeShift ? "moss" : "olive"}
+        />
+        <Stat label="Tarefas de hoje" value={tasks.data?.length ?? "-"} sub="Pendentes com vencimento hoje" tone="gold" />
+        <Stat label="Plantões registrados" value={shifts.data?.length ?? "-"} sub="Últimos 30" tone="olive" />
+      </div>
+
+      <div className="mt-6 grid gap-6 lg:grid-cols-2">
+        <Card>
+          <div className="flex items-center gap-3">
+            <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-olive/10 text-olive">
+              <Clock className="h-5 w-5" />
+            </span>
             <div>
-              <p className="text-[10px] uppercase tracking-widest text-ivory/60">Tuesday · May 12</p>
-              <p className="font-display text-xl text-ivory">8h shift</p>
+              <h2 className="text-xl font-semibold text-foreground">Plantão</h2>
+              <p className="text-xs text-muted-foreground">Check-in e check-out com localização e observações.</p>
             </div>
-            <Pill tone="moss">On site</Pill>
           </div>
-          <div className="mt-4 rounded-2xl bg-ivory/10 p-4">
-            <div className="flex items-center gap-3">
-              <Avatar name="Maria Lopes" tone="wine" size={44} />
-              <div>
-                <p className="text-sm text-ivory">Maria Lopes</p>
-                <p className="text-[11px] text-ivory/60">82 · Cardiac care</p>
+
+          {activeShift ? (
+            <div className="mt-5 space-y-4">
+              <div className="rounded-2xl border border-moss/30 bg-moss/5 p-4">
+                <p className="text-sm font-medium text-foreground">
+                  Em plantão há {elapsed(activeShift.started_at)}
+                  {activeShift.resident_id && residentName(activeShift.resident_id) ? ` · ${residentName(activeShift.resident_id)}` : ""}
+                </p>
+                <p className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
+                  <MapPin className="h-3 w-3" />
+                  {activeShift.checkin_latitude
+                    ? `Check-in em ${activeShift.checkin_latitude.toFixed(5)}, ${activeShift.checkin_longitude.toFixed(5)}`
+                    : "Check-in sem GPS"}
+                </p>
               </div>
+              <textarea
+                value={notes}
+                onChange={(event) => setNotes(event.target.value)}
+                rows={3}
+                placeholder="Observações do plantão (opcional): intercorrências, entregas, recados..."
+                className="w-full rounded-xl border border-border bg-ivory px-3 py-2 text-sm"
+              />
+              <button
+                onClick={() => checkOut.mutate()}
+                disabled={checkOut.isPending}
+                className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-wine px-4 py-3 text-sm font-semibold text-ivory disabled:opacity-50"
+              >
+                <LogOut className="h-4 w-4" />
+                {checkOut.isPending ? "Registrando..." : "Fazer check-out"}
+              </button>
             </div>
-            <div className="mt-3 flex justify-between text-[11px] text-ivory/70">
-              <span>Checked in 09:14</span><span>4h 12m elapsed</span>
+          ) : (
+            <div className="mt-5 space-y-4">
+              <GlassSelect
+                value={residentId}
+                onChange={setResidentId}
+                placeholder="Residente do plantão (opcional)"
+                options={[
+                  { value: "", label: "Sem residente específico" },
+                  ...(residents.data ?? []).map((resident: any) => ({
+                    value: resident.id,
+                    label: resident.preferred_name || resident.full_name,
+                  })),
+                ]}
+              />
+              <button
+                onClick={() => checkIn.mutate()}
+                disabled={checkIn.isPending}
+                className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-olive px-4 py-3 text-sm font-semibold text-ivory disabled:opacity-50"
+              >
+                <LogIn className="h-4 w-4" />
+                {checkIn.isPending ? "Registrando..." : "Fazer check-in"}
+              </button>
+              <p className="text-xs leading-5 text-muted-foreground">
+                O navegador vai pedir sua localização para registrar onde o plantão começou. Se negar, o check-in é registrado sem GPS.
+              </p>
             </div>
-          </div>
-          <div className="mt-4 grid grid-cols-2 gap-2">
-            <ActionBtn icon="M9 11l3 3 8-8" label="Check task" />
-            <ActionBtn icon="M12 5v14 M5 12h14" label="Add note" />
-            <ActionBtn icon="M23 7l-7 5 7 5V7z" label="Voice note" />
-            <ActionBtn icon="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4 M7 10l5 5 5-5 M12 15V3" label="Photo" />
-          </div>
-          <button className="mt-5 w-full rounded-2xl bg-wine px-4 py-3 text-sm text-ivory">SOS · escalate</button>
-        </Phone>
+          )}
+        </Card>
 
-        {/* Phone 2 - Tasks */}
-        <Phone title="Tasks · 12 of 14">
-          <ul className="space-y-2">
-            {[
-              { t: "Morning medication", d: "09:00 · Atorvastatin, Vit D", done: true },
-              { t: "Breakfast support", d: "08:15 · Porridge & berries", done: true },
-              { t: "Garden walk · 20 min", d: "10:30 · 1,240 steps", done: true },
-              { t: "Hydration check", d: "11:30 · 6/8 glasses", done: true },
-              { t: "Afternoon medication", d: "16:00 · Losartan 50mg", done: false, next: true },
-              { t: "Cognitive exercise", d: "17:00 · Memory cards", done: false },
-              { t: "Dinner & evening hygiene", d: "19:00", done: false },
-            ].map((t) => (
-              <li key={t.t} className={`flex items-center gap-3 rounded-2xl p-3 ${t.next ? "bg-wine/15 ring-1 ring-wine/30" : "bg-ivory/10"}`}>
-                <div className={`flex h-6 w-6 items-center justify-center rounded-full ${t.done ? "bg-moss text-ivory" : "border border-ivory/30"}`}>
-                  {t.done && <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="3"><path d="M20 6L9 17l-5-5"/></svg>}
+        <Card>
+          <h2 className="text-xl font-semibold text-foreground">Tarefas de hoje</h2>
+          {(tasks.data ?? []).length === 0 ? (
+            <div className="mt-4"><EmptyState title="Nenhuma tarefa pendente hoje" hint="As tarefas do plano de cuidado com vencimento hoje aparecem aqui." /></div>
+          ) : (
+            <div className="mt-4 space-y-2">
+              {(tasks.data ?? []).map((task: any) => (
+                <div key={task.id} className="flex items-center justify-between gap-3 rounded-2xl border border-white/70 bg-white/50 px-4 py-3">
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-medium text-foreground">{task.title}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {task.due_at ? new Date(task.due_at).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }) : "Sem hora"}
+                      {residentName(task.resident_id) ? ` · ${residentName(task.resident_id)}` : ""}
+                      {task.priority === "high" ? " · prioridade alta" : ""}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => completeTask(task.id)}
+                    className="flex-none rounded-full bg-olive px-3 py-1.5 text-xs font-semibold text-ivory hover:opacity-90"
+                  >
+                    <span className="inline-flex items-center gap-1">
+                      <CheckCircle2 className="h-3.5 w-3.5" /> Concluir
+                    </span>
+                  </button>
                 </div>
-                <div className="flex-1">
-                  <p className={`text-sm ${t.done ? "text-ivory/50 line-through" : "text-ivory"}`}>{t.t}</p>
-                  <p className="text-[11px] text-ivory/50">{t.d}</p>
-                </div>
-                {t.next && <Pill tone="wine">next</Pill>}
-              </li>
-            ))}
-          </ul>
-        </Phone>
+              ))}
+            </div>
+          )}
+        </Card>
+      </div>
 
-        {/* Phone 3 - Vitals */}
-        <Phone title="Log vitals">
-          <div className="space-y-3">
-            {[
-              { l: "Blood pressure", v: "118/76", u: "mmHg", c: "moss" },
-              { l: "Heart rate", v: "72", u: "bpm", c: "wine" },
-              { l: "Glucose", v: "104", u: "mg/dL", c: "gold" },
-              { l: "Oxygen", v: "97", u: "%", c: "moss" },
-              { l: "Temperature", v: "36.4", u: "°C", c: "moss" },
-            ].map((v) => (
-              <div key={v.l} className="flex items-center justify-between rounded-2xl bg-ivory/10 p-3">
+      <Card className="mt-6">
+        <h2 className="text-xl font-semibold text-foreground">Histórico de plantões</h2>
+        {(shifts.data ?? []).length === 0 ? (
+          <p className="mt-3 text-sm text-muted-foreground">Nenhum plantão registrado ainda.</p>
+        ) : (
+          <div className="mt-4 space-y-2">
+            {(shifts.data ?? []).map((shift: any) => (
+              <div key={shift.id} className="flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-white/70 bg-white/50 px-4 py-3">
                 <div>
-                  <p className="text-[11px] uppercase tracking-widest text-ivory/50">{v.l}</p>
-                  <p className="mt-0.5 font-display text-lg text-ivory">{v.v} <span className="text-[11px] text-ivory/50">{v.u}</span></p>
+                  <p className="text-sm font-medium text-foreground">
+                    {new Date(shift.started_at).toLocaleDateString("pt-BR")} ·{" "}
+                    {new Date(shift.started_at).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
+                    {shift.ended_at ? ` → ${new Date(shift.ended_at).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}` : " (em andamento)"}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {residentName(shift.resident_id) ?? "Sem residente"}
+                    {shift.notes ? ` · ${shift.notes}` : ""}
+                  </p>
                 </div>
-                <Pill tone={v.c as "moss" | "wine" | "gold"}>normal</Pill>
+                <div className="flex items-center gap-2">
+                  {shift.checkin_latitude && <Pill tone="olive">GPS in</Pill>}
+                  {shift.checkout_latitude && <Pill tone="moss">GPS out</Pill>}
+                  <Pill tone={shift.ended_at ? "muted" : "moss"}>{shift.ended_at ? "encerrado" : "ativo"}</Pill>
+                </div>
               </div>
             ))}
           </div>
-          <button className="mt-5 w-full rounded-2xl bg-gradient-wine px-4 py-3 text-sm text-ivory">Submit reading</button>
-        </Phone>
-      </div>
-
-      <div className="mt-10 grid gap-6 md:grid-cols-3">
-        {[
-          { t: "Geolocated check-in", d: "Verified at the resident's address. Falsified shifts impossible.", icon: "M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" },
-          { t: "Voice-first workflows", d: "Dictate notes hands-free. AI transcribes, structures, and saves.", icon: "M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z M19 10v2a7 7 0 0 1-14 0v-2 M12 19v4" },
-          { t: "Offline first", d: "Field-tested in dead zones — every action syncs the moment signal returns.", icon: "M5 12.55a11 11 0 0 1 14.08 0 M1.42 9a16 16 0 0 1 21.16 0 M8.53 16.11a6 6 0 0 1 6.95 0" },
-        ].map((f) => (
-          <div key={f.t} className="rounded-3xl border border-border bg-card p-6 shadow-soft">
-            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-olive text-ivory">
-              <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2"><path d={f.icon}/></svg>
-            </div>
-            <h3 className="mt-4 font-display text-lg text-foreground">{f.t}</h3>
-            <p className="mt-1 text-sm text-muted-foreground">{f.d}</p>
-          </div>
-        ))}
-      </div>
+        )}
+      </Card>
     </>
-  );
-}
-
-function Phone({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <div className="mx-auto w-full max-w-[300px]">
-      <div className="rounded-[2.5rem] border-[10px] border-foreground/90 bg-foreground/90 shadow-elevated">
-        <div className="rounded-[2rem] bg-gradient-olive p-5 text-ivory">
-          <div className="mb-4 flex items-center justify-between text-[11px] text-ivory/70">
-            <span>9:41</span>
-            <div className="flex gap-1.5">
-              <span>5G</span><span>●●●</span>
-            </div>
-          </div>
-          <p className="font-display text-sm text-ivory/70">{title}</p>
-          <div className="mt-4">{children}</div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function ActionBtn({ icon, label }: { icon: string; label: string }) {
-  return (
-    <button className="flex flex-col items-center gap-1 rounded-2xl bg-ivory/10 p-3 text-ivory">
-      <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2"><path d={icon}/></svg>
-      <span className="text-[10px]">{label}</span>
-    </button>
   );
 }

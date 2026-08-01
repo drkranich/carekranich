@@ -4,6 +4,8 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { Card, PageHeader, Pill, Avatar } from "@/components/app/primitives";
+import { GlassSelect } from "@/components/app/GlassSelect";
+import { GlassDatePicker } from "@/components/app/GlassDatePicker";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/app/timeline")({ component: TimelinePage });
@@ -20,8 +22,26 @@ type EventRow = {
   occurred_at: string;
 };
 
-const CATEGORIES = ["all", "general", "medication", "vitals", "nutrition", "hydration", "mobility", "mood", "incident", "memory", "alert"];
-const SEVERITIES = ["all", "info", "success", "warning", "critical"];
+const CATEGORIES = [
+  { value: "all", label: "Todas" },
+  { value: "general", label: "Geral" },
+  { value: "medication", label: "Medicação" },
+  { value: "vitals", label: "Sinais vitais" },
+  { value: "nutrition", label: "Nutrição" },
+  { value: "hydration", label: "Hidratação" },
+  { value: "mobility", label: "Mobilidade" },
+  { value: "mood", label: "Humor" },
+  { value: "incident", label: "Incidente" },
+  { value: "memory", label: "Memória" },
+  { value: "alert", label: "Alerta" },
+];
+const SEVERITIES = [
+  { value: "all", label: "Todas" },
+  { value: "info", label: "Informação" },
+  { value: "success", label: "Sucesso" },
+  { value: "warning", label: "Aviso" },
+  { value: "critical", label: "Crítico" },
+];
 
 const sevTone = (s: string) =>
   s === "critical" ? "wine" : s === "warning" ? "gold" : s === "success" ? "moss" : "olive";
@@ -32,24 +52,30 @@ function toDayKey(d: Date) {
 function dayLabel(key: string) {
   const today = toDayKey(new Date());
   const yest = toDayKey(new Date(Date.now() - 86400000));
-  if (key === today) return "Today";
-  if (key === yest) return "Yesterday";
-  return new Date(key).toLocaleDateString([], { weekday: "long", month: "short", day: "numeric" });
+  if (key === today) return "Hoje";
+  if (key === yest) return "Ontem";
+  return new Date(key + "T12:00:00").toLocaleDateString("pt-BR", {
+    weekday: "long",
+    month: "short",
+    day: "numeric",
+  });
 }
 
 function TimelinePage() {
-  const { profile, user, hasAnyRole } = useAuth();
+  const { profile, user, hasAnyRole, isSuperAdmin } = useAuth();
   const qc = useQueryClient();
   const canLog = hasAnyRole(["caregiver", "nurse", "doctor", "clinic_admin", "super_admin"]);
 
   const [date, setDate] = useState(() => toDayKey(new Date()));
   const [category, setCategory] = useState("all");
   const [severity, setSeverity] = useState("all");
+  const [formCategory, setFormCategory] = useState("general");
+  const [formSeverity, setFormSeverity] = useState("info");
   const [showForm, setShowForm] = useState(false);
 
   const { data: events = [], isLoading } = useQuery({
-    queryKey: ["events", { date, category, severity }],
-    enabled: !!profile?.tenant_id,
+    queryKey: ["events", { date, category, severity, tenantId: profile?.tenant_id, isSuperAdmin }],
+    enabled: !!profile?.tenant_id || isSuperAdmin,
     queryFn: async () => {
       const start = new Date(date + "T00:00:00").toISOString();
       const end = new Date(date + "T23:59:59.999").toISOString();
@@ -68,7 +94,12 @@ function TimelinePage() {
   });
 
   const createEvent = useMutation({
-    mutationFn: async (vars: { title: string; category: string; severity: string; description: string }) => {
+    mutationFn: async (vars: {
+      title: string;
+      category: string;
+      severity: string;
+      description: string;
+    }) => {
       const { error } = await supabase.from("events").insert({
         tenant_id: profile!.tenant_id!,
         actor_id: user!.id,
@@ -81,7 +112,7 @@ function TimelinePage() {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["events"] });
-      toast.success("Event logged");
+      toast.success("Evento registrado");
       setShowForm(false);
     },
     onError: (e: Error) => toast.error(e.message),
@@ -106,39 +137,58 @@ function TimelinePage() {
   return (
     <>
       <PageHeader
-        title="Timeline"
-        subtitle="A unified, realtime stream of every meaningful care moment."
+        title="Linha do tempo"
+        subtitle="Um fluxo unificado e em tempo real de cada momento de cuidado."
         action={
-          canLog && (
-            <button onClick={() => setShowForm((v) => !v)} className="rounded-full bg-olive px-4 py-2 text-xs text-ivory hover:opacity-90">
-              {showForm ? "Cancel" : "+ Log event"}
+          canLog && profile?.tenant_id && (
+            <button
+              onClick={() => setShowForm((v) => !v)}
+              className="rounded-full bg-olive px-4 py-2 text-xs text-ivory hover:opacity-90"
+            >
+              {showForm ? "Cancelar" : "+ Registrar evento"}
             </button>
           )
         }
       />
 
-      <div className="mb-4 flex flex-wrap items-center gap-2">
-        <button onClick={() => shiftDay(-1)} className="rounded-full border border-border bg-ivory px-3 py-1.5 text-xs hover:bg-cream">← Yesterday</button>
-        <input
-          type="date"
-          value={date}
-          onChange={(e) => setDate(e.target.value)}
-          className="rounded-full border border-border bg-ivory px-3 py-1.5 text-xs"
+      <div className="mb-4 flex flex-wrap items-center gap-2 rounded-2xl border border-white/70 bg-white/45 p-3 shadow-soft ring-1 ring-white/35 backdrop-blur-2xl">
+        <button
+          onClick={() => shiftDay(-1)}
+          className="rounded-full border border-white/70 bg-white/55 px-3 py-1.5 text-xs shadow-soft backdrop-blur-xl transition hover:bg-white/75 hover:text-olive"
+        >
+          Ontem
+        </button>
+        <GlassDatePicker value={date} onChange={setDate} />
+        <button
+          onClick={() => shiftDay(1)}
+          className="rounded-full border border-white/70 bg-white/55 px-3 py-1.5 text-xs shadow-soft backdrop-blur-xl transition hover:bg-white/75 hover:text-olive"
+        >
+          Amanhã
+        </button>
+        <button
+          onClick={() => setDate(toDayKey(new Date()))}
+          className="rounded-full bg-olive/90 px-3 py-1.5 text-xs font-semibold text-ivory shadow-soft backdrop-blur-xl transition hover:bg-olive"
+        >
+          Hoje
+        </button>
+
+        <span className="mx-2 h-4 w-px bg-white/70" />
+
+        <GlassSelect
+          value={category}
+          onChange={setCategory}
+          options={CATEGORIES}
+          className="w-36"
         />
-        <button onClick={() => shiftDay(1)} className="rounded-full border border-border bg-ivory px-3 py-1.5 text-xs hover:bg-cream">Tomorrow →</button>
-        <button onClick={() => setDate(toDayKey(new Date()))} className="rounded-full border border-border bg-ivory px-3 py-1.5 text-xs hover:bg-cream">Today</button>
-
-        <span className="mx-2 h-4 w-px bg-border" />
-
-        <select value={category} onChange={(e) => setCategory(e.target.value)} className="rounded-full border border-border bg-ivory px-3 py-1.5 text-xs capitalize">
-          {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
-        </select>
-        <select value={severity} onChange={(e) => setSeverity(e.target.value)} className="rounded-full border border-border bg-ivory px-3 py-1.5 text-xs capitalize">
-          {SEVERITIES.map((s) => <option key={s} value={s}>{s}</option>)}
-        </select>
+        <GlassSelect
+          value={severity}
+          onChange={setSeverity}
+          options={SEVERITIES}
+          className="w-36"
+        />
 
         <span className="ml-auto flex items-center gap-1.5 text-xs text-muted-foreground">
-          <span className="h-2 w-2 animate-pulse rounded-full bg-moss" /> Live
+          <span className="h-2 w-2 animate-pulse rounded-full bg-moss" /> Ao vivo
         </span>
       </div>
 
@@ -155,19 +205,40 @@ function TimelinePage() {
                 description: String(f.get("description") || ""),
               });
               (e.target as HTMLFormElement).reset();
+              setFormCategory("general");
+              setFormSeverity("info");
             }}
             className="grid grid-cols-1 gap-2 md:grid-cols-4"
           >
-            <input name="title" required placeholder="What happened?" className="rounded-lg border border-border bg-card px-2 py-1.5 text-sm md:col-span-2" />
-            <select name="category" className="rounded-lg border border-border bg-card px-2 py-1.5 text-sm capitalize">
-              {CATEGORIES.filter((c) => c !== "all").map((c) => <option key={c}>{c}</option>)}
-            </select>
-            <select name="severity" className="rounded-lg border border-border bg-card px-2 py-1.5 text-sm capitalize">
-              {SEVERITIES.filter((s) => s !== "all").map((s) => <option key={s}>{s}</option>)}
-            </select>
-            <textarea name="description" placeholder="Notes (optional)" rows={2} className="rounded-lg border border-border bg-card px-2 py-1.5 text-sm md:col-span-3" />
-            <button disabled={createEvent.isPending} className="rounded-lg bg-olive py-1.5 text-xs text-ivory hover:opacity-90 disabled:opacity-50">
-              {createEvent.isPending ? "Logging…" : "Log event"}
+            <input
+              name="title"
+              required
+              placeholder="O que aconteceu?"
+              className="rounded-lg border border-border bg-card px-2 py-1.5 text-sm md:col-span-2"
+            />
+            <GlassSelect
+              name="category"
+              value={formCategory}
+              onChange={setFormCategory}
+              options={CATEGORIES.filter((item) => item.value !== "all")}
+            />
+            <GlassSelect
+              name="severity"
+              value={formSeverity}
+              onChange={setFormSeverity}
+              options={SEVERITIES.filter((item) => item.value !== "all")}
+            />
+            <textarea
+              name="description"
+              placeholder="Observações (opcional)"
+              rows={2}
+              className="rounded-lg border border-border bg-card px-2 py-1.5 text-sm md:col-span-3"
+            />
+            <button
+              disabled={createEvent.isPending}
+              className="rounded-lg bg-olive py-1.5 text-xs text-ivory hover:opacity-90 disabled:opacity-50"
+            >
+              {createEvent.isPending ? "Registrando..." : "Registrar evento"}
             </button>
           </form>
         </Card>
@@ -181,14 +252,18 @@ function TimelinePage() {
         </div>
       ) : events.length === 0 ? (
         <Card className="p-10 text-center">
-          <p className="font-display text-lg text-foreground">A quiet day.</p>
-          <p className="mt-1 text-sm text-muted-foreground">No events recorded for {dayLabel(date)}.</p>
+          <p className="text-lg font-semibold text-foreground">Um dia tranquilo.</p>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Nenhum evento registrado em {dayLabel(date)}.
+          </p>
         </Card>
       ) : (
         <div className="space-y-6">
           {grouped.map(([day, items]) => (
             <div key={day}>
-              <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-muted-foreground">{dayLabel(day)}</p>
+              <p className="mb-2 text-xs font-semibold uppercase text-muted-foreground">
+                {dayLabel(day)}
+              </p>
               <div className="space-y-1.5">
                 {items.map((e) => (
                   <Card key={e.id} className="flex items-start gap-3 p-3" padded={false}>
@@ -199,10 +274,15 @@ function TimelinePage() {
                         <Pill tone={sevTone(e.severity) as "olive"}>{e.severity}</Pill>
                         <Pill tone="muted">{e.category}</Pill>
                       </div>
-                      {e.description && <p className="mt-0.5 text-xs text-muted-foreground">{e.description}</p>}
+                      {e.description && (
+                        <p className="mt-0.5 text-xs text-muted-foreground">{e.description}</p>
+                      )}
                     </div>
                     <span className="flex-none text-xs text-muted-foreground">
-                      {new Date(e.occurred_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                      {new Date(e.occurred_at).toLocaleTimeString("pt-BR", {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
                     </span>
                   </Card>
                 ))}

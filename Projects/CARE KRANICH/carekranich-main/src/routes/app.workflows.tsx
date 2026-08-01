@@ -1,91 +1,271 @@
-﻿import { createFileRoute } from "@tanstack/react-router";
-import { Card, PageHeader, Pill } from "@/components/app/primitives";
+import { createFileRoute, Navigate } from "@tanstack/react-router";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Play, Zap } from "lucide-react";
+import { toast } from "sonner";
+import { Card, EmptyState, PageHeader, Pill, Stat } from "@/components/app/primitives";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/use-auth";
 
 export const Route = createFileRoute("/app/workflows")({ component: Workflows });
 
-const workflows = [
+type WorkflowKey = "critical_alert_escalation" | "overdue_task_follow_up" | "inbox_triage";
+
+const WORKFLOWS: { key: WorkflowKey; title: string; description: string; steps: string[] }[] = [
   {
-    name: "Missed medication â†’ Family escalation",
-    cat: "Medication",
-    runs: 1248,
-    success: 99.2,
-    steps: ["Med skipped 15min", "Notify caregiver", "Wait 5min", "Notify family", "Generate AI summary"],
+    key: "critical_alert_escalation",
+    title: "Escalonamento de alertas críticos",
+    description: "Alertas abertos críticos/altos notificam toda a equipe da organização imediatamente.",
+    steps: ["Localizar alertas críticos abertos", "Notificar equipe e admins", "Registrar execução auditável"],
   },
   {
-    name: "Abnormal vitals â†’ Telemedicine bridge",
-    cat: "Health",
-    runs: 412,
-    success: 98.5,
-    steps: ["Detect anomaly (2 readings)", "Page caregiver", "Open telemed slot", "Doctor joins", "Plan updated"],
+    key: "overdue_task_follow_up",
+    title: "Cobrança de tarefas vencidas",
+    description: "Tarefas de cuidado vencidas sobem para prioridade alta e notificam os responsáveis.",
+    steps: ["Localizar tarefas vencidas", "Elevar prioridade para alta", "Notificar responsável e criador"],
   },
   {
-    name: "Fall detected â†’ Full emergency chain",
-    cat: "Emergency",
-    runs: 18,
-    success: 100,
-    steps: ["IMU + audio confirm", "SOS to caregiver", "Family alerted", "112 dispatched", "Incident report"],
-  },
-  {
-    name: "Emotional withdrawal â†’ Companion intervention",
-    cat: "Emotional",
-    runs: 86,
-    success: 94.1,
-    steps: ["Detect 3-day pattern", "Care Kranich companion call", "Notify family gently", "Suggest visit", "Wellness coach"],
+    key: "inbox_triage",
+    title: "Triagem do inbox",
+    description: "Conversas abertas sem resposta há mais de 24h são marcadas como prioridade alta.",
+    steps: ["Localizar conversas paradas +24h", "Elevar prioridade", "Notificar a equipe"],
   },
 ];
 
 function Workflows() {
+  const { profile, user, isAdmin, isSuperAdmin, hasAnyRole } = useAuth();
+  const qc = useQueryClient();
+  const canRun = hasAnyRole(["nurse", "doctor", "clinic_admin", "super_admin"]);
+  if (!isAdmin && !isSuperAdmin && !canRun) return <Navigate to="/app" />;
+
+  const runs = useQuery({
+    queryKey: ["workflow-runs", profile?.tenant_id],
+    queryFn: async () => {
+      const { data, error } = await (supabase as any)
+        .from("workflow_runs")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .limit(40);
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  const notifyStaff = async (tenantId: string, title: string, body: string, link: string) => {
+    const { data: staff } = await (supabase as any)
+      .from("user_roles")
+      .select("user_id, role")
+      .eq("tenant_id", tenantId)
+      .in("role", ["caregiver", "nurse", "doctor", "clinic_admin"]);
+    const targets = [...new Set(((staff ?? []) as any[]).map((item) => item.user_id))];
+    if (targets.length === 0 && user) targets.push(user.id);
+    await (supabase as any).from("notifications").insert(
+      targets.map((userId) => ({ tenant_id: tenantId, user_id: userId, title, body, link, severity: "warning" })),
+    );
+    return targets.length;
+  };
+
+  const execute = useMutation({
+    mutationFn: async (key: WorkflowKey) => {
+      const tenantId = profile?.tenant_id;
+      if (!tenantId && !isSuperAdmin) throw new Error("Entre em uma organização para executar automações.");
+      const db = supabase as any;
+      let processed = 0;
+      const details: Record<string, unknown> = {};
+
+      if (key === "critical_alert_escalation") {
+        const { data: alerts, error } = await db
+          .from("alerts")
+          .select("id,tenant_id,title,severity")
+          .eq("status", "open")
+          .in("severity", ["critical", "warning"])
+          .limit(100);
+        if (error) throw error;
+        for (const alert of alerts ?? []) {
+          const notified = await notifyStaff(
+            alert.tenant_id,
+            `Alerta ${alert.severity === "critical" ? "crítico" : "de atenção"}: ${alert.title}`,
+            "Escalonado automaticamente pelo workflow de alertas.",
+            "/app/alerts",
+          );
+          details[alert.id] = { notified };
+          processed++;
+        }
+      }
+
+      if (key === "overdue_task_follow_up") {
+        const { data: tasks, error } = await db
+          .from("care_tasks")
+          .select("id,tenant_id,title,assigned_to,created_by,due_at,priority")
+          .eq("status", "pending")
+          .lt("due_at", new Date().toISOString())
+          .limit(100);
+        if (error) throw error;
+        for (const task of tasks ?? []) {
+          if (task.priority !== "high") {
+            await db.from("care_tasks").update({ priority: "high" }).eq("id", task.id);
+          }
+          const targets = [...new Set([task.assigned_to, task.created_by].filter(Boolean))];
+          if (targets.length) {
+            await db.from("notifications").insert(
+              targets.map((userId: string) => ({
+                tenant_id: task.tenant_id,
+                user_id: userId,
+                title: `Tarefa vencida: ${task.title}`,
+                body: `Vencida em ${new Date(task.due_at).toLocaleString("pt-BR")} — prioridade elevada para alta.`,
+                link: "/app/care-plan",
+                severity: "warning",
+              })),
+            );
+          }
+          details[task.id] = { notified: targets.length };
+          processed++;
+        }
+      }
+
+      if (key === "inbox_triage") {
+        const cutoff = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+        const { data: threads, error } = await db
+          .from("inbox_threads")
+          .select("id,tenant_id,subject,priority,last_message_at")
+          .eq("status", "open")
+          .lt("last_message_at", cutoff)
+          .limit(100);
+        if (error) throw error;
+        for (const thread of threads ?? []) {
+          if (thread.priority !== "high") {
+            await db.from("inbox_threads").update({ priority: "high" }).eq("id", thread.id);
+          }
+          if (thread.tenant_id) {
+            await notifyStaff(
+              thread.tenant_id,
+              `Conversa sem resposta: ${thread.subject}`,
+              "Sem resposta há mais de 24h — prioridade elevada.",
+              "/app/inbox",
+            );
+          }
+          details[thread.id] = { escalated: true };
+          processed++;
+        }
+      }
+
+      const { error: runError } = await db.from("workflow_runs").insert({
+        tenant_id: tenantId ?? null,
+        workflow_key: key,
+        status: processed > 0 ? "completed" : "no_op",
+        processed,
+        results: details,
+        executed_by: user?.id,
+      });
+      if (runError) throw runError;
+      return { key, processed };
+    },
+    onSuccess: ({ processed }) => {
+      toast.success(processed > 0 ? `Automação executada — ${processed} item(ns) processado(s)` : "Nada pendente para processar");
+      qc.invalidateQueries({ queryKey: ["workflow-runs", profile?.tenant_id] });
+    },
+    onError: (error: any) => toast.error(error.message ?? "Falha ao executar a automação"),
+  });
+
+  const runsFor = (key: string) => (runs.data ?? []).filter((run: any) => run.workflow_key === key);
+
   return (
     <>
       <PageHeader
-        title="Care automation"
-        subtitle="Visual workflows that orchestrate caregivers, family, AI and emergency services."
-        action={<button className="rounded-full bg-olive px-4 py-2 text-sm text-ivory shadow-soft">+ New workflow</button>}
+        title="Automação de cuidados"
+        subtitle="Workflows executáveis sobre dados reais: alertas, tarefas e conversas. Cada execução fica registrada e auditável."
+        action={<Pill tone="olive">Motor ativo</Pill>}
       />
 
-      <div className="grid gap-6 lg:grid-cols-2">
-        {workflows.map((w) => (
-          <Card key={w.name}>
-            <div className="flex items-start justify-between">
-              <div>
-                <p className="text-xs uppercase tracking-widest text-moss">{w.cat}</p>
-                <h3 className="mt-1 font-display text-lg text-foreground">{w.name}</h3>
-              </div>
-              <Pill tone="moss">Active</Pill>
-            </div>
-
-            <div className="mt-5 overflow-x-auto">
-              <div className="flex min-w-max items-center gap-2">
-                {w.steps.map((s, i) => (
-                  <div key={i} className="flex items-center gap-2">
-                    <div className="rounded-2xl border border-border bg-cream/40 px-3 py-2 text-xs text-foreground whitespace-nowrap">
-                      <span className="mr-2 inline-flex h-5 w-5 items-center justify-center rounded-full bg-olive font-display text-[10px] text-ivory">{i + 1}</span>
-                      {s}
-                    </div>
-                    {i < w.steps.length - 1 && <svg viewBox="0 0 24 24" className="h-4 w-4 flex-none text-muted-foreground" fill="none" stroke="currentColor" strokeWidth="2"><path d="M5 12h14 M13 6l6 6-6 6"/></svg>}
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="mt-5 flex items-center justify-between border-t border-border/60 pt-4 text-xs text-muted-foreground">
-              <span>{w.runs.toLocaleString()} runs Â· 30d</span>
-              <span><span className="text-moss font-display text-sm">{w.success}%</span> success</span>
-              <button className="text-olive hover:underline">Open builder â†’</button>
-            </div>
-          </Card>
-        ))}
-
-        <Card className="lg:col-span-2 bg-gradient-olive text-ivory border-none">
-          <p className="text-xs uppercase tracking-widest text-ivory/70">AI suggestion</p>
-          <h3 className="mt-1 font-display text-2xl">Create a workflow for nighttime restlessness?</h3>
-          <p className="mt-2 max-w-2xl text-sm text-ivory/85">Care Kranich detected 7 nights of light fragmentation patterns across 12 residents. A proactive companion + environment routine could reduce wake events by ~34%.</p>
-          <div className="mt-4 flex gap-2">
-            <button className="rounded-full bg-ivory px-4 py-2 text-xs text-olive">Generate workflow</button>
-            <button className="rounded-full border border-ivory/30 px-4 py-2 text-xs">Dismiss</button>
-          </div>
-        </Card>
+      <div className="grid gap-4 md:grid-cols-3">
+        <Stat label="Execuções registradas" value={runs.data?.length ?? "-"} sub="Últimas 40" tone="olive" />
+        <Stat
+          label="Itens processados"
+          value={(runs.data ?? []).reduce((total: number, run: any) => total + (run.processed ?? 0), 0)}
+          sub="Total recente"
+          tone="moss"
+        />
+        <Stat
+          label="Última execução"
+          value={runs.data?.[0] ? new Date(runs.data[0].created_at).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }) : "-"}
+          sub={runs.data?.[0] ? new Date(runs.data[0].created_at).toLocaleDateString("pt-BR") : "Nenhuma ainda"}
+          tone="gold"
+        />
       </div>
+
+      <div className="mt-6 grid gap-4 xl:grid-cols-3">
+        {WORKFLOWS.map((workflow) => {
+          const history = runsFor(workflow.key);
+          return (
+            <Card key={workflow.key}>
+              <div className="flex items-start justify-between gap-3">
+                <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-olive/10 text-olive">
+                  <Zap className="h-5 w-5" />
+                </span>
+                <Pill tone={history[0]?.status === "completed" ? "moss" : "muted"}>
+                  {history.length ? `${history.length} execuções` : "nunca executado"}
+                </Pill>
+              </div>
+              <h2 className="mt-4 text-lg font-semibold text-foreground">{workflow.title}</h2>
+              <p className="mt-1 text-sm leading-6 text-muted-foreground">{workflow.description}</p>
+              <ol className="mt-4 space-y-2">
+                {workflow.steps.map((step, index) => (
+                  <li key={step} className="flex items-center gap-2 rounded-xl bg-white/45 px-3 py-2 text-xs text-foreground/80">
+                    <span className="flex h-5 w-5 flex-none items-center justify-center rounded-full bg-olive text-[10px] font-bold text-ivory">
+                      {index + 1}
+                    </span>
+                    {step}
+                  </li>
+                ))}
+              </ol>
+              {canRun && (
+                <button
+                  onClick={() => execute.mutate(workflow.key)}
+                  disabled={execute.isPending}
+                  className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-full bg-olive px-4 py-2 text-xs font-semibold text-ivory disabled:opacity-50"
+                >
+                  <Play className="h-3.5 w-3.5" />
+                  {execute.isPending ? "Executando..." : "Executar agora"}
+                </button>
+              )}
+              {history[0] && (
+                <p className="mt-3 text-[11px] text-muted-foreground">
+                  Última: {new Date(history[0].created_at).toLocaleString("pt-BR")} · {history[0].processed} item(ns)
+                </p>
+              )}
+            </Card>
+          );
+        })}
+      </div>
+
+      <Card className="mt-6">
+        <h2 className="text-xl font-semibold text-foreground">Histórico de execuções</h2>
+        {(runs.data ?? []).length === 0 ? (
+          <div className="mt-4"><EmptyState title="Nenhuma execução ainda" hint="Execute uma automação acima para registrar a primeira." /></div>
+        ) : (
+          <div className="mt-4 space-y-2">
+            {(runs.data ?? []).map((run: any) => (
+              <div key={run.id} className="flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-white/70 bg-white/50 px-4 py-3">
+                <div>
+                  <p className="text-sm font-medium text-foreground">
+                    {WORKFLOWS.find((w) => w.key === run.workflow_key)?.title ?? run.workflow_key}
+                  </p>
+                  <p className="text-xs text-muted-foreground">{new Date(run.created_at).toLocaleString("pt-BR")}</p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Pill tone={run.status === "completed" ? "moss" : run.status === "failed" ? "wine" : "muted"}>
+                    {run.status === "completed" ? "concluída" : run.status === "failed" ? "falhou" : "sem pendências"}
+                  </Pill>
+                  <Pill tone="olive">{run.processed} item(ns)</Pill>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </Card>
+
+      <p className="mt-6 text-xs leading-5 text-muted-foreground">
+        Agendamento automático (execução recorrente via cron do worker) entra na fase de integrações, junto com Stripe e APIs Google.
+      </p>
     </>
   );
 }
