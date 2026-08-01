@@ -5,6 +5,7 @@ import { Download, FileArchive, ImageIcon, Upload } from "lucide-react";
 import { toast } from "sonner";
 import { Card, EmptyState, PageHeader, Pill } from "@/components/app/primitives";
 import { GlassSelect } from "@/components/app/GlassSelect";
+import { GlassDatePicker } from "@/components/app/GlassDatePicker";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { downloadPdf } from "@/lib/pdf";
@@ -39,16 +40,16 @@ type MemoryRow = {
 
 const memoryTypes = [
   { value: "photo", label: "Foto" },
-  { value: "audio", label: "Audio" },
-  { value: "video", label: "Video" },
-  { value: "journal", label: "Jornal" },
+  { value: "audio", label: "Áudio" },
+  { value: "video", label: "Vídeo" },
+  { value: "journal", label: "Diário" },
   { value: "letter", label: "Carta" },
   { value: "document", label: "Documento" },
 ];
 const visibilityOptions = [
   { value: "private", label: "Privado" },
-  { value: "family", label: "Familia" },
-  { value: "tenant", label: "Organizacao" },
+  { value: "family", label: "Família" },
+  { value: "tenant", label: "Organização" },
 ];
 
 function Memory() {
@@ -130,11 +131,11 @@ function Memory() {
     const selectedResident = residents.data?.find((resident) => resident.id === draft.resident_id);
     const tenantId = profile?.tenant_id ?? selectedResident?.tenant_id;
     if (!tenantId || !user) {
-      toast.error("Select a resident with an organization before creating memories.");
+      toast.error("Selecione um residente com organização antes de criar memórias.");
       return;
     }
     if (!draft.title.trim() && !file) {
-      toast.error("Add a title or choose a file.");
+      toast.error("Adicione um título ou escolha um arquivo.");
       return;
     }
 
@@ -160,7 +161,7 @@ function Memory() {
         resident_id: draft.resident_id || null,
         owner_id: user.id,
         uploaded_by: user.id,
-        title: draft.title.trim() || file?.name || "Untitled memory",
+        title: draft.title.trim() || file?.name || "Memória sem título",
         memory_type: draft.memory_type,
         memory_date: draft.memory_date || null,
         memory_year: draft.memory_year ? Number(draft.memory_year) : null,
@@ -185,10 +186,10 @@ function Memory() {
         prompt: "",
         description: "",
       });
-      toast.success("Memory saved to private archive");
+      toast.success("Memória salva no arquivo privado");
       qc.invalidateQueries({ queryKey: ["legacy-memories", profile?.tenant_id] });
     } catch (err: any) {
-      toast.error(err.message ?? "Could not save memory");
+      toast.error(err.message ?? "Não foi possível salvar a memória");
     } finally {
       setUploading(false);
     }
@@ -196,37 +197,37 @@ function Memory() {
 
   const openMemory = async (memory: MemoryRow) => {
     if (!memory.storage_path) {
-      toast.info("This memory is text-only.");
+      toast.info("Esta memória é somente texto.");
       return;
     }
     const { data, error } = await supabase.storage
       .from(memory.bucket)
       .createSignedUrl(memory.storage_path, 60 * 5);
     if (error || !data?.signedUrl) {
-      toast.error(error?.message ?? "Could not open memory file");
+      toast.error(error?.message ?? "Não foi possível abrir o arquivo da memória");
       return;
     }
     window.open(data.signedUrl, "_blank", "noopener,noreferrer");
   };
 
   const exportMemory = (memory: MemoryRow) => {
-    downloadPdf(`${memory.title}-legacy.pdf`, memory.title, [
-      `Type: ${memory.memory_type}`,
-      `Resident: ${memory.resident_id ? residentName.get(memory.resident_id) ?? memory.resident_id : "Not linked"}`,
-      `Date: ${memory.memory_date ?? memory.memory_year ?? "Not set"}`,
-      `Visibility: ${memory.visibility}`,
-      `Prompt: ${memory.prompt ?? "No prompt"}`,
-      `Description: ${memory.description ?? "No description"}`,
-      `File: ${memory.storage_path ?? "Text-only memory"}`,
+    downloadPdf(`${memory.title}-legado.pdf`, memory.title, [
+      `Tipo: ${memory.memory_type}`,
+      `Residente: ${memory.resident_id ? residentName.get(memory.resident_id) ?? memory.resident_id : "Não vinculado"}`,
+      `Data: ${memory.memory_date ?? memory.memory_year ?? "Não definida"}`,
+      `Visibilidade: ${memory.visibility}`,
+      `Prompt: ${memory.prompt ?? "Sem prompt"}`,
+      `Descrição: ${memory.description ?? "Sem descrição"}`,
+      `Arquivo: ${memory.storage_path ?? "Somente texto"}`,
     ]);
   };
 
   return (
     <>
       <PageHeader
-        title="Memory & legacy"
-        subtitle="Private archive for real photos, audio, letters, journals and legacy documents. Nothing here is sample content."
-        action={<Pill tone="olive">Private Storage + RLS</Pill>}
+        title="Memória e legado"
+        subtitle="Arquivo privado para fotos reais, áudios, cartas, diários e documentos de legado."
+        action={<Pill tone="olive">Storage privado + RLS</Pill>}
       />
 
       <div className="grid gap-6 xl:grid-cols-[420px_1fr]">
@@ -236,9 +237,9 @@ function Memory() {
               <Upload className="h-5 w-5" />
             </span>
             <div>
-              <h2 className="text-xl font-semibold text-foreground">Add real memory</h2>
+              <h2 className="text-xl font-semibold text-foreground">Adicionar memória real</h2>
               <p className="text-xs text-muted-foreground">
-                Upload image, audio, video, PDF or save a text-only journal entry.
+                Envie imagem, áudio, vídeo, PDF ou salve um registro somente de texto.
               </p>
             </div>
           </div>
@@ -247,7 +248,7 @@ function Memory() {
             <input
               value={draft.title}
               onChange={(event) => setDraft({ ...draft, title: event.target.value })}
-              placeholder="Title"
+              placeholder="Título"
               className="w-full rounded-xl border border-border bg-ivory px-3 py-2 text-sm"
             />
 
@@ -265,11 +266,9 @@ function Memory() {
             </div>
 
             <div className="grid gap-3 sm:grid-cols-2">
-              <input
-                type="date"
+              <GlassDatePicker
                 value={draft.memory_date}
-                onChange={(event) => setDraft({ ...draft, memory_date: event.target.value })}
-                className="rounded-xl border border-border bg-ivory px-3 py-2 text-sm"
+                onChange={(value) => setDraft({ ...draft, memory_date: value })}
               />
               <input
                 inputMode="numeric"
@@ -277,7 +276,7 @@ function Memory() {
                 onChange={(event) =>
                   setDraft({ ...draft, memory_year: event.target.value.replace(/\D/g, "").slice(0, 4) })
                 }
-                placeholder="Year"
+                placeholder="Ano"
                 className="rounded-xl border border-border bg-ivory px-3 py-2 text-sm"
               />
             </div>
@@ -286,7 +285,7 @@ function Memory() {
               value={draft.resident_id}
               onChange={(value) => setDraft({ ...draft, resident_id: value })}
               options={[
-                { value: "", label: "Nao vinculado a nenhum residente" },
+                { value: "", label: "Não vinculado a nenhum residente" },
                 ...(residents.data ?? []).map((resident) => ({
                   value: resident.id,
                   label: resident.preferred_name || resident.full_name,
@@ -298,19 +297,19 @@ function Memory() {
               value={draft.prompt}
               onChange={(event) => setDraft({ ...draft, prompt: event.target.value })}
               rows={2}
-              placeholder="Prompt or question that inspired this memory"
+              placeholder="Pergunta ou inspiração desta memória"
               className="w-full rounded-xl border border-border bg-ivory px-3 py-2 text-sm"
             />
             <textarea
               value={draft.description}
               onChange={(event) => setDraft({ ...draft, description: event.target.value })}
               rows={4}
-              placeholder="Description, transcript or context"
+              placeholder="Descrição, transcrição ou contexto"
               className="w-full rounded-xl border border-border bg-ivory px-3 py-2 text-sm"
             />
 
             <label className="flex cursor-pointer items-center justify-between gap-3 rounded-xl border border-border bg-ivory px-3 py-3 text-sm">
-              <span className="min-w-0 truncate">{file ? file.name : "Choose file"}</span>
+              <span className="min-w-0 truncate">{file ? file.name : "Escolher arquivo"}</span>
               <FileArchive className="h-4 w-4 flex-none text-muted-foreground" />
               <input
                 type="file"
@@ -325,7 +324,7 @@ function Memory() {
               disabled={uploading || !(profile?.tenant_id || draft.resident_id)}
               className="w-full rounded-xl bg-olive px-4 py-2.5 text-sm font-medium text-ivory disabled:opacity-50"
             >
-              {uploading ? "Saving..." : "Save memory"}
+              {uploading ? "Salvando..." : "Salvar memória"}
             </button>
           </div>
         </Card>
@@ -338,12 +337,12 @@ function Memory() {
                 <input
                   value={query}
                   onChange={(event) => setQuery(event.target.value)}
-                  placeholder="Search memories, residents, prompts..."
+                  placeholder="Buscar memórias, residentes, prompts..."
                   className="flex-1 bg-transparent text-sm outline-none"
                 />
               </div>
               <div className="flex flex-wrap gap-2">
-                {[{ value: "all", label: "Todos" }, ...memoryTypes].map((type) => (
+                {[{ value: "all", label: "Todas" }, ...memoryTypes].map((type) => (
                   <button
                     key={type.value}
                     onClick={() => setTypeFilter(type.value)}
@@ -361,20 +360,20 @@ function Memory() {
           </Card>
 
           {!profile?.tenant_id && !isSuperAdmin ? (
-            <EmptyState title="Join an approved organization first" hint="Memories are scoped to a tenant for privacy." />
+            <EmptyState title="Entre em uma organização aprovada primeiro" hint="Memórias ficam restritas à organização por privacidade." />
           ) : memories.isLoading ? (
-            <p className="text-sm text-muted-foreground">Loading memories...</p>
+            <p className="text-sm text-muted-foreground">Carregando memórias...</p>
           ) : memories.isError ? (
             <Card className="border-wine/25 bg-wine/5">
-              <p className="font-medium text-wine">Could not load memories.</p>
+              <p className="font-medium text-wine">Não foi possível carregar as memórias.</p>
               <p className="mt-2 text-sm text-muted-foreground">
                 {(memories.error as Error).message}
               </p>
             </Card>
           ) : filteredMemories.length === 0 ? (
             <EmptyState
-              title="No memories yet"
-              hint="Upload the first real photo, audio, letter or journal entry."
+              title="Ainda não há memórias"
+              hint="Envie a primeira foto, áudio, carta ou registro de diário."
             />
           ) : (
             <div className="grid gap-6 lg:grid-cols-[1fr_340px]">
@@ -393,7 +392,7 @@ function Memory() {
               {selectedMemory && (
                 <Card>
                   <p className="text-xs font-semibold uppercase text-muted-foreground">
-                    Selected memory
+                    Memória selecionada
                   </p>
                   <h2 className="mt-2 text-2xl font-semibold text-foreground">
                     {selectedMemory.title}
@@ -402,13 +401,13 @@ function Memory() {
                     <Pill tone="olive">{selectedMemory.memory_type}</Pill>
                     <Pill tone="muted">{selectedMemory.visibility}</Pill>
                     <Pill tone={selectedMemory.storage_path ? "moss" : "gold"}>
-                      {selectedMemory.storage_path ? "file attached" : "text-only"}
+                      {selectedMemory.storage_path ? "com arquivo" : "somente texto"}
                     </Pill>
                   </div>
                   <dl className="mt-5 space-y-3 text-sm">
-                    <Detail label="Resident" value={selectedMemory.resident_id ? residentName.get(selectedMemory.resident_id) ?? selectedMemory.resident_id : "Not linked"} />
-                    <Detail label="Date" value={selectedMemory.memory_date ?? String(selectedMemory.memory_year ?? "Not set")} />
-                    <Detail label="File size" value={formatBytes(selectedMemory.file_size)} />
+                    <Detail label="Residente" value={selectedMemory.resident_id ? residentName.get(selectedMemory.resident_id) ?? selectedMemory.resident_id : "Não vinculado"} />
+                    <Detail label="Data" value={selectedMemory.memory_date ?? String(selectedMemory.memory_year ?? "Não definida")} />
+                    <Detail label="Tamanho" value={formatBytes(selectedMemory.file_size)} />
                     <Detail label="Status" value={selectedMemory.status} />
                   </dl>
                   {selectedMemory.prompt && (
@@ -426,14 +425,14 @@ function Memory() {
                       onClick={() => openMemory(selectedMemory)}
                       className="rounded-full bg-olive px-4 py-2 text-xs text-ivory"
                     >
-                      Open signed file
+                      Abrir arquivo assinado
                     </button>
                     <button
                       onClick={() => exportMemory(selectedMemory)}
                       className="inline-flex items-center gap-2 rounded-full border border-border px-4 py-2 text-xs"
                     >
                       <Download className="h-3.5 w-3.5" />
-                      Export PDF
+                      Exportar PDF
                     </button>
                   </div>
                 </Card>
@@ -486,14 +485,14 @@ function MemoryCard({
         )}
         <div className="absolute left-3 top-3">
           <Pill tone={memory.storage_path ? "moss" : "gold"}>
-            {memory.storage_path ? memory.memory_type : "journal"}
+            {memory.storage_path ? memory.memory_type : "diário"}
           </Pill>
         </div>
       </div>
       <div className="p-4">
         <p className="truncate text-sm font-semibold text-foreground">{memory.title}</p>
         <p className="mt-1 text-xs text-muted-foreground">
-          {resident ?? "No resident"} · {memory.memory_date ?? memory.memory_year ?? formatDate(memory.created_at)}
+          {resident ?? "Sem residente"} · {memory.memory_date ?? memory.memory_year ?? formatDate(memory.created_at)}
         </p>
         {memory.description && (
           <p className="mt-3 line-clamp-2 text-xs leading-5 text-foreground/70">{memory.description}</p>
@@ -514,7 +513,7 @@ function Detail({ label, value }: { label: string; value: string }) {
 
 function formatDate(value: string | null | undefined) {
   if (!value) return "-";
-  return new Date(value).toLocaleDateString();
+  return new Date(value).toLocaleDateString("pt-BR");
 }
 
 function formatBytes(value: number | null | undefined) {
