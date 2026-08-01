@@ -131,7 +131,7 @@ function CaregiverApp() {
       if (error) throw error;
     },
     onSuccess: () => {
-      toast.success("Check-out registrado — bom descanso!");
+      toast.success("Check-out registered — rest well!");
       setNotes("");
       qc.invalidateQueries({ queryKey: ["caregiver-shifts", user?.id] });
     },
@@ -197,7 +197,7 @@ function CaregiverApp() {
                   <MapPin className="h-3 w-3" />
                   {activeShift.checkin_latitude
                     ? `Check-in em ${activeShift.checkin_latitude.toFixed(5)}, ${activeShift.checkin_longitude.toFixed(5)}`
-                    : "Check-in sem GPS"}
+                    : "Check-in without GPS"}
                 </p>
               </div>
               <textarea

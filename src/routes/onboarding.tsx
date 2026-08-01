@@ -65,7 +65,7 @@ function Onboarding() {
     },
   });
 
-  if (loading) return <div className="min-h-screen grid place-items-center text-sm text-muted-foreground">Carregando...</div>;
+  if (loading) return <div className="min-h-screen grid place-items-center text-sm text-muted-foreground">Loading...</div>;
   if (!user) return <Navigate to="/login" />;
   if (profile?.tenant_id && profile.account_status === "active") return <Navigate to="/app" />;
 

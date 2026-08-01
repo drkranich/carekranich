@@ -29,10 +29,10 @@ const accessRoutes = [
   { route: "/app/care-plan", label: "Care plan", group: "Cuidado" },
   { route: "/app/memory", label: "Memory and legacy", group: "Cuidado" },
   { route: "/app/emergency", label: "SOS", group: "Cuidado" },
-  { route: "/app/caregiver", label: "Caregiver app", group: "Equipe" },
-  { route: "/app/quality", label: "Qualidade", group: "Equipe" },
-  { route: "/app/academy", label: "Academia", group: "Equipe" },
-  { route: "/app/medical", label: "Medical", group: "Equipe" },
+  { route: "/app/caregiver", label: "Caregiver app", group: "Team" },
+  { route: "/app/quality", label: "Quality", group: "Team" },
+  { route: "/app/academy", label: "Academy", group: "Team" },
+  { route: "/app/medical", label: "Medical", group: "Team" },
   { route: "/app/marketplace", label: "Marketplace", group: "Rede" },
   { route: "/app/agents", label: "Agentes", group: "IA" },
   { route: "/app/agents/recommendations", label: "Recommendations", group: "IA" },
@@ -402,7 +402,7 @@ function AccessProfileMatrix({
     updateDraft(profile, { allowed_routes: Array.from(routes) });
   };
 
-  if (loading) return <p className="mt-6 text-sm text-muted-foreground">Carregando cargos...</p>;
+  if (loading) return <p className="mt-6 text-sm text-muted-foreground">Loading roles...</p>;
 
   return (
     <div className="mt-6 space-y-5">

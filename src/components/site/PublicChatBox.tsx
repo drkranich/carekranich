@@ -108,7 +108,7 @@ export function PublicChatBox() {
             <div>
               <p className="text-sm font-semibold text-olive">Chat Care Kranich</p>
               <p className="mt-1 text-xs leading-5 text-muted-foreground">
-                {session ? "Conversa ao vivo com a equipe." : "Fale com a equipe Care Kranich pelo site."}
+                {session ? "Live conversation with the team." : "Talk to the Care Kranich team through the site."}
               </p>
             </div>
             <button onClick={() => setOpen(false)} className="rounded-full bg-white/65 p-2 text-olive hover:bg-white">
@@ -134,7 +134,7 @@ export function PublicChatBox() {
                     </div>
                   </div>
                 ))}
-                {messages.isLoading && <p className="py-4 text-center text-xs text-muted-foreground">Carregando conversa...</p>}
+                {messages.isLoading && <p className="py-4 text-center text-xs text-muted-foreground">Loading conversation...</p>}
               </div>
               <div className="flex items-center gap-2 border-t border-white/65 p-3">
                 <input
@@ -143,7 +143,7 @@ export function PublicChatBox() {
                   onKeyDown={(event) => {
                     if (event.key === "Enter" && reply.trim()) sendReply.mutate();
                   }}
-                  placeholder="Escreva sua mensagem..."
+                  placeholder="Write your message..."
                   className="min-w-0 flex-1 rounded-full border border-white/70 bg-ivory/75 px-4 py-2 text-sm outline-none focus:ring-2 focus:ring-olive/25"
                 />
                 <button

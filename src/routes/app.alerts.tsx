@@ -25,21 +25,21 @@ type Alert = {
 };
 
 const CATEGORIES = [
-  { value: "medication", label: "Medicamento" },
-  { value: "vitals", label: "Sinais vitais" },
-  { value: "mobility", label: "Mobilidade" },
+  { value: "medication", label: "Medication" },
+  { value: "vitals", label: "Vital signs" },
+  { value: "mobility", label: "Mobility" },
   { value: "hydration", label: "Hydration" },
-  { value: "emotional", label: "Emocional" },
-  { value: "inactivity", label: "Inatividade" },
-  { value: "environmental", label: "Ambiente" },
+  { value: "emotional", label: "Emotional" },
+  { value: "inactivity", label: "Inactivity" },
+  { value: "environmental", label: "Environment" },
   { value: "smart-home", label: "Smart home" },
-  { value: "caregiver", label: "Cuidador" },
-  { value: "ai-predictive", label: "IA preditiva" },
+  { value: "caregiver", label: "Caregiver" },
+  { value: "ai-predictive", label: "Predictive AI" },
 ];
 const SEVERITIES = [
   { value: "info", label: "Information" },
-  { value: "warning", label: "Aviso" },
-  { value: "critical", label: "Critico" },
+  { value: "warning", label: "Warning" },
+  { value: "critical", label: "Critical" },
 ];
 
 const sevTone = (s: string) => (s === "critical" ? "wine" : s === "warning" ? "gold" : "olive");

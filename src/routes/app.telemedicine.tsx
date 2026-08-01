@@ -122,7 +122,7 @@ function Telemedicine() {
           <Card>
             <div className="flex items-center gap-3">
               <MessageCircle className="h-5 w-5 text-olive" />
-              <h2 className="text-xl font-semibold text-foreground">Consultas de telemedicina</h2>
+              <h2 className="text-xl font-semibold text-foreground">Telemedicine consultations</h2>
             </div>
             {(telemed.data?.threads ?? []).length === 0 ? (
               <div className="mt-5">

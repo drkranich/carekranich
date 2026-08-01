@@ -22,8 +22,8 @@ type PublicExam = {
 
 const CATEGORIES = [
   { value: "all", label: "All" },
-  { value: "laboratorial", label: "Laboratoriais" },
-  { value: "imagem", label: "Imagem" },
+  { value: "laboratorial", label: "Laboratory" },
+  { value: "imagem", label: "Diagnostic imaging" },
   { value: "genetica", label: "Genetics" },
 ];
 
@@ -70,12 +70,12 @@ function ExamesPublic() {
       eyebrow="Exams and diagnostics"
       title={
         <>
-          Encontre, compare e agende <span className="text-olive">seus exames</span>
+          Find, compare and schedule <span className="text-olive">your exams</span>
         </>
       }
       lede="Laboratory exams, diagnostic imaging and genetic tests with clear preparation, transparent turnaround and optional home collection."
-      crumbs={[{ label: "Exames" }]}
-      primaryCta={{ label: "Criar minha conta", to: "/signup" }}
+      crumbs={[{ label: "Exams" }]}
+      primaryCta={{ label: "Create my account", to: "/signup" }}
       secondaryCta={{ label: "I already have an account", to: "/login" }}
     >
       <div className="flex flex-wrap items-center gap-2">
@@ -126,10 +126,10 @@ function ExamesPublic() {
             )}
             <div className="mt-4 flex flex-wrap gap-2 text-xs text-muted-foreground">
               {e.turnaround_days ? (
-                <span className="rounded-full border border-border bg-ivory/60 px-2.5 py-1">Resultado em {e.turnaround_days}d</span>
+                <span className="rounded-full border border-border bg-ivory/60 px-2.5 py-1">Result in {e.turnaround_days}d</span>
               ) : null}
               {e.fasting_hours ? (
-                <span className="rounded-full border border-border bg-ivory/60 px-2.5 py-1">Jejum {e.fasting_hours}h</span>
+                <span className="rounded-full border border-border bg-ivory/60 px-2.5 py-1">Fasting {e.fasting_hours}h</span>
               ) : null}
               {e.home_collection ? (
                 <span className="rounded-full border border-moss/30 bg-moss/10 px-2.5 py-1 text-moss">Home collection</span>

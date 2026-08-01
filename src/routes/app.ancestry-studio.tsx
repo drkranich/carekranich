@@ -33,7 +33,7 @@ const TEMPLATES = [
   { value: "atlas", label: "Scientific atlas" },
   { value: "familiar", label: "Family History" },
   { value: "minimalista", label: "Descoberta Minimalista" },
-  { value: "luzes", label: "Mapa de Luzes" },
+  { value: "luzes", label: "Light map" },
   { value: "migracoes", label: "Ancestral migrations" },
 ];
 
@@ -249,8 +249,8 @@ function AncestryStudio() {
     const list: string[] = [];
     const rs = regions.data ?? [];
     if (rs.length === 0) list.push("No origins registered.");
-    if (totalPct > 100.5) list.push(`Soma dos percentuais acima de 100% (${totalPct.toFixed(1)}%).`);
-    if (rs.length > 0 && totalPct < 95) list.push(`Soma dos percentuais abaixo de 95% (${totalPct.toFixed(1)}%).`);
+    if (totalPct > 100.5) list.push(`Percentage sum is above 100% (${totalPct.toFixed(1)}%).`);
+    if (rs.length > 0 && totalPct < 95) list.push(`Percentage sum is below 95% (${totalPct.toFixed(1)}%).`);
     if (rs.some((r: any) => r.latitude === null || r.longitude === null)) list.push("An origin is missing map coordinates.");
     if (rs.some((r: any) => !r.summary)) list.push("At least one origin has no short description.");
     return list;
@@ -363,7 +363,7 @@ function AncestryStudio() {
       .update({ status, updated_at: new Date().toISOString() })
       .eq("id", selected.id);
     if (error) return toast.error(error.message);
-    await audit("status", `Status alterado para ${STATUS_LABEL[status] ?? status}`);
+    await audit("status", `Status changed to ${STATUS_LABEL[status] ?? status}`);
     toast.success(`Status: ${STATUS_LABEL[status] ?? status}`);
     refresh();
   };
@@ -564,7 +564,7 @@ function AncestryStudio() {
     const url = `${window.location.origin}/origens/${token}`;
     try {
       await navigator.clipboard.writeText(url);
-      toast.success("Link copiado");
+      toast.success("Link copied");
     } catch {
       window.prompt("Copie o link:", url);
     }
@@ -676,7 +676,7 @@ function AncestryStudio() {
             <input className={glassInput} placeholder="Algorithm version (e.g. CK-Ancestry 2.1)" value={newResult.algorithm_version} onChange={(e) => setNewResult({ ...newResult, algorithm_version: e.target.value })} />
             <input className={glassInput} placeholder="Reference population" value={newResult.reference_population} onChange={(e) => setNewResult({ ...newResult, reference_population: e.target.value })} />
             <div>
-              <p className="mb-1 text-xs font-medium text-muted-foreground">Data de processamento</p>
+              <p className="mb-1 text-xs font-medium text-muted-foreground">Processing date</p>
               <GlassDatePicker value={newResult.processed_at} onChange={(v) => setNewResult({ ...newResult, processed_at: v })} />
             </div>
           </div>
@@ -865,7 +865,7 @@ function AncestryStudio() {
                     </div>
                     <p className="text-xs text-muted-foreground">
                       {[r.sub_region, r.historical_territory, r.population_group].filter(Boolean).join(" · ") || "No additional details"}
-                      {r.latitude ? ` · ${Number(r.latitude).toFixed(2)}, ${Number(r.longitude).toFixed(2)}` : " · sem coordenadas"}
+                      {r.latitude ? ` · ${Number(r.latitude).toFixed(2)}, ${Number(r.longitude).toFixed(2)}` : " · no coordinates"}
                     </p>
                     <input
                       defaultValue={r.summary ?? ""}
@@ -987,7 +987,7 @@ function AncestryStudio() {
                   options={SPEEDS}
                 />
                 <label className="flex items-center gap-2 text-xs text-muted-foreground">
-                  Zoom inicial do mapa
+                  Initial map zoom
                   <input
                     type="range"
                     min={1}
@@ -1014,7 +1014,7 @@ function AncestryStudio() {
                 </h3>
                 <p className="text-xs text-muted-foreground">Not visible to the patient.</p>
                 <div className="flex gap-2">
-                  <input className={glassInput} placeholder="Ex.: revisar percentual da Europa Central" value={comment} onChange={(e) => setComment(e.target.value)} />
+                  <input className={glassInput} placeholder="Example: review Central Europe percentage" value={comment} onChange={(e) => setComment(e.target.value)} />
                   <button onClick={addComment} className="rounded-full bg-olive px-4 py-2 text-xs font-medium text-ivory">
                     Comentar
                   </button>

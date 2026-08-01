@@ -21,7 +21,7 @@ type Section = {
 };
 
 const SECTION_LABEL: Record<string, string> = {
-  texto: "Bloco de texto",
+  texto: "Text block",
   destaques: "Destaques (cards)",
   chamada: "Callout with button",
   faq: "Questions frequentes",

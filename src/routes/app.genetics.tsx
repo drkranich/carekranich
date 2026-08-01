@@ -23,7 +23,7 @@ const KIT_STATUS: Array<{ key: string; label: string }> = [
 
 const PIPELINE: Array<{ key: string; label: string }> = [
   { key: "extracao", label: "DNA extraction" },
-  { key: "controle_qualidade", label: "Controle de qualidade" },
+  { key: "controle_qualidade", label: "Quality control" },
   { key: "sequenciamento", label: "Sequenciamento" },
   { key: "bioinformatica", label: "Bioinformatics analysis" },
   { key: "interpretacao", label: "Interpretation" },
@@ -244,7 +244,7 @@ function Genetics() {
       );
     },
     onSuccess: () => {
-      toast.success("Consent registrado");
+      toast.success("Consent registered");
       refresh();
     },
     onError: (e: any) => toast.error(e.message),

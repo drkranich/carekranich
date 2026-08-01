@@ -301,7 +301,7 @@ function Orders() {
       />
 
       <div className="grid gap-4 md:grid-cols-4">
-        <Stat label="Carrinhos abertos" value={stats.carts} sub="Em montagem" tone="gold" />
+        <Stat label="Open carts" value={stats.carts} sub="In progress" tone="gold" />
         <Stat label="Quotes" value={stats.quotes} sub="Awaiting decision" tone="olive" />
         <Stat label="Confirmed orders" value={stats.confirmed} sub="Confirmed + paid" tone="moss" />
         <Stat label="Paid revenue" value={brl(stats.revenue)} sub="Paid orders" tone="wine" />

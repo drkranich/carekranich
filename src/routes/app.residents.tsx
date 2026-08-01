@@ -152,7 +152,7 @@ function Residents() {
       )}
 
       {isLoading ? (
-        <p className="text-sm text-muted-foreground">Carregando...</p>
+        <p className="text-sm text-muted-foreground">Loading...</p>
       ) : residents.length === 0 ? (
         <Card className="text-center py-16">
           <p className="text-xl font-semibold text-foreground">No residents yet</p>

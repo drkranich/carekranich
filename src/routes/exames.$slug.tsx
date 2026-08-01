@@ -73,7 +73,7 @@ function ExamDetail() {
         .eq("active", true)
         .eq("is_public", true)
         .limit(1);
-      // aceita slug ou id
+      // Accepts either slug or id.
       q = /^[0-9a-f]{8}-/.test(slug) ? q.eq("id", slug) : q.eq("slug", slug);
       const { data, error } = await q;
       if (error) throw error;
@@ -110,7 +110,7 @@ function ExamDetail() {
     return (
       <MarketingPage
         title="Exam not found"
-        crumbs={[{ label: "Exames", to: "/exames" }]}
+        crumbs={[{ label: "Exams", to: "/exames" }]}
         primaryCta={{ label: "View full catalog", to: "/exames" }}
       >
         <p className="text-sm text-muted-foreground">
@@ -128,13 +128,13 @@ function ExamDetail() {
       eyebrow={CATEGORY_LABEL[e.category] ?? "Exam"}
       title={e.commercial_name || e.name}
       lede={e.description ?? undefined}
-      crumbs={[{ label: "Exames", to: "/exames" }, { label: e.commercial_name || e.name }]}
+      crumbs={[{ label: "Exams", to: "/exames" }, { label: e.commercial_name || e.name }]}
       primaryCta={{ label: "Schedule this exam", to: "/signup" }}
-      secondaryCta={{ label: "Agendar para um familiar", to: "/signup" }}
+      secondaryCta={{ label: "Schedule for a family member", to: "/signup" }}
     >
       <div className="grid gap-6 md:grid-cols-3">
         <div className="rounded-2xl border border-border bg-card p-6 shadow-soft">
-          <p className="text-xs uppercase tracking-widest text-moss">Investimento</p>
+          <p className="text-xs uppercase tracking-widest text-moss">Investment</p>
           <p className="mt-2 font-display text-3xl text-olive">{brl(e.price_cents)}</p>
           <p className="mt-1 text-xs text-muted-foreground">
             {e.allow_installments ? "Installments available" : "Upfront payment"}
@@ -144,14 +144,14 @@ function ExamDetail() {
         <div className="rounded-2xl border border-border bg-card p-6 shadow-soft">
           <p className="text-xs uppercase tracking-widest text-moss">Result turnaround</p>
           <p className="mt-2 font-display text-3xl text-foreground">
-            {e.turnaround_days ? `${e.turnaround_days} dias` : "Consulte"}
+            {e.turnaround_days ? `${e.turnaround_days} days` : "Ask us"}
           </p>
           <p className="mt-1 text-xs text-muted-foreground">
             {e.home_collection ? "Home collection available" : "In-unit collection"}
           </p>
         </div>
         <div className="rounded-2xl border border-border bg-card p-6 shadow-soft">
-          <p className="text-xs uppercase tracking-widest text-moss">Preparo</p>
+          <p className="text-xs uppercase tracking-widest text-moss">Preparation</p>
           <p className="mt-2 text-sm leading-relaxed text-foreground">
             {e.preparation || "No special preparation"}
           </p>
@@ -166,16 +166,16 @@ function ExamDetail() {
           {e.benefits && <InfoCard label="Benefits" value={e.benefits} />}
           {e.indication && <InfoCard label="Who it is recommended for" value={e.indication} />}
           {e.contraindication && <InfoCard label="Who it is not indicated for" value={e.contraindication} />}
-          {e.biological_material && <InfoCard label="Material coletado" value={e.biological_material} />}
+          {e.biological_material && <InfoCard label="Collected material" value={e.biological_material} />}
           {e.collection_method && <InfoCard label="Collection method" value={e.collection_method} />}
-          {e.technology && <InfoCard label="Tecnologia utilizada" value={e.technology} />}
+          {e.technology && <InfoCard label="Technology used" value={e.technology} />}
           {e.min_age || e.max_age ? (
             <InfoCard
               label="Age range"
               value={`${e.min_age ? `From ${e.min_age} years old` : "No minimum age"}${e.max_age ? ` · up to ${e.max_age} years old` : ""}`}
             />
           ) : null}
-          {e.risks && <InfoCard label="Riscos" value={e.risks} />}
+          {e.risks && <InfoCard label="Risks" value={e.risks} />}
           {e.limitations && <InfoCard label="Limitations" value={e.limitations} />}
         </div>
       </Section>
@@ -183,14 +183,14 @@ function ExamDetail() {
       {isGenetic && (
         <Section title="Important genetic information" kicker="Responsible genetics">
           <div className="grid gap-4 md:grid-cols-2">
-            {e.genes_analyzed && <InfoCard label="Genes analisados" value={e.genes_analyzed} />}
+            {e.genes_analyzed && <InfoCard label="Analyzed genes" value={e.genes_analyzed} />}
             {e.sample_storage_policy && (
-              <InfoCard label="Armazenamento e descarte da amostra" value={e.sample_storage_policy} />
+              <InfoCard label="Sample storage and disposal" value={e.sample_storage_policy} />
             )}
           </div>
           <div className="mt-4 rounded-2xl border border-terracotta/30 bg-terracotta/5 p-6 text-sm leading-relaxed text-muted-foreground">
             {e.consent_required && (
-              <p>Este teste exige termo de consentimento assinado antes da coleta.</p>
+              <p>This test requires a signed consent form before collection.</p>
             )}
             {e.requires_counseling && (
               <p className="mt-1">We recommend genetic counseling before and after the result.</p>

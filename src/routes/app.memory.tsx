@@ -230,7 +230,7 @@ function Memory() {
     isSuperAdmin || isAdmin || (!!user && memory.owner_id === user.id);
 
   const renameMemory = async (memory: MemoryRow) => {
-    if (!newTitle.trim()) return toast.error("Informe o novo nome.");
+    if (!newTitle.trim()) return toast.error("Enter the new name.");
     const { error } = await (supabase as any)
       .from("legacy_memories")
       .update({ title: newTitle.trim() })

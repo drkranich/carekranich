@@ -308,7 +308,7 @@ function Tenants() {
     onError: (error: any) => toast.error(error.message ?? "Upload did not finish"),
   });
 
-  if (loading) return <p className="text-sm text-muted-foreground">Carregando...</p>;
+  if (loading) return <p className="text-sm text-muted-foreground">Loading...</p>;
   if (!isAdmin && !isSuperAdmin) return <Navigate to="/app" />;
 
   const currentTenant = tenantId
@@ -372,12 +372,12 @@ function Tenants() {
         line("Status", tenant.status),
         line("Cobranca", tenant.billing_status),
         line("Archived", tenant.archived_at ? new Date(tenant.archived_at).toLocaleDateString("en-US") : "No"),
-        line("Codigo de convite", tenant.invite_code),
+        line("Invite code", tenant.invite_code),
         line("Created at", tenant.created_at ? new Date(tenant.created_at).toLocaleDateString("en-US") : "-"),
         "",
         line("Members", memberCount ?? 0),
         line("Residents", residentCount ?? 0),
-        line("Observacoes", tenant.notes),
+        line("Notes", tenant.notes),
         "",
         `Generated at ${new Date().toLocaleString("en-US")} - Care Kranich`,
       ].map((item) => stripAccents(String(item))),
@@ -551,7 +551,7 @@ function Tenants() {
                     {member.user_kind ?? "user"} - {member.account_status ?? "unknown"}
                   </p>
                   <div className="mt-1 flex flex-wrap gap-1">
-                    {member.roles.length === 0 && <span className="text-[10px] text-muted-foreground">sem papel</span>}
+                    {member.roles.length === 0 && <span className="text-[10px] text-muted-foreground">no role</span>}
                     {member.roles.map((role: string) => (
                       <Pill key={role} tone="muted">
                         {ROLE_LABELS[role as keyof typeof ROLE_LABELS] ?? role}
@@ -893,7 +893,7 @@ function TenantStatusControls({
 
   return (
     <div className="mt-4 border-t border-white/60 pt-3">
-      <p className="text-[10px] font-semibold uppercase text-muted-foreground">Controles de acesso</p>
+      <p className="text-[10px] font-semibold uppercase text-muted-foreground">Access controls</p>
       <div className="mt-2 flex flex-wrap gap-2">
         {actions.map((action) => (
           <button

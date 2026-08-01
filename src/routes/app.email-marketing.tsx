@@ -37,7 +37,7 @@ type Design = {
   blocks?: EmailBlock[];
 };
 
-const EMPTY_DESIGN: Design = { headline: "", paragraphs: "", cta_text: "", cta_url: "", footer: "Care Kranich · cuidado que acompanha a vida", blocks: [] };
+const EMPTY_DESIGN: Design = { headline: "", paragraphs: "", cta_text: "", cta_url: "", footer: "Care Kranich · care that follows life", blocks: [] };
 
 const SYMBOL_SETS = ["✦ ✦ ✦", "❦", "🌿 🌿 🌿", "♥", "★ ★ ★", "— ◆ —", "🕊️", "☀️ 🌙 ⭐"];
 

@@ -114,7 +114,7 @@ function MedicalRecords() {
       "",
       `Autor: ${record.author_role ? ROLE_LABELS[record.author_role as AppRole] ?? record.author_role : "-"}`,
       `Date: ${new Date(record.created_at).toLocaleString("en-US")}`,
-      `Hash de integridade: ${record.signed_hash ?? "-"}`,
+      `Integrity hash: ${record.signed_hash ?? "-"}`,
     ]);
   };
 
@@ -161,7 +161,7 @@ function MedicalRecords() {
           tone="moss"
         />
         <Stat
-          label="Alergias registradas"
+          label="Registered allergies"
           value={residentId ? (records.data ?? []).filter((r: any) => r.record_type === "alergia").length : "—"}
           sub="Clinical attention"
           tone="wine"

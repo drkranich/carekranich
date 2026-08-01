@@ -112,7 +112,7 @@ function TimelinePage() {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["events"] });
-      toast.success("Evento registrado");
+      toast.success("Event registered");
       setShowForm(false);
     },
     onError: (e: Error) => toast.error(e.message),

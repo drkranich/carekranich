@@ -122,7 +122,7 @@ function SharedOrigins() {
               </button>
               {payload.allow_download && (
                 <button onClick={exportPremiumPdf} className="rounded-full border border-border bg-ivory/60 px-4 py-2">
-                  Baixar resumo em PDF
+                  Download PDF summary
                 </button>
               )}
             </div>

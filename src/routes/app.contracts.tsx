@@ -104,7 +104,7 @@ function Contracts() {
       return { hash, ip };
     },
     onSuccess: ({ hash }) => {
-      toast.success(`Contract assinado — hash ${hash.slice(0, 12)}...`);
+      toast.success(`Contract signed — hash ${hash.slice(0, 12)}...`);
       qc.invalidateQueries({ queryKey: ["contracts", profile?.tenant_id, isSuperAdmin] });
       qc.invalidateQueries({ queryKey: ["contract-signatures", profile?.tenant_id] });
     },
@@ -149,7 +149,7 @@ function Contracts() {
     const text = [`Contract: ${contract.title}`, `Status: ${contract.status}`, "", contract.body].join("\n");
     try {
       await navigator.clipboard.writeText(text);
-      toast.success("Contract copiado para sharing");
+      toast.success("Contract copied for sharing");
     } catch {
       window.prompt("Copy the contract:", text);
     }
@@ -170,7 +170,7 @@ function Contracts() {
   };
 
   const exportSignedPdf = (contract: any, signature: any) => {
-    downloadPdf(`${contract.title}-assinado.pdf`, contract.title, [
+    downloadPdf(`${contract.title}-signed.pdf`, contract.title, [
       contract.body,
       "",
       "----------------------------------------",
@@ -191,7 +191,7 @@ function Contracts() {
       <PageHeader
         title="Contracts"
         subtitle="Create, approve, sign electronically with IP and cryptographic hash, and export contracts as PDF."
-        action={<Pill tone="olive">Subscription com IP + SHA-256</Pill>}
+        action={<Pill tone="olive">Subscription with IP + SHA-256</Pill>}
       />
       <Card>
         <h2 className="text-xl font-semibold text-foreground">New contract</h2>
@@ -247,7 +247,7 @@ function Contracts() {
 
               {sigs.length > 0 && (
                 <div className="mt-4 space-y-2 rounded-2xl border border-moss/25 bg-moss/5 p-3">
-                  <p className="text-[10px] font-semibold uppercase text-muted-foreground">Subscriptions registradas</p>
+                  <p className="text-[10px] font-semibold uppercase text-muted-foreground">Registered subscriptions</p>
                   {sigs.map((signature: any) => (
                     <div key={signature.id} className="flex flex-wrap items-center justify-between gap-2 text-xs">
                       <span className="min-w-0 truncate text-foreground">

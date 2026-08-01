@@ -5,9 +5,9 @@ export function SiteHeader() {
   const { user, loading } = useAuth();
   const primaryCta = user ? { to: "/app", label: "Open dashboard" } : { to: "/signup", label: "Start now" };
   const navItems = [
-    { to: "/exames", label: "Exames" },
+    { to: "/exames", label: "Exams" },
     { to: "/family-center", label: "Families" },
-    { to: "/caregiver-app", label: "Cuidadores" },
+    { to: "/caregiver-app", label: "Caregivers" },
     { to: "/medical-office", label: "Clinics" },
     { to: "/solutions/home-care", label: "Solutions" },
     { to: "/about", label: "Company" },
@@ -41,8 +41,8 @@ export function SiteHeader() {
         <div className="flex items-center gap-3">
           {!loading && (
             user
-              ? <span className="hidden text-sm text-foreground/70 sm:inline">Bem-vindo de volta</span>
-              : <Link to="/login" className="hidden text-sm text-foreground/70 hover:text-olive sm:inline">Entrar</Link>
+              ? <span className="hidden text-sm text-foreground/70 sm:inline">Welcome back</span>
+              : <Link to="/login" className="hidden text-sm text-foreground/70 hover:text-olive sm:inline">Sign in</Link>
           )}
           <Link to={primaryCta.to} className="rounded-full bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow-soft transition hover:translate-y-[-1px] hover:opacity-95">
             {primaryCta.label}

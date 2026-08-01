@@ -358,7 +358,7 @@ const ALL_SECTIONS: NavSection[] = [
       },
       {
         to: "/app/cms",
-        label: "CMS do site",
+        label: "Site CMS",
         icon: "M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20z M2 12h20 M12 2c2.5 3 4 6.5 4 10s-1.5 7-4 10c-2.5-3-4-6.5-4-10s1.5-7 4-10z",
         roles: ["super_admin"],
       },

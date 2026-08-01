@@ -239,7 +239,7 @@ function Documents() {
             disabled={!file || !effTenant || uploading}
             className="rounded-xl bg-olive px-4 py-2 text-sm text-ivory disabled:opacity-50"
           >
-            {uploading ? "Carregando..." : "Carregar"}
+            {uploading ? "Uploading..." : "Upload"}
           </button>
         </div>
       </Card>
@@ -273,7 +273,7 @@ function Documents() {
       {!profile?.tenant_id && !isSuperAdmin ? (
         <EmptyState title="Join an approved organization first" hint="Private documents are linked to an organization." />
       ) : docs.isLoading ? (
-        <p className="text-sm text-muted-foreground">Carregando...</p>
+        <p className="text-sm text-muted-foreground">Loading...</p>
       ) : filteredDocs.length === 0 ? (
         <EmptyState title="No documents yet." hint="Upload the first real file to create the vault." />
       ) : (
