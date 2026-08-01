@@ -93,7 +93,7 @@ function Overview() {
             <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">{workspace.body}</p>
           </div>
           <div className="border-t border-white/55 bg-white/30 p-5 lg:border-l lg:border-t-0">
-            <p className="text-xs uppercase text-muted-foreground">Sua area</p>
+            <p className="text-xs uppercase text-muted-foreground">Sua área</p>
             <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-1">
               {workspace.links.map((link) => (
                 <QuickLink key={link.to} to={link.to} label={link.label} hint={link.hint} />
@@ -221,11 +221,11 @@ function workspaceFor(
     return {
       eyebrow: "Super admin",
       title: "Ecossistema Care Kranich",
-      subtitle: "Painel global para aprovar usuarios, planos, contratos e operação.",
-      body: "Aqui ficam as decisoes de plataforma: acesso, receita, contratos, inbox, verificacoes e saúde operacional.",
+      subtitle: "Painel global para aprovar usuários, planos, contratos e operação.",
+      body: "Aqui ficam as decisões de plataforma: acesso, receita, contratos, inbox, verificações e saúde operacional.",
       links: [
         { to: "/app/admin", label: "Super Admin", hint: "Visão global" },
-        { to: "/app/approvals", label: "Aprovações", hint: "Usuarios e clinicas" },
+        { to: "/app/approvals", label: "Aprovações", hint: "Usuários e clínicas" },
         { to: "/app/billing", label: "Planos", hint: "Assinaturas e acesso" },
         { to: "/app/inbox", label: "Inbox", hint: "Conversas do ecossistema" },
       ],
@@ -235,11 +235,11 @@ function workspaceFor(
     return {
       eyebrow: "Clínica",
       title: "Operação da clínica",
-      subtitle: "Area para gerir residentes, equipe, cuidado e qualidade.",
+      subtitle: "Área para gerir residentes, equipe, cuidado e qualidade.",
       body: "A clínica acompanha alertas, tarefas, documentos, equipe e indicadores sem entrar nas ferramentas de dono da plataforma.",
       links: [
         { to: "/app/residents", label: "Residentes", hint: "Perfis e cuidado" },
-        { to: "/app/tenants", label: "Organização", hint: "Equipe e permissoes" },
+        { to: "/app/tenants", label: "Organização", hint: "Equipe e permissões" },
         { to: "/app/command", label: "Comando", hint: "Operação do dia" },
         { to: "/app/care-plan", label: "Plano de cuidado", hint: "Rotina clínica" },
       ],
@@ -248,7 +248,7 @@ function workspaceFor(
   if (userKind === "service_provider") {
     return {
       eyebrow: "Prestador",
-      title: "Area do prestador de servicos",
+      title: "Área do prestador de serviços",
       subtitle: "Espaco para identidade, contatos, documentos e oportunidades.",
       body: "Prestadores entram pelo marketplace, conversam pelo inbox, mantem verificação facial e organizam documentos profissionais.",
       links: [
@@ -263,24 +263,24 @@ function workspaceFor(
     return {
       eyebrow: "Equipe de cuidado",
       title: "Turno e cuidado direto",
-      subtitle: "Area para tarefas, registros, alertas e evolucao de residentes.",
-      body: "A equipe trabalha com timeline, plano de cuidado, app do cuidador, alertas e documentos clinicos conforme permissao.",
+      subtitle: "Área para tarefas, registros, alertas e evolução de residentes.",
+      body: "A equipe trabalha com timeline, plano de cuidado, app do cuidador, alertas e documentos clínicos conforme permissão.",
       links: [
         { to: "/app/caregiver", label: "App cuidador", hint: "Tarefas do turno" },
         { to: "/app/timeline", label: "Timeline", hint: "Registrar cuidado" },
         { to: "/app/alerts", label: "Alertas", hint: "Resolver incidentes" },
-        { to: "/app/medical", label: "Médico", hint: "Notas clinicas" },
+        { to: "/app/medical", label: "Médico", hint: "Notas clínicas" },
       ],
     };
   }
   return {
     eyebrow: "Família",
     title: "Cuidado familiar",
-    subtitle: "Area para acompanhar quem você ama, memorias, casa inteligente e alertas.",
-    body: "Usuarios comuns veem o que importa para a família: residentes vinculados, memorias, rotina, documentos, alertas e comunicacao com a equipe.",
+    subtitle: "Área para acompanhar quem você ama, memórias, casa inteligente e alertas.",
+    body: "Usuários comuns veem o que importa para a família: residentes vinculados, memórias, rotina, documentos, alertas e comunicação com a equipe.",
     links: [
       { to: "/app/residents", label: "Residentes", hint: "Quem você acompanha" },
-      { to: "/app/memory", label: "Memorias", hint: "Historia e legado" },
+      { to: "/app/memory", label: "Memórias", hint: "História e legado" },
       { to: "/app/smart-home", label: "Casa inteligente", hint: "Sensores e ambiente" },
       { to: "/app/inbox", label: "Inbox", hint: "Fale com a equipe" },
     ],
