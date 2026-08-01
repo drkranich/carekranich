@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { MessageCircle, Vídeo } from "lucide-react";
+import { MessageCircle, Video } from "lucide-react";
 import { toast } from "sonner";
 import { Card, EmptyState, PageHeader, Pill } from "@/components/app/primitives";
 import { useAuth } from "@/hooks/use-auth";
@@ -67,7 +67,7 @@ function Telemedicine() {
     <>
       <PageHeader
         title="Telemedicine"
-        subtitle="Telemedicine requests and clinical events from real inbox/event records. Vídeo visits can be connected after provider setup."
+        subtitle="Telemedicine requests and clinical events from real inbox/event records. Video visits can be connected after provider setup."
         action={<Pill tone={telemed.isError ? "wine" : "olive"}>{telemed.isError ? "Read error" : "Inbox-backed"}</Pill>}
       />
 
@@ -82,7 +82,7 @@ function Telemedicine() {
         <div className="grid gap-6 lg:grid-cols-[.8fr_1.2fr]">
           <Card>
             <div className="flex items-center gap-3">
-              <Vídeo className="h-5 w-5 text-olive" />
+              <Video className="h-5 w-5 text-olive" />
               <h2 className="text-xl font-semibold text-foreground">Request consultation</h2>
             </div>
             <div className="mt-4 space-y-3">
