@@ -84,7 +84,7 @@ function Residents() {
             <button
               onClick={() => setCreating(true)}
               disabled={!profile?.tenant_id && !isSuperAdmin}
-              title={!profile?.tenant_id && !isSuperAdmin ? "Crie ou selecione uma organizacao antes de adicionar residentes" : ""}
+              title={!profile?.tenant_id && !isSuperAdmin ? "Crie ou selecione uma organização antes de adicionar residentes" : ""}
               className="rounded-lg bg-olive px-4 py-2 text-xs text-ivory shadow-soft hover:opacity-90 disabled:opacity-50"
             >
               + Adicionar residente
@@ -223,7 +223,7 @@ function ResidentDialog({
     e.preventDefault();
     setErr(null);
     if (!tenantId) {
-      setErr("Selecione uma organizacao antes de criar o residente.");
+      setErr("Selecione uma organização antes de criar o residente.");
       return;
     }
     setSaving(true);
@@ -296,18 +296,18 @@ function ResidentDialog({
         {requireTenantPicker && (
           <div className="mt-5">
             <label className="block text-sm">
-              <span className="text-foreground/80">Organizacao</span>
+              <span className="text-foreground/80">Organização</span>
               <GlassSelect
                 value={tenantId}
                 onChange={setTenantId}
                 className="mt-1"
-                placeholder="Selecione a organizacao"
+                placeholder="Selecione a organização"
                 options={tenantOptions.map((tenant) => ({ value: tenant.id, label: tenant.name }))}
               />
             </label>
             {tenantOptions.length === 0 && (
               <p className="mt-2 rounded-xl border border-gold/25 bg-gold/10 px-3 py-2 text-xs text-foreground">
-                Nenhuma organizacao existe ainda. Crie ou aprove uma organizacao antes de cadastrar residentes.
+                Nenhuma organização existe ainda. Crie ou aprove uma organização antes de cadastrar residentes.
               </p>
             )}
           </div>
@@ -352,7 +352,7 @@ function ResidentDialog({
         </div>
 
         <div className="mt-4">
-          <GeoAddressField label="Endereco de atendimento" value={address} onChange={setAddress} />
+          <GeoAddressField label="Endereço de atendimento" value={address} onChange={setAddress} />
         </div>
 
         <label className="mt-4 block text-sm">
@@ -365,7 +365,7 @@ function ResidentDialog({
           />
         </label>
         <label className="mt-4 block text-sm">
-          <span className="text-foreground/80">A historia dela/dele</span>
+          <span className="text-foreground/80">A história dela/dele</span>
           <textarea
             value={form.story}
             onChange={(e) => setForm({ ...form, story: e.target.value })}
