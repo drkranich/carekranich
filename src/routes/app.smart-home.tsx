@@ -200,7 +200,7 @@ function SmartHome() {
                   onChange={(value) => setDraft({ ...draft, domain: value })}
                   options={[
                     { value: "environment", label: "Ambiente" },
-                    { value: "safety", label: "Seguranca" },
+                    { value: "safety", label: "Segurança" },
                     { value: "movement", label: "Movimento" },
                     { value: "sleep", label: "Sono" },
                   ]}
