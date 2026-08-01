@@ -8,7 +8,7 @@ import { GlassSelect } from "@/components/app/GlassSelect";
 import { GlassDatePicker } from "@/components/app/GlassDatePicker";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
-import { downloadPdf } from "@/lib/pdf";
+import { downloadAncestryPdf } from "@/lib/ancestryPdf";
 
 export const Route = createFileRoute("/app/ancestry-studio")({ component: AncestryStudio });
 
@@ -570,25 +570,48 @@ function AncestryStudio() {
     }
   };
 
-  const exportPdf = () => {
+  const exportPremiumPdf = () => {
     if (!selected) return;
     const rs = regions.data ?? [];
-    downloadPdf(`ancestralidade-${patientName(selected.patient_id)}.pdf`, "Minhas Origens — relatório técnico", [
-      `Paciente: ${patientName(selected.patient_id)}`,
-      `Status: ${STATUS_LABEL[selected.status] ?? selected.status} · versão ${selected.version}`,
-      `Laboratório: ${selected.lab_name ?? "-"}  Algoritmo: ${selected.algorithm_version ?? "-"}`,
-      `População de referência: ${selected.reference_population ?? "-"}`,
-      `Processado em: ${selected.processed_at ? new Date(selected.processed_at + "T00:00:00").toLocaleDateString("pt-BR") : "-"}`,
-      "",
-      `Composição (soma ${totalPct.toFixed(1)}%):`,
-      ...rs.map(
-        (r: any) =>
-          `- ${[r.genetic_region, r.country, r.macro_region].filter(Boolean).join(" · ")}: ${Number(r.percentage).toFixed(1)}%${r.range_min ? ` (${r.range_min}–${r.range_max}%)` : ""} · ${CONFIDENCE.find((c) => c.value === r.confidence)?.label ?? r.confidence}`,
-      ),
-      "",
-      "Estes percentuais representam estimativas construídas a partir da comparação entre o DNA do titular e grupos",
-      "populacionais de referência. Semelhança genética com uma região não determina pertencimento cultural.",
-    ]);
+    const name = patientName(selected.patient_id);
+    downloadAncestryPdf(`ancestralidade-${name}.pdf`, {
+      patientName: name,
+      version: selected.version,
+      publishedAt: selected.published_at,
+      labName: selected.lab_name,
+      algorithm: selected.algorithm_version,
+      referencePopulation: selected.reference_population,
+      processedAt: selected.processed_at,
+      technicalLead: selected.technical_lead,
+      regions: rs.map((r: any) => ({
+        label: [r.genetic_region, r.country, r.macro_region].filter(Boolean).join(" · ") || "Origem ancestral",
+        path: [r.continent, r.macro_region, r.genetic_region, r.country, r.sub_region, r.historical_territory]
+          .filter(Boolean)
+          .join(" · "),
+        percentage: Number(r.percentage ?? 0),
+        rangeMin: r.range_min !== null && r.range_min !== undefined ? Number(r.range_min) : null,
+        rangeMax: r.range_max !== null && r.range_max !== undefined ? Number(r.range_max) : null,
+        confidence: CONFIDENCE.find((c) => c.value === r.confidence)?.label ?? "Confiança moderada",
+        color: r.color ?? "#c98a3a",
+        latitude: r.latitude !== null && r.latitude !== undefined ? Number(r.latitude) : null,
+        longitude: r.longitude !== null && r.longitude !== undefined ? Number(r.longitude) : null,
+        populationGroup: r.population_group,
+        summary: r.summary,
+        fullText: r.full_text,
+        historicalText: r.historical_text,
+        limitations: r.limitations,
+      })),
+      routes: (routesQ.data ?? []).map((r: any) => ({
+        label: r.label,
+        period: r.period,
+        description: r.description,
+      })),
+      timeline: (eventsQ.data ?? []).map((t: any) => ({
+        period: t.period,
+        title: t.title,
+        description: t.description,
+      })),
+    });
   };
 
   const stats = useMemo(() => {
@@ -735,7 +758,7 @@ function AncestryStudio() {
                   {selected.archived_at ? <RotateCcw className="h-3 w-3" /> : <Archive className="h-3 w-3" />}
                   {selected.archived_at ? "Desarquivar" : "Arquivar"}
                 </button>
-                <button onClick={exportPdf} className="inline-flex items-center gap-1 rounded-full border border-border bg-white/55 px-4 py-2">
+                <button onClick={exportPremiumPdf} className="inline-flex items-center gap-1 rounded-full border border-border bg-white/55 px-4 py-2">
                   <FileDown className="h-3 w-3" /> Relatório técnico
                 </button>
                 <button onClick={softDelete} className="inline-flex items-center gap-1 rounded-full border border-wine/30 bg-wine/5 px-4 py-2 text-wine">

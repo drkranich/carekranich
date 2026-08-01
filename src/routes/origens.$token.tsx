@@ -5,7 +5,7 @@ import { AncestryMap, regionLabel, regionPath, type AncestryRegion } from "@/com
 import { SiteHeader } from "@/components/site/SiteHeader";
 import { SiteFooter } from "@/components/site/SiteFooter";
 import { supabase } from "@/integrations/supabase/client";
-import { downloadPdf } from "@/lib/pdf";
+import { downloadAncestryPdf } from "@/lib/ancestryPdf";
 
 export const Route = createFileRoute("/origens/$token")({ component: SharedOrigins });
 
@@ -41,18 +41,44 @@ function SharedOrigins() {
   const regions: AncestryRegion[] = payload?.regions ?? [];
   const active = regions.find((r) => r.id === activeId) ?? null;
 
-  const exportPdf = () => {
+  const exportPremiumPdf = () => {
     if (!payload) return;
-    downloadPdf("minhas-origens.pdf", "Minhas Origens — Atlas Ancestral", [
-      `Titular: ${payload.patient_name ?? "-"}`,
-      `Versão: ${payload.result?.version} · laboratório ${payload.result?.lab_name ?? "-"}`,
-      "",
-      "Composição ancestral:",
-      ...regions.map((r) => `- ${regionLabel(r)}: ${Number(r.percentage).toFixed(1)}%`),
-      "",
-      "Estes percentuais representam estimativas construídas a partir da comparação com grupos populacionais",
-      "de referência. Semelhança genética não determina pertencimento cultural.",
-    ]);
+    downloadAncestryPdf(`minhas-origens-${payload.patient_name ?? "paciente"}.pdf`, {
+      patientName: payload.patient_name ?? "Paciente",
+      version: payload.result?.version ?? "-",
+      publishedAt: payload.result?.published_at,
+      labName: payload.result?.lab_name,
+      algorithm: payload.result?.algorithm_version,
+      referencePopulation: payload.result?.reference_population,
+      processedAt: payload.result?.processed_at,
+      technicalLead: payload.result?.technical_lead,
+      regions: regions.map((r) => ({
+        label: regionLabel(r),
+        path: regionPath(r),
+        percentage: Number(r.percentage ?? 0),
+        rangeMin: r.range_min !== null && r.range_min !== undefined ? Number(r.range_min) : null,
+        rangeMax: r.range_max !== null && r.range_max !== undefined ? Number(r.range_max) : null,
+        confidence: CONFIDENCE_LABEL[r.confidence ?? "moderada"] ?? "Confiança moderada",
+        color: r.color ?? "#c98a3a",
+        latitude: r.latitude !== null && r.latitude !== undefined ? Number(r.latitude) : null,
+        longitude: r.longitude !== null && r.longitude !== undefined ? Number(r.longitude) : null,
+        populationGroup: r.population_group,
+        summary: r.summary,
+        fullText: r.full_text,
+        historicalText: r.historical_text,
+        limitations: r.limitations,
+      })),
+      routes: (payload.routes ?? []).map((r: any) => ({
+        label: r.label,
+        period: r.period,
+        description: r.description,
+      })),
+      timeline: (payload.timeline ?? []).map((t: any) => ({
+        period: t.period,
+        title: t.title,
+        description: t.description,
+      })),
+    });
   };
 
   return (
@@ -95,7 +121,7 @@ function SharedOrigins() {
                 Rotas migratórias
               </button>
               {payload.allow_download && (
-                <button onClick={exportPdf} className="rounded-full border border-border bg-ivory/60 px-4 py-2">
+                <button onClick={exportPremiumPdf} className="rounded-full border border-border bg-ivory/60 px-4 py-2">
                   Baixar resumo em PDF
                 </button>
               )}
