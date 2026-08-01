@@ -96,9 +96,9 @@ function Onboarding() {
                 onChange={(value) => setUserKind(value as any)}
                 className="mt-1"
                 options={[
-                  { value: "clinic", label: "Clinica" },
-                  { value: "service_provider", label: "Prestador de servicos" },
-                  { value: "family", label: "Familia" },
+                  { value: "clinic", label: "Clínica" },
+                  { value: "service_provider", label: "Prestador de serviços" },
+                  { value: "family", label: "Família" },
                 ]}
               />
             </label>
