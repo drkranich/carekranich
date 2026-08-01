@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Download, FileText, Upload } from "lucide-react";
+import { Archive, Download, FileText, Pencil, Share2, Trash2, Upload } from "lucide-react";
 import { toast } from "sonner";
 import { Card, EmptyState, PageHeader, Pill } from "@/components/app/primitives";
 import { GlassSelect } from "@/components/app/GlassSelect";
@@ -47,6 +47,8 @@ function Documents() {
   const [title, setTitle] = useState("");
   const [documentType, setDocumentType] = useState("medical");
   const [uploading, setUploading] = useState(false);
+  const [editingDocId, setEditingDocId] = useState<string | null>(null);
+  const [editDocDraft, setEditDocDraft] = useState({ title: "", document_type: "medical", ai_summary: "" });
 
   const tenantsList = useQuery({
     queryKey: ["documents-tenants", isSuperAdmin],
@@ -137,6 +139,75 @@ function Documents() {
     ]);
   };
 
+  const startEditDocument = (doc: DocumentRow) => {
+    setEditingDocId(doc.id);
+    setEditDocDraft({
+      title: doc.title,
+      document_type: doc.document_type,
+      ai_summary: doc.ai_summary ?? "",
+    });
+  };
+
+  const saveDocumentEdit = async (doc: DocumentRow) => {
+    if (!editDocDraft.title.trim()) return toast.error("Informe o título do documento.");
+    const { data, error } = await (supabase as any)
+      .from("documents")
+      .update({
+        title: editDocDraft.title.trim(),
+        document_type: editDocDraft.document_type,
+        ai_summary: editDocDraft.ai_summary.trim() || null,
+      })
+      .eq("id", doc.id)
+      .select("id")
+      .maybeSingle();
+    if (error) return toast.error(error.message);
+    if (!data) return toast.error("Documento não foi atualizado. Verifique suas permissões.");
+    toast.success("Documento atualizado");
+    setEditingDocId(null);
+    qc.invalidateQueries({ queryKey: ["documents"] });
+  };
+
+  const archiveDocument = async (doc: DocumentRow) => {
+    const nextStatus = doc.status === "archived" ? "uploaded" : "archived";
+    const { data, error } = await (supabase as any)
+      .from("documents")
+      .update({ status: nextStatus })
+      .eq("id", doc.id)
+      .select("id")
+      .maybeSingle();
+    if (error) return toast.error(error.message);
+    if (!data) return toast.error("Documento não foi arquivado. Verifique suas permissões.");
+    toast.success(nextStatus === "archived" ? "Documento arquivado" : "Documento restaurado");
+    qc.invalidateQueries({ queryKey: ["documents"] });
+  };
+
+  const shareDocument = async (doc: DocumentRow) => {
+    const { data, error } = await supabase.storage.from(doc.bucket).createSignedUrl(doc.storage_path, 60 * 60 * 24);
+    if (error || !data?.signedUrl) return toast.error(error?.message ?? "Não foi possível gerar link de compartilhamento");
+    try {
+      await navigator.clipboard.writeText(data.signedUrl);
+      toast.success("Link assinado copiado por 24 horas");
+    } catch {
+      window.prompt("Copie o link assinado:", data.signedUrl);
+    }
+  };
+
+  const deleteDocument = async (doc: DocumentRow) => {
+    if (!window.confirm(`Excluir definitivamente "${doc.title}"?`)) return;
+    const { data, error } = await (supabase as any)
+      .from("documents")
+      .delete()
+      .eq("id", doc.id)
+      .select("id,bucket,storage_path")
+      .maybeSingle();
+    if (error) return toast.error(error.message);
+    if (!data) return toast.error("Documento não foi excluído. Verifique suas permissões.");
+    const { error: storageError } = await supabase.storage.from(doc.bucket).remove([doc.storage_path]);
+    if (storageError) toast.warning(`Registro excluído, mas o arquivo não foi removido: ${storageError.message}`);
+    else toast.success("Documento excluído");
+    qc.invalidateQueries({ queryKey: ["documents"] });
+  };
+
   return (
     <>
       <PageHeader
@@ -214,25 +285,68 @@ function Documents() {
                   {(doc.mime_type?.includes("pdf") ? "PDF" : doc.document_type.slice(0, 3)).toUpperCase()}
                 </div>
                 <div className="min-w-0 flex-1">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <p className="truncate text-sm font-medium text-foreground">{doc.title}</p>
-                    <Pill tone="muted">{documentTypeOptions.find((t) => t.value === doc.document_type)?.label ?? doc.document_type}</Pill>
-                  </div>
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    {new Date(doc.created_at).toLocaleDateString("pt-BR")} · {formatBytes(doc.file_size)} · {doc.status}
-                  </p>
-                  <p className="mt-3 rounded-xl border border-border/60 bg-cream/40 p-3 text-sm leading-6 text-foreground/85">
-                    {doc.ai_summary ?? "Sem resumo ainda."}
-                  </p>
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    <button onClick={() => openDocument(doc)} className="rounded-full bg-olive px-3 py-1.5 text-xs text-ivory">
-                      Abrir arquivo assinado
-                    </button>
-                    <button onClick={() => exportSummary(doc)} className="inline-flex items-center gap-1 rounded-full border border-border px-3 py-1.5 text-xs">
-                      <Download className="h-3 w-3" />
-                      Exportar PDF
-                    </button>
-                  </div>
+                  {editingDocId === doc.id ? (
+                    <div className="space-y-2">
+                      <input
+                        value={editDocDraft.title}
+                        onChange={(event) => setEditDocDraft({ ...editDocDraft, title: event.target.value })}
+                        className="w-full rounded-xl border border-border bg-ivory px-3 py-2 text-sm"
+                      />
+                      <GlassSelect
+                        value={editDocDraft.document_type}
+                        onChange={(value) => setEditDocDraft({ ...editDocDraft, document_type: value })}
+                        options={documentTypeOptions}
+                      />
+                      <textarea
+                        value={editDocDraft.ai_summary}
+                        onChange={(event) => setEditDocDraft({ ...editDocDraft, ai_summary: event.target.value })}
+                        rows={3}
+                        className="w-full rounded-xl border border-border bg-ivory px-3 py-2 text-sm"
+                      />
+                      <div className="flex flex-wrap gap-2">
+                        <button onClick={() => saveDocumentEdit(doc)} className="rounded-full bg-olive px-3 py-1.5 text-xs font-medium text-ivory">
+                          Salvar
+                        </button>
+                        <button onClick={() => setEditingDocId(null)} className="rounded-full border border-border px-3 py-1.5 text-xs">
+                          Cancelar
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <p className="truncate text-sm font-medium text-foreground">{doc.title}</p>
+                        <Pill tone="muted">{documentTypeOptions.find((t) => t.value === doc.document_type)?.label ?? doc.document_type}</Pill>
+                        {doc.status === "archived" && <Pill tone="gold">arquivado</Pill>}
+                      </div>
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        {new Date(doc.created_at).toLocaleDateString("pt-BR")} · {formatBytes(doc.file_size)} · {doc.status}
+                      </p>
+                      <p className="mt-3 rounded-xl border border-border/60 bg-cream/40 p-3 text-sm leading-6 text-foreground/85">
+                        {doc.ai_summary ?? "Sem resumo ainda."}
+                      </p>
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        <button onClick={() => openDocument(doc)} className="rounded-full bg-olive px-3 py-1.5 text-xs text-ivory">
+                          Abrir arquivo assinado
+                        </button>
+                        <button onClick={() => startEditDocument(doc)} className="inline-flex items-center gap-1 rounded-full border border-border px-3 py-1.5 text-xs">
+                          <Pencil className="h-3 w-3" /> Editar
+                        </button>
+                        <button onClick={() => shareDocument(doc)} className="inline-flex items-center gap-1 rounded-full border border-border px-3 py-1.5 text-xs">
+                          <Share2 className="h-3 w-3" /> Compartilhar
+                        </button>
+                        <button onClick={() => archiveDocument(doc)} className="inline-flex items-center gap-1 rounded-full border border-border px-3 py-1.5 text-xs">
+                          <Archive className="h-3 w-3" /> {doc.status === "archived" ? "Restaurar" : "Arquivar"}
+                        </button>
+                        <button onClick={() => deleteDocument(doc)} className="inline-flex items-center gap-1 rounded-full border border-wine/30 bg-wine/5 px-3 py-1.5 text-xs text-wine">
+                          <Trash2 className="h-3 w-3" /> Excluir
+                        </button>
+                        <button onClick={() => exportSummary(doc)} className="inline-flex items-center gap-1 rounded-full border border-border px-3 py-1.5 text-xs">
+                          <Download className="h-3 w-3" /> Exportar PDF
+                        </button>
+                      </div>
+                    </>
+                  )}
                 </div>
               </div>
             </Card>

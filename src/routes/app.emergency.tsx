@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { AlertTriangle, Archive, Pencil, Siren, Trash2, UserCheck } from "lucide-react";
+import { AlertTriangle, Archive, Pencil, Share2, Siren, Trash2, UserCheck } from "lucide-react";
 import { toast } from "sonner";
 import { Card, EmptyState, PageHeader, Pill } from "@/components/app/primitives";
 import { GlassSelect } from "@/components/app/GlassSelect";
@@ -102,10 +102,27 @@ function Emergency() {
 
   const deleteAlert = async (id: string) => {
     if (!window.confirm("Excluir este alerta definitivamente?")) return;
-    const { error } = await (supabase as any).from("alerts").delete().eq("id", id);
+    const { data: deleted, error } = await (supabase as any).from("alerts").delete().eq("id", id).select("id").maybeSingle();
     if (error) return toast.error(error.message);
+    if (!deleted) return toast.error("Alerta não foi excluído. Verifique suas permissões.");
     toast.success("Alerta excluído");
     refresh();
+  };
+
+  const shareAlert = async (alert: any) => {
+    const text = [
+      `Alerta de emergência: ${alert.title}`,
+      `Status: ${statusLabel(alert.status)}`,
+      `Descrição: ${alert.description ?? "Sem descrição."}`,
+      `Criado em: ${new Date(alert.created_at).toLocaleString("pt-BR")}`,
+      `${window.location.origin}/app/emergency?alert=${alert.id}`,
+    ].join("\n");
+    try {
+      await navigator.clipboard.writeText(text);
+      toast.success("Alerta copiado para compartilhamento");
+    } catch {
+      window.prompt("Copie o alerta:", text);
+    }
   };
 
   const statusLabel = (status: string) =>
@@ -259,6 +276,12 @@ function Emergency() {
                               className="inline-flex items-center gap-1 rounded-full border border-border bg-white/55 px-3 py-1.5"
                             >
                               <UserCheck className="h-3 w-3" /> Delegar
+                            </button>
+                            <button
+                              onClick={() => shareAlert(alert)}
+                              className="inline-flex items-center gap-1 rounded-full border border-border bg-white/55 px-3 py-1.5"
+                            >
+                              <Share2 className="h-3 w-3" /> Compartilhar
                             </button>
                             <button
                               onClick={() => updateAlert(alert.id, { archived_at: new Date().toISOString() }, "Alerta arquivado")}

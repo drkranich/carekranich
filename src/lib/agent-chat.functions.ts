@@ -47,7 +47,7 @@ function parseConfidence(text: string): number | null {
 
 export const sendAgentMessage = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => ChatInput.parse(d))
+  .validator((d: unknown) => ChatInput.parse(d))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context as any;
     const agent = AGENTS[data.agentKey as AgentKey];
@@ -134,7 +134,7 @@ const RecInput = z.object({
 
 export const captureRecommendation = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => RecInput.parse(d))
+  .validator((d: unknown) => RecInput.parse(d))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context as any;
     const { data: prof } = await supabase.from("profiles").select("tenant_id").eq("id", userId).maybeSingle();

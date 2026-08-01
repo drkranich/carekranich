@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Home, Plus } from "lucide-react";
+import { Archive, Home, Pencil, Plus, Share2, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Card, EmptyState, PageHeader, Pill, Stat } from "@/components/app/primitives";
 import { GlassSelect } from "@/components/app/GlassSelect";
@@ -12,11 +12,20 @@ export const Route = createFileRoute("/app/smart-home")({
   component: SmartHome,
 });
 
+const HOME_DOMAIN_OPTIONS = [
+  { value: "environment", label: "Ambiente" },
+  { value: "routine", label: "Rotina" },
+  { value: "mobility", label: "Movimento" },
+  { value: "sleep", label: "Sono" },
+];
+
 function SmartHome() {
   const qc = useQueryClient();
   const { profile, user, isSuperAdmin } = useAuth();
   const [residentId, setResidentId] = useState("");
   const [draft, setDraft] = useState({ metric: "", value_text: "", domain: "environment", notes: "" });
+  const [editingObservationId, setEditingObservationId] = useState<string | null>(null);
+  const [editObservationDraft, setEditObservationDraft] = useState({ metric: "", value_text: "", domain: "environment", notes: "" });
 
   const home = useQuery({
     queryKey: ["smart-home-real", profile?.tenant_id, isSuperAdmin],
@@ -35,7 +44,9 @@ function SmartHome() {
   });
 
   const selectedResident = (home.data?.residents ?? []).find((item: any) => item.id === residentId) ?? (home.data?.residents ?? [])[0] ?? null;
-  const observations = selectedResident ? (home.data?.observations ?? []).filter((item: any) => item.resident_id === selectedResident.id) : [];
+  const observations = selectedResident
+    ? (home.data?.observations ?? []).filter((item: any) => item.resident_id === selectedResident.id && !isArchivedObservation(item))
+    : [];
   const alerts = selectedResident ? (home.data?.alerts ?? []).filter((item: any) => item.resident_id === selectedResident.id) : home.data?.alerts ?? [];
   const deviceSources = new Set(observations.map((item: any) => item.source).filter(Boolean));
 
@@ -62,12 +73,89 @@ function SmartHome() {
       domain: draft.domain,
       metric: draft.metric.trim(),
       value_text: draft.value_text.trim() || null,
-      source: "manual_home_entry",
+      source: "manual",
       notes: draft.notes.trim() || null,
     } as any);
     if (error) return toast.error(error.message);
     setDraft({ metric: "", value_text: "", domain: "environment", notes: "" });
     toast.success("Observação residencial salva");
+    qc.invalidateQueries({ queryKey: ["smart-home-real"] });
+  };
+
+  const startEditObservation = (item: any) => {
+    setEditingObservationId(item.id);
+    setEditObservationDraft({
+      metric: item.metric ?? "",
+      value_text: String(item.value_numeric ?? item.value_text ?? ""),
+      domain: item.domain ?? "environment",
+      notes: stripArchiveMarker(item.notes ?? ""),
+    });
+  };
+
+  const saveObservationEdit = async (item: any) => {
+    if (!editObservationDraft.metric.trim()) return toast.error("Informe a métrica da observação.");
+    const { data, error } = await (supabase as any)
+      .from("twin_observations")
+      .update({
+        metric: editObservationDraft.metric.trim(),
+        value_text: editObservationDraft.value_text.trim() || null,
+        value_numeric: null,
+        domain: editObservationDraft.domain,
+        notes: editObservationDraft.notes.trim() || null,
+      })
+      .eq("id", item.id)
+      .select("id")
+      .maybeSingle();
+    if (error) return toast.error(error.message);
+    if (!data) return toast.error("Observação não foi atualizada. Verifique suas permissões.");
+    toast.success("Observação atualizada");
+    setEditingObservationId(null);
+    qc.invalidateQueries({ queryKey: ["smart-home-real"] });
+  };
+
+  const archiveObservation = async (item: any) => {
+    const cleanNotes = stripArchiveMarker(item.notes ?? "").trim();
+    const notes = [cleanNotes, `[archived ${new Date().toISOString()}]`].filter(Boolean).join("\n");
+    const { data, error } = await (supabase as any)
+      .from("twin_observations")
+      .update({ notes })
+      .eq("id", item.id)
+      .select("id")
+      .maybeSingle();
+    if (error) return toast.error(error.message);
+    if (!data) return toast.error("Observação não foi arquivada. Verifique suas permissões.");
+    toast.success("Observação arquivada");
+    qc.invalidateQueries({ queryKey: ["smart-home-real"] });
+  };
+
+  const shareObservation = async (item: any) => {
+    const value = [item.value_numeric ?? item.value_text ?? "-", item.unit ?? ""].filter(Boolean).join(" ");
+    const text = [
+      `Observação da casa: ${item.metric}`,
+      `Valor: ${value}`,
+      `Domínio: ${item.domain}`,
+      `Registrado em: ${new Date(item.observed_at).toLocaleString("pt-BR")}`,
+      `${window.location.origin}/app/smart-home?observation=${item.id}`,
+    ].join("\n");
+    try {
+      await navigator.clipboard.writeText(text);
+      toast.success("Observação copiada para compartilhamento");
+    } catch {
+      window.prompt("Copie a observação:", text);
+    }
+  };
+
+  const deleteObservation = async (item: any) => {
+    if (!window.confirm(`Excluir definitivamente a observação "${item.metric}"?`)) return;
+    const { data, error } = await (supabase as any)
+      .from("twin_observations")
+      .delete()
+      .eq("id", item.id)
+      .select("id")
+      .maybeSingle();
+    if (error) return toast.error(error.message);
+    if (!data) return toast.error("Observação não foi excluída. Verifique suas permissões.");
+    toast.success("Observação excluída");
     qc.invalidateQueries({ queryKey: ["smart-home-real"] });
   };
 
@@ -128,7 +216,7 @@ function SmartHome() {
               ) : (
                 <div className="mt-4 flex flex-wrap gap-2">
                   {Array.from(deviceSources).map((source) => (
-                    <Pill key={source} tone="moss">{source === "manual_home_entry" ? "registro manual" : source}</Pill>
+                    <Pill key={source} tone="moss">{sourceLabel(String(source))}</Pill>
                   ))}
                 </div>
               )}
@@ -178,12 +266,65 @@ function SmartHome() {
                 <div className="mt-5 space-y-3">
                   {observations.slice(0, 12).map((item: any) => (
                     <div key={item.id} className="rounded-2xl border border-border/60 bg-cream/40 p-4">
-                      <div className="flex flex-wrap items-center justify-between gap-2">
-                        <p className="font-medium text-foreground">{item.metric}</p>
-                        <Pill tone="olive">{item.domain}</Pill>
-                      </div>
-                      <p className="mt-1 text-sm text-muted-foreground">{item.value_numeric ?? item.value_text ?? "-"} {item.unit ?? ""}</p>
-                      <p className="mt-1 text-xs text-muted-foreground">{item.source === "manual_home_entry" ? "registro manual" : item.source} · {new Date(item.observed_at).toLocaleString("pt-BR")}</p>
+                      {editingObservationId === item.id ? (
+                        <div className="space-y-2">
+                          <input
+                            value={editObservationDraft.metric}
+                            onChange={(event) => setEditObservationDraft({ ...editObservationDraft, metric: event.target.value })}
+                            className="w-full rounded-xl border border-border bg-ivory px-3 py-2 text-sm"
+                          />
+                          <input
+                            value={editObservationDraft.value_text}
+                            onChange={(event) => setEditObservationDraft({ ...editObservationDraft, value_text: event.target.value })}
+                            className="w-full rounded-xl border border-border bg-ivory px-3 py-2 text-sm"
+                          />
+                          <GlassSelect
+                            value={editObservationDraft.domain}
+                            onChange={(value) => setEditObservationDraft({ ...editObservationDraft, domain: value })}
+                            options={HOME_DOMAIN_OPTIONS}
+                          />
+                          <textarea
+                            value={editObservationDraft.notes}
+                            onChange={(event) => setEditObservationDraft({ ...editObservationDraft, notes: event.target.value })}
+                            rows={3}
+                            className="w-full rounded-xl border border-border bg-ivory px-3 py-2 text-sm"
+                          />
+                          <div className="flex flex-wrap gap-2">
+                            <button onClick={() => saveObservationEdit(item)} className="rounded-full bg-olive px-3 py-1.5 text-xs font-medium text-ivory">
+                              Salvar
+                            </button>
+                            <button onClick={() => setEditingObservationId(null)} className="rounded-full border border-border px-3 py-1.5 text-xs">
+                              Cancelar
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <>
+                          <div className="flex flex-wrap items-center justify-between gap-2">
+                            <p className="font-medium text-foreground">{item.metric}</p>
+                            <Pill tone="olive">{HOME_DOMAIN_OPTIONS.find((option) => option.value === item.domain)?.label ?? item.domain}</Pill>
+                          </div>
+                          <p className="mt-1 text-sm text-muted-foreground">{item.value_numeric ?? item.value_text ?? "-"} {item.unit ?? ""}</p>
+                          <p className="mt-1 text-xs text-muted-foreground">{sourceLabel(item.source)} · {new Date(item.observed_at).toLocaleString("pt-BR")}</p>
+                          {stripArchiveMarker(item.notes ?? "").trim() && (
+                            <p className="mt-2 rounded-xl border border-border/60 bg-white/45 p-3 text-xs text-muted-foreground">{stripArchiveMarker(item.notes ?? "")}</p>
+                          )}
+                          <div className="mt-3 flex flex-wrap gap-2 text-xs">
+                            <button onClick={() => startEditObservation(item)} className="inline-flex items-center gap-1 rounded-full border border-border px-3 py-1.5">
+                              <Pencil className="h-3 w-3" /> Editar
+                            </button>
+                            <button onClick={() => shareObservation(item)} className="inline-flex items-center gap-1 rounded-full border border-border px-3 py-1.5">
+                              <Share2 className="h-3 w-3" /> Compartilhar
+                            </button>
+                            <button onClick={() => archiveObservation(item)} className="inline-flex items-center gap-1 rounded-full border border-border px-3 py-1.5">
+                              <Archive className="h-3 w-3" /> Arquivar
+                            </button>
+                            <button onClick={() => deleteObservation(item)} className="inline-flex items-center gap-1 rounded-full border border-wine/30 bg-wine/5 px-3 py-1.5 text-wine">
+                              <Trash2 className="h-3 w-3" /> Excluir
+                            </button>
+                          </div>
+                        </>
+                      )}
                     </div>
                   ))}
                 </div>
@@ -201,12 +342,7 @@ function SmartHome() {
                 <GlassSelect
                   value={draft.domain}
                   onChange={(value) => setDraft({ ...draft, domain: value })}
-                  options={[
-                    { value: "environment", label: "Ambiente" },
-                    { value: "safety", label: "Segurança" },
-                    { value: "movement", label: "Movimento" },
-                    { value: "sleep", label: "Sono" },
-                  ]}
+                  options={HOME_DOMAIN_OPTIONS}
                 />
                 <textarea value={draft.notes} onChange={(event) => setDraft({ ...draft, notes: event.target.value })} placeholder="Observações" rows={3} className="w-full rounded-xl border border-border bg-ivory px-3 py-2 text-sm" />
                 <button onClick={addObservation} className="w-full rounded-xl bg-olive px-4 py-2 text-sm text-ivory">Salvar observação</button>
@@ -217,4 +353,19 @@ function SmartHome() {
       )}
     </>
   );
+}
+
+function isArchivedObservation(item: any) {
+  return typeof item.notes === "string" && item.notes.includes("[archived ");
+}
+
+function stripArchiveMarker(notes: string) {
+  return notes.replace(/\n?\[archived [^\]]+\]/g, "");
+}
+
+function sourceLabel(source: string | null) {
+  if (source === "manual" || source === "manual_home_entry") return "registro manual";
+  if (source === "device") return "dispositivo";
+  if (source === "family") return "família";
+  return source ?? "fonte não informada";
 }
