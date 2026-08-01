@@ -10,9 +10,9 @@ import { useAuth } from "@/hooks/use-auth";
 export const Route = createFileRoute("/app/billing")({ component: Billing });
 
 const audienceOptions = [
-  { value: "family", label: "Familia" },
-  { value: "clinic", label: "Clinica" },
-  { value: "service_provider", label: "Prestador de servicos" },
+  { value: "family", label: "Família" },
+  { value: "clinic", label: "Clínica" },
+  { value: "service_provider", label: "Prestador de serviços" },
 ];
 
 const audienceLabel = (value: string) =>
@@ -215,7 +215,7 @@ function Billing() {
                 {p.description && <p className="mt-3 text-sm leading-6 text-muted-foreground">{p.description}</p>}
                 <div className="mt-4 rounded-2xl border border-white/70 bg-white/45 p-4">
                   <p className="text-xs font-semibold uppercase text-muted-foreground">Stripe Price ID</p>
-                  <code className="mt-1 block break-all text-xs text-olive">{p.stripe_price_id ?? "Nao configurado"}</code>
+                  <code className="mt-1 block break-all text-xs text-olive">{p.stripe_price_id ?? "Não configurado"}</code>
                 </div>
                 <ul className="mt-4 grid gap-2 text-sm text-foreground/80">
                   {(Array.isArray(p.features) ? p.features : []).map((feature: string) => (
