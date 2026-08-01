@@ -22,8 +22,8 @@ const STATUS_LABELS: Record<string, string> = {
 const KIND_LABELS: Record<string, string> = {
   consulta: "Consulta",
   encaixe: "Encaixe",
-  bloqueio: "Bloqueio",
-  ferias: "Férias",
+  block: "Bloqueio",
+  vacation: "Férias",
 };
 
 const statusTone = (status: string) =>
@@ -114,9 +114,9 @@ function Schedule() {
 
   const createAppointment = useMutation({
     mutationFn: async () => {
-      if (!form.professional_id) throw new Error("Escolha o profissional.");
-      if (!form.starts_at) throw new Error("Escolha data e hora.");
-      if (form.kind !== "bloqueio" && form.kind !== "ferias" && !form.patient_name.trim()) throw new Error("Informe o paciente.");
+      if (!form.professional_id) throw new Error("Choose the professional.");
+      if (!form.starts_at) throw new Error("Choose date and time.");
+      if (form.kind !== "block" && form.kind !== "vacation" && !form.patient_name.trim()) throw new Error("Enter the patient.");
       const starts = new Date(form.starts_at);
       const ends = new Date(starts.getTime() + Number(form.duration || 30) * 60000);
       const { error } = await (supabase as any).from("appointments").insert({
@@ -158,7 +158,7 @@ function Schedule() {
   };
 
   const addWaitlist = async () => {
-    if (!wait.patient_name.trim()) return toast.error("Informe o nome do paciente.");
+    if (!wait.patient_name.trim()) return toast.error("Enter the patient name.");
     const { error } = await (supabase as any).from("schedule_waitlist").insert({
       tenant_id: effTenant,
       patient_name: wait.patient_name.trim(),
@@ -195,12 +195,12 @@ function Schedule() {
     <>
       <PageHeader
         title="Agenda inteligente"
-        subtitle="Múltiplos profissionais e salas, encaixes, bloqueios e lista de espera — em tempo real."
+        subtitle="Múltiplos profissionais and salas, encaixes, blocks and lista de espera — em tempo real."
         action={<Pill tone="olive">Módulo clínico</Pill>}
       />
 
       <div className="grid gap-4 md:grid-cols-4">
-        <Stat label="Agendamentos no dia" value={appointments.data?.length ?? "-"} sub={new Date(`${day}T12:00:00`).toLocaleDateString("pt-BR")} tone="olive" />
+        <Stat label="Appointments today" value={appointments.data?.length ?? "-"} sub={new Date(`${day}T12:00:00`).toLocaleDateString("pt-BR")} tone="olive" />
         <Stat label="Profissionais" value={professionals.length} sub="Com agenda ativa" tone="moss" />
         <Stat label="Salas" value={rooms.data?.length ?? "-"} sub="Cadastradas" tone="gold" />
         <Stat label="Lista de espera" value={waitlist.data?.length ?? "-"} sub="Aguardando encaixe" tone="wine" />
@@ -213,7 +213,7 @@ function Schedule() {
             value={professionalFilter}
             onChange={setProfessionalFilter}
             className="w-56"
-            options={[{ value: "all", label: "Todos os profissionais" }, ...professionals.map((p: any) => ({ value: p.id, label: p.name }))]}
+            options={[{ value: "all", label: "All os profissionais" }, ...professionals.map((p: any) => ({ value: p.id, label: p.name }))]}
           />
           <div className="ml-auto flex items-center gap-2">
             <input
@@ -255,7 +255,7 @@ function Schedule() {
           <input
             value={form.patient_name}
             onChange={(e) => setForm({ ...form, patient_name: e.target.value })}
-            placeholder={form.kind === "bloqueio" || form.kind === "ferias" ? "Motivo (opcional)" : "Paciente *"}
+            placeholder={form.kind === "block" || form.kind === "vacation" ? "Motivo (opcional)" : "Patient *"}
             className="rounded-xl border border-border bg-ivory px-3 py-2 text-sm"
           />
           <GlassDateTimePicker value={form.starts_at} onChange={(value) => setForm({ ...form, starts_at: value })} />
@@ -272,7 +272,7 @@ function Schedule() {
               disabled={createAppointment.isPending}
               className="ml-auto rounded-full bg-olive px-4 py-2 text-xs font-semibold text-ivory disabled:opacity-50"
             >
-              {createAppointment.isPending ? "Agendando..." : "Agendar"}
+              {createAppointment.isPending ? "Scheduling..." : "Schedule"}
             </button>
           </div>
         </div>
@@ -299,7 +299,7 @@ function Schedule() {
                   <div
                     key={appointment.id}
                     className={`rounded-2xl border px-3 py-2.5 ${
-                      appointment.kind === "bloqueio" || appointment.kind === "ferias"
+                      appointment.kind === "block" || appointment.kind === "vacation"
                         ? "border-border/60 bg-cream/50"
                         : "border-white/70 bg-white/50"
                     }`}
@@ -310,7 +310,7 @@ function Schedule() {
                         {" – "}
                         {new Date(appointment.ends_at).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
                         {" · "}
-                        {appointment.kind === "bloqueio" || appointment.kind === "ferias"
+                        {appointment.kind === "block" || appointment.kind === "vacation"
                           ? KIND_LABELS[appointment.kind]
                           : appointment.patient_name}
                       </p>
@@ -320,14 +320,14 @@ function Schedule() {
                         <Pill tone={statusTone(appointment.status)}>{STATUS_LABELS[appointment.status]}</Pill>
                       </div>
                     </div>
-                    {appointment.kind !== "bloqueio" && appointment.kind !== "ferias" && appointment.status !== "done" && appointment.status !== "canceled" && (
+                    {appointment.kind !== "block" && appointment.kind !== "vacation" && appointment.status !== "done" && appointment.status !== "canceled" && (
                       <div className="mt-2 flex flex-wrap gap-1.5">
                         {appointment.status === "scheduled" && (
                           <button onClick={() => setStatus(appointment.id, "confirmed")} className="rounded-full border border-olive/30 bg-white/60 px-2.5 py-1 text-[11px] text-olive">Confirmar</button>
                         )}
                         <button onClick={() => setStatus(appointment.id, "done")} className="rounded-full bg-moss px-2.5 py-1 text-[11px] text-ivory">Atendido</button>
                         <button onClick={() => setStatus(appointment.id, "no_show")} className="rounded-full border border-gold/40 bg-white/60 px-2.5 py-1 text-[11px]">Faltou</button>
-                        <button onClick={() => setStatus(appointment.id, "canceled")} className="rounded-full border border-wine/30 px-2.5 py-1 text-[11px] text-wine">Cancelar</button>
+                        <button onClick={() => setStatus(appointment.id, "canceled")} className="rounded-full border border-wine/30 px-2.5 py-1 text-[11px] text-wine">Cancel</button>
                       </div>
                     )}
                   </div>
@@ -337,7 +337,7 @@ function Schedule() {
           );
         })}
         {visibleProfessionals.length === 0 && (
-          <div className="lg:col-span-2 xl:col-span-3"><EmptyState title="Nenhum profissional na equipe" hint="Convide profissionais para a organização para montarem agenda." /></div>
+          <div className="lg:col-span-2 xl:col-span-3"><EmptyState title="No professional on the team" hint="Invite professionals to the organization to build the schedule." /></div>
         )}
       </div>
 
@@ -347,7 +347,7 @@ function Schedule() {
           <h2 className="text-lg font-semibold text-foreground">Lista de espera</h2>
         </div>
         <div className="mt-3 grid gap-3 md:grid-cols-4">
-          <input value={wait.patient_name} onChange={(e) => setWait({ ...wait, patient_name: e.target.value })} placeholder="Paciente *" className="rounded-xl border border-border bg-ivory px-3 py-2 text-sm" />
+          <input value={wait.patient_name} onChange={(e) => setWait({ ...wait, patient_name: e.target.value })} placeholder="Patient *" className="rounded-xl border border-border bg-ivory px-3 py-2 text-sm" />
           <input value={wait.phone} onChange={(e) => setWait({ ...wait, phone: e.target.value })} placeholder="Telefone" className="rounded-xl border border-border bg-ivory px-3 py-2 text-sm" />
           <input value={wait.notes} onChange={(e) => setWait({ ...wait, notes: e.target.value })} placeholder="Observação (ex.: prefere manhã)" className="rounded-xl border border-border bg-ivory px-3 py-2 text-sm" />
           <button onClick={addWaitlist} className="rounded-xl bg-olive px-4 py-2 text-sm text-ivory">Adicionar à fila</button>
@@ -369,7 +369,7 @@ function Schedule() {
                     <Pill tone="gold">chamado</Pill>
                   )}
                   <button onClick={() => setWaitStatus(item.id, "scheduled", item.patient_name)} className="rounded-full bg-olive px-2.5 py-1 text-[11px] text-ivory">Encaixar</button>
-                  <button onClick={() => setWaitStatus(item.id, "canceled")} className="rounded-full border border-wine/30 px-2.5 py-1 text-[11px] text-wine">Remover</button>
+                  <button onClick={() => setWaitStatus(item.id, "canceled")} className="rounded-full border border-wine/30 px-2.5 py-1 text-[11px] text-wine">Remove</button>
                 </div>
               </div>
             ))}
@@ -378,7 +378,7 @@ function Schedule() {
       </Card>
 
       <p className="mt-6 text-xs leading-5 text-muted-foreground">
-        Lembretes automáticos por WhatsApp, SMS e e-mail entram na fase de integrações (junto com Stripe e APIs Google).
+        Lembretes automáticos por WhatsApp, SMS and e-mail entram na fase de integrações (junto com Stripe and APIs Google).
       </p>
     </>
   );

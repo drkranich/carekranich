@@ -68,13 +68,13 @@ function Residents() {
     mutationFn: async (id: string) => {
       const { data, error } = await supabase.from("residents").delete().eq("id", id).select("id").maybeSingle();
       if (error) throw error;
-      if (!data) throw new Error("Residente nÃ£o foi excluÃ­do. Verifique suas permissÃµes.");
+      if (!data) throw new Error("Resident was not deleted. Check your permissions.");
     },
     onSuccess: () => {
-      toast.success("Residente excluÃ­do");
+      toast.success("Resident deleted");
       qc.invalidateQueries({ queryKey: ["residents"] });
     },
-    onError: (error: any) => toast.error(error.message ?? "NÃ£o foi possÃ­vel excluir"),
+    onError: (error: any) => toast.error(error.message ?? "Could not delete"),
   });
 
   const archiveResident = async (resident: Resident) => {
@@ -86,14 +86,14 @@ function Residents() {
       .select("id")
       .maybeSingle();
     if (error) return toast.error(error.message);
-    if (!data) return toast.error("Residente nÃ£o foi arquivado. Verifique suas permissÃµes.");
-    toast.success(archive ? "Residente arquivado" : "Residente restaurado");
+    if (!data) return toast.error("Resident was not archived. Check your permissions.");
+    toast.success(archive ? "Resident archived" : "Resident restored");
     qc.invalidateQueries({ queryKey: ["residents"] });
   };
 
   const shareResident = async (resident: Resident) => {
     const text = [
-      `Residente: ${resident.full_name}`,
+      `Resident: ${resident.full_name}`,
       resident.preferred_name ? `Nome preferido: ${resident.preferred_name}` : "",
       resident.date_of_birth ? `Nascimento: ${resident.date_of_birth}` : "",
       resident.language ? `Idioma: ${resident.language}` : "",
@@ -101,9 +101,9 @@ function Residents() {
     ].filter(Boolean).join("\n");
     try {
       await navigator.clipboard.writeText(text);
-      toast.success("Resumo do residente copiado");
+      toast.success("Resident summary copied");
     } catch {
-      window.prompt("Copie o resumo do residente:", text);
+      window.prompt("Copy the resident summary:", text);
     }
   };
 
@@ -113,8 +113,8 @@ function Residents() {
   return (
     <>
       <PageHeader
-        title="Residentes"
-        subtitle="Pessoas, não pacientes. Cada perfil é um documento vivo construído com a família e a equipe de cuidado."
+        title="Residents"
+        subtitle="People, not patients. Each profile is a living document built with the family and care team."
         action={
           <Gate
             roles={["caregiver", "nurse", "doctor", "clinic_admin", "super_admin"]}
@@ -123,10 +123,10 @@ function Residents() {
             <button
               onClick={() => setCreating(true)}
               disabled={!profile?.tenant_id && !isSuperAdmin}
-              title={!profile?.tenant_id && !isSuperAdmin ? "Crie ou selecione uma organização antes de adicionar residentes" : ""}
+              title={!profile?.tenant_id && !isSuperAdmin ? "Create or select an organization before adding residents" : ""}
               className="rounded-lg bg-olive px-4 py-2 text-xs text-ivory shadow-soft hover:opacity-90 disabled:opacity-50"
             >
-              + Adicionar residente
+              + Add resident
             </button>
           </Gate>
         }
@@ -137,7 +137,7 @@ function Residents() {
           <p className="text-sm text-foreground">
             Você ainda não faz parte de uma organização. Visite{" "}
             <span className="font-medium text-olive">Organizações</span> para criar ou entrar em uma
-            antes de adicionar residentes.
+            before adding residents.
           </p>
         </Card>
       )}
@@ -145,8 +145,8 @@ function Residents() {
       {!profile?.tenant_id && isSuperAdmin && (
         <Card className="mb-6 border-olive/25 bg-olive/5">
           <p className="text-sm text-foreground">
-            Visão global de super admin. Residentes de organizações aprovadas aparecem aqui; criar um
-            residente ainda exige o contexto de uma organização.
+            Visão global de super admin. Residents de organizações aprovadas aparecem aqui; criar um
+            resident still requires an organization context.
           </p>
         </Card>
       )}
@@ -155,7 +155,7 @@ function Residents() {
         <p className="text-sm text-muted-foreground">Carregando...</p>
       ) : residents.length === 0 ? (
         <Card className="text-center py-16">
-          <p className="text-xl font-semibold text-foreground">Nenhum residente ainda</p>
+          <p className="text-xl font-semibold text-foreground">No residents yet</p>
           <p className="mt-2 text-sm text-muted-foreground">
             Quando você adicionar alguém, a história dessa pessoa começa aqui.
           </p>
@@ -169,7 +169,7 @@ function Residents() {
                 <div className="min-w-0 flex-1">
                   <p className="text-lg font-semibold text-foreground truncate">{r.full_name}</p>
                   <p className="text-xs text-muted-foreground">
-                    {r.date_of_birth ? `${ageFrom(r.date_of_birth)} anos` : "Idade -"}
+                    {r.date_of_birth ? `${ageFrom(r.date_of_birth)} years old` : "Idade -"}
                     {r.language ? ` - ${r.language}` : ""}
                   </p>
                   {r.bio && <p className="mt-2 text-sm text-foreground/80 line-clamp-3">{r.bio}</p>}
@@ -179,9 +179,9 @@ function Residents() {
                 className="mt-4"
                 onEdit={canEdit ? () => setEditing(r) : undefined}
                 onArchive={canEdit && "archived_at" in r ? () => archiveResident(r) : undefined}
-                archiveLabel={r.archived_at ? "Restaurar" : "Arquivar"}
+                archiveLabel={r.archived_at ? "Restaurar" : "Archive"}
                 onShare={() => shareResident(r)}
-                onDelete={canDelete ? () => confirm(`Excluir ${r.full_name}?`) && del.mutate(r.id) : undefined}
+                onDelete={canDelete ? () => confirm(`Delete ${r.full_name}?`) && del.mutate(r.id) : undefined}
               />
             </Card>
           ))}
@@ -252,7 +252,7 @@ function ResidentDialog({
     e.preventDefault();
     setErr(null);
     if (!tenantId) {
-      setErr("Selecione uma organização antes de criar o residente.");
+      setErr("Select an organization before creating the resident.");
       return;
     }
     setSaving(true);
@@ -308,7 +308,7 @@ function ResidentDialog({
       >
         <div className="flex items-center justify-between border-b border-white/55 px-8 pb-4 pt-7">
           <h2 className="text-2xl font-semibold text-foreground">
-            {resident ? "Editar residente" : "Adicionar residente"}
+            {resident ? "Edit resident" : "Add resident"}
           </h2>
           <button
             type="button"
@@ -325,7 +325,7 @@ function ResidentDialog({
         {requireTenantPicker && (
           <div className="mt-5">
             <label className="block text-sm">
-              <span className="text-foreground/80">Organização</span>
+              <span className="text-foreground/80">Organization</span>
               <GlassSelect
                 value={tenantId}
                 onChange={setTenantId}
@@ -336,7 +336,7 @@ function ResidentDialog({
             </label>
             {tenantOptions.length === 0 && (
               <p className="mt-2 rounded-xl border border-gold/25 bg-gold/10 px-3 py-2 text-xs text-foreground">
-                Nenhuma organização existe ainda. Crie ou aprove uma organização antes de cadastrar residentes.
+                No organization exists yet. Create or approve an organization before registering residents.
               </p>
             )}
           </div>
@@ -413,13 +413,13 @@ function ResidentDialog({
             onClick={onClose}
             className="rounded-lg border border-border bg-ivory px-4 py-2 text-sm hover:bg-cream"
           >
-            Cancelar
+            Cancel
           </button>
           <button
             disabled={saving || !tenantId}
             className="rounded-lg bg-olive px-5 py-2 text-sm text-ivory hover:opacity-90 disabled:opacity-50"
           >
-            {saving ? "Salvando..." : resident ? "Salvar alterações" : "Criar residente"}
+            {saving ? "Saving..." : resident ? "Salvar alterações" : "Create resident"}
           </button>
         </div>
       </form>

@@ -14,14 +14,14 @@ export const Route = createFileRoute("/app/equipment")({ component: Equipment })
 
 const STATUS_LABEL: Record<string, string> = {
   operational: "Operacional",
-  maintenance: "Em manutenção",
-  inactive: "Inativo",
+  maintenance: "Under maintenance",
+  inactive: "Inactive",
 };
 
 const KIND_LABEL: Record<string, string> = {
   preventiva: "Preventiva",
   corretiva: "Corretiva",
-  calibracao: "Calibração",
+  calibracao: "Calibration",
 };
 
 const glassInput =
@@ -118,8 +118,8 @@ function Equipment() {
 
   const save = useMutation({
     mutationFn: async () => {
-      if (!effTenant) throw new Error("Nenhuma organização disponível.");
-      if (form.name.trim().length < 2) throw new Error("Informe o nome do equipamento.");
+      if (!effTenant) throw new Error("No organization available.");
+      if (form.name.trim().length < 2) throw new Error("Enter the equipment name.");
       const payload: Record<string, unknown> = {
         name: form.name.trim(),
         serial_number: form.serial_number.trim() || null,
@@ -142,13 +142,13 @@ function Equipment() {
       }
     },
     onSuccess: () => {
-      toast.success(editingId ? "Equipamento atualizado" : "Equipamento cadastrado");
+      toast.success(editingId ? "Equipment updated" : "Equipment registered");
       setForm({ ...EMPTY });
       setOpen(false);
       setEditingId(null);
       refresh();
     },
-    onError: (e: any) => toast.error(e.message ?? "Não foi possível salvar"),
+    onError: (e: any) => toast.error(e.message ?? "Could not save"),
   });
 
   const setStatus = async (eq: any, status: string) => {
@@ -157,14 +157,14 @@ function Equipment() {
     if (status === "maintenance") {
       await (supabase as any).from("alerts").insert({
         tenant_id: eq.tenant_id,
-        title: `Equipamento em manutenção — ${eq.name}`,
-        description: `Agendas que dependem deste equipamento devem ser bloqueadas ou redistribuídas (${unitName(eq.unit_id)}).`,
+        title: `Equipment under maintenance - ${eq.name}`,
+        description: `Schedules that depend on this equipment must be blocked or reassigned (${unitName(eq.unit_id)}).`,
         severity: "high",
         category: "equipment",
         status: "open",
         created_by: user?.id ?? null,
       });
-      toast.success("Status atualizado — alerta de bloqueio de agenda criado");
+      toast.success("Status updated - schedule block alert created");
     } else {
       toast.success(`Status: ${STATUS_LABEL[status]}`);
     }
@@ -173,7 +173,7 @@ function Equipment() {
 
   const addMaintenance = useMutation({
     mutationFn: async () => {
-      if (!selected) throw new Error("Selecione um equipamento.");
+      if (!selected) throw new Error("Select equipment.");
       const { error } = await (supabase as any).from("equipment_maintenance").insert({
         tenant_id: selected.tenant_id,
         equipment_id: selected.id,
@@ -190,7 +190,7 @@ function Equipment() {
       }
     },
     onSuccess: () => {
-      toast.success("Manutenção registrada");
+      toast.success("Maintenance registered");
       setMaint({ kind: "preventiva", scheduled_for: "", provider: "", cost: "", description: "" });
       refresh();
     },
@@ -209,7 +209,7 @@ function Equipment() {
         .update({ last_calibration: new Date().toISOString().slice(0, 10) })
         .eq("id", selected.id);
     }
-    toast.success("Manutenção concluída");
+    toast.success("Manutenção completed");
     refresh();
   };
 
@@ -232,19 +232,19 @@ function Equipment() {
 
   const exportPdf = (eq: any) => {
     const list = eq.id === selected?.id ? (maintenances.data ?? []) : [];
-    downloadPdf(`equipamento-${eq.name}.pdf`, eq.name, [
+    downloadPdf(`equipment-${eq.name}.pdf`, eq.name, [
       `Fabricante: ${eq.manufacturer ?? "-"}  Modelo: ${eq.model ?? "-"}`,
-      `Número de série: ${eq.serial_number ?? "-"}`,
+      `Serial number: ${eq.serial_number ?? "-"}`,
       `Unidade: ${unitName(eq.unit_id)}  Sala: ${eq.room ?? "-"}`,
       `Status: ${STATUS_LABEL[eq.status] ?? eq.status}`,
-      `Garantia até: ${eq.warranty_until ? new Date(eq.warranty_until + "T00:00:00").toLocaleDateString("pt-BR") : "-"}`,
-      `Última calibração: ${eq.last_calibration ? new Date(eq.last_calibration + "T00:00:00").toLocaleDateString("pt-BR") : "-"}`,
-      `Próxima manutenção: ${eq.next_maintenance ? new Date(eq.next_maintenance + "T00:00:00").toLocaleDateString("pt-BR") : "-"}`,
+      `Warranty until: ${eq.warranty_until ? new Date(eq.warranty_until + "T00:00:00").toLocaleDateString("pt-BR") : "-"}`,
+      `Last calibration: ${eq.last_calibration ? new Date(eq.last_calibration + "T00:00:00").toLocaleDateString("pt-BR") : "-"}`,
+      `Next maintenance: ${eq.next_maintenance ? new Date(eq.next_maintenance + "T00:00:00").toLocaleDateString("pt-BR") : "-"}`,
       "",
-      "Histórico de manutenções:",
+      "Maintenance history:",
       ...list.map(
         (m: any) =>
-          `- ${KIND_LABEL[m.kind] ?? m.kind} · ${m.status === "done" ? "concluída" : "agendada"} · ${m.scheduled_for ? new Date(m.scheduled_for + "T00:00:00").toLocaleDateString("pt-BR") : "-"} · ${brl(m.cost_cents)}${m.provider ? ` · ${m.provider}` : ""}`,
+          `- ${KIND_LABEL[m.kind] ?? m.kind} · ${m.status === "done" ? "completed" : "scheduled"} · ${m.scheduled_for ? new Date(m.scheduled_for + "T00:00:00").toLocaleDateString("pt-BR") : "-"} · ${brl(m.cost_cents)}${m.provider ? ` · ${m.provider}` : ""}`,
       ),
     ]);
   };
@@ -263,8 +263,8 @@ function Equipment() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Equipamentos e manutenção"
-        subtitle="Ativos médicos com série, garantia, calibração, manutenções preventivas/corretivas e impacto em agenda."
+        title="Equipment and maintenance"
+        subtitle="Medical assets with serial number, warranty, calibration, preventive/corrective maintenance and scheduling impact."
         action={
           <button
             onClick={() => {
@@ -274,26 +274,26 @@ function Equipment() {
             }}
             className="inline-flex items-center gap-2 rounded-full bg-olive px-4 py-2 text-sm font-medium text-ivory shadow-soft hover:opacity-90"
           >
-            <Plus className="h-4 w-4" /> Novo equipamento
+            <Plus className="h-4 w-4" /> New equipment
           </button>
         }
       />
 
       <div className="grid gap-4 md:grid-cols-4">
-        <Stat label="Equipamentos" value={stats.total} sub="Cadastrados" tone="olive" />
-        <Stat label="Operacionais" value={stats.operational} sub="Disponíveis para agenda" tone="moss" />
-        <Stat label="Em manutenção" value={stats.maintenance} sub="Agendas impactadas" tone="wine" />
-        <Stat label="Manutenção atrasada" value={stats.overdue} sub="Data prevista vencida" tone="terracotta" />
+        <Stat label="Equipment" value={stats.total} sub="Cadastrados" tone="olive" />
+        <Stat label="Operational" value={stats.operational} sub="Available for scheduling" tone="moss" />
+        <Stat label="Under maintenance" value={stats.maintenance} sub="Impacted schedules" tone="wine" />
+        <Stat label="Overdue maintenance" value={stats.overdue} sub="Expected date overdue" tone="terracotta" />
       </div>
 
       {open && (
         <Card className="space-y-3 p-6">
-          <h3 className="text-sm font-semibold text-foreground">{editingId ? "Editar equipamento" : "Novo equipamento"}</h3>
+          <h3 className="text-sm font-semibold text-foreground">{editingId ? "Edit equipment" : "New equipment"}</h3>
           <div className="grid gap-3 md:grid-cols-3">
             <input className={glassInput} placeholder="Nome (ex.: Ultrassom GE Logiq) *" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
             <input className={glassInput} placeholder="Fabricante" value={form.manufacturer} onChange={(e) => setForm({ ...form, manufacturer: e.target.value })} />
             <input className={glassInput} placeholder="Modelo" value={form.model} onChange={(e) => setForm({ ...form, model: e.target.value })} />
-            <input className={glassInput} placeholder="Número de série" value={form.serial_number} onChange={(e) => setForm({ ...form, serial_number: e.target.value })} />
+            <input className={glassInput} placeholder="Serial number" value={form.serial_number} onChange={(e) => setForm({ ...form, serial_number: e.target.value })} />
             <GlassSelect
               value={form.unit_id}
               onChange={(v) => setForm({ ...form, unit_id: v })}
@@ -302,21 +302,21 @@ function Equipment() {
             />
             <input className={glassInput} placeholder="Sala" value={form.room} onChange={(e) => setForm({ ...form, room: e.target.value })} />
             <div>
-              <p className="mb-1 text-xs font-medium text-muted-foreground">Garantia até</p>
+              <p className="mb-1 text-xs font-medium text-muted-foreground">Warranty until</p>
               <GlassDatePicker value={form.warranty_until} onChange={(v) => setForm({ ...form, warranty_until: v })} />
             </div>
             <div>
-              <p className="mb-1 text-xs font-medium text-muted-foreground">Próxima manutenção</p>
+              <p className="mb-1 text-xs font-medium text-muted-foreground">Next maintenance</p>
               <GlassDatePicker value={form.next_maintenance} onChange={(v) => setForm({ ...form, next_maintenance: v })} />
             </div>
-            <input className={glassInput} placeholder="Observações" value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} />
+            <input className={glassInput} placeholder="Notes" value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} />
           </div>
           <div className="flex gap-2">
             <button onClick={() => save.mutate()} disabled={save.isPending} className="rounded-full bg-olive px-5 py-2 text-sm font-medium text-ivory shadow-soft hover:opacity-90 disabled:opacity-60">
-              {save.isPending ? "Salvando..." : editingId ? "Salvar alterações" : "Cadastrar"}
+              {save.isPending ? "Saving..." : editingId ? "Salvar alterações" : "Register"}
             </button>
             <button onClick={() => { setOpen(false); setEditingId(null); }} className="rounded-full border border-white/70 bg-white/55 px-5 py-2 text-sm backdrop-blur-xl">
-              Cancelar
+              Cancel
             </button>
           </div>
         </Card>
@@ -324,8 +324,8 @@ function Equipment() {
 
       <div className="grid gap-6 xl:grid-cols-[360px_1fr]">
         <Card className="space-y-2 p-5">
-          <h3 className="text-sm font-semibold text-foreground">Ativos</h3>
-          {(equipment.data ?? []).length === 0 && <p className="text-sm text-muted-foreground">Nenhum equipamento ainda.</p>}
+          <h3 className="text-sm font-semibold text-foreground">Actives</h3>
+          {(equipment.data ?? []).length === 0 && <p className="text-sm text-muted-foreground">No equipment yet.</p>}
           {(equipment.data ?? []).map((eq: any) => (
             <button
               key={eq.id}
@@ -353,13 +353,13 @@ function Equipment() {
               <div>
                 <h3 className="text-lg font-semibold text-foreground">{selected.name}</h3>
                 <p className="text-xs text-muted-foreground">
-                  {selected.manufacturer ?? "-"} {selected.model ?? ""} · série {selected.serial_number ?? "-"} ·{" "}
+                  {selected.manufacturer ?? "-"} {selected.model ?? ""} · serial {selected.serial_number ?? "-"} ·{" "}
                   {unitName(selected.unit_id)}{selected.room ? ` · ${selected.room}` : ""}
                 </p>
               </div>
               <div className="flex flex-wrap gap-2">
                 <button onClick={() => startEdit(selected)} className="inline-flex items-center gap-1 rounded-full border border-border bg-white/55 px-3 py-1.5 text-xs">
-                  <Pencil className="h-3 w-3" /> Editar
+                  <Pencil className="h-3 w-3" /> Edit
                 </button>
                 <button onClick={() => exportPdf(selected)} className="inline-flex items-center gap-1 rounded-full border border-border bg-white/55 px-3 py-1.5 text-xs">
                   <FileDown className="h-3 w-3" /> Ficha PDF
@@ -369,14 +369,14 @@ function Equipment() {
 
             <div className="flex flex-wrap gap-2 text-xs">
               {selected.warranty_until && (
-                <Pill tone="olive">Garantia até {new Date(selected.warranty_until + "T00:00:00").toLocaleDateString("pt-BR")}</Pill>
+                <Pill tone="olive">Warranty until {new Date(selected.warranty_until + "T00:00:00").toLocaleDateString("pt-BR")}</Pill>
               )}
               {selected.last_calibration && (
                 <Pill tone="moss">Calibrado em {new Date(selected.last_calibration + "T00:00:00").toLocaleDateString("pt-BR")}</Pill>
               )}
               {selected.next_maintenance && (
                 <Pill tone={selected.next_maintenance < new Date().toISOString().slice(0, 10) ? "wine" : "gold"}>
-                  Próxima manutenção {new Date(selected.next_maintenance + "T00:00:00").toLocaleDateString("pt-BR")}
+                  Next maintenance {new Date(selected.next_maintenance + "T00:00:00").toLocaleDateString("pt-BR")}
                 </Pill>
               )}
             </div>
@@ -389,7 +389,7 @@ function Equipment() {
               )}
               {selected.status !== "maintenance" && (
                 <button onClick={() => setStatus(selected, "maintenance")} className="rounded-full bg-wine px-4 py-2 text-xs font-medium text-ivory">
-                  Colocar em manutenção
+                  Set under maintenance
                 </button>
               )}
               {selected.status !== "inactive" && (
@@ -401,7 +401,7 @@ function Equipment() {
 
             <div className="space-y-3 rounded-2xl border border-white/70 bg-white/45 p-4">
               <p className="flex items-center gap-2 text-xs font-semibold text-foreground">
-                <Wrench className="h-3.5 w-3.5" /> Registrar manutenção / calibração
+                <Wrench className="h-3.5 w-3.5" /> Register maintenance / calibration
               </p>
               <div className="grid gap-2 md:grid-cols-4">
                 <GlassSelect
@@ -410,20 +410,20 @@ function Equipment() {
                   options={Object.entries(KIND_LABEL).map(([value, label]) => ({ value, label }))}
                 />
                 <GlassDatePicker value={maint.scheduled_for} onChange={(v) => setMaint({ ...maint, scheduled_for: v })} />
-                <input className={glassInput} placeholder="Prestador" value={maint.provider} onChange={(e) => setMaint({ ...maint, provider: e.target.value })} />
+                <input className={glassInput} placeholder="Provider" value={maint.provider} onChange={(e) => setMaint({ ...maint, provider: e.target.value })} />
                 <input className={glassInput} placeholder="Custo (R$)" value={maint.cost} onChange={(e) => setMaint({ ...maint, cost: e.target.value })} />
               </div>
-              <input className={glassInput} placeholder="Descrição (peças, falha, laudo técnico...)" value={maint.description} onChange={(e) => setMaint({ ...maint, description: e.target.value })} />
+              <input className={glassInput} placeholder="Description (parts, failure, technical report...)" value={maint.description} onChange={(e) => setMaint({ ...maint, description: e.target.value })} />
               <button onClick={() => addMaintenance.mutate()} disabled={addMaintenance.isPending} className="rounded-full bg-olive px-4 py-1.5 text-xs font-medium text-ivory disabled:opacity-60">
                 Registrar
               </button>
             </div>
 
             <div>
-              <h4 className="text-sm font-semibold text-foreground">Histórico de manutenções</h4>
+              <h4 className="text-sm font-semibold text-foreground">Maintenance history</h4>
               <div className="mt-2 space-y-1.5">
                 {(maintenances.data ?? []).length === 0 && (
-                  <p className="text-xs text-muted-foreground">Nenhuma manutenção registrada.</p>
+                  <p className="text-xs text-muted-foreground">No maintenance registered.</p>
                 )}
                 {(maintenances.data ?? []).map((m: any) => (
                   <div key={m.id} className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-white/70 bg-white/45 px-3 py-2 text-xs">
@@ -436,7 +436,7 @@ function Equipment() {
                         {m.scheduled_for ? new Date(m.scheduled_for + "T00:00:00").toLocaleDateString("pt-BR") : "-"}
                       </span>
                       {m.status === "done" ? (
-                        <Pill tone="moss">concluída</Pill>
+                        <Pill tone="moss">completed</Pill>
                       ) : (
                         <button onClick={() => completeMaintenance(m)} className="rounded-full bg-olive px-3 py-1 font-medium text-ivory">
                           Concluir
@@ -450,7 +450,7 @@ function Equipment() {
             </div>
           </Card>
         ) : (
-          <EmptyState title="Nenhum equipamento selecionado" hint="Cadastre um ativo médico para controlar manutenções e calibração." />
+          <EmptyState title="No equipment selected" hint="Register a medical asset to control maintenance and calibration." />
         )}
       </div>
     </div>

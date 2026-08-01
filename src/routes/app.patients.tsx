@@ -147,7 +147,7 @@ function Patients() {
 
   const save = useMutation({
     mutationFn: async () => {
-      if (form.full_name.trim().length < 3) throw new Error("Informe o nome completo do paciente.");
+      if (form.full_name.trim().length < 3) throw new Error("Enter the patient full name.");
       const payload: Record<string, unknown> = {
         full_name: form.full_name.trim(),
         social_name: form.social_name.trim() || null,
@@ -173,13 +173,13 @@ function Patients() {
       }
     },
     onSuccess: () => {
-      toast.success(editingId ? "Paciente atualizado" : "Paciente cadastrado");
+      toast.success(editingId ? "Patient updated" : "Patient registered");
       setForm(EMPTY);
       setOpen(false);
       setEditingId(null);
       qc.invalidateQueries({ queryKey: ["patients"] });
     },
-    onError: (e: any) => toast.error(e.message ?? "Não foi possível salvar o paciente"),
+    onError: (e: any) => toast.error(e.message ?? "Could not save the patient"),
   });
 
   const grantAuth = useMutation({
@@ -246,14 +246,14 @@ function Patients() {
   };
 
   const exportPdf = (p: PatientRow) => {
-    downloadPdf(`paciente-${p.full_name}.pdf`, `Ficha do paciente — ${p.full_name}`, [
+    downloadPdf(`patient-${p.full_name}.pdf`, `Patient record — ${p.full_name}`, [
       `Nome social: ${p.social_name ?? "-"}`,
       `Nascimento: ${p.birth_date ? new Date(p.birth_date + "T00:00:00").toLocaleDateString("pt-BR") : "-"}  Idade: ${age(p.birth_date) ?? "-"}`,
       `Sexo: ${p.sex ?? "-"}  CPF: ${p.cpf ?? "-"}`,
       `Telefone: ${p.phone ?? "-"}  E-mail: ${p.email ?? "-"}`,
       `Cidade: ${p.city ?? "-"} / ${p.state ?? "-"}`,
       `Convênio: ${p.insurance_plan ?? "Particular"}  Carteirinha: ${p.insurance_number ?? "-"}`,
-      `Status: ${p.status === "active" ? "Ativo" : "Inativo"}`,
+      `Status: ${p.status === "active" ? "Active" : "Inactive"}`,
       `Observações: ${p.notes ?? "-"}`,
     ]);
   };
@@ -261,8 +261,8 @@ function Patients() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Pacientes"
-        subtitle="Cadastro de pacientes da plataforma diagnóstica, com autorizações de familiares e responsáveis."
+        title="Patients"
+        subtitle="Diagnostic platform patient records, with family and guardian authorizations."
         action={
           <button
             onClick={() => {
@@ -272,7 +272,7 @@ function Patients() {
             }}
             className="inline-flex items-center gap-2 rounded-full bg-olive px-4 py-2 text-sm font-medium text-ivory shadow-soft hover:opacity-90"
           >
-            <Plus className="h-4 w-4" /> Novo paciente
+            <Plus className="h-4 w-4" /> New patient
           </button>
         }
       />
@@ -290,7 +290,7 @@ function Patients() {
       {open && (
         <Card className="space-y-4 p-6">
           <h3 className="text-sm font-semibold text-foreground">
-            {editingId ? "Editar paciente" : "Novo paciente"}
+            {editingId ? "Edit patient" : "New patient"}
           </h3>
           <div className="grid gap-3 md:grid-cols-3">
             <input className={`${glassInput} md:col-span-2`} placeholder="Nome completo *" value={form.full_name} onChange={(e) => setForm({ ...form, full_name: e.target.value })} />
@@ -338,17 +338,17 @@ function Patients() {
               disabled={save.isPending}
               className="rounded-full bg-olive px-5 py-2 text-sm font-medium text-ivory shadow-soft hover:opacity-90 disabled:opacity-60"
             >
-              {save.isPending ? "Salvando..." : editingId ? "Salvar alterações" : "Cadastrar paciente"}
+              {save.isPending ? "Saving..." : editingId ? "Salvar alterações" : "Register patient"}
             </button>
             <button onClick={() => { setOpen(false); setEditingId(null); }} className="rounded-full border border-white/70 bg-white/55 px-5 py-2 text-sm backdrop-blur-xl">
-              Cancelar
+              Cancel
             </button>
           </div>
         </Card>
       )}
 
       {filtered.length === 0 ? (
-        <EmptyState title="Nenhum paciente encontrado" hint="Cadastre pacientes para habilitar agendamentos, check-in, exames e resultados." />
+        <EmptyState title="No patient found" hint="Register patients to enable appointments, check-in, exams and results." />
       ) : (
         <div className="grid gap-4 md:grid-cols-2">
           {filtered.map((p) => (
@@ -361,12 +361,12 @@ function Patients() {
                   <div>
                     <p className="font-semibold text-foreground">{p.social_name || p.full_name}</p>
                     <p className="text-xs text-muted-foreground">
-                      {age(p.birth_date) !== null ? `${age(p.birth_date)} anos` : "Idade não informada"}
+                      {age(p.birth_date) !== null ? `${age(p.birth_date)} years old` : "Idade não informada"}
                       {p.insurance_plan ? ` · ${p.insurance_plan}` : " · Particular"}
                     </p>
                   </div>
                 </div>
-                <Pill tone={p.status === "active" ? "moss" : "muted"}>{p.status === "active" ? "Ativo" : "Inativo"}</Pill>
+                <Pill tone={p.status === "active" ? "moss" : "muted"}>{p.status === "active" ? "Active" : "Inactive"}</Pill>
               </div>
               <div className="flex flex-wrap gap-2 text-xs">
                 <button onClick={() => startEdit(p)} className="inline-flex items-center gap-1 rounded-full border border-white/70 bg-white/55 px-3 py-1.5 backdrop-blur-xl hover:bg-white/80">
@@ -383,10 +383,10 @@ function Patients() {
               {authFor === p.id && (
                 <div className="space-y-3 rounded-2xl border border-white/70 bg-white/45 p-4 backdrop-blur-xl">
                   <p className="text-xs font-semibold text-foreground">
-                    Familiares e responsáveis autorizados
+                    Authorized family members and guardians
                   </p>
                   {(authorizations.data ?? []).length === 0 && (
-                    <p className="text-xs text-muted-foreground">Nenhuma autorização registrada.</p>
+                    <p className="text-xs text-muted-foreground">No authorization recorded.</p>
                   )}
                   {(authorizations.data ?? []).map((a) => (
                     <div key={a.id} className="flex items-center justify-between gap-2 text-xs">

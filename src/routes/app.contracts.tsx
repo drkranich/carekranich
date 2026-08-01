@@ -149,7 +149,7 @@ function Contracts() {
     const text = [`Contract: ${contract.title}`, `Status: ${contract.status}`, "", contract.body].join("\n");
     try {
       await navigator.clipboard.writeText(text);
-      toast.success("Contract copiado para compartilhamento");
+      toast.success("Contract copiado para sharing");
     } catch {
       window.prompt("Copy the contract:", text);
     }
@@ -270,7 +270,7 @@ function Contracts() {
                   disabled={sign.isPending}
                   className="rounded-full bg-moss px-3 py-1.5 text-xs font-semibold text-ivory disabled:opacity-50"
                 >
-                  {sign.isPending ? "Assinando..." : "Assinar eletronicamente"}
+                  {sign.isPending ? "Signing..." : "Sign electronically"}
                 </button>
                 <button onClick={() => downloadPdf(`${contract.title}.pdf`, contract.title, [contract.body])} className="rounded-full border border-border px-3 py-1.5 text-xs">Generate PDF</button>
                 <button onClick={() => setStatus(contract.id, "active")} className="rounded-full bg-olive px-3 py-1.5 text-xs text-ivory">Approve</button>

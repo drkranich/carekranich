@@ -14,46 +14,46 @@ const roleOptions: AppRole[] = ["family", "caregiver", "nurse", "doctor", "clini
 const accountStatusOptions = ["all", "pending", "active", "suspended", "rejected"];
 const userKindOptions = ["all", "family", "clinic", "service_provider", "staff"];
 const userKindLabels: Record<string, string> = {
-  family: "Família",
-  clinic: "Clínica",
-  service_provider: "Prestador de serviços",
-  staff: "Funcionário",
+  family: "Family",
+  clinic: "Clinic",
+  service_provider: "Service provider",
+  staff: "Staff member",
 };
 
 const accessRoutes = [
-  { route: "/app", label: "Visão geral", group: "Base" },
+  { route: "/app", label: "Overview", group: "Base" },
   { route: "/app/profile", label: "Perfil", group: "Base" },
-  { route: "/app/notifications", label: "Notificações", group: "Base" },
-  { route: "/app/residents", label: "Residentes", group: "Cuidado" },
+  { route: "/app/notifications", label: "Notifications", group: "Base" },
+  { route: "/app/residents", label: "Residents", group: "Cuidado" },
   { route: "/app/timeline", label: "Timeline", group: "Cuidado" },
-  { route: "/app/care-plan", label: "Plano de cuidado", group: "Cuidado" },
-  { route: "/app/memory", label: "Memória e legado", group: "Cuidado" },
+  { route: "/app/care-plan", label: "Care plan", group: "Cuidado" },
+  { route: "/app/memory", label: "Memory and legacy", group: "Cuidado" },
   { route: "/app/emergency", label: "SOS", group: "Cuidado" },
-  { route: "/app/caregiver", label: "App cuidador", group: "Equipe" },
+  { route: "/app/caregiver", label: "Caregiver app", group: "Equipe" },
   { route: "/app/quality", label: "Qualidade", group: "Equipe" },
   { route: "/app/academy", label: "Academia", group: "Equipe" },
   { route: "/app/medical", label: "Medical", group: "Equipe" },
   { route: "/app/marketplace", label: "Marketplace", group: "Rede" },
   { route: "/app/agents", label: "Agentes", group: "IA" },
-  { route: "/app/agents/recommendations", label: "Recomendações", group: "IA" },
+  { route: "/app/agents/recommendations", label: "Recommendations", group: "IA" },
   { route: "/app/twin", label: "Digital twin", group: "IA" },
   { route: "/app/cognitive", label: "Cognitive twin", group: "IA" },
   { route: "/app/longevity", label: "Longevity", group: "IA" },
   { route: "/app/ai", label: "AI insights", group: "IA" },
-  { route: "/app/alerts", label: "Alertas", group: "Operação" },
-  { route: "/app/workflows", label: "Workflows", group: "Operação" },
-  { route: "/app/smart-home", label: "Casa inteligente", group: "Operação" },
-  { route: "/app/telemedicine", label: "Telemedicina", group: "Operação" },
+  { route: "/app/alerts", label: "Alerts", group: "Operations" },
+  { route: "/app/workflows", label: "Workflows", group: "Operations" },
+  { route: "/app/smart-home", label: "Smart home", group: "Operations" },
+  { route: "/app/telemedicine", label: "Telemedicine", group: "Operations" },
   { route: "/app/command", label: "Command center", group: "Admin" },
-  { route: "/app/documents", label: "Documentos", group: "Admin" },
-  { route: "/app/tenants", label: "Organização", group: "Admin" },
+  { route: "/app/documents", label: "Documents", group: "Admin" },
+  { route: "/app/tenants", label: "Organization", group: "Admin" },
   { route: "/app/contracts", label: "Contratos", group: "Admin" },
-  { route: "/app/billing", label: "Planos e cobrança", group: "Admin" },
+  { route: "/app/billing", label: "Plans and billing", group: "Admin" },
   { route: "/app/inbox", label: "Inbox", group: "Admin" },
   { route: "/app/email-marketing", label: "Email marketing", group: "Admin" },
-  { route: "/app/identity", label: "Reconhecimento facial", group: "Admin" },
-  { route: "/app/admin", label: "Super admin", group: "Plataforma" },
-  { route: "/app/approvals", label: "Aprovações e acessos", group: "Plataforma" },
+  { route: "/app/identity", label: "Facial recognition", group: "Admin" },
+  { route: "/app/admin", label: "Super admin", group: "Platform" },
+  { route: "/app/approvals", label: "Approvals and access", group: "Platform" },
 ] as const;
 
 function Approvals() {
@@ -168,11 +168,11 @@ function Approvals() {
       if (error) throw error;
     },
     onSuccess: () => {
-      toast.success("Cargo e acessos atualizados");
+      toast.success("Role and access updated");
       qc.invalidateQueries({ queryKey: ["platform-staff-access-profiles-admin"] });
       qc.invalidateQueries({ queryKey: ["platform-staff-access-profiles"] });
     },
-    onError: (error: any) => toast.error(error.message ?? "Não foi possível salvar os acessos"),
+    onError: (error: any) => toast.error(error.message ?? "Could not save access settings"),
   });
 
   const addRole = async (userId: string, tenantId: string | null, role: AppRole) => {
@@ -222,13 +222,13 @@ function Approvals() {
           onClick={() => setView("people")}
           className={`rounded-xl px-4 py-2 text-xs font-medium ${view === "people" ? "bg-olive text-ivory" : "text-foreground/70 hover:bg-white/60"}`}
         >
-          Pessoas e aprovações
+          People and approvals
         </button>
         <button
           onClick={() => setView("roles")}
           className={`rounded-xl px-4 py-2 text-xs font-medium ${view === "roles" ? "bg-olive text-ivory" : "text-foreground/70 hover:bg-white/60"}`}
         >
-          Cargos e acessos
+          Roles and access
         </button>
       </div>
 
@@ -296,7 +296,7 @@ function Approvals() {
               onChange={setStatusFilter}
               options={accountStatusOptions.map((status) => ({
                 value: status,
-                label: status === "all" ? "Todos os status" : status,
+                label: status === "all" ? "All statuses" : status,
               }))}
             />
             <GlassSelect
@@ -304,7 +304,7 @@ function Approvals() {
               onChange={setKindFilter}
               options={userKindOptions.map((kind) => ({
                 value: kind,
-                label: kind === "all" ? "Todos os perfis" : userKindLabels[kind] ?? kind,
+                label: kind === "all" ? "All profiles" : userKindLabels[kind] ?? kind,
               }))}
             />
           </div>
@@ -349,7 +349,7 @@ function Approvals() {
                   <GlassSelect
                     className="mt-3"
                     value=""
-                    placeholder="Adicionar permissão..."
+                    placeholder="Add permission..."
                     onChange={(value) => addRole(member.id, member.tenant_id, value as AppRole)}
                     options={roleOptions.map((role) => ({ value: role, label: ROLE_LABELS[role] }))}
                   />
@@ -432,7 +432,7 @@ function AccessProfileMatrix({
                   onClick={() => updateDraft(profile, { active: !draft.active })}
                   className={`rounded-full px-3 py-1.5 text-xs ${draft.active ? "bg-olive text-ivory" : "border border-border bg-white/50 text-muted-foreground"}`}
                 >
-                  {draft.active ? "Ativo" : "Inativo"}
+                  {draft.active ? "Active" : "Inactive"}
                 </button>
                 <button
                   onClick={() => {
@@ -447,7 +447,7 @@ function AccessProfileMatrix({
                   className="inline-flex items-center gap-1 rounded-full bg-olive px-3 py-1.5 text-xs text-ivory disabled:cursor-not-allowed disabled:opacity-45"
                 >
                   <Save className="h-3.5 w-3.5" />
-                  Salvar
+                  Save
                 </button>
               </div>
             </div>
@@ -480,7 +480,7 @@ function AccessProfileMatrix({
       })}
       {profiles.length === 0 && (
         <Card>
-          <p className="text-sm text-muted-foreground">Nenhum cargo configurado ainda.</p>
+          <p className="text-sm text-muted-foreground">No roles configured yet.</p>
         </Card>
       )}
     </div>

@@ -13,7 +13,7 @@ import { downloadPdf } from "@/lib/pdf";
 export const Route = createFileRoute("/app/inventory")({ component: Inventory });
 
 const CATEGORIES = [
-  { value: "material", label: "Material de coleta" },
+  { value: "material", label: "Collection material" },
   { value: "reagente", label: "Reagentes" },
   { value: "kit", label: "Kits" },
   { value: "epi", label: "EPIs" },
@@ -87,8 +87,8 @@ function Inventory() {
 
   const save = useMutation({
     mutationFn: async () => {
-      if (!effTenant) throw new Error("Nenhuma organização disponível.");
-      if (form.name.trim().length < 2) throw new Error("Informe o nome do insumo.");
+      if (!effTenant) throw new Error("No organization available.");
+      if (form.name.trim().length < 2) throw new Error("Enter the supply name.");
       const { error } = await (supabase as any).from("inventory_items").insert({
         tenant_id: effTenant,
         name: form.name.trim(),
@@ -105,7 +105,7 @@ function Inventory() {
       if (error) throw error;
     },
     onSuccess: () => {
-      toast.success("Insumo cadastrado");
+      toast.success("Supply registered");
       setForm({ ...EMPTY });
       setOpen(false);
       refresh();
@@ -116,9 +116,9 @@ function Inventory() {
   const registerMove = useMutation({
     mutationFn: async () => {
       const item = (items.data ?? []).find((i: any) => i.id === moveFor);
-      if (!item) throw new Error("Selecione o insumo.");
+      if (!item) throw new Error("Select the supply.");
       const qty = Number(move.quantity.replace(",", "."));
-      if (!qty || qty <= 0) throw new Error("Informe a quantidade.");
+      if (!qty || qty <= 0) throw new Error("Enter the quantity.");
       const delta = move.kind === "entrada" ? qty : -qty;
       const newQty = Number(item.quantity) + delta;
       if (newQty < 0) throw new Error("Quantidade insuficiente em estoque.");
@@ -139,8 +139,8 @@ function Inventory() {
       if (newQty <= Number(item.min_quantity) && delta < 0) {
         await (supabase as any).from("alerts").insert({
           tenant_id: item.tenant_id,
-          title: `Estoque baixo — ${item.name}`,
-          description: `Restam ${newQty} ${item.unit_label} (mínimo: ${item.min_quantity}). Programar reposição.`,
+          title: `Low stock — ${item.name}`,
+          description: `Remaining ${newQty} ${item.unit_label} (mínimo: ${item.min_quantity}). Programar reposição.`,
           severity: "high",
           category: "inventory",
           status: "open",
@@ -194,7 +194,7 @@ function Inventory() {
       "",
       ...(items.data ?? []).map((i: any) => {
         const d = daysTo(i.expiry_date);
-        return `- ${i.name} (${CATEGORIES.find((c) => c.value === i.category)?.label ?? i.category}) · ${i.quantity} ${i.unit_label} · mínimo ${i.min_quantity}${i.lot ? ` · lote ${i.lot}` : ""}${i.expiry_date ? ` · validade ${new Date(i.expiry_date + "T00:00:00").toLocaleDateString("pt-BR")}${d !== null && d < 0 ? " (VENCIDO)" : ""}` : ""}`;
+        return `- ${i.name} (${CATEGORIES.find((c) => c.value === i.category)?.label ?? i.category}) · ${i.quantity} ${i.unit_label} · mínimo ${i.min_quantity}${i.lot ? ` · lot ${i.lot}` : ""}${i.expiry_date ? ` · expires ${new Date(i.expiry_date + "T00:00:00").toLocaleDateString("pt-BR")}${d !== null && d < 0 ? " (EXPIRED)" : ""}` : ""}`;
       }),
     ]);
   };
@@ -202,8 +202,8 @@ function Inventory() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Estoque e insumos"
-        subtitle="Tubos, reagentes, kits, EPIs e materiais com lote, validade, estoque mínimo e alerta automático de reposição."
+        title="Stock and supplies"
+        subtitle="Tubos, reagentes, kits, EPIs and materiais com lot, expires, estoque mínimo and alerta automático de reposição."
         action={
           <div className="flex gap-2">
             <button onClick={exportPdf} className="inline-flex items-center gap-1.5 rounded-full border border-border bg-white/55 px-4 py-2 text-xs">
@@ -220,9 +220,9 @@ function Inventory() {
       />
 
       <div className="grid gap-4 md:grid-cols-4">
-        <Stat label="Itens cadastrados" value={stats.total} sub="No inventário" tone="olive" />
-        <Stat label="Estoque baixo" value={stats.low} sub="No mínimo ou abaixo" tone="wine" />
-        <Stat label="Vencendo em 30 dias" value={stats.expiring} sub="Priorizar uso" tone="gold" />
+        <Stat label="Registered items" value={stats.total} sub="No inventário" tone="olive" />
+        <Stat label="Low stock" value={stats.low} sub="No mínimo ou abaixo" tone="wine" />
+        <Stat label="Vencendo em 30 days" value={stats.expiring} sub="Priorizar uso" tone="gold" />
         <Stat label="Vencidos" value={stats.expired} sub="Descartar" tone="terracotta" />
       </div>
 
@@ -239,16 +239,16 @@ function Inventory() {
               <GlassDatePicker value={form.expiry_date} onChange={(v) => setForm({ ...form, expiry_date: v })} />
             </div>
             <input className={glassInput} placeholder="Quantidade inicial" inputMode="decimal" value={form.quantity} onChange={(e) => setForm({ ...form, quantity: e.target.value })} />
-            <input className={glassInput} placeholder="Estoque mínimo" inputMode="decimal" value={form.min_quantity} onChange={(e) => setForm({ ...form, min_quantity: e.target.value })} />
+            <input className={glassInput} placeholder="Minimum stock" inputMode="decimal" value={form.min_quantity} onChange={(e) => setForm({ ...form, min_quantity: e.target.value })} />
             <input className={glassInput} placeholder="Unidade (un, cx, mL...)" value={form.unit_label} onChange={(e) => setForm({ ...form, unit_label: e.target.value })} />
             <input className={glassInput} placeholder="Custo unitário (R$)" value={form.cost} onChange={(e) => setForm({ ...form, cost: e.target.value })} />
           </div>
           <div className="flex gap-2">
             <button onClick={() => save.mutate()} disabled={save.isPending} className="rounded-full bg-olive px-5 py-2 text-sm font-medium text-ivory shadow-soft hover:opacity-90 disabled:opacity-60">
-              {save.isPending ? "Salvando..." : "Cadastrar insumo"}
+              {save.isPending ? "Saving..." : "Register supply"}
             </button>
             <button onClick={() => setOpen(false)} className="rounded-full border border-white/70 bg-white/55 px-5 py-2 text-sm backdrop-blur-xl">
-              Cancelar
+              Cancel
             </button>
           </div>
         </Card>
@@ -256,8 +256,8 @@ function Inventory() {
 
       <div className="flex flex-wrap gap-2">
         {[
-          { value: "all", label: "Todos" },
-          { value: "low", label: "Estoque baixo" },
+          { value: "all", label: "All" },
+          { value: "low", label: "Low stock" },
           { value: "expiring", label: "Vencendo" },
           ...CATEGORIES,
         ].map((f) => (
@@ -276,7 +276,7 @@ function Inventory() {
       </div>
 
       {filtered.length === 0 ? (
-        <EmptyState title="Nenhum insumo neste filtro" hint="Cadastre tubos, reagentes, kits e EPIs para controlar o estoque." />
+        <EmptyState title="No supplies in this filter" hint="Register tubes, reagents, kits, and PPE to control stock." />
       ) : (
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           {filtered.map((i: any) => {
@@ -303,10 +303,10 @@ function Inventory() {
                 </div>
                 <div className="flex flex-wrap gap-1.5 text-xs">
                   <Pill tone="muted">mín. {i.min_quantity}</Pill>
-                  {i.lot && <Pill tone="muted">lote {i.lot}</Pill>}
+                  {i.lot && <Pill tone="muted">lot {i.lot}</Pill>}
                   {i.expiry_date && (
                     <Pill tone={d !== null && d < 0 ? "terracotta" : d !== null && d <= 30 ? "gold" : "muted"}>
-                      {d !== null && d < 0 ? "vencido" : `validade ${new Date(i.expiry_date + "T00:00:00").toLocaleDateString("pt-BR")}`}
+                      {d !== null && d < 0 ? "vencido" : `expires ${new Date(i.expiry_date + "T00:00:00").toLocaleDateString("pt-BR")}`}
                     </Pill>
                   )}
                 </div>
@@ -323,7 +323,7 @@ function Inventory() {
                         Registrar
                       </button>
                       <button onClick={() => setMoveFor(null)} className="rounded-full border border-border px-4 py-1.5 text-xs">
-                        Cancelar
+                        Cancel
                       </button>
                     </div>
                   </div>

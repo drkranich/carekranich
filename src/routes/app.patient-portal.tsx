@@ -96,10 +96,10 @@ function PatientPortal() {
     downloadPdf(`portal-${selected.full_name}.pdf`, `Resumo — ${selected.social_name || selected.full_name}`, [
       `Convênio: ${selected.insurance_plan ?? "Particular"}`,
       "",
-      "Próximos agendamentos:",
+      "Upcoming appointments:",
       ...upcoming.map((a: any) => `- ${new Date(a.starts_at).toLocaleString("pt-BR")} · ${a.kind}`),
       "",
-      "Pedidos de exames:",
+      "Pedidos de exams:",
       ...(orders.data ?? []).map(
         (o: any) => `- ${new Date(o.created_at).toLocaleDateString("pt-BR")} · ${ORDER_LABEL[o.status] ?? o.status} · ${brl(o.total_cents)}`,
       ),
@@ -110,12 +110,12 @@ function PatientPortal() {
     return (
       <>
         <PageHeader
-          title="Portal do paciente"
-          subtitle="Acompanhe agendamentos, pedidos de exames e orçamentos — seus e de quem você cuida."
+          title="Patient portal"
+          subtitle="Track appointments, exam orders and quotes - yours and those of people you care for."
         />
         <EmptyState
-          title="Nenhum perfil de paciente vinculado à sua conta"
-          hint="Peça à clínica para vincular seu cadastro de paciente ao seu e-mail, ou para registrar uma autorização de familiar em Pacientes → Autorizações."
+          title="No patient profile linked to your account"
+          hint="Ask the clinic to link your patient record to your email, or to register a family authorization under Patients > Authorizations."
         />
       </>
     );
@@ -124,8 +124,8 @@ function PatientPortal() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Portal do paciente"
-        subtitle="Agendamentos, pedidos e orçamentos — seus e dos familiares que você acompanha com autorização."
+        title="Patient portal"
+        subtitle="Appointments, orders and quotes - yours and those of authorized family members you follow."
         action={
           <button onClick={exportSummary} className="inline-flex items-center gap-1.5 rounded-full border border-border bg-white/55 px-4 py-2 text-xs">
             <FileDown className="h-3.5 w-3.5" /> Resumo em PDF
@@ -154,8 +154,8 @@ function PatientPortal() {
       {selected && (
         <>
           <div className="grid gap-4 md:grid-cols-3">
-            <Stat label="Próximos agendamentos" value={upcoming.length} sub="Confirmados e agendados" tone="olive" />
-            <Stat label="Pedidos de exames" value={(orders.data ?? []).length} sub="Histórico completo" tone="moss" />
+            <Stat label="Upcoming appointments" value={upcoming.length} sub="Confirmed and scheduled" tone="olive" />
+            <Stat label="Pedidos de exams" value={(orders.data ?? []).length} sub="Histórico completo" tone="moss" />
             <Stat
               label="Orçamentos abertos"
               value={(orders.data ?? []).filter((o: any) => o.status === "quote").length}
@@ -170,7 +170,7 @@ function PatientPortal() {
                 <CalendarDays className="h-4 w-4" /> Agendamentos
               </h3>
               {(appointments.data ?? []).length === 0 && (
-                <p className="text-sm text-muted-foreground">Nenhum agendamento ainda.</p>
+                <p className="text-sm text-muted-foreground">No appointments yet.</p>
               )}
               {(appointments.data ?? []).map((a: any) => {
                 const future = new Date(a.starts_at) >= new Date();
@@ -193,10 +193,10 @@ function PatientPortal() {
 
             <Card className="space-y-3 p-6">
               <h3 className="flex items-center gap-2 text-sm font-semibold text-foreground">
-                <ShoppingCart className="h-4 w-4" /> Pedidos e orçamentos
+                <ShoppingCart className="h-4 w-4" /> Pedidos and orçamentos
               </h3>
               {(orders.data ?? []).length === 0 && (
-                <p className="text-sm text-muted-foreground">Nenhum pedido de exames ainda.</p>
+                <p className="text-sm text-muted-foreground">No exam orders yet.</p>
               )}
               {(orders.data ?? []).map((o: any) => (
                 <div key={o.id} className="flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-white/70 bg-white/50 px-4 py-3">
@@ -210,7 +210,7 @@ function PatientPortal() {
                 </div>
               ))}
               <p className="text-xs text-muted-foreground">
-                Resultados de exames aparecem aqui assim que forem liberados pelo laboratório.
+                Resultados de exams aparecem aqui assim que forem liberados pelo laboratório.
               </p>
             </Card>
           </div>

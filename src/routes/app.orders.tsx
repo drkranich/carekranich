@@ -38,7 +38,7 @@ type ItemRow = {
 
 const STATUS_LABEL: Record<string, string> = {
   cart: "Carrinho",
-  quote: "Orçamento",
+  quote: "Quote",
   ordered: "Pedido confirmado",
   paid: "Pago",
   canceled: "Cancelado",
@@ -138,7 +138,7 @@ function Orders() {
 
   const patientName = (id: string | null) => {
     const p = (patients.data ?? []).find((x: any) => x.id === id);
-    return p ? p.social_name || p.full_name : "Paciente não vinculado";
+    return p ? p.social_name || p.full_name : "Patient not linked";
   };
   const patientInsurance = (id: string | null) =>
     (patients.data ?? []).find((x: any) => x.id === id)?.insurance_plan ?? null;
@@ -151,8 +151,8 @@ function Orders() {
 
   const createOrder = useMutation({
     mutationFn: async () => {
-      if (!effTenant) throw new Error("Nenhuma organização disponível.");
-      if (!newPatientId) throw new Error("Selecione o paciente do pedido.");
+      if (!effTenant) throw new Error("No organization available.");
+      if (!newPatientId) throw new Error("Select the order patient.");
       const { data, error } = await (supabase as any)
         .from("exam_orders")
         .insert({ tenant_id: effTenant, patient_id: newPatientId, origin: "reception", created_by: user?.id ?? null })
@@ -162,12 +162,12 @@ function Orders() {
       return data.id as string;
     },
     onSuccess: (id) => {
-      toast.success("Carrinho criado — adicione os exames");
+      toast.success("Cart created - add exams");
       setNewPatientId("");
       setSelectedOrderId(id);
       refresh();
     },
-    onError: (e: any) => toast.error(e.message ?? "Não foi possível criar o pedido"),
+    onError: (e: any) => toast.error(e.message ?? "Could not create the order"),
   });
 
   const recalc = async (orderId: string, discountCents?: number) => {
@@ -184,11 +184,11 @@ function Orders() {
 
   const addItem = useMutation({
     mutationFn: async () => {
-      if (!selectedOrder) throw new Error("Crie ou selecione um pedido primeiro.");
-      if (!addExamId) throw new Error("Escolha o exame.");
+      if (!selectedOrder) throw new Error("Create or select an order first.");
+      if (!addExamId) throw new Error("Choose the exam.");
       const exam = examOf(addExamId);
       const duplicated = itemsOf(selectedOrder.id).some((i) => i.exam_id === addExamId);
-      if (duplicated) throw new Error("Este exame já está no carrinho deste paciente.");
+      if (duplicated) throw new Error("This exam is already in this patient cart.");
       const { error } = await (supabase as any).from("exam_order_items").insert({
         order_id: selectedOrder.id,
         tenant_id: selectedOrder.tenant_id,
@@ -200,10 +200,10 @@ function Orders() {
     onSuccess: async () => {
       setAddExamId("");
       qc.invalidateQueries({ queryKey: ["exam-order-items", tenantId] });
-      toast.success("Exame adicionado");
+      toast.success("Exam adicionado");
       setTimeout(() => selectedOrder && recalc(selectedOrder.id), 400);
     },
-    onError: (e: any) => toast.error(e.message ?? "Não foi possível adicionar"),
+    onError: (e: any) => toast.error(e.message ?? "Could not add"),
   });
 
   const removeItem = async (item: ItemRow) => {
@@ -226,7 +226,7 @@ function Orders() {
   const applyDiscount = async () => {
     if (!selectedOrder) return;
     const cents = discount ? Math.round(Number(discount.replace(",", ".")) * 100) : 0;
-    if (Number.isNaN(cents) || cents < 0) return toast.error("Desconto inválido.");
+    if (Number.isNaN(cents) || cents < 0) return toast.error("Invalid discount.");
     await recalc(selectedOrder.id, cents);
     setDiscount("");
     toast.success("Desconto aplicado");
@@ -248,13 +248,13 @@ function Orders() {
     const fasting = list.filter((e) => e.fasting_hours);
     if (fasting.length > 1) {
       const max = Math.max(...fasting.map((e) => e.fasting_hours));
-      warnings.push(`Preparos combinados: vale o maior jejum (${max}h) para coleta única.`);
+      warnings.push(`Combined preparation: use the longest fasting period (${max}h) for single collection.`);
     } else if (fasting.length === 1) {
-      warnings.push(`Jejum necessário: ${fasting[0].fasting_hours}h (${fasting[0].commercial_name || fasting[0].name}).`);
+      warnings.push(`Fasting required: ${fasting[0].fasting_hours}h (${fasting[0].commercial_name || fasting[0].name}).`);
     }
     const screening = list.filter((e) => e.requires_screening);
     if (screening.length) {
-      warnings.push(`Exigem triagem prévia: ${screening.map((e) => e.commercial_name || e.name).join(", ")}.`);
+      warnings.push(`Require pre-screening: ${screening.map((e) => e.commercial_name || e.name).join(", ")}.`);
     }
     return warnings;
   }, [selectedOrder, items.data, exams.data]);
@@ -262,25 +262,25 @@ function Orders() {
   const exportQuote = (order: OrderRow) => {
     const list = itemsOf(order.id);
     const lines: string[] = [
-      `Paciente: ${patientName(order.patient_id)}`,
-      `Convênio: ${patientInsurance(order.patient_id) ?? "Particular"}`,
+      `Patient: ${patientName(order.patient_id)}`,
+      `Insurance: ${patientInsurance(order.patient_id) ?? "Private"}`,
       `Status: ${STATUS_LABEL[order.status] ?? order.status}`,
-      `Data: ${new Date(order.created_at).toLocaleString("pt-BR")}`,
+      `Date: ${new Date(order.created_at).toLocaleString("pt-BR")}`,
       "",
-      "Exames:",
+      "Exams:",
       ...list.map((i) => {
-        const e = examOf(i.exam_id);
-        const name = e ? e.commercial_name || e.name : "Exame";
-        return `- ${name} ... ${i.covered_by_insurance ? "coberto pelo convênio" : brl(i.price_cents)}`;
+        const exam = examOf(i.exam_id);
+        const name = exam ? exam.commercial_name || exam.name : "Exam";
+        return `- ${name} ... ${i.covered_by_insurance ? "covered by insurance" : brl(i.price_cents)}`;
       }),
       "",
       `Subtotal (particular): ${brl(order.subtotal_cents)}`,
       `Desconto: ${brl(order.discount_cents)}`,
       `Total a pagar: ${brl(order.total_cents)}`,
       "",
-      "Orçamento válido por 15 dias. Care Kranich.",
+      "Quote válido por 15 days. Care Kranich.",
     ];
-    downloadPdf(`orcamento-${patientName(order.patient_id)}.pdf`, "Orçamento de exames", lines);
+    downloadPdf(`quote-${patientName(order.patient_id)}.pdf`, "Exam quote", lines);
   };
 
   const stats = useMemo(() => {
@@ -296,26 +296,26 @@ function Orders() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Pedidos e orçamentos"
-        subtitle="Carrinho de exames por paciente: duplicados bloqueados, preparos combinados, convênio × particular e orçamento em PDF."
+        title="Orders and quotes"
+        subtitle="Exam cart by patient: duplicate blocking, combined preparation, insurance vs private and PDF quotes."
       />
 
       <div className="grid gap-4 md:grid-cols-4">
         <Stat label="Carrinhos abertos" value={stats.carts} sub="Em montagem" tone="gold" />
-        <Stat label="Orçamentos" value={stats.quotes} sub="Aguardando decisão" tone="olive" />
-        <Stat label="Pedidos confirmados" value={stats.confirmed} sub="Confirmados + pagos" tone="moss" />
+        <Stat label="Quotes" value={stats.quotes} sub="Awaiting decision" tone="olive" />
+        <Stat label="Confirmed orders" value={stats.confirmed} sub="Confirmed + paid" tone="moss" />
         <Stat label="Receita paga" value={brl(stats.revenue)} sub="Pedidos pagos" tone="wine" />
       </div>
 
       <Card className="space-y-3 p-6">
         <h3 className="flex items-center gap-2 text-sm font-semibold text-foreground">
-          <ShoppingCart className="h-4 w-4" /> Novo carrinho
+          <ShoppingCart className="h-4 w-4" /> New cart
         </h3>
         <div className="flex flex-wrap items-center gap-3">
           <GlassSelect
             value={newPatientId}
             onChange={setNewPatientId}
-            placeholder="Selecionar paciente"
+            placeholder="Select patient"
             className="min-w-72"
             options={(patients.data ?? []).map((p: any) => ({
               value: p.id,
@@ -327,10 +327,10 @@ function Orders() {
             disabled={createOrder.isPending}
             className="inline-flex items-center gap-2 rounded-full bg-olive px-5 py-2 text-sm font-medium text-ivory shadow-soft hover:opacity-90 disabled:opacity-60"
           >
-            <Plus className="h-4 w-4" /> Abrir carrinho
+            <Plus className="h-4 w-4" /> Open cart
           </button>
           <p className="text-xs text-muted-foreground">
-            Cadastre o paciente em "Pacientes" caso ainda não exista.
+            Register the patient in "Patients" if they do not exist yet.
           </p>
         </div>
       </Card>
@@ -339,7 +339,7 @@ function Orders() {
         <Card className="space-y-2 p-5">
           <h3 className="text-sm font-semibold text-foreground">Pedidos recentes</h3>
           {(orders.data ?? []).length === 0 && (
-            <p className="text-sm text-muted-foreground">Nenhum pedido ainda.</p>
+            <p className="text-sm text-muted-foreground">No orders yet.</p>
           )}
           {(orders.data ?? []).map((order) => (
             <button
@@ -356,7 +356,7 @@ function Orders() {
                 <Pill tone={STATUS_TONE[order.status] ?? "muted"}>{STATUS_LABEL[order.status] ?? order.status}</Pill>
               </div>
               <p className="mt-1 text-xs text-muted-foreground">
-                {itemsOf(order.id).length} exame(s) · {brl(order.total_cents)} ·{" "}
+                {itemsOf(order.id).length} exam(s) · {brl(order.total_cents)} ·{" "}
                 {new Date(order.created_at).toLocaleDateString("pt-BR")}
               </p>
             </button>
@@ -370,8 +370,8 @@ function Orders() {
                 <h3 className="text-lg font-semibold text-foreground">{patientName(selectedOrder.patient_id)}</h3>
                 <p className="text-xs text-muted-foreground">
                   {patientInsurance(selectedOrder.patient_id)
-                    ? `Convênio: ${patientInsurance(selectedOrder.patient_id)}`
-                    : "Particular"}{" "}
+                    ? `Insurance: ${patientInsurance(selectedOrder.patient_id)}`
+                    : "Private"}{" "}
                   · criado em {new Date(selectedOrder.created_at).toLocaleString("pt-BR")}
                 </p>
               </div>
@@ -385,7 +385,7 @@ function Orders() {
                 <GlassSelect
                   value={addExamId}
                   onChange={setAddExamId}
-                  placeholder="Adicionar exame ao carrinho"
+                  placeholder="Add exam to cart"
                   className="min-w-72 flex-1"
                   options={(exams.data ?? []).map((e: any) => ({
                     value: e.id,
@@ -404,10 +404,10 @@ function Orders() {
 
             <div className="space-y-2">
               {itemsOf(selectedOrder.id).length === 0 && (
-                <p className="text-sm text-muted-foreground">Carrinho vazio — adicione exames acima.</p>
+                <p className="text-sm text-muted-foreground">Empty cart - add exams above.</p>
               )}
               {itemsOf(selectedOrder.id).map((item) => {
-                const e = examOf(item.exam_id);
+                const exam = examOf(item.exam_id);
                 return (
                   <div
                     key={item.id}
@@ -415,12 +415,12 @@ function Orders() {
                   >
                     <div className="min-w-0">
                       <p className="truncate text-sm font-medium text-foreground">
-                        {e ? e.commercial_name || e.name : "Exame removido do catálogo"}
+                        {exam ? exam.commercial_name || exam.name : "Exam removed from catalog"}
                       </p>
                       <p className="text-xs text-muted-foreground">
-                        {e?.turnaround_days ? `Resultado em ${e.turnaround_days}d · ` : ""}
-                        {e?.fasting_hours ? `jejum ${e.fasting_hours}h · ` : ""}
-                        {item.covered_by_insurance ? "coberto pelo convênio" : brl(item.price_cents)}
+                        {exam?.turnaround_days ? `Result in ${exam.turnaround_days}d - ` : ""}
+                        {exam?.fasting_hours ? `fasting ${exam.fasting_hours}h - ` : ""}
+                        {item.covered_by_insurance ? "covered by insurance" : brl(item.price_cents)}
                       </p>
                     </div>
                     <div className="flex items-center gap-2 text-xs">
@@ -432,7 +432,7 @@ function Orders() {
                             : "border-white/70 bg-white/55 text-muted-foreground"
                         }`}
                       >
-                        {item.covered_by_insurance ? "Convênio" : "Particular"}
+                        {item.covered_by_insurance ? "Insurance" : "Private"}
                       </button>
                       {["cart", "quote"].includes(selectedOrder.status) && (
                         <button onClick={() => removeItem(item)} className="rounded-full border border-wine/30 bg-wine/5 p-1.5 text-wine">
@@ -479,16 +479,16 @@ function Orders() {
                 onClick={() => exportQuote(selectedOrder)}
                 className="inline-flex items-center gap-1.5 rounded-full border border-border bg-white/55 px-4 py-2 text-xs"
               >
-                <FileDown className="h-3.5 w-3.5" /> Orçamento em PDF
+                <FileDown className="h-3.5 w-3.5" /> Quote em PDF
               </button>
               {selectedOrder.status === "cart" && (
                 <button onClick={() => setStatus(selectedOrder, "quote")} className="rounded-full bg-olive px-4 py-2 text-xs font-medium text-ivory">
-                  Gerar orçamento
+                  Generate quote
                 </button>
               )}
               {["cart", "quote"].includes(selectedOrder.status) && (
                 <button onClick={() => setStatus(selectedOrder, "ordered")} className="rounded-full bg-moss px-4 py-2 text-xs font-medium text-ivory">
-                  Confirmar pedido
+                  Confirm order
                 </button>
               )}
               {selectedOrder.status === "ordered" && (
@@ -498,13 +498,13 @@ function Orders() {
               )}
               {selectedOrder.status !== "canceled" && selectedOrder.status !== "paid" && (
                 <button onClick={() => setStatus(selectedOrder, "canceled")} className="rounded-full border border-wine/30 bg-wine/5 px-4 py-2 text-xs text-wine">
-                  Cancelar
+                  Cancel
                 </button>
               )}
             </div>
           </Card>
         ) : (
-          <EmptyState title="Nenhum pedido selecionado" hint="Abra um carrinho para um paciente e adicione exames do catálogo." />
+          <EmptyState title="No order selected" hint="Open a cart for a patient and add exams from the catalog." />
         )}
       </div>
     </div>

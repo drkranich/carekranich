@@ -23,7 +23,7 @@ const FLOW: Array<{ key: string; label: string }> = [
 const NEXT_LABEL: Record<string, string> = {
   scheduled: "Iniciar rota",
   en_route: "Cheguei ao local",
-  arrived: "Registrar coleta",
+  arrived: "Register collection",
   collected: "Entregar no laboratório",
 };
 
@@ -132,11 +132,11 @@ function HomeCollection() {
   const patientOf = (id: string | null) => (patients.data ?? []).find((x: any) => x.id === id) ?? null;
   const patientName = (id: string | null) => {
     const p = patientOf(id);
-    return p ? p.social_name || p.full_name : "Paciente";
+    return p ? p.social_name || p.full_name : "Patient";
   };
   const collectorName = (id: string | null) => {
     const m = (members.data ?? []).find((x: any) => x.id === id);
-    return m?.name ?? "Sem coletador";
+    return m?.name ?? "No collector";
   };
 
   const refresh = () => {
@@ -158,9 +158,9 @@ function HomeCollection() {
 
   const create = useMutation({
     mutationFn: async () => {
-      if (!effTenant) throw new Error("Nenhuma organização disponível.");
-      if (!draft.patient_id) throw new Error("Selecione o paciente.");
-      if (!draft.scheduled_at) throw new Error("Escolha data e hora da coleta.");
+      if (!effTenant) throw new Error("No organization available.");
+      if (!draft.patient_id) throw new Error("Select the patient.");
+      if (!draft.scheduled_at) throw new Error("Choose collection date and time.");
       const p = patientOf(draft.patient_id);
       const { data, error } = await (supabase as any)
         .from("home_collections")
@@ -203,8 +203,8 @@ function HomeCollection() {
         patch.checkin_longitude = pos?.coords.longitude ?? null;
       }
       if (next.key === "collected") {
-        if (!collect.identity) throw new Error("Confirme a identidade do paciente antes de registrar a coleta.");
-        if (!collect.signature_name.trim()) throw new Error("Registre o nome de quem assinou a coleta.");
+        if (!collect.identity) throw new Error("Confirm patient identity before registering collection.");
+        if (!collect.signature_name.trim()) throw new Error("Enter the name of the person who signed the collection.");
         patch.identity_confirmed = true;
         patch.signature_name = collect.signature_name.trim();
         patch.material = collect.material;
@@ -260,14 +260,14 @@ function HomeCollection() {
 
   const exportPdf = (c: any) => {
     const evts = c.id === selected?.id ? (events.data ?? []) : [];
-    downloadPdf(`coleta-${patientName(c.patient_id)}.pdf`, "Comprovante de coleta domiciliar", [
-      `Paciente: ${patientName(c.patient_id)}`,
+    downloadPdf(`collection-${patientName(c.patient_id)}.pdf`, "Home collection receipt", [
+      `Patient: ${patientName(c.patient_id)}`,
       `Coletador: ${collectorName(c.collector_id)}`,
       `Endereço: ${c.address ?? "-"}${c.city ? `, ${c.city}` : ""}`,
       `Agendada para: ${new Date(c.scheduled_at).toLocaleString("pt-BR")}`,
       `Taxa de deslocamento: ${brl(c.fee_cents)}`,
       `Status: ${c.status === "failed" ? `SEM SUCESSO (${c.failure_reason})` : FLOW[flowIndex(c.status)].label}`,
-      c.identity_confirmed ? `Identidade confirmada · assinado por ${c.signature_name}` : "",
+      c.identity_confirmed ? `Identity confirmed · assinado por ${c.signature_name}` : "",
       c.material ? `Material: ${c.material}${c.temperature ? ` · temperatura ${c.temperature}` : ""}` : "",
       "",
       "Cadeia de custódia:",
@@ -293,19 +293,19 @@ function HomeCollection() {
     <div className="space-y-6">
       <PageHeader
         title="Coleta domiciliar"
-        subtitle="Agenda do coletador, rota com GPS, confirmação de identidade, assinatura e cadeia de custódia até o laboratório."
+        subtitle="Collector schedule, GPS route, identity confirmation, signature and chain of custody through the laboratory."
       />
 
       <div className="grid gap-4 md:grid-cols-4">
         <Stat label="Coletas de hoje" value={stats.today} sub="Agendadas para hoje" tone="olive" />
-        <Stat label="Em rota / no local" value={stats.enRoute} sub="Acontecendo agora" tone="gold" />
+        <Stat label="En route / on site" value={stats.enRoute} sub="Acontecendo agora" tone="gold" />
         <Stat label="Coletadas" value={stats.collected} sub="Incluindo entregues" tone="moss" />
         <Stat label="Sem sucesso" value={stats.failed} sub="Aguardando reagendamento" tone="wine" />
       </div>
 
       <Card className="space-y-3 p-6">
         <h3 className="flex items-center gap-2 text-sm font-semibold text-foreground">
-          <Truck className="h-4 w-4" /> Agendar coleta domiciliar
+          <Truck className="h-4 w-4" /> Schedule home collection
         </h3>
         <div className="grid gap-3 md:grid-cols-3">
           <GlassSelect
@@ -314,7 +314,7 @@ function HomeCollection() {
               const p = patientOf(v);
               setDraft({ ...draft, patient_id: v, address: p?.address ?? draft.address });
             }}
-            placeholder="Paciente"
+            placeholder="Patient"
             options={(patients.data ?? []).map((p: any) => ({ value: p.id, label: p.social_name || p.full_name }))}
           />
           <GlassSelect
@@ -327,7 +327,7 @@ function HomeCollection() {
           <input
             value={draft.address}
             onChange={(e) => setDraft({ ...draft, address: e.target.value })}
-            placeholder="Endereço da coleta"
+            placeholder="Collection address"
             className="rounded-2xl border border-white/70 bg-white/55 px-4 py-2.5 text-sm shadow-soft backdrop-blur-xl outline-none focus:border-olive/40 md:col-span-2"
           />
           <input
@@ -342,14 +342,14 @@ function HomeCollection() {
           disabled={create.isPending}
           className="inline-flex items-center gap-2 rounded-full bg-olive px-5 py-2 text-sm font-medium text-ivory shadow-soft hover:opacity-90 disabled:opacity-60"
         >
-          <Plus className="h-4 w-4" /> Agendar coleta
+          <Plus className="h-4 w-4" /> Schedule collection
         </button>
       </Card>
 
       <div className="grid gap-6 xl:grid-cols-[360px_1fr]">
         <Card className="space-y-2 p-5">
           <h3 className="text-sm font-semibold text-foreground">Coletas</h3>
-          {(collections.data ?? []).length === 0 && <p className="text-sm text-muted-foreground">Nenhuma coleta agendada.</p>}
+          {(collections.data ?? []).length === 0 && <p className="text-sm text-muted-foreground">No home collections scheduled.</p>}
           {(collections.data ?? []).map((c: any) => (
             <button
               key={c.id}
@@ -388,7 +388,7 @@ function HomeCollection() {
 
             {selected.status === "failed" && (
               <div className="rounded-2xl border border-wine/25 bg-wine/5 p-4 text-sm text-wine">
-                Tentativa sem sucesso: {selected.failure_reason}. Agende uma nova coleta.
+                Unsuccessful attempt: {selected.failure_reason}. Schedule a new collection.
               </div>
             )}
 
@@ -415,7 +415,7 @@ function HomeCollection() {
 
             {selected.status === "arrived" && (
               <div className="space-y-2 rounded-2xl border border-white/70 bg-white/45 p-4">
-                <p className="text-xs font-semibold text-foreground">Registro da coleta</p>
+                <p className="text-xs font-semibold text-foreground">Collection record</p>
                 <div className="grid gap-2 md:grid-cols-3">
                   <input
                     value={collect.signature_name}
@@ -426,7 +426,7 @@ function HomeCollection() {
                   <input
                     value={collect.material}
                     onChange={(e) => setCollect({ ...collect, material: e.target.value })}
-                    placeholder="Material coletado"
+                    placeholder="Collected material"
                     className="rounded-xl border border-border bg-ivory px-3 py-2 text-sm"
                   />
                   <input
@@ -445,7 +445,7 @@ function HomeCollection() {
                       : "border-white/70 bg-white/55 text-muted-foreground"
                   }`}
                 >
-                  {collect.identity ? "Identidade confirmada ✓" : "Confirmar identidade do paciente"}
+                  {collect.identity ? "Identity confirmed ✓" : "Confirm patient identity"}
                 </button>
               </div>
             )}
@@ -463,7 +463,7 @@ function HomeCollection() {
                   onClick={() => fail.mutate()}
                   className="rounded-full border border-wine/30 bg-wine/5 px-4 py-2 text-sm text-wine"
                 >
-                  Tentativa sem sucesso
+                  Unsuccessful attempt
                 </button>
               </div>
             )}
@@ -487,7 +487,7 @@ function HomeCollection() {
             </div>
           </Card>
         ) : (
-          <EmptyState title="Nenhuma coleta selecionada" hint="Agende uma coleta domiciliar para acompanhar a rota e a custódia." />
+          <EmptyState title="No collection selected" hint="Schedule a home collection to track the route and custody." />
         )}
       </div>
     </div>

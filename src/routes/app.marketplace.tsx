@@ -12,11 +12,11 @@ export const Route = createFileRoute("/app/marketplace")({
 });
 
 const categories = [
-  { value: "all", label: "Todos" },
+  { value: "all", label: "All" },
   { value: "service_provider", label: "Prestador de serviços" },
   { value: "staff", label: "Funcionário" },
-  { value: "clinic", label: "Clínica" },
-  { value: "family", label: "Família" },
+  { value: "clinic", label: "Clinic" },
+  { value: "family", label: "Family" },
 ];
 
 const categoryLabel = (value: string) =>

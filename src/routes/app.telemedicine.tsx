@@ -86,7 +86,7 @@ function Telemedicine() {
     <>
       <PageHeader
         title="Telemedicina"
-        subtitle="Solicitações e eventos clínicos reais, com sala de vídeo instantânea por consulta."
+        subtitle="Solicitações and eventos clínicos reais, com sala de vídeo instantânea por consulta."
         action={<Pill tone={telemed.isError ? "wine" : "olive"}>{telemed.isError ? "Erro de leitura" : "Vídeo integrado"}</Pill>}
       />
 
@@ -126,7 +126,7 @@ function Telemedicine() {
             </div>
             {(telemed.data?.threads ?? []).length === 0 ? (
               <div className="mt-5">
-                <EmptyState title="Nenhuma solicitação de telemedicina" hint="Crie uma solicitação de consulta para iniciar uma conversa real." />
+                <EmptyState title="No telemedicine requests" hint="Create a consultation request to start a real conversation." />
               </div>
             ) : (
               <div className="mt-5 space-y-3">
@@ -161,7 +161,7 @@ function Telemedicine() {
                   <p className="mt-1 text-sm text-muted-foreground">{event.description ?? "Sem descrição."}</p>
                 </div>
               ))}
-              {(telemed.data?.events ?? []).length === 0 && <p className="text-sm text-muted-foreground">Nenhum evento de telemedicina registrado.</p>}
+              {(telemed.data?.events ?? []).length === 0 && <p className="text-sm text-muted-foreground">No telemedicine event recorded.</p>}
             </div>
           </Card>
         </div>

@@ -437,9 +437,9 @@ function CarePlanPage() {
                     name="care_plan_id"
                     value={taskPlanId}
                     onChange={setTaskPlanId}
-                    placeholder="Sem plano"
+                    placeholder="No plan"
                     options={[
-                      { value: "", label: "Sem plano" },
+                      { value: "", label: "No plan" },
                       ...plans.map((p) => ({ value: p.id, label: p.title })),
                     ]}
                   />

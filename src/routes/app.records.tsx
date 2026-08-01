@@ -12,12 +12,12 @@ import { downloadPdf } from "@/lib/pdf";
 export const Route = createFileRoute("/app/records")({ component: MedicalRecords });
 
 const TYPE_LABELS: Record<string, string> = {
-  soap: "Evolução SOAP",
-  evolucao: "Evolução livre",
-  prescricao: "Prescrição",
+  soap: "SOAP progress note",
+  evolucao: "Free progress note",
+  prescricao: "Prescription",
   atestado: "Atestado",
   alergia: "Alergia",
-  historico: "Histórico",
+  historico: "History",
 };
 
 async function sha256Hex(text: string) {
@@ -69,7 +69,7 @@ function MedicalRecords() {
 
   const save = useMutation({
     mutationFn: async () => {
-      if (!resident) throw new Error("Selecione um residente.");
+      if (!resident) throw new Error("Select a resident.");
       const payloadText = isSoap
         ? `S:${form.subjective}\nO:${form.objective}\nA:${form.assessment}\nP:${form.plan}\nCID:${form.cid}`
         : form.content;
@@ -91,11 +91,11 @@ function MedicalRecords() {
       if (error) throw error;
     },
     onSuccess: () => {
-      toast.success("Registro assinado e adicionado ao prontuário");
+      toast.success("Record signed and added to the chart");
       setForm({ subjective: "", objective: "", assessment: "", plan: "", cid: "", content: "" });
       qc.invalidateQueries({ queryKey: ["medical-records", residentId] });
     },
-    onError: (error: any) => toast.error(error.message ?? "Não foi possível registrar"),
+    onError: (error: any) => toast.error(error.message ?? "Could not register"),
   });
 
   const exportRecordPdf = (record: any) => {
@@ -104,8 +104,8 @@ function MedicalRecords() {
         ? [
             `S (Subjetivo): ${record.subjective ?? "-"}`,
             `O (Objetivo): ${record.objective ?? "-"}`,
-            `A (Avaliação): ${record.assessment ?? "-"}`,
-            `P (Plano): ${record.plan ?? "-"}`,
+            `A (Assessment): ${record.assessment ?? "-"}`,
+            `P (Plan): ${record.plan ?? "-"}`,
             `CID: ${record.cid_code ?? "-"}`,
           ]
         : [record.content ?? "-", record.cid_code ? `CID: ${record.cid_code}` : ""];
@@ -113,7 +113,7 @@ function MedicalRecords() {
       ...lines,
       "",
       `Autor: ${record.author_role ? ROLE_LABELS[record.author_role as AppRole] ?? record.author_role : "-"}`,
-      `Data: ${new Date(record.created_at).toLocaleString("pt-BR")}`,
+      `Date: ${new Date(record.created_at).toLocaleString("pt-BR")}`,
       `Hash de integridade: ${record.signed_hash ?? "-"}`,
     ]);
   };
@@ -127,7 +127,7 @@ function MedicalRecords() {
         : [`  ${record.content ?? "-"}`]),
       "",
     ]);
-    downloadPdf(`prontuario-completo-${residentLabel}`, `Prontuário — ${residentLabel}`, [
+    downloadPdf(`complete-chart-${residentLabel}`, `Chart - ${residentLabel}`, [
       resident.date_of_birth ? `Nascimento: ${new Date(resident.date_of_birth + "T12:00:00").toLocaleDateString("pt-BR")}` : "",
       "",
       ...lines,
@@ -138,14 +138,14 @@ function MedicalRecords() {
   return (
     <>
       <PageHeader
-        title="Prontuário eletrônico"
-        subtitle="Evolução SOAP, prescrições, atestados e alergias — registros imutáveis, assinados com hash e por profissional."
+        title="Electronic health record"
+        subtitle="SOAP progress notes, prescriptions, certificates and allergies - immutable records signed with hash and professional identity."
         action={
           <div className="flex items-center gap-2">
-            <Pill tone="olive">Imutável + hash</Pill>
+            <Pill tone="olive">Immutable + hash</Pill>
             {resident && (
               <button onClick={exportFullPdf} className="rounded-full border border-moss/40 bg-white/60 px-4 py-2 text-xs font-medium hover:bg-moss/15">
-                Prontuário completo PDF
+                Complete chart PDF
               </button>
             )}
           </div>
@@ -153,9 +153,9 @@ function MedicalRecords() {
       />
 
       <div className="grid gap-4 md:grid-cols-3">
-        <Stat label="Registros" value={residentId ? records.data?.length ?? "-" : "—"} sub={residentLabel || "Selecione um residente"} tone="olive" />
+        <Stat label="Records" value={residentId ? records.data?.length ?? "-" : "—"} sub={residentLabel || "Select a resident"} tone="olive" />
         <Stat
-          label="Última evolução"
+          label="Latest progress note"
           value={records.data?.[0] ? new Date(records.data[0].created_at).toLocaleDateString("pt-BR") : "—"}
           sub={records.data?.[0] ? TYPE_LABELS[records.data[0].record_type] : "Sem registros"}
           tone="moss"
@@ -163,7 +163,7 @@ function MedicalRecords() {
         <Stat
           label="Alergias registradas"
           value={residentId ? (records.data ?? []).filter((r: any) => r.record_type === "alergia").length : "—"}
-          sub="Atenção clínica"
+          sub="Clinical attention"
           tone="wine"
         />
       </div>
@@ -172,13 +172,13 @@ function MedicalRecords() {
         <GlassSelect
           value={residentId}
           onChange={setResidentId}
-          placeholder="Selecione o residente/paciente"
+          placeholder="Select resident/patient"
           options={(residents.data ?? []).map((item: any) => ({ value: item.id, label: item.preferred_name || item.full_name }))}
         />
       </Card>
 
       {!resident ? (
-        <div className="mt-6"><EmptyState title="Escolha um residente" hint="O prontuário é individual, imutável e auditável." /></div>
+        <div className="mt-6"><EmptyState title="Choose a resident" hint="The chart is individual, immutable and auditable." /></div>
       ) : (
         <div className="mt-6 grid gap-6 xl:grid-cols-[420px_1fr]">
           <Card>
@@ -195,12 +195,12 @@ function MedicalRecords() {
               {isSoap ? (
                 <>
                   <textarea value={form.subjective} onChange={(e) => setForm({ ...form, subjective: e.target.value })} rows={2} placeholder="S — Subjetivo (queixas, relato)" className="w-full rounded-xl border border-border bg-ivory px-3 py-2 text-sm" />
-                  <textarea value={form.objective} onChange={(e) => setForm({ ...form, objective: e.target.value })} rows={2} placeholder="O — Objetivo (exame físico, sinais vitais)" className="w-full rounded-xl border border-border bg-ivory px-3 py-2 text-sm" />
-                  <textarea value={form.assessment} onChange={(e) => setForm({ ...form, assessment: e.target.value })} rows={2} placeholder="A — Avaliação (hipóteses, diagnóstico)" className="w-full rounded-xl border border-border bg-ivory px-3 py-2 text-sm" />
-                  <textarea value={form.plan} onChange={(e) => setForm({ ...form, plan: e.target.value })} rows={2} placeholder="P — Plano (conduta, exames, retorno)" className="w-full rounded-xl border border-border bg-ivory px-3 py-2 text-sm" />
+                  <textarea value={form.objective} onChange={(e) => setForm({ ...form, objective: e.target.value })} rows={2} placeholder="O - Objective (physical exam, vital signs)" className="w-full rounded-xl border border-border bg-ivory px-3 py-2 text-sm" />
+                  <textarea value={form.assessment} onChange={(e) => setForm({ ...form, assessment: e.target.value })} rows={2} placeholder="A - Assessment (hypotheses, diagnosis)" className="w-full rounded-xl border border-border bg-ivory px-3 py-2 text-sm" />
+                  <textarea value={form.plan} onChange={(e) => setForm({ ...form, plan: e.target.value })} rows={2} placeholder="P — Plan (conduta, exams, retorno)" className="w-full rounded-xl border border-border bg-ivory px-3 py-2 text-sm" />
                 </>
               ) : (
-                <textarea value={form.content} onChange={(e) => setForm({ ...form, content: e.target.value })} rows={6} placeholder={`Conteúdo de ${TYPE_LABELS[type].toLowerCase()}...`} className="w-full rounded-xl border border-border bg-ivory px-3 py-2 text-sm" />
+                <textarea value={form.content} onChange={(e) => setForm({ ...form, content: e.target.value })} rows={6} placeholder={`Content for ${TYPE_LABELS[type].toLowerCase()}...`} className="w-full rounded-xl border border-border bg-ivory px-3 py-2 text-sm" />
               )}
               <input value={form.cid} onChange={(e) => setForm({ ...form, cid: e.target.value.toUpperCase() })} placeholder="CID-10 (ex.: I10, F03)" className="w-full rounded-xl border border-border bg-ivory px-3 py-2 text-sm" />
               <button
@@ -208,10 +208,10 @@ function MedicalRecords() {
                 disabled={save.isPending || !canSave}
                 className="w-full rounded-full bg-olive px-4 py-2.5 text-sm font-semibold text-ivory disabled:opacity-50"
               >
-                {save.isPending ? "Assinando..." : "Assinar e registrar"}
+                {save.isPending ? "Signing..." : "Sign and register"}
               </button>
               <p className="text-[11px] leading-4 text-muted-foreground">
-                Registros não podem ser editados nem apagados — correções entram como novas evoluções (versionamento clínico).
+                Records cannot be edited or deleted - corrections are entered as new progress notes (clinical versioning).
               </p>
             </div>
           </Card>
@@ -219,10 +219,10 @@ function MedicalRecords() {
           <Card>
             <div className="flex items-center gap-2">
               <FileText className="h-4 w-4 text-olive" />
-              <h2 className="text-lg font-semibold text-foreground">Linha do tempo clínica — {residentLabel}</h2>
+              <h2 className="text-lg font-semibold text-foreground">Clinical timeline - {residentLabel}</h2>
             </div>
             {(records.data ?? []).length === 0 ? (
-              <p className="mt-4 text-sm text-muted-foreground">Nenhum registro no prontuário ainda.</p>
+              <p className="mt-4 text-sm text-muted-foreground">No chart records yet.</p>
             ) : (
               <div className="mt-4 space-y-3">
                 {(records.data ?? []).map((record: any) => (

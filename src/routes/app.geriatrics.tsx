@@ -28,19 +28,19 @@ const SCALES: Record<string, { label: string; min: number; max: number; risk: (s
     label: "Barthel (independência funcional)",
     min: 0,
     max: 100,
-    risk: (s) => (s < 20 ? { level: "Dependência total", tone: "wine" } : s < 40 ? { level: "Dependência grave", tone: "wine" } : s < 60 ? { level: "Dependência moderada", tone: "gold" } : s < 100 ? { level: "Dependência leve", tone: "gold" } : { level: "Independente", tone: "moss" }),
+    risk: (s) => (s < 20 ? { level: "Dependência total", tone: "wine" } : s < 40 ? { level: "Dependência grave", tone: "wine" } : s < 60 ? { level: "Dependência moderada", tone: "gold" } : s < 100 ? { level: "Dependência leve", tone: "gold" } : { level: "Independent", tone: "moss" }),
   },
   katz: {
     label: "Katz (atividades da vida diária)",
     min: 0,
     max: 6,
-    risk: (s) => (s <= 2 ? { level: "Dependência importante", tone: "wine" } : s <= 4 ? { level: "Dependência parcial", tone: "gold" } : { level: "Independente", tone: "moss" }),
+    risk: (s) => (s <= 2 ? { level: "Dependência importante", tone: "wine" } : s <= 4 ? { level: "Dependência parcial", tone: "gold" } : { level: "Independent", tone: "moss" }),
   },
   minimental: {
     label: "Mini Mental (rastreio cognitivo)",
     min: 0,
     max: 30,
-    risk: (s) => (s < 24 ? { level: "Sugestivo de déficit — avaliar escolaridade", tone: "gold" } : { level: "Dentro do esperado", tone: "moss" }),
+    risk: (s) => (s < 24 ? { level: "Sugestivo de déficit — avaliar escolaridade", tone: "gold" } : { level: "Within expected range", tone: "moss" }),
   },
 };
 
@@ -48,7 +48,7 @@ const CARE_TYPES: { value: string; label: string; icon: typeof ShowerHead; withQ
   { value: "banho", label: "Banho", icon: ShowerHead },
   { value: "alimentacao", label: "Alimentação", icon: Utensils },
   { value: "hidratacao", label: "Hidratação", icon: Droplets, withQuantity: "ml" },
-  { value: "sono", label: "Sono", icon: Moon, withQuantity: "horas" },
+  { value: "sono", label: "Sono", icon: Moon, withQuantity: "hours" },
   { value: "mobilidade", label: "Mobilidade", icon: Activity },
   { value: "fralda", label: "Troca de fralda", icon: HeartPulse },
   { value: "visita", label: "Visita", icon: HeartPulse },
@@ -113,11 +113,11 @@ function Geriatrics() {
 
   const saveScale = useMutation({
     mutationFn: async () => {
-      if (!resident) throw new Error("Selecione um residente.");
+      if (!resident) throw new Error("Select a resident.");
       const numeric = Number(score);
       const config = SCALES[scale];
       if (Number.isNaN(numeric) || numeric < config.min || numeric > config.max) {
-        throw new Error(`Pontuação de ${config.label} deve estar entre ${config.min} e ${config.max}.`);
+        throw new Error(`Score for ${config.label} must be between ${config.min} and ${config.max}.`);
       }
       const { error } = await (supabase as any).from("care_scale_assessments").insert({
         tenant_id: resident.tenant_id,
@@ -141,7 +141,7 @@ function Geriatrics() {
 
   const logCare = useMutation({
     mutationFn: async (careType: string) => {
-      if (!resident) throw new Error("Selecione um residente.");
+      if (!resident) throw new Error("Select a resident.");
       const { error } = await (supabase as any).from("daily_care_logs").insert({
         tenant_id: resident.tenant_id,
         resident_id: resident.id,
@@ -178,12 +178,12 @@ function Geriatrics() {
           CARE_TYPES.find((item) => item.value === log.care_type)?.label ?? log.care_type
         }${log.quantity ? ` (${log.quantity})` : ""}${log.detail ? ` — ${log.detail}` : ""}`,
     );
-    downloadPdf(`geriatria-${residentLabel}`, `Relatório geriátrico — ${residentLabel}`, [
+    downloadPdf(`geriatria-${residentLabel}`, `Geriatric report — ${residentLabel}`, [
       "ESCALAS CLÍNICAS (última avaliação)",
       ...scaleLines,
       "",
       "ROTINA DE HOJE",
-      ...(todayLines.length ? todayLines : ["Nenhum cuidado registrado hoje."]),
+      ...(todayLines.length ? todayLines : ["No care recorded today."]),
       "",
       `Gerado em ${new Date().toLocaleString("pt-BR")} - Care Kranich`,
     ]);
@@ -193,13 +193,13 @@ function Geriatrics() {
     <>
       <PageHeader
         title="Gestão geriátrica"
-        subtitle="Escalas clínicas validadas (Braden, Morse, Barthel, Katz, Mini Mental) e rotina diária de cuidados por residente."
+        subtitle="Validated clinical scales (Braden, Morse, Barthel, Katz, Mini Mental) and daily care routine by resident."
         action={
           <div className="flex items-center gap-2">
             <Pill tone="olive">Módulo clínico</Pill>
             {resident && (
               <button onClick={exportReport} className="rounded-full border border-moss/40 bg-white/60 px-4 py-2 text-xs font-medium hover:bg-moss/15">
-                Relatório PDF
+                PDF report
               </button>
             )}
           </div>
@@ -211,7 +211,7 @@ function Geriatrics() {
           <GlassSelect
             value={residentId}
             onChange={setResidentId}
-            placeholder="Selecione o residente"
+            placeholder="Select resident"
             options={(residents.data ?? []).map((item: any) => ({
               value: item.id,
               label: item.preferred_name || item.full_name,
@@ -222,7 +222,7 @@ function Geriatrics() {
       </Card>
 
       {!resident ? (
-        <div className="mt-6"><EmptyState title="Escolha um residente" hint="As escalas e a rotina diária são registradas por pessoa." /></div>
+        <div className="mt-6"><EmptyState title="Choose a resident" hint="As escalas and a rotina diária são registradas por pessoa." /></div>
       ) : (
         <>
           <div className="mt-6 grid gap-3 md:grid-cols-3 xl:grid-cols-5">
@@ -252,7 +252,7 @@ function Geriatrics() {
                   <input
                     value={score}
                     onChange={(e) => setScore(e.target.value.replace(/[^\d.]/g, ""))}
-                    placeholder={`Pontuação (${SCALES[scale].min}–${SCALES[scale].max})`}
+                    placeholder={`Score (${SCALES[scale].min}–${SCALES[scale].max})`}
                     inputMode="numeric"
                     className="w-full rounded-xl border border-border bg-ivory px-3 py-2 text-sm"
                   />
@@ -271,7 +271,7 @@ function Geriatrics() {
                     disabled={saveScale.isPending || !score}
                     className="rounded-full bg-olive px-5 py-2 text-xs font-semibold text-ivory disabled:opacity-50"
                   >
-                    {saveScale.isPending ? "Salvando..." : "Registrar avaliação"}
+                    {saveScale.isPending ? "Saving..." : "Registrar avaliação"}
                   </button>
                 </div>
               </Card>
@@ -305,7 +305,7 @@ function Geriatrics() {
                   <input
                     value={careQty}
                     onChange={(e) => setCareQty(e.target.value.replace(/[^\d.]/g, ""))}
-                    placeholder="Quantidade (ml, horas...)"
+                    placeholder="Quantidade (ml, hours...)"
                     className="rounded-xl border border-border bg-ivory px-3 py-2 text-sm"
                   />
                   <input
@@ -322,7 +322,7 @@ function Geriatrics() {
           <Card className="mt-6">
             <h2 className="text-xl font-semibold text-foreground">Hoje — {residentLabel}</h2>
             {(careLogs.data ?? []).length === 0 ? (
-              <p className="mt-3 text-sm text-muted-foreground">Nenhum cuidado registrado hoje ainda.</p>
+              <p className="mt-3 text-sm text-muted-foreground">No care recorded today yet.</p>
             ) : (
               <div className="mt-4 space-y-2">
                 {(careLogs.data ?? []).map((log: any) => (
@@ -344,7 +344,7 @@ function Geriatrics() {
           <Card className="mt-6">
             <h2 className="text-xl font-semibold text-foreground">Histórico de escalas</h2>
             {(assessments.data ?? []).length === 0 ? (
-              <p className="mt-3 text-sm text-muted-foreground">Nenhuma avaliação registrada.</p>
+              <p className="mt-3 text-sm text-muted-foreground">No assessment recorded.</p>
             ) : (
               <div className="mt-4 space-y-2">
                 {(assessments.data ?? []).slice(0, 20).map((item: any) => (

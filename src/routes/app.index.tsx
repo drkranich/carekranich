@@ -221,68 +221,68 @@ function workspaceFor(
     return {
       eyebrow: "Super admin",
       title: "Ecossistema Care Kranich",
-      subtitle: "Painel global para aprovar usuários, planos, contratos e operação.",
-      body: "Aqui ficam as decisões de plataforma: acesso, receita, contratos, inbox, verificações e saúde operacional.",
+      subtitle: "Global dashboard to approve users, plans, contracts and operations.",
+      body: "This is where platform decisions live: access, revenue, contracts, inbox, verifications and operational health.",
       links: [
         { to: "/app/admin", label: "Super Admin", hint: "Visão global" },
-        { to: "/app/approvals", label: "Aprovações", hint: "Usuários e clínicas" },
-        { to: "/app/billing", label: "Planos", hint: "Assinaturas e acesso" },
-        { to: "/app/inbox", label: "Inbox", hint: "Conversas do ecossistema" },
+        { to: "/app/approvals", label: "Approvals", hint: "Users and clinics" },
+        { to: "/app/billing", label: "Plans", hint: "Subscriptions and access" },
+        { to: "/app/inbox", label: "Inbox", hint: "Ecosystem conversations" },
       ],
     };
   }
   if (isAdmin || userKind === "clinic") {
     return {
-      eyebrow: "Clínica",
-      title: "Operação da clínica",
-      subtitle: "Área para gerir residentes, equipe, cuidado e qualidade.",
-      body: "A clínica acompanha alertas, tarefas, documentos, equipe e indicadores sem entrar nas ferramentas de dono da plataforma.",
+      eyebrow: "Clinic",
+      title: "Clinic operations",
+      subtitle: "Space to manage residents, staff, care and quality.",
+      body: "The clinic tracks alerts, tasks, documents, staff and indicators without entering platform-owner tools.",
       links: [
-        { to: "/app/residents", label: "Residentes", hint: "Perfis e cuidado" },
-        { to: "/app/tenants", label: "Organização", hint: "Equipe e permissões" },
-        { to: "/app/command", label: "Comando", hint: "Operação do dia" },
-        { to: "/app/care-plan", label: "Plano de cuidado", hint: "Rotina clínica" },
+        { to: "/app/residents", label: "Residents", hint: "Profiles and care" },
+        { to: "/app/tenants", label: "Organization", hint: "Team and permissions" },
+        { to: "/app/command", label: "Command", hint: "Daily operations" },
+        { to: "/app/care-plan", label: "Care plan", hint: "Rotina clínica" },
       ],
     };
   }
   if (userKind === "service_provider") {
     return {
-      eyebrow: "Prestador",
-      title: "Área do prestador de serviços",
-      subtitle: "Espaco para identidade, contatos, documentos e oportunidades.",
-      body: "Prestadores entram pelo marketplace, conversam pelo inbox, mantem verificação facial e organizam documentos profissionais.",
+      eyebrow: "Provider",
+      title: "Service provider area",
+      subtitle: "Space for identity, contacts, documents and opportunities.",
+      body: "Providers enter through the marketplace, chat through the inbox, maintain facial verification and organize professional documents.",
       links: [
-        { to: "/app/marketplace", label: "Marketplace", hint: "Presenca publica" },
-        { to: "/app/inbox", label: "Inbox", hint: "Conversas com clientes" },
-        { to: "/app/documents", label: "Documentos", hint: "Certificados e contratos" },
-        { to: "/app/identity", label: "Verificação", hint: "Reconhecimento facial" },
+        { to: "/app/marketplace", label: "Marketplace", hint: "Public presence" },
+        { to: "/app/inbox", label: "Inbox", hint: "Customer conversations" },
+        { to: "/app/documents", label: "Documents", hint: "Certificates and contracts" },
+        { to: "/app/identity", label: "Verificação", hint: "Facial recognition" },
       ],
     };
   }
   if (isStaff || userKind === "staff") {
     return {
-      eyebrow: "Equipe de cuidado",
-      title: "Turno e cuidado direto",
-      subtitle: "Área para tarefas, registros, alertas e evolução de residentes.",
-      body: "A equipe trabalha com timeline, plano de cuidado, app do cuidador, alertas e documentos clínicos conforme permissão.",
+      eyebrow: "Care team",
+      title: "Shift and direct care",
+      subtitle: "Space for tasks, records, alerts and resident progress.",
+      body: "The team works with timeline, care plan, caregiver app, alerts and clinical documents according to permissions.",
       links: [
-        { to: "/app/caregiver", label: "App cuidador", hint: "Tarefas do turno" },
-        { to: "/app/timeline", label: "Timeline", hint: "Registrar cuidado" },
-        { to: "/app/alerts", label: "Alertas", hint: "Resolver incidentes" },
-        { to: "/app/medical", label: "Médico", hint: "Notas clínicas" },
+        { to: "/app/caregiver", label: "Caregiver app", hint: "Tarefas do turno" },
+        { to: "/app/timeline", label: "Timeline", hint: "Log care" },
+        { to: "/app/alerts", label: "Alertas", hint: "Resolve incidents" },
+        { to: "/app/medical", label: "Doctor", hint: "Clinical notes" },
       ],
     };
   }
   return {
-    eyebrow: "Família",
-    title: "Cuidado familiar",
-    subtitle: "Área para acompanhar quem você ama, memórias, casa inteligente e alertas.",
-    body: "Usuários comuns veem o que importa para a família: residentes vinculados, memórias, rotina, documentos, alertas e comunicação com a equipe.",
+    eyebrow: "Family",
+    title: "Family care",
+    subtitle: "Space to follow the people you love, memories, smart home and alerts.",
+    body: "Common users see what matters to the family: linked residents, memories, routine, documents, alerts and team communication.",
     links: [
-      { to: "/app/residents", label: "Residentes", hint: "Quem você acompanha" },
-      { to: "/app/memory", label: "Memórias", hint: "História e legado" },
-      { to: "/app/smart-home", label: "Casa inteligente", hint: "Sensores e ambiente" },
-      { to: "/app/inbox", label: "Inbox", hint: "Fale com a equipe" },
+      { to: "/app/residents", label: "Residents", hint: "Quem você acompanha" },
+      { to: "/app/memory", label: "Memories", hint: "History and legacy" },
+      { to: "/app/smart-home", label: "Smart home", hint: "Sensors and environment" },
+      { to: "/app/inbox", label: "Inbox", hint: "Talk to the team" },
     ],
   };
 }

@@ -106,12 +106,12 @@ function Reception() {
 
   const patientName = (id: string | null) => {
     const p = (patients.data ?? []).find((x) => x.id === id);
-    return p ? p.social_name || p.full_name : "Paciente";
+    return p ? p.social_name || p.full_name : "Patient";
   };
 
   const create = useMutation({
     mutationFn: async () => {
-      if (!draft.patient_id) throw new Error("Selecione o paciente.");
+      if (!draft.patient_id) throw new Error("Select the patient.");
       const todayCount = (checkins.data ?? []).length;
       const prefix = draft.priority ? "P" : "N";
       const ticket = `${prefix}${String(todayCount + 1).padStart(3, "0")}`;
@@ -170,12 +170,12 @@ function Reception() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Recepção e check-in"
-        subtitle="Fila do dia, senhas, prioridades e pendências antes de liberar cada paciente."
+        title="Recepção and check-in"
+        subtitle="Daily queue, tickets, priorities and pending items before releasing each patient."
       />
 
       <div className="grid gap-4 md:grid-cols-4">
-        <Stat label="Aguardando" value={waiting.length} tone="olive" sub="pacientes na fila" />
+        <Stat label="Waiting" value={waiting.length} tone="olive" sub="patients in queue" />
         <Stat label="Em atendimento" value={inService.length} tone="moss" sub="chamados agora" />
         <Stat label="Atendidos hoje" value={done.length} tone="gold" sub="check-ins concluídos" />
         <Stat label="Espera média" value={`${avgWait} min`} tone="wine" sub="fila atual" />
@@ -189,7 +189,7 @@ function Reception() {
           <GlassSelect
             value={draft.patient_id}
             onChange={(v) => setDraft({ ...draft, patient_id: v })}
-            placeholder="Paciente"
+            placeholder="Patient"
             options={(patients.data ?? []).map((p) => ({ value: p.id, label: p.social_name || p.full_name }))}
           />
           <GlassSelect
@@ -220,7 +220,7 @@ function Reception() {
         </div>
         <div>
           <p className="mb-2 text-xs font-medium text-muted-foreground">
-            Pendências a resolver antes de liberar o paciente
+            Pending items to resolve before releasing the patient
           </p>
           <div className="flex flex-wrap gap-2">
             {PENDING_OPTIONS.map((item) => (
@@ -248,7 +248,7 @@ function Reception() {
           disabled={create.isPending}
           className="inline-flex items-center gap-2 rounded-full bg-olive px-5 py-2 text-sm font-medium text-ivory shadow-soft hover:opacity-90 disabled:opacity-60"
         >
-          <TicketCheck className="h-4 w-4" /> {create.isPending ? "Gerando senha..." : "Fazer check-in e gerar senha"}
+          <TicketCheck className="h-4 w-4" /> {create.isPending ? "Gerando senha..." : "Fazer check-in and gerar senha"}
         </button>
       </Card>
 
@@ -308,7 +308,7 @@ function Reception() {
 
         <Card className="space-y-3 p-6">
           <h3 className="text-sm font-semibold text-foreground">Em atendimento</h3>
-          {inService.length === 0 && <p className="text-sm text-muted-foreground">Nenhum paciente em atendimento.</p>}
+          {inService.length === 0 && <p className="text-sm text-muted-foreground">No patient currently in service.</p>}
           {inService.map((row) => (
             <div key={row.id} className="flex items-center justify-between gap-2 rounded-2xl border border-white/70 bg-white/45 p-4 backdrop-blur-xl">
               <div className="flex items-center gap-3">
@@ -347,7 +347,7 @@ function Reception() {
 
       {rows.length === 0 && (
         <EmptyState
-          title="Nenhum check-in hoje"
+          title="No check-ins today"
           hint="Faça o primeiro check-in acima para iniciar a fila do dia."
         />
       )}

@@ -164,7 +164,7 @@ function Origins() {
 
   const exportPdf = () => {
     if (!result.data) return;
-    const name = selectedPatient?.social_name || selectedPatient?.full_name || "Paciente";
+    const name = selectedPatient?.social_name || selectedPatient?.full_name || "Patient";
     downloadAncestryPdf(`minhas-origens-${name}.pdf`, {
       patientName: name,
       version: result.data.version,
@@ -219,8 +219,8 @@ function Origins() {
           subtitle="Seu atlas ancestral aparecerá aqui assim que o resultado do teste genético for liberado."
         />
         <EmptyState
-          title="Nenhum resultado de ancestralidade publicado"
-          hint="Quando o laboratório liberar seu resultado, você receberá uma notificação e poderá explorar o mapa das suas origens."
+          title="No ancestry result published"
+          hint="Quando o laboratório liberar seu resultado, você receberá uma notificação and poderá explorar o mapa das suas origens."
         />
       </>
     );
@@ -257,7 +257,7 @@ function Origins() {
               Rever a revelação
             </button>
             <button onClick={exportPdf} className="inline-flex items-center gap-1.5 rounded-full border border-border bg-white/55 px-4 py-2 text-xs">
-              <FileDown className="h-3.5 w-3.5" /> Relatório em PDF
+              <FileDown className="h-3.5 w-3.5" /> PDF report
             </button>
           </div>
         }
@@ -466,7 +466,7 @@ function Origins() {
           Resultado processado por {result.data.lab_name ?? "laboratório parceiro"} · algoritmo{" "}
           {result.data.algorithm_version ?? "não informado"} · população de referência{" "}
           {result.data.reference_population ?? "não informada"}. Novas versões podem surgir conforme os bancos de
-          referência forem ampliados — você será avisado e poderá comparar com o resultado anterior.
+          referência forem ampliados — você será avisado and poderá comparar com o resultado anterior.
         </p>
       </Card>
     </div>

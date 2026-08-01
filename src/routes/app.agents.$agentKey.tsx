@@ -212,9 +212,9 @@ function AgentWorkspace() {
                 value={residentId ?? ""}
                 onChange={(value) => setResidentId(value || null)}
                 className="ml-auto w-52"
-                placeholder="Selecionar residente..."
+                placeholder="Select resident..."
                 options={[
-                  { value: "", label: "Selecionar residente..." },
+                  { value: "", label: "Select resident..." },
                   ...residents.map((r) => ({ value: r.id, label: r.preferred_name ?? r.full_name })),
                 ]}
               />

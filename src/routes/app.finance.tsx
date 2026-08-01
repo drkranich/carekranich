@@ -16,12 +16,12 @@ const glassInput =
   "w-full rounded-2xl border border-white/70 bg-white/55 px-4 py-2.5 text-sm shadow-soft backdrop-blur-xl outline-none focus:border-olive/40";
 
 const CATEGORIES = [
-  { value: "exames", label: "Exames e serviços" },
-  { value: "convenios", label: "Convênios" },
-  { value: "insumos", label: "Insumos" },
-  { value: "equipamentos", label: "Equipamentos" },
+  { value: "exams", label: "Exams and services" },
+  { value: "convenios", label: "Insurances" },
+  { value: "insumos", label: "Supplies" },
+  { value: "equipamentos", label: "Equipment" },
   { value: "pessoal", label: "Pessoal" },
-  { value: "logistica", label: "Logística" },
+  { value: "logistica", label: "Logistics" },
   { value: "geral", label: "Geral" },
 ];
 
@@ -81,10 +81,10 @@ function Finance() {
 
   const save = useMutation({
     mutationFn: async () => {
-      if (!effTenant) throw new Error("Nenhuma organização disponível.");
-      if (!form.description.trim()) throw new Error("Informe a descrição.");
+      if (!effTenant) throw new Error("No organization available.");
+      if (!form.description.trim()) throw new Error("Enter the description.");
       const cents = Math.round(Number(form.amount.replace(",", ".")) * 100);
-      if (!cents || cents <= 0) throw new Error("Informe o valor.");
+      if (!cents || cents <= 0) throw new Error("Enter the amount.");
       const { error } = await (supabase as any).from("finance_entries").insert({
         tenant_id: effTenant,
         kind: tab,
@@ -98,12 +98,12 @@ function Finance() {
       if (error) throw error;
     },
     onSuccess: () => {
-      toast.success(tab === "receivable" ? "Conta a receber lançada" : "Conta a pagar lançada");
+      toast.success(tab === "receivable" ? "Receivable posted" : "Payable posted");
       setForm({ description: "", category: "geral", counterparty: "", amount: "", due_date: "" });
       setOpen(false);
       refresh();
     },
-    onError: (e: any) => toast.error(e.message ?? "Não foi possível lançar"),
+    onError: (e: any) => toast.error(e.message ?? "Could not post"),
   });
 
   const markPaid = async (entry: any) => {
@@ -117,10 +117,10 @@ function Finance() {
   };
 
   const remove = async (entry: any) => {
-    if (!window.confirm("Excluir este lançamento?")) return;
+    if (!window.confirm("Delete this entry?")) return;
     const { error } = await (supabase as any).from("finance_entries").delete().eq("id", entry.id);
     if (error) return toast.error(error.message);
-    toast.success("Lançamento excluído");
+    toast.success("Entry deleted");
     refresh();
   };
 
@@ -147,24 +147,24 @@ function Finance() {
   const today = new Date().toISOString().slice(0, 10);
 
   const exportDre = () => {
-    downloadPdf("dre-care-kranich.pdf", "Demonstrativo financeiro", [
-      `Emitido em: ${new Date().toLocaleString("pt-BR")}`,
+    downloadPdf("dre-care-kranich.pdf", "Demonstractive financeiro", [
+      `Issued at: ${new Date().toLocaleString("pt-BR")}`,
       "",
-      `Receita de exames pagos (pedidos): ${brl((orders.data ?? []).reduce((a: number, o: any) => a + (o.total_cents ?? 0), 0))}`,
+      `Paid exam revenue (orders): ${brl((orders.data ?? []).reduce((a: number, o: any) => a + (o.total_cents ?? 0), 0))}`,
       `Outros recebimentos confirmados: ${brl((entries.data ?? []).filter((e: any) => e.kind === "receivable" && e.paid_at).reduce((a: number, e: any) => a + e.amount_cents, 0))}`,
-      `Despesas pagas: ${brl(summary.expenses)}`,
+      `Paid expenses: ${brl(summary.expenses)}`,
       `Resultado: ${brl(summary.result)}`,
       "",
       `A receber (aberto): ${brl(summary.toReceive)}`,
       `A pagar (aberto): ${brl(summary.toPay)}`,
-      `Lançamentos vencidos: ${summary.overdue.length}`,
+      `Overdue entries: ${summary.overdue.length}`,
       "",
-      "Lançamentos em aberto:",
+      "Open entries:",
       ...(entries.data ?? [])
         .filter((e: any) => !e.paid_at)
         .map(
           (e: any) =>
-            `- ${e.kind === "receivable" ? "RECEBER" : "PAGAR"} · ${e.description} · ${brl(e.amount_cents)}${e.due_date ? ` · vence ${new Date(e.due_date + "T00:00:00").toLocaleDateString("pt-BR")}` : ""}`,
+            `- ${e.kind === "receivable" ? "RECEIVE" : "PAY"} · ${e.description} · ${brl(e.amount_cents)}${e.due_date ? ` · due ${new Date(e.due_date + "T00:00:00").toLocaleDateString("pt-BR")}` : ""}`,
         ),
     ]);
   };
@@ -173,17 +173,17 @@ function Finance() {
     <div className="space-y-6">
       <PageHeader
         title="Financeiro"
-        subtitle="Contas a pagar e receber, inadimplência, receita de exames e demonstrativo — PIX, cartão e boleto entram na fase de integrações."
+        subtitle="Accounts payable and receivable, delinquency, exam revenue and statement - PIX, card and boleto enter in the integrations phase."
         action={
           <div className="flex gap-2">
             <button onClick={exportDre} className="inline-flex items-center gap-1.5 rounded-full border border-border bg-white/55 px-4 py-2 text-xs">
-              <FileDown className="h-3.5 w-3.5" /> Demonstrativo PDF
+              <FileDown className="h-3.5 w-3.5" /> Demonstractive PDF
             </button>
             <button
               onClick={() => setOpen(!open)}
               className="inline-flex items-center gap-2 rounded-full bg-olive px-4 py-2 text-sm font-medium text-ivory shadow-soft hover:opacity-90"
             >
-              <Plus className="h-4 w-4" /> Novo lançamento
+              <Plus className="h-4 w-4" /> New entry
             </button>
           </div>
         }
@@ -191,7 +191,7 @@ function Finance() {
 
       <div className="grid gap-4 md:grid-cols-4">
         <Stat label="Receita confirmada" value={brl(summary.revenue)} sub="Pedidos pagos + recebimentos" tone="moss" />
-        <Stat label="Despesas pagas" value={brl(summary.expenses)} sub="Saídas confirmadas" tone="wine" />
+        <Stat label="Paid expenses" value={brl(summary.expenses)} sub="Confirmed outflows" tone="wine" />
         <Stat label="Resultado" value={brl(summary.result)} sub="Receita menos despesas" tone="olive" />
         <Stat label="Vencidos" value={summary.overdue.length} sub={`${brl(summary.overdue.reduce((a: number, e: any) => a + e.amount_cents, 0))} em atraso`} tone="terracotta" />
       </div>
@@ -221,10 +221,10 @@ function Finance() {
             <Landmark className="h-4 w-4" /> {tab === "receivable" ? "Nova conta a receber" : "Nova conta a pagar"}
           </h3>
           <div className="grid gap-3 md:grid-cols-4">
-            <input className={`${glassInput} md:col-span-2`} placeholder="Descrição *" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
+            <input className={`${glassInput} md:col-span-2`} placeholder="Description *" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
             <GlassSelect value={form.category} onChange={(v) => setForm({ ...form, category: v })} options={CATEGORIES} />
-            <input className={glassInput} placeholder={tab === "receivable" ? "Pagador (convênio, empresa...)" : "Fornecedor"} value={form.counterparty} onChange={(e) => setForm({ ...form, counterparty: e.target.value })} />
-            <input className={glassInput} placeholder="Valor (R$) *" value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} />
+            <input className={glassInput} placeholder={tab === "receivable" ? "Payer (insurance, company...)" : "Supplier"} value={form.counterparty} onChange={(e) => setForm({ ...form, counterparty: e.target.value })} />
+            <input className={glassInput} placeholder="Amount (BRL) *" value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} />
             <div>
               <p className="mb-1 text-xs font-medium text-muted-foreground">Vencimento</p>
               <GlassDatePicker value={form.due_date} onChange={(v) => setForm({ ...form, due_date: v })} />
@@ -232,10 +232,10 @@ function Finance() {
           </div>
           <div className="flex gap-2">
             <button onClick={() => save.mutate()} disabled={save.isPending} className="rounded-full bg-olive px-5 py-2 text-sm font-medium text-ivory shadow-soft hover:opacity-90 disabled:opacity-60">
-              {save.isPending ? "Lançando..." : "Lançar"}
+              {save.isPending ? "Posting..." : "Post"}
             </button>
             <button onClick={() => setOpen(false)} className="rounded-full border border-white/70 bg-white/55 px-5 py-2 text-sm backdrop-blur-xl">
-              Cancelar
+              Cancel
             </button>
           </div>
         </Card>
@@ -243,8 +243,8 @@ function Finance() {
 
       {list.length === 0 ? (
         <EmptyState
-          title={tab === "receivable" ? "Nenhuma conta a receber" : "Nenhuma conta a pagar"}
-          hint="A receita dos pedidos de exames pagos já entra automaticamente no demonstrativo."
+          title={tab === "receivable" ? "No receivable account" : "No payable account"}
+          hint="Revenue from paid exam orders is automatically included in the statement."
         />
       ) : (
         <Card className="space-y-2 p-5">
@@ -257,7 +257,7 @@ function Finance() {
                   <p className="text-xs text-muted-foreground">
                     {CATEGORIES.find((c) => c.value === e.category)?.label ?? e.category}
                     {e.counterparty ? ` · ${e.counterparty}` : ""}
-                    {e.due_date ? ` · vence ${new Date(e.due_date + "T00:00:00").toLocaleDateString("pt-BR")}` : ""}
+                    {e.due_date ? ` · due ${new Date(e.due_date + "T00:00:00").toLocaleDateString("pt-BR")}` : ""}
                   </p>
                 </div>
                 <div className="flex items-center gap-2">

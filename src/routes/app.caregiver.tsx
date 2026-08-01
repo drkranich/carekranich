@@ -95,7 +95,7 @@ function CaregiverApp() {
         ((residents.data ?? [])[0] as any)?.tenant_id ??
         null;
       if (!user || !tenantId) {
-        throw new Error("Selecione um residente do plantão para registrar o check-in.");
+        throw new Error("Select a resident on shift to register check-in.");
       }
       const position = await getPosition();
       const { error } = await (supabase as any).from("caregiver_shifts").insert({
@@ -109,15 +109,15 @@ function CaregiverApp() {
       return !!position;
     },
     onSuccess: (hasGps) => {
-      toast.success(hasGps ? "Check-in registrado com localização" : "Check-in registrado (sem GPS)");
+      toast.success(hasGps ? "Check-in registered with location" : "Check-in registered (without GPS)");
       qc.invalidateQueries({ queryKey: ["caregiver-shifts", user?.id] });
     },
-    onError: (error: any) => toast.error(error.message ?? "Não foi possível fazer check-in"),
+    onError: (error: any) => toast.error(error.message ?? "Could not check in"),
   });
 
   const checkOut = useMutation({
     mutationFn: async () => {
-      if (!activeShift) throw new Error("Nenhum plantão ativo.");
+      if (!activeShift) throw new Error("No active shift.");
       const position = await getPosition();
       const { error } = await (supabase as any)
         .from("caregiver_shifts")
@@ -135,7 +135,7 @@ function CaregiverApp() {
       setNotes("");
       qc.invalidateQueries({ queryKey: ["caregiver-shifts", user?.id] });
     },
-    onError: (error: any) => toast.error(error.message ?? "Não foi possível fazer check-out"),
+    onError: (error: any) => toast.error(error.message ?? "Could not check out"),
   });
 
   const completeTask = async (taskId: string) => {
@@ -145,7 +145,7 @@ function CaregiverApp() {
       .eq("id", taskId);
     if (error) toast.error(error.message);
     else {
-      toast.success("Tarefa concluída");
+      toast.success("Task completed");
       qc.invalidateQueries({ queryKey: ["caregiver-tasks-today", profile?.tenant_id, user?.id] });
     }
   };
@@ -158,20 +158,20 @@ function CaregiverApp() {
   return (
     <>
       <PageHeader
-        title="App do cuidador"
-        subtitle="Plantões com check-in/check-out geolocalizado, tarefas do dia e registro rápido — pensado para o celular."
-        action={<Pill tone={activeShift ? "moss" : "muted"}>{activeShift ? "Em plantão" : "Fora de plantão"}</Pill>}
+        title="Caregiver app"
+        subtitle="Shifts with geolocated check-in/check-out, daily tasks and fast logging - designed for mobile."
+        action={<Pill tone={activeShift ? "moss" : "muted"}>{activeShift ? "On shift" : "Off shift"}</Pill>}
       />
 
       <div className="grid gap-4 md:grid-cols-3">
         <Stat
-          label="Plantão atual"
+          label="Current shift"
           value={activeShift ? elapsed(activeShift.started_at) : "—"}
-          sub={activeShift ? `Início ${new Date(activeShift.started_at).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}` : "Faça check-in para começar"}
+          sub={activeShift ? `Started ${new Date(activeShift.started_at).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}` : "Check in to start"}
           tone={activeShift ? "moss" : "olive"}
         />
         <Stat label="Tarefas de hoje" value={tasks.data?.length ?? "-"} sub="Pendentes com vencimento hoje" tone="gold" />
-        <Stat label="Plantões registrados" value={shifts.data?.length ?? "-"} sub="Últimos 30" tone="olive" />
+        <Stat label="Registered shifts" value={shifts.data?.length ?? "-"} sub="Last 30" tone="olive" />
       </div>
 
       <div className="mt-6 grid gap-6 lg:grid-cols-2">
@@ -181,8 +181,8 @@ function CaregiverApp() {
               <Clock className="h-5 w-5" />
             </span>
             <div>
-              <h2 className="text-xl font-semibold text-foreground">Plantão</h2>
-              <p className="text-xs text-muted-foreground">Check-in e check-out com localização e observações.</p>
+              <h2 className="text-xl font-semibold text-foreground">Shift</h2>
+              <p className="text-xs text-muted-foreground">Check-in and check-out with location and notes.</p>
             </div>
           </div>
 
@@ -190,7 +190,7 @@ function CaregiverApp() {
             <div className="mt-5 space-y-4">
               <div className="rounded-2xl border border-moss/30 bg-moss/5 p-4">
                 <p className="text-sm font-medium text-foreground">
-                  Em plantão há {elapsed(activeShift.started_at)}
+                  On shift for {elapsed(activeShift.started_at)}
                   {activeShift.resident_id && residentName(activeShift.resident_id) ? ` · ${residentName(activeShift.resident_id)}` : ""}
                 </p>
                 <p className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
@@ -204,7 +204,7 @@ function CaregiverApp() {
                 value={notes}
                 onChange={(event) => setNotes(event.target.value)}
                 rows={3}
-                placeholder="Observações do plantão (opcional): intercorrências, entregas, recados..."
+                placeholder="Shift notes (optional): incidents, handoffs, messages..."
                 className="w-full rounded-xl border border-border bg-ivory px-3 py-2 text-sm"
               />
               <button
@@ -221,9 +221,9 @@ function CaregiverApp() {
               <GlassSelect
                 value={residentId}
                 onChange={setResidentId}
-                placeholder="Residente do plantão (opcional)"
+                placeholder="Shift resident (optional)"
                 options={[
-                  { value: "", label: "Sem residente específico" },
+                  { value: "", label: "No specific resident" },
                   ...(residents.data ?? []).map((resident: any) => ({
                     value: resident.id,
                     label: resident.preferred_name || resident.full_name,
@@ -239,7 +239,7 @@ function CaregiverApp() {
                 {checkIn.isPending ? "Registrando..." : "Fazer check-in"}
               </button>
               <p className="text-xs leading-5 text-muted-foreground">
-                O navegador vai pedir sua localização para registrar onde o plantão começou. Se negar, o check-in é registrado sem GPS.
+                The browser will ask for your location to register where the shift started. If denied, check-in is registered without GPS.
               </p>
             </div>
           )}
@@ -248,7 +248,7 @@ function CaregiverApp() {
         <Card>
           <h2 className="text-xl font-semibold text-foreground">Tarefas de hoje</h2>
           {(tasks.data ?? []).length === 0 ? (
-            <div className="mt-4"><EmptyState title="Nenhuma tarefa pendente hoje" hint="As tarefas do plano de cuidado com vencimento hoje aparecem aqui." /></div>
+            <div className="mt-4"><EmptyState title="No pending tasks today" hint="Care plan tasks due today appear here." /></div>
           ) : (
             <div className="mt-4 space-y-2">
               {(tasks.data ?? []).map((task: any) => (
@@ -277,9 +277,9 @@ function CaregiverApp() {
       </div>
 
       <Card className="mt-6">
-        <h2 className="text-xl font-semibold text-foreground">Histórico de plantões</h2>
+        <h2 className="text-xl font-semibold text-foreground">Shift history</h2>
         {(shifts.data ?? []).length === 0 ? (
-          <p className="mt-3 text-sm text-muted-foreground">Nenhum plantão registrado ainda.</p>
+          <p className="mt-3 text-sm text-muted-foreground">No shifts registered yet.</p>
         ) : (
           <div className="mt-4 space-y-2">
             {(shifts.data ?? []).map((shift: any) => (
@@ -291,14 +291,14 @@ function CaregiverApp() {
                     {shift.ended_at ? ` → ${new Date(shift.ended_at).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}` : " (em andamento)"}
                   </p>
                   <p className="text-xs text-muted-foreground">
-                    {residentName(shift.resident_id) ?? "Sem residente"}
+                    {residentName(shift.resident_id) ?? "No resident"}
                     {shift.notes ? ` · ${shift.notes}` : ""}
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
                   {shift.checkin_latitude && <Pill tone="olive">GPS in</Pill>}
                   {shift.checkout_latitude && <Pill tone="moss">GPS out</Pill>}
-                  <Pill tone={shift.ended_at ? "muted" : "moss"}>{shift.ended_at ? "encerrado" : "ativo"}</Pill>
+                  <Pill tone={shift.ended_at ? "muted" : "moss"}>{shift.ended_at ? "ended" : "active"}</Pill>
                 </div>
               </div>
             ))}

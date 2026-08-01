@@ -15,20 +15,20 @@ const KIT_STATUS: Array<{ key: string; label: string }> = [
   { key: "created", label: "Kit criado" },
   { key: "shipped", label: "Enviado" },
   { key: "delivered", label: "Entregue" },
-  { key: "activated", label: "Ativado pelo paciente" },
-  { key: "collected", label: "Amostra coletada" },
+  { key: "activated", label: "Activated by patient" },
+  { key: "collected", label: "Sample collected" },
   { key: "in_transit", label: "Em transporte" },
-  { key: "received", label: "Recebido no laboratório" },
+  { key: "received", label: "Received by laboratory" },
 ];
 
 const PIPELINE: Array<{ key: string; label: string }> = [
-  { key: "extracao", label: "Extração de DNA" },
+  { key: "extracao", label: "DNA extraction" },
   { key: "controle_qualidade", label: "Controle de qualidade" },
   { key: "sequenciamento", label: "Sequenciamento" },
-  { key: "bioinformatica", label: "Análise bioinformática" },
-  { key: "interpretacao", label: "Interpretação" },
-  { key: "revisao", label: "Revisão" },
-  { key: "laudo_liberado", label: "Laudo liberado" },
+  { key: "bioinformatica", label: "Bioinformatics analysis" },
+  { key: "interpretacao", label: "Interpretation" },
+  { key: "revisao", label: "Review" },
+  { key: "laudo_liberado", label: "Report released" },
 ];
 
 function statusIndex(key: string) {
@@ -123,12 +123,12 @@ function Genetics() {
 
   const patientName = (id: string | null) => {
     const p = (patients.data ?? []).find((x: any) => x.id === id);
-    return p ? p.social_name || p.full_name : "Sem paciente";
+    return p ? p.social_name || p.full_name : "No patient";
   };
   const examOf = (id: string | null) => (geneticExams.data ?? []).find((x: any) => x.id === id) ?? null;
   const examName = (id: string | null) => {
-    const e = examOf(id);
-    return e ? e.commercial_name || e.name : "Teste genético";
+    const exam = examOf(id);
+    return exam ? exam.commercial_name || exam.name : "Genetic test";
   };
 
   const refresh = () => {
@@ -148,9 +148,9 @@ function Genetics() {
 
   const createKit = useMutation({
     mutationFn: async () => {
-      if (!effTenant) throw new Error("Nenhuma organização disponível.");
-      if (!draft.patient_id) throw new Error("Selecione o paciente.");
-      if (!draft.exam_id) throw new Error("Selecione o teste genético do catálogo.");
+      if (!effTenant) throw new Error("No organization available.");
+      if (!draft.patient_id) throw new Error("Select the patient.");
+      if (!draft.exam_id) throw new Error("Select the genetic test from the catalog.");
       const kit_code = `GEN-${Date.now().toString(36).toUpperCase()}${Math.random().toString(36).slice(2, 4).toUpperCase()}`;
       const { data, error } = await (supabase as any)
         .from("genetic_kits")
@@ -164,27 +164,27 @@ function Genetics() {
         .select("id")
         .single();
       if (error) throw error;
-      await logEvent(data.id, "created", "Kit genético criado no sistema.");
+      await logEvent(data.id, "created", "Genetic kit created in the system.");
       return data.id as string;
     },
     onSuccess: (id) => {
-      toast.success("Kit genético criado com código de ativação");
+      toast.success("Genetic kit created with activation code");
       setDraft({ patient_id: "", exam_id: "" });
       setSelectedId(id);
       refresh();
     },
-    onError: (e: any) => toast.error(e.message ?? "Não foi possível criar o kit"),
+    onError: (e: any) => toast.error(e.message ?? "Could not create the kit"),
   });
 
   const advanceStatus = useMutation({
     mutationFn: async () => {
       if (!selected) return;
       const idx = statusIndex(selected.status);
-      if (idx >= KIT_STATUS.length - 1) throw new Error("O kit já chegou ao laboratório. Use o pipeline abaixo.");
+      if (idx >= KIT_STATUS.length - 1) throw new Error("The kit has already reached the laboratory. Use the pipeline below.");
       const next = KIT_STATUS[idx + 1];
       const exam = examOf(selected.exam_id);
       if (next.key === "collected" && exam?.consent_required && !selected.consent_accepted) {
-        throw new Error("Este teste exige termo de consentimento aceito antes da coleta.");
+        throw new Error("This test requires accepted consent before collection.");
       }
       const patch: Record<string, unknown> = { status: next.key };
       if (next.key === "activated") patch.activated_at = new Date().toISOString();
@@ -204,9 +204,9 @@ function Genetics() {
   const advancePipeline = useMutation({
     mutationFn: async () => {
       if (!selected) return;
-      if (selected.status !== "received") throw new Error("O pipeline inicia após o kit ser recebido no laboratório.");
+      if (selected.status !== "received") throw new Error("The pipeline starts after the kit is received by the laboratory.");
       const idx = pipelineIndex(selected.pipeline_step);
-      if (idx >= PIPELINE.length - 1) throw new Error("Pipeline concluído — laudo liberado.");
+      if (idx >= PIPELINE.length - 1) throw new Error("Pipeline completed - report released.");
       const next = PIPELINE[idx + 1];
       const { error } = await (supabase as any)
         .from("genetic_kits")
@@ -240,11 +240,11 @@ function Genetics() {
       await logEvent(
         selected.id,
         "consentimento",
-        `Termo aceito. Armazenamento de amostra: ${storage ? "autorizado" : "negado"}. Uso de dados: ${dataUse ? "autorizado" : "negado"}.`,
+        `Termo aceito. Sample storage: ${storage ? "authorized" : "negado"}. Uso de dados: ${dataUse ? "authorized" : "negado"}.`,
       );
     },
     onSuccess: () => {
-      toast.success("Consentimento registrado");
+      toast.success("Consent registrado");
       refresh();
     },
     onError: (e: any) => toast.error(e.message),
@@ -253,16 +253,16 @@ function Genetics() {
   const requestDeletion = useMutation({
     mutationFn: async () => {
       if (!selected) return;
-      if (!window.confirm("Registrar solicitação de exclusão dos dados genéticos deste paciente?")) return;
+      if (!window.confirm("Register deletion request for this patient genetic data?")) return;
       const { error } = await (supabase as any)
         .from("genetic_kits")
         .update({ deletion_requested: true, deletion_requested_at: new Date().toISOString() })
         .eq("id", selected.id);
       if (error) throw error;
-      await logEvent(selected.id, "exclusao_solicitada", "Titular solicitou exclusão de dados e descarte da amostra (LGPD).");
+      await logEvent(selected.id, "deletion_requested", "Holder requested data deletion and sample disposal (LGPD).");
     },
     onSuccess: () => {
-      toast.success("Solicitação de exclusão registrada");
+      toast.success("Deletion request registered");
       refresh();
     },
     onError: (e: any) => toast.error(e.message),
@@ -270,18 +270,18 @@ function Genetics() {
 
   const exportKit = (k: any) => {
     const exam = examOf(k.exam_id);
-    downloadPdf(`kit-${k.kit_code}.pdf`, `Kit genético ${k.kit_code}`, [
-      `Paciente: ${patientName(k.patient_id)}`,
+    downloadPdf(`kit-${k.kit_code}.pdf`, `Genetic kit ${k.kit_code}`, [
+      `Patient: ${patientName(k.patient_id)}`,
       `Teste: ${examName(k.exam_id)}`,
       exam?.genes_analyzed ? `Genes analisados: ${exam.genes_analyzed}` : "",
-      `Status logístico: ${KIT_STATUS[statusIndex(k.status)].label}`,
-      `Pipeline: ${k.pipeline_step ? PIPELINE[pipelineIndex(k.pipeline_step)].label : "não iniciado"}`,
-      `Consentimento: ${k.consent_accepted ? `aceito em ${new Date(k.consent_at).toLocaleString("pt-BR")}` : "PENDENTE"}`,
-      `Armazenamento de amostra: ${k.storage_authorized ? "autorizado" : "não autorizado"}`,
-      `Uso de dados para pesquisa: ${k.data_use_authorized ? "autorizado" : "não autorizado"}`,
-      k.deletion_requested ? `EXCLUSÃO SOLICITADA em ${new Date(k.deletion_requested_at).toLocaleString("pt-BR")}` : "",
+      `Logistics status: ${KIT_STATUS[statusIndex(k.status)].label}`,
+      `Pipeline: ${k.pipeline_step ? PIPELINE[pipelineIndex(k.pipeline_step)].label : "not started"}`,
+      `Consent: ${k.consent_accepted ? `aceito em ${new Date(k.consent_at).toLocaleString("pt-BR")}` : "PENDENTE"}`,
+      `Sample storage: ${k.storage_authorized ? "authorized" : "not authorized"}`,
+      `Data use for research: ${k.data_use_authorized ? "authorized" : "not authorized"}`,
+      k.deletion_requested ? `DELETION REQUESTED at ${new Date(k.deletion_requested_at).toLocaleString("pt-BR")}` : "",
       "",
-      "Predisposição genética não significa diagnóstico. Resultados exigem interpretação profissional.",
+      "Genetic predisposition does not mean diagnosis. Results require professional interpretation.",
     ].filter((l) => l !== ""));
   };
 
@@ -298,33 +298,33 @@ function Genetics() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Genética — kits e pipeline"
-        subtitle="Kits com ativação por código, consentimento explícito, rastreamento logístico e pipeline até o laudo. Acesso restrito a médicos e administradores."
-        action={<Pill tone="wine">Dados sensíveis</Pill>}
+        title="Genetics — kits and pipeline"
+        subtitle="Kits with code activation, explicit consent, logistics tracking and pipeline through the report. Access restricted to doctors and administrators."
+        action={<Pill tone="wine">Sensitive data</Pill>}
       />
 
       <div className="grid gap-4 md:grid-cols-4">
-        <Stat label="Kits em logística" value={stats.logistics} sub="Do envio à chegada" tone="olive" />
-        <Stat label="Em pipeline" value={stats.inPipeline} sub="Extração → laudo" tone="gold" />
-        <Stat label="Consentimentos pendentes" value={stats.consentPending} sub="Bloqueiam a coleta" tone="wine" />
-        <Stat label="Exclusões solicitadas" value={stats.deletions} sub="LGPD / descarte" tone="terracotta" />
+        <Stat label="Kits in logistics" value={stats.logistics} sub="From shipping to arrival" tone="olive" />
+        <Stat label="In pipeline" value={stats.inPipeline} sub="Extraction to report" tone="gold" />
+        <Stat label="Pending consents" value={stats.consentPending} sub="Block collection" tone="wine" />
+        <Stat label="Deletion requests" value={stats.deletions} sub="LGPD / descarte" tone="terracotta" />
       </div>
 
       <Card className="space-y-3 p-6">
         <h3 className="flex items-center gap-2 text-sm font-semibold text-foreground">
-          <Dna className="h-4 w-4" /> Novo kit genético
+          <Dna className="h-4 w-4" /> New genetic kit
         </h3>
         <div className="grid gap-3 md:grid-cols-3">
           <GlassSelect
             value={draft.patient_id}
             onChange={(v) => setDraft({ ...draft, patient_id: v })}
-            placeholder="Paciente"
+            placeholder="Patient"
             options={(patients.data ?? []).map((p: any) => ({ value: p.id, label: p.social_name || p.full_name }))}
           />
           <GlassSelect
             value={draft.exam_id}
             onChange={(v) => setDraft({ ...draft, exam_id: v })}
-            placeholder="Teste genético do catálogo"
+            placeholder="Genetic test do catálogo"
             options={(geneticExams.data ?? []).map((e: any) => ({ value: e.id, label: e.commercial_name || e.name }))}
           />
           <button
@@ -332,12 +332,12 @@ function Genetics() {
             disabled={createKit.isPending}
             className="inline-flex items-center justify-center gap-2 rounded-2xl bg-olive px-4 py-2.5 text-sm font-medium text-ivory shadow-soft hover:opacity-90 disabled:opacity-60"
           >
-            <Plus className="h-4 w-4" /> Gerar kit e código
+            <Plus className="h-4 w-4" /> Generate kit and code
           </button>
         </div>
         {(geneticExams.data ?? []).length === 0 && (
           <p className="text-xs text-muted-foreground">
-            Nenhum teste genético no catálogo ainda — crie na aba Genética do Catálogo de exames.
+            No genetic test in the catalog yet - create one in the Genetics tab of the Exam catalog.
           </p>
         )}
       </Card>
@@ -345,7 +345,7 @@ function Genetics() {
       <div className="grid gap-6 xl:grid-cols-[360px_1fr]">
         <Card className="space-y-2 p-5">
           <h3 className="text-sm font-semibold text-foreground">Kits</h3>
-          {(kits.data ?? []).length === 0 && <p className="text-sm text-muted-foreground">Nenhum kit ainda.</p>}
+          {(kits.data ?? []).length === 0 && <p className="text-sm text-muted-foreground">No kits yet.</p>}
           {(kits.data ?? []).map((k: any) => (
             <button
               key={k.id}
@@ -385,10 +385,10 @@ function Genetics() {
             {!selected.consent_accepted ? (
               <div className="space-y-3 rounded-2xl border border-wine/25 bg-wine/5 p-4">
                 <p className="flex items-center gap-2 text-sm font-semibold text-wine">
-                  <ShieldCheck className="h-4 w-4" /> Consentimento pendente — obrigatório antes da coleta
+                  <ShieldCheck className="h-4 w-4" /> Pending consent - required before collection
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  Registre o aceite do titular ao termo de consentimento, informando as autorizações concedidas:
+                  Register the holder acceptance of the consent term, including granted authorizations:
                 </p>
                 <div className="flex flex-wrap gap-2">
                   <button onClick={() => registerConsent.mutate({ storage: true, dataUse: true })} className="rounded-full bg-olive px-4 py-1.5 text-xs font-medium text-ivory">
@@ -404,19 +404,19 @@ function Genetics() {
               </div>
             ) : (
               <div className="flex flex-wrap gap-2 text-xs">
-                <Pill tone="moss">Consentimento aceito {new Date(selected.consent_at).toLocaleDateString("pt-BR")}</Pill>
+                <Pill tone="moss">Consent aceito {new Date(selected.consent_at).toLocaleDateString("pt-BR")}</Pill>
                 <Pill tone={selected.storage_authorized ? "moss" : "muted"}>
-                  Armazenamento {selected.storage_authorized ? "autorizado" : "negado"}
+                  Armazenamento {selected.storage_authorized ? "authorized" : "negado"}
                 </Pill>
                 <Pill tone={selected.data_use_authorized ? "moss" : "muted"}>
-                  Uso de dados {selected.data_use_authorized ? "autorizado" : "negado"}
+                  Uso de dados {selected.data_use_authorized ? "authorized" : "negado"}
                 </Pill>
-                {selected.deletion_requested && <Pill tone="terracotta">Exclusão solicitada</Pill>}
+                {selected.deletion_requested && <Pill tone="terracotta">Deletion requested</Pill>}
               </div>
             )}
 
             <div>
-              <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Logística do kit</p>
+              <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Kit logistics</p>
               <div className="grid gap-1.5 sm:grid-cols-2 lg:grid-cols-4">
                 {KIT_STATUS.map((s, i) => {
                   const current = statusIndex(selected.status);
@@ -442,7 +442,7 @@ function Genetics() {
 
             <div>
               <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                Pipeline laboratorial {selected.status !== "received" ? "(inicia após recebimento)" : ""}
+                Laboratory pipeline {selected.status !== "received" ? "(starts after receipt)" : ""}
               </p>
               <div className="grid gap-1.5 sm:grid-cols-2 lg:grid-cols-4">
                 {PIPELINE.map((s, i) => {
@@ -470,7 +470,7 @@ function Genetics() {
               <input
                 value={stepNote}
                 onChange={(e) => setStepNote(e.target.value)}
-                placeholder="Observação da etapa (opcional)"
+                placeholder="Step note (optional)"
                 className="min-w-64 flex-1 rounded-2xl border border-white/70 bg-white/55 px-4 py-2.5 text-sm shadow-soft backdrop-blur-xl outline-none focus:border-olive/40"
               />
               {selected.status !== "received" ? (
@@ -479,7 +479,7 @@ function Genetics() {
                   disabled={advanceStatus.isPending}
                   className="rounded-full bg-olive px-5 py-2 text-sm font-medium text-ivory shadow-soft hover:opacity-90 disabled:opacity-60"
                 >
-                  Avançar logística →
+                  Advance logistics
                 </button>
               ) : (
                 <button
@@ -487,7 +487,7 @@ function Genetics() {
                   disabled={advancePipeline.isPending}
                   className="rounded-full bg-olive px-5 py-2 text-sm font-medium text-ivory shadow-soft hover:opacity-90 disabled:opacity-60"
                 >
-                  Avançar pipeline →
+                  Advance pipeline
                 </button>
               )}
               {!selected.deletion_requested && (
@@ -495,7 +495,7 @@ function Genetics() {
                   onClick={() => requestDeletion.mutate()}
                   className="inline-flex items-center gap-1.5 rounded-full border border-terracotta/40 bg-terracotta/5 px-4 py-2 text-xs text-terracotta"
                 >
-                  <Trash2 className="h-3.5 w-3.5" /> Registrar pedido de exclusão
+                  <Trash2 className="h-3.5 w-3.5" /> Register deletion request
                 </button>
               )}
             </div>
@@ -508,7 +508,7 @@ function Genetics() {
                     <span className="font-medium text-foreground">
                       {KIT_STATUS.find((x) => x.key === e.step)?.label ??
                         PIPELINE.find((x) => x.key === e.step)?.label ??
-                        (e.step === "consentimento" ? "Consentimento" : e.step === "exclusao_solicitada" ? "Exclusão solicitada" : e.step)}
+                        (e.step === "consentimento" ? "Consent" : e.step === "deletion_requested" ? "Deletion requested" : e.step)}
                     </span>
                     <span className="text-muted-foreground">{new Date(e.performed_at).toLocaleString("pt-BR")}</span>
                     {e.notes && <span className="w-full text-muted-foreground">{e.notes}</span>}
@@ -518,13 +518,13 @@ function Genetics() {
             </div>
 
             <p className="text-xs text-muted-foreground">
-              Predisposição não significa diagnóstico. {examOf(selected.exam_id)?.requires_counseling
-                ? "Este teste recomenda aconselhamento genético antes e após o resultado."
+              Predisposition does not mean diagnosis. {examOf(selected.exam_id)?.requires_counseling
+                ? "This test recommends genetic counseling before and after the result."
                 : ""}
             </p>
           </Card>
         ) : (
-          <EmptyState title="Nenhum kit selecionado" hint="Crie um kit genético para iniciar logística, consentimento e pipeline." />
+          <EmptyState title="No kit selected" hint="Create a genetic kit to start logistics, consent and pipeline." />
         )}
       </div>
     </div>

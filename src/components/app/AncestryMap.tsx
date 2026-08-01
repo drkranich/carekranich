@@ -35,14 +35,14 @@ export function regionPath(r: AncestryRegion) {
     .join(" → ");
 }
 
-/** Projeção equiretangular simples: lat/lng → coordenadas do viewBox 1000x500. */
+/** Simple equirectangular projection: lat/lng to 1000x500 viewBox coordinates. */
 export function project(lat: number, lng: number) {
   return { x: ((lng + 180) / 360) * 1000, y: ((90 - lat) / 180) * 500 };
 }
 
 /**
- * Mapa-múndi estilizado (contornos simplificados) com pontos pulsantes
- * de intensidade proporcional ao percentual. Sem dependências externas.
+ * Stylized world map (simplified outlines) with pulsing points
+ * with intensity proportional to percentage. No external dependencies.
  */
 export function AncestryMap({
   regions,
@@ -76,7 +76,7 @@ export function AncestryMap({
 
   return (
     <div className="relative overflow-hidden rounded-3xl border border-white/15 bg-[#0f1a17]">
-      <svg viewBox="0 0 1000 500" className="h-full w-full" role="img" aria-label="Mapa das origens genéticas">
+      <svg viewBox="0 0 1000 500" className="h-full w-full" role="img" aria-label="Genetic origins map">
         <defs>
           <radialGradient id="ck-glow" cx="50%" cy="50%" r="50%">
             <stop offset="0%" stopColor="#f2c078" stopOpacity="0.9" />
@@ -91,7 +91,7 @@ export function AncestryMap({
 
         <rect width="1000" height="500" fill="url(#ck-sea)" />
 
-        {/* meridianos e paralelos discretos */}
+        {/* meridiyears old and paralelos discretos */}
         <g stroke="#ffffff" strokeOpacity="0.05" strokeWidth="0.6">
           {[...Array(11)].map((_, i) => (
             <line key={`v${i}`} x1={(i * 1000) / 10} y1="0" x2={(i * 1000) / 10} y2="500" />
@@ -113,7 +113,7 @@ export function AncestryMap({
           <path d="M60 40 L200 30 L260 48 L180 62 L96 66 Z" />
         </g>
 
-        {/* rotas migratórias */}
+        {/* migration routes */}
         {showRoutes &&
           routes
             .filter((r) => r.from_lat !== null && r.to_lat !== null)

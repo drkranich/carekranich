@@ -13,7 +13,7 @@ export const Route = createFileRoute("/app/exams")({ component: Exams });
 const STATUS_LABELS: Record<string, string> = {
   scheduled: "Agendado",
   collected: "Coletado",
-  processing: "Em análise",
+  processing: "Under analysis",
   ready: "Pronto",
   delivered: "Entregue",
   canceled: "Cancelado",
@@ -76,17 +76,17 @@ function Exams() {
       if (error) throw error;
     },
     onSuccess: () => {
-      toast.success("Exame adicionado ao catálogo");
+      toast.success("Exam added to catalog");
       setNewExam({ name: "", description: "", preparation: "", price: "", payment_link: "" });
       qc.invalidateQueries({ queryKey: ["exam-catalog", profile?.tenant_id] });
     },
-    onError: (error: any) => toast.error(error.message ?? "Não foi possível salvar o exame"),
+    onError: (error: any) => toast.error(error.message ?? "Could not save the exam"),
   });
 
   const scheduleExam = useMutation({
     mutationFn: async () => {
-      if (!scheduling || !user) throw new Error("Sessão expirada");
-      if (!scheduleAt) throw new Error("Escolha data e hora para a coleta.");
+      if (!scheduling || !user) throw new Error("Session expired");
+      if (!scheduleAt) throw new Error("Choose date and time for collection.");
       const { error } = await (supabase as any).from("exam_orders").insert({
         tenant_id: scheduling.tenant_id ?? profile?.tenant_id,
         exam_id: scheduling.id,
@@ -98,12 +98,12 @@ function Exams() {
       if (error) throw error;
     },
     onSuccess: () => {
-      toast.success("Exame agendado");
+      toast.success("Exam scheduled");
       setScheduling(null);
       setScheduleAt("");
       qc.invalidateQueries({ queryKey: ["exam-orders", profile?.tenant_id, user?.id] });
     },
-    onError: (error: any) => toast.error(error.message ?? "Não foi possível agendar"),
+    onError: (error: any) => toast.error(error.message ?? "Could not schedule"),
   });
 
   const updateOrder = async (id: string, patch: Record<string, unknown>, message: string) => {
@@ -121,13 +121,13 @@ function Exams() {
       .from("exams")
       .upload(path, file, { contentType: file.type || "application/pdf", upsert: true });
     if (error) return toast.error(error.message);
-    await updateOrder(order.id, { result_path: path, status: "ready" }, "Resultado anexado — exame pronto");
+    await updateOrder(order.id, { result_path: path, status: "ready" }, "Resultado anexado — exam pronto");
   };
 
   const openResult = async (order: any) => {
-    if (!order.result_path) return toast.info("Resultado ainda não disponível.");
+    if (!order.result_path) return toast.info("Result is not available yet.");
     const { data, error } = await supabase.storage.from("exams").createSignedUrl(order.result_path, 300);
-    if (error || !data?.signedUrl) return toast.error(error?.message ?? "Não foi possível abrir o resultado");
+    if (error || !data?.signedUrl) return toast.error(error?.message ?? "Could not open the result");
     window.open(data.signedUrl, "_blank", "noopener,noreferrer");
     if (order.status === "ready") updateOrder(order.id, { status: "delivered" }, "Resultado entregue");
   };
@@ -138,13 +138,13 @@ function Exams() {
   const tenantOrders = (orders.data ?? []);
 
   const exportOrdersPdf = () => {
-    downloadPdf("relatorio-exames", "Relatório de Exames", [
-      `Total de pedidos: ${tenantOrders.length}`,
-      `Prontos: ${tenantOrders.filter((o: any) => o.status === "ready").length}`,
+    downloadPdf("exam-report", "Exam Report", [
+      `Total orders: ${tenantOrders.length}`,
+      `Ready: ${tenantOrders.filter((o: any) => o.status === "ready").length}`,
       `Pagos: ${tenantOrders.filter((o: any) => o.payment_status === "paid").length}`,
       "",
       ...tenantOrders.slice(0, 60).map((o: any) =>
-        `${o.exam?.name ?? "Exame"} - ${o.patient_name ?? o.patient_id.slice(0, 8)} - ${STATUS_LABELS[o.status] ?? o.status} - pagamento ${o.payment_status === "paid" ? "pago" : "pendente"} - ${o.scheduled_for ? new Date(o.scheduled_for).toLocaleString("pt-BR") : "sem data"}`,
+        `${o.exam?.name ?? "Exam"} - ${o.patient_name ?? o.patient_id.slice(0, 8)} - ${STATUS_LABELS[o.status] ?? o.status} - pagamento ${o.payment_status === "paid" ? "pago" : "pendente"} - ${o.scheduled_for ? new Date(o.scheduled_for).toLocaleString("pt-BR") : "no date"}`,
       ),
       "",
       `Gerado em ${new Date().toLocaleString("pt-BR")} - Care Kranich`,
@@ -154,14 +154,14 @@ function Exams() {
   return (
     <>
       <PageHeader
-        title="Clínica de exames"
-        subtitle="Clientes consultam exames prontos, agendam coletas e realizam pagamentos. Resultados ficam em storage privado."
+        title="Diagnostics clinic"
+        subtitle="Clients view ready exams, schedule collections and complete payments. Results stay in private storage."
         action={
           <div className="flex items-center gap-2">
             <Pill tone="olive">Resultados assinados</Pill>
             {isStaffClinic && (
               <button onClick={exportOrdersPdf} className="rounded-full border border-moss/40 bg-white/60 px-4 py-2 text-xs font-medium hover:bg-moss/15">
-                Relatório PDF
+                PDF report
               </button>
             )}
           </div>
@@ -169,32 +169,32 @@ function Exams() {
       />
 
       <div className="grid gap-4 md:grid-cols-4">
-        <Stat label="Catálogo" value={catalog.data?.length ?? "-"} sub="Exames ativos" tone="olive" />
-        <Stat label="Agendados" value={tenantOrders.filter((o: any) => o.status === "scheduled").length} sub="Aguardando coleta" tone="gold" />
-        <Stat label="Prontos" value={tenantOrders.filter((o: any) => o.status === "ready").length} sub="Resultado disponível" tone="moss" />
+        <Stat label="Catalog" value={catalog.data?.length ?? "-"} sub="Active exams" tone="olive" />
+        <Stat label="Scheduled" value={tenantOrders.filter((o: any) => o.status === "scheduled").length} sub="Awaiting collection" tone="gold" />
+        <Stat label="Ready" value={tenantOrders.filter((o: any) => o.status === "ready").length} sub="Result available" tone="moss" />
         <Stat label="Pagamentos pendentes" value={tenantOrders.filter((o: any) => o.payment_status === "pending").length} sub="A receber" tone="wine" />
       </div>
 
       {isStaffClinic && (
         <Card className="mt-6">
-          <h2 className="text-xl font-semibold text-foreground">Novo exame no catálogo</h2>
+          <h2 className="text-xl font-semibold text-foreground">New exam no catálogo</h2>
           <div className="mt-4 grid gap-3 md:grid-cols-4">
-            <input value={newExam.name} onChange={(e) => setNewExam({ ...newExam, name: e.target.value })} placeholder="Nome do exame *" className="rounded-xl border border-border bg-ivory px-3 py-2 text-sm md:col-span-2" />
-            <input value={newExam.price} onChange={(e) => setNewExam({ ...newExam, price: e.target.value })} placeholder="Preço (R$)" inputMode="decimal" className="rounded-xl border border-border bg-ivory px-3 py-2 text-sm" />
+            <input value={newExam.name} onChange={(e) => setNewExam({ ...newExam, name: e.target.value })} placeholder="Nome do exam *" className="rounded-xl border border-border bg-ivory px-3 py-2 text-sm md:col-span-2" />
+            <input value={newExam.price} onChange={(e) => setNewExam({ ...newExam, price: e.target.value })} placeholder="Price (BRL)" inputMode="decimal" className="rounded-xl border border-border bg-ivory px-3 py-2 text-sm" />
             <input value={newExam.payment_link} onChange={(e) => setNewExam({ ...newExam, payment_link: e.target.value })} placeholder="Link de pagamento (Pix/Stripe)" className="rounded-xl border border-border bg-ivory px-3 py-2 text-sm" />
             <input value={newExam.description} onChange={(e) => setNewExam({ ...newExam, description: e.target.value })} placeholder="Descrição" className="rounded-xl border border-border bg-ivory px-3 py-2 text-sm md:col-span-2" />
             <input value={newExam.preparation} onChange={(e) => setNewExam({ ...newExam, preparation: e.target.value })} placeholder="Preparo (ex.: jejum de 8h)" className="rounded-xl border border-border bg-ivory px-3 py-2 text-sm" />
             <button onClick={() => createExam.mutate()} disabled={!newExam.name.trim() || createExam.isPending} className="rounded-xl bg-olive px-4 py-2 text-sm text-ivory disabled:opacity-50">
-              Salvar exame
+              Save exam
             </button>
           </div>
         </Card>
       )}
 
       <Card className="mt-6">
-        <h2 className="text-xl font-semibold text-foreground">Catálogo de exames</h2>
+        <h2 className="text-xl font-semibold text-foreground">Exam catalog</h2>
         {(catalog.data ?? []).length === 0 ? (
-          <div className="mt-4"><EmptyState title="Nenhum exame cadastrado" hint="A equipe da clínica pode cadastrar exames acima." /></div>
+          <div className="mt-4"><EmptyState title="No exam registered" hint="Clinic staff can register exams above." /></div>
         ) : (
           <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
             {(catalog.data ?? []).map((exam: any) => (
@@ -206,14 +206,14 @@ function Exams() {
                 {exam.description && <p className="mt-2 text-sm leading-5 text-muted-foreground">{exam.description}</p>}
                 {exam.preparation && (
                   <p className="mt-2 rounded-xl bg-baby/20 px-3 py-2 text-xs leading-5 text-foreground/80">
-                    Preparo: {exam.preparation}
+                    Preparation: {exam.preparation}
                   </p>
                 )}
                 <button
                   onClick={() => { setScheduling(exam); setScheduleAt(""); }}
                   className="mt-3 w-full rounded-full bg-olive px-4 py-2 text-xs font-semibold text-ivory hover:opacity-90"
                 >
-                  Agendar este exame
+                  Schedule this exam
                 </button>
               </div>
             ))}
@@ -225,14 +225,14 @@ function Exams() {
         <Card className="mt-6 border-olive/30">
           <div className="flex flex-wrap items-end justify-between gap-4">
             <div>
-              <p className="text-xs uppercase text-muted-foreground">Agendar coleta</p>
+              <p className="text-xs uppercase text-muted-foreground">Schedule collection</p>
               <h3 className="mt-1 text-lg font-semibold text-foreground">{scheduling.name} · {money(scheduling.price_cents)}</h3>
               <div className="mt-3">
                 <GlassDateTimePicker value={scheduleAt} onChange={setScheduleAt} />
               </div>
             </div>
             <div className="flex gap-2">
-              <button onClick={() => setScheduling(null)} className="rounded-full border border-border bg-white/55 px-4 py-2 text-xs">Cancelar</button>
+              <button onClick={() => setScheduling(null)} className="rounded-full border border-border bg-white/55 px-4 py-2 text-xs">Cancel</button>
               <button onClick={() => scheduleExam.mutate()} disabled={scheduleExam.isPending || !scheduleAt} className="rounded-full bg-olive px-5 py-2 text-xs font-semibold text-ivory disabled:opacity-45">
                 {scheduleExam.isPending ? "Agendando..." : "Confirmar agendamento"}
               </button>
@@ -242,15 +242,15 @@ function Exams() {
       )}
 
       <Card className="mt-6">
-        <h2 className="text-xl font-semibold text-foreground">Meus exames</h2>
+        <h2 className="text-xl font-semibold text-foreground">My exams</h2>
         {myOrders.length === 0 ? (
-          <p className="mt-3 text-sm text-muted-foreground">Você ainda não agendou exames.</p>
+          <p className="mt-3 text-sm text-muted-foreground">You have not scheduled exams yet.</p>
         ) : (
           <div className="mt-4 space-y-3">
             {myOrders.map((order: any) => (
               <div key={order.id} className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-white/70 bg-white/50 p-4">
                 <div className="min-w-0">
-                  <p className="font-medium text-foreground">{order.exam?.name ?? "Exame"}</p>
+                  <p className="font-medium text-foreground">{order.exam?.name ?? "Exam"}</p>
                   <p className="text-xs text-muted-foreground">
                     {order.scheduled_for ? new Date(order.scheduled_for).toLocaleString("pt-BR") : "Sem data"} · pagamento {order.payment_status === "paid" ? "pago" : "pendente"}
                   </p>
@@ -276,16 +276,16 @@ function Exams() {
 
       {isStaffClinic && (
         <Card className="mt-6">
-          <h2 className="text-xl font-semibold text-foreground">Gestão de pedidos (equipe)</h2>
+          <h2 className="text-xl font-semibold text-foreground">Order management (team)</h2>
           {tenantOrders.length === 0 ? (
-            <p className="mt-3 text-sm text-muted-foreground">Nenhum pedido de exame ainda.</p>
+            <p className="mt-3 text-sm text-muted-foreground">No exam orders yet.</p>
           ) : (
             <div className="mt-4 space-y-3">
               {tenantOrders.map((order: any) => (
                 <div key={order.id} className="rounded-2xl border border-white/70 bg-white/50 p-4">
                   <div className="flex flex-wrap items-center justify-between gap-3">
                     <div className="min-w-0">
-                      <p className="font-medium text-foreground">{order.exam?.name ?? "Exame"} · {order.patient_name ?? "Paciente"}</p>
+                      <p className="font-medium text-foreground">{order.exam?.name ?? "Exam"} · {order.patient_name ?? "Patient"}</p>
                       <p className="text-xs text-muted-foreground">
                         {order.scheduled_for ? new Date(order.scheduled_for).toLocaleString("pt-BR") : "Sem data"} · {money(order.exam?.price_cents ?? 0)}
                       </p>
@@ -301,7 +301,7 @@ function Exams() {
                         onClick={() => updateOrder(order.id, { status: nextStatus(order.status) }, `Status: ${STATUS_LABELS[nextStatus(order.status)!]}`)}
                         className="rounded-full bg-olive px-3 py-1.5 text-xs text-ivory"
                       >
-                        Avançar para {STATUS_LABELS[nextStatus(order.status)!]}
+                        Advance to {STATUS_LABELS[nextStatus(order.status)!]}
                       </button>
                     )}
                     {order.payment_status !== "paid" && (
@@ -332,10 +332,10 @@ function Exams() {
                     )}
                     {order.status !== "canceled" && (
                       <button
-                        onClick={() => updateOrder(order.id, { status: "canceled" }, "Exame cancelado")}
+                        onClick={() => updateOrder(order.id, { status: "canceled" }, "Exam canceled")}
                         className="rounded-full border border-wine/30 px-3 py-1.5 text-xs text-wine"
                       >
-                        Cancelar
+                        Cancel
                       </button>
                     )}
                   </div>

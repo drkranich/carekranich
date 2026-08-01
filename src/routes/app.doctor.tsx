@@ -125,18 +125,18 @@ function DoctorPortal() {
 
   const patientName = (id: string | null) => {
     const p = (patients.data ?? []).find((x: any) => x.id === id);
-    return p ? p.social_name || p.full_name : "Paciente";
+    return p ? p.social_name || p.full_name : "Patient";
   };
   const examName = (id: string) => {
-    const e = (exams.data ?? []).find((x: any) => x.id === id);
-    return e ? e.commercial_name || e.name : "Exame";
+    const exam = (exams.data ?? []).find((x: any) => x.id === id);
+    return exam ? exam.commercial_name || exam.name : "Exam";
   };
 
   const createOrder = useMutation({
     mutationFn: async () => {
-      if (!effTenant) throw new Error("Nenhuma organização disponível.");
-      if (!draft.patient_id) throw new Error("Selecione o paciente.");
-      if (examIds.length === 0) throw new Error("Selecione ao menos um exame.");
+      if (!effTenant) throw new Error("No organization available.");
+      if (!draft.patient_id) throw new Error("Select the patient.");
+      if (examIds.length === 0) throw new Error("Select at least one exam.");
       const signed_hash = await sha256Hex(
         `${user?.id}|${draft.patient_id}|${examIds.join(",")}|${Date.now()}`,
       );
@@ -154,8 +154,8 @@ function DoctorPortal() {
       if (draft.urgent) {
         await (supabase as any).from("alerts").insert({
           tenant_id: effTenant,
-          title: `Pedido médico URGENTE — ${patientName(draft.patient_id)}`,
-          description: `Exames: ${examIds.map(examName).join(", ")}`,
+          title: `URGENT medical order — ${patientName(draft.patient_id)}`,
+          description: `Exams: ${examIds.map(examName).join(", ")}`,
           severity: "high",
           category: "lab",
           status: "open",
@@ -164,12 +164,12 @@ function DoctorPortal() {
       }
     },
     onSuccess: () => {
-      toast.success("Pedido eletrônico assinado e enviado");
+      toast.success("Electronic order signed and sent");
       setDraft({ patient_id: "", clinical_notes: "", urgent: false });
       setExamIds([]);
       qc.invalidateQueries({ queryKey: ["doctor-orders", user?.id] });
     },
-    onError: (e: any) => toast.error(e.message ?? "Não foi possível enviar o pedido"),
+    onError: (e: any) => toast.error(e.message ?? "Could not send the order"),
   });
 
   const setStatus = async (order: any, status: string) => {
@@ -180,13 +180,13 @@ function DoctorPortal() {
   };
 
   const exportOrder = (o: any) => {
-    downloadPdf(`pedido-${patientName(o.patient_id)}.pdf`, "Pedido médico eletrônico", [
-      `Paciente: ${patientName(o.patient_id)}`,
-      `Data: ${new Date(o.created_at).toLocaleString("pt-BR")}`,
-      `Urgência: ${o.urgent ? "SIM" : "não"}`,
+    downloadPdf(`order-${patientName(o.patient_id)}.pdf`, "Electronic medical order", [
+      `Patient: ${patientName(o.patient_id)}`,
+      `Date: ${new Date(o.created_at).toLocaleString("pt-BR")}`,
+      `Urgência: ${o.urgent ? "YES" : "não"}`,
       `Status: ${STATUS_LABEL[o.status] ?? o.status}`,
       "",
-      "Exames solicitados:",
+      "Exams solicitados:",
       ...(o.exam_ids ?? []).map((id: string) => `- ${examName(id)}`),
       "",
       o.clinical_notes ? `Observações clínicas: ${o.clinical_notes}` : "",
@@ -196,8 +196,8 @@ function DoctorPortal() {
   };
 
   const exportReport = (r: any) => {
-    downloadPdf(`laudo-${r.title}.pdf`, r.title, [
-      `Paciente: ${patientName(r.patient_id)}`,
+    downloadPdf(`report-${r.title}.pdf`, r.title, [
+      `Patient: ${patientName(r.patient_id)}`,
       `Versão: ${r.version} · Status: ${r.status}`,
       "",
       ...(r.result_text ?? "").split("\n"),
@@ -211,13 +211,13 @@ function DoctorPortal() {
     <div className="space-y-6">
       <PageHeader
         title="Portal do médico"
-        subtitle="Pedidos eletrônicos assinados, acompanhamento dos seus pacientes e alertas de resultados críticos."
+        subtitle="Signed electronic orders, patient follow-up and critical result alerts."
       />
 
       <div className="grid gap-4 md:grid-cols-4">
-        <Stat label="Meus pedidos" value={(orders.data ?? []).length} sub="Pedidos eletrônicos" tone="olive" />
-        <Stat label="Pacientes vinculados" value={myPatientIds.length} sub="Via pedidos" tone="moss" />
-        <Stat label="Laudos disponíveis" value={(reports.data ?? []).length} sub="Dos seus pacientes" tone="gold" />
+        <Stat label="My orders" value={(orders.data ?? []).length} sub="Electronic orders" tone="olive" />
+        <Stat label="Linked patients" value={myPatientIds.length} sub="Via orders" tone="moss" />
+        <Stat label="Laudos disponíveis" value={(reports.data ?? []).length} sub="For your patients" tone="gold" />
         <Stat label="Críticos abertos" value={(criticals.data ?? []).length} sub="Exigem atenção" tone="wine" />
       </div>
 
@@ -239,13 +239,13 @@ function DoctorPortal() {
 
       <Card className="space-y-4 p-6">
         <h3 className="flex items-center gap-2 text-sm font-semibold text-foreground">
-          <Stethoscope className="h-4 w-4" /> Novo pedido eletrônico
+          <Stethoscope className="h-4 w-4" /> New electronic order
         </h3>
         <div className="grid gap-3 md:grid-cols-2">
           <GlassSelect
             value={draft.patient_id}
             onChange={(v) => setDraft({ ...draft, patient_id: v })}
-            placeholder="Paciente *"
+            placeholder="Patient *"
             options={(patients.data ?? []).map((p: any) => ({ value: p.id, label: p.social_name || p.full_name }))}
           />
           <button
@@ -257,11 +257,11 @@ function DoctorPortal() {
                 : "border-white/70 bg-white/55 text-muted-foreground backdrop-blur-xl"
             }`}
           >
-            {draft.urgent ? "URGENTE — alerta será disparado" : "Marcar como urgente"}
+            {draft.urgent ? "URGENTE — alerta será disparado" : "Mark as urgent"}
           </button>
         </div>
         <div>
-          <p className="mb-2 text-xs font-medium text-muted-foreground">Exames solicitados ({examIds.length})</p>
+          <p className="mb-2 text-xs font-medium text-muted-foreground">Exams solicitados ({examIds.length})</p>
           <div className="flex max-h-44 flex-wrap gap-2 overflow-y-auto">
             {(exams.data ?? []).map((e: any) => (
               <button
@@ -294,15 +294,15 @@ function DoctorPortal() {
           className="inline-flex items-center gap-2 rounded-full bg-olive px-5 py-2 text-sm font-medium text-ivory shadow-soft hover:opacity-90 disabled:opacity-60"
         >
           <FileSignature className="h-4 w-4" />
-          {createOrder.isPending ? "Assinando..." : "Assinar e enviar pedido"}
+          {createOrder.isPending ? "Signing..." : "Sign and send order"}
         </button>
       </Card>
 
       <div className="grid gap-6 lg:grid-cols-2">
         <Card className="space-y-3 p-6">
-          <h3 className="text-sm font-semibold text-foreground">Meus pedidos</h3>
+          <h3 className="text-sm font-semibold text-foreground">My orders</h3>
           {(orders.data ?? []).length === 0 && (
-            <p className="text-sm text-muted-foreground">Nenhum pedido eletrônico ainda.</p>
+            <p className="text-sm text-muted-foreground">No electronic orders yet.</p>
           )}
           {(orders.data ?? []).map((o: any) => (
             <div key={o.id} className="space-y-2 rounded-2xl border border-white/70 bg-white/50 p-4">
@@ -333,7 +333,7 @@ function DoctorPortal() {
                       Concluir
                     </button>
                     <button onClick={() => setStatus(o, "canceled")} className="rounded-full border border-wine/30 bg-wine/5 px-3 py-1.5 text-wine">
-                      Cancelar
+                      Cancel
                     </button>
                   </>
                 )}
@@ -343,10 +343,10 @@ function DoctorPortal() {
         </Card>
 
         <Card className="space-y-3 p-6">
-          <h3 className="text-sm font-semibold text-foreground">Laudos dos meus pacientes</h3>
+          <h3 className="text-sm font-semibold text-foreground">My patient reports</h3>
           {(reports.data ?? []).length === 0 && (
             <p className="text-sm text-muted-foreground">
-              Os laudos aparecem aqui assim que seus pacientes tiverem resultados.
+              Reports appear here as soon as your patients have results.
             </p>
           )}
           {(reports.data ?? []).map((r: any) => (

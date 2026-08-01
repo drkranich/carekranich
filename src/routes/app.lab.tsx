@@ -12,27 +12,27 @@ import { downloadPdf } from "@/lib/pdf";
 export const Route = createFileRoute("/app/lab")({ component: Lab });
 
 const STAGES: Array<{ key: string; label: string }> = [
-  { key: "pedido_recebido", label: "Pedido recebido" },
+  { key: "pedido_recebido", label: "Order received" },
   { key: "cadastro_validado", label: "Cadastro validado" },
   { key: "agendamento_confirmado", label: "Agendamento confirmado" },
-  { key: "paciente_identificado", label: "Paciente identificado" },
-  { key: "coleta_realizada", label: "Coleta realizada" },
+  { key: "paciente_identificado", label: "Patient identified" },
+  { key: "coleta_realizada", label: "Collection completed" },
   { key: "etiqueta_vinculada", label: "Etiqueta vinculada" },
   { key: "amostra_transportada", label: "Transporte" },
-  { key: "amostra_recebida", label: "Recebida no laboratório" },
-  { key: "triagem_tecnica", label: "Triagem técnica" },
-  { key: "centrifugacao", label: "Centrifugação" },
-  { key: "separacao", label: "Separação" },
-  { key: "aliquota", label: "Alíquota" },
+  { key: "amostra_recebida", label: "Received by laboratory" },
+  { key: "triagem_tecnica", label: "Technical screening" },
+  { key: "centrifugacao", label: "Centrifugation" },
+  { key: "separacao", label: "Separation" },
+  { key: "aliquota", label: "Aliquot" },
   { key: "processamento", label: "Processamento" },
   { key: "controle_qualidade", label: "Controle de qualidade" },
-  { key: "analise", label: "Análise" },
-  { key: "revisao", label: "Revisão" },
-  { key: "validacao_tecnica", label: "Validação técnica" },
-  { key: "validacao_clinica", label: "Validação clínica" },
+  { key: "analise", label: "Analysis" },
+  { key: "revisao", label: "Review" },
+  { key: "validacao_tecnica", label: "Technical validation" },
+  { key: "validacao_clinica", label: "Clinical validation" },
   { key: "assinatura", label: "Assinatura" },
-  { key: "liberacao", label: "Liberação" },
-  { key: "comunicacao", label: "Comunicação" },
+  { key: "liberacao", label: "Release" },
+  { key: "comunicacao", label: "Communication" },
   { key: "arquivamento", label: "Arquivamento" },
   { key: "descarte", label: "Descarte" },
 ];
@@ -145,17 +145,17 @@ function Lab() {
 
   const memberName = (id: string | null) => {
     const m = (members.data ?? []).find((x: any) => x.id === id);
-    return m ? m.preferred_name || m.full_name || "Usuário" : "—";
+    return m ? m.preferred_name || m.full_name || "User" : "—";
   };
 
   const patientName = (id: string | null) => {
     const p = (patients.data ?? []).find((x: any) => x.id === id);
-    return p ? p.social_name || p.full_name : "Sem paciente";
+    return p ? p.social_name || p.full_name : "No patient";
   };
 
   const examName = (id: string | null) => {
-    const e = (exams.data ?? []).find((x: any) => x.id === id);
-    return e ? e.commercial_name || e.name : "Exame";
+    const exam = (exams.data ?? []).find((x: any) => x.id === id);
+    return exam ? exam.commercial_name || exam.name : "Exam";
   };
 
   const refresh = () => {
@@ -165,9 +165,9 @@ function Lab() {
 
   const createSample = useMutation({
     mutationFn: async () => {
-      if (!effTenant) throw new Error("Nenhuma organização disponível.");
-      if (!draft.patient_id) throw new Error("Selecione o paciente.");
-      if (!draft.exam_id) throw new Error("Selecione o exame.");
+      if (!effTenant) throw new Error("No organization available.");
+      if (!draft.patient_id) throw new Error("Select the patient.");
+      if (!draft.exam_id) throw new Error("Select the exam.");
       const barcode = `CK${Date.now().toString(36).toUpperCase()}${Math.random().toString(36).slice(2, 5).toUpperCase()}`;
       const { data, error } = await (supabase as any)
         .from("samples")
@@ -192,19 +192,19 @@ function Lab() {
       return data.id as string;
     },
     onSuccess: (id) => {
-      toast.success("Amostra registrada com código de barras");
+      toast.success("Sample registered with barcode");
       setDraft({ patient_id: "", exam_id: "", material: "Sangue total" });
       setSelectedId(id);
       refresh();
     },
-    onError: (e: any) => toast.error(e.message ?? "Não foi possível registrar a amostra"),
+    onError: (e: any) => toast.error(e.message ?? "Could not register the sample"),
   });
 
   const advance = useMutation({
     mutationFn: async () => {
       if (!selected) return;
       const idx = stageIndex(selected.current_stage);
-      if (idx >= STAGES.length - 1) throw new Error("A amostra já concluiu todas as etapas.");
+      if (idx >= STAGES.length - 1) throw new Error("The sample has already completed all stages.");
       const next = STAGES[idx + 1];
       const { error } = await (supabase as any)
         .from("samples")
@@ -235,8 +235,8 @@ function Lab() {
   const reject = useMutation({
     mutationFn: async () => {
       if (!selected) return;
-      const reason = window.prompt("Motivo da rejeição da amostra (ex.: hemólise, volume insuficiente):");
-      if (!reason || !reason.trim()) throw new Error("Informe o motivo da rejeição.");
+      const reason = window.prompt("Sample rejection reason (e.g. hemolysis, insufficient volume):");
+      if (!reason || !reason.trim()) throw new Error("Enter the rejection reason.");
       const { error } = await (supabase as any)
         .from("samples")
         .update({ status: "rejected", rejection_reason: reason.trim() })
@@ -247,13 +247,13 @@ function Lab() {
         sample_id: selected.id,
         stage: selected.current_stage,
         status: "rejected",
-        notes: `Amostra rejeitada: ${reason.trim()}. Necessária recoleta.`,
+        notes: `Sample rejected: ${reason.trim()}. Recollection required.`,
         performed_by: user?.id ?? null,
       });
       await (supabase as any).from("alerts").insert({
         tenant_id: selected.tenant_id,
-        title: `Recoleta necessária — ${patientName(selected.patient_id)}`,
-        description: `Amostra ${selected.barcode} (${examName(selected.exam_id)}) rejeitada: ${reason.trim()}`,
+        title: `Recollection required - ${patientName(selected.patient_id)}`,
+        description: `Amostra ${selected.barcode} (${examName(selected.exam_id)}) rejected: ${reason.trim()}`,
         severity: "high",
         category: "lab",
         status: "open",
@@ -261,7 +261,7 @@ function Lab() {
       });
     },
     onSuccess: () => {
-      toast.success("Rejeição registrada — alerta de recoleta criado");
+      toast.success("Rejection registered - recollection alert created");
       refresh();
     },
     onError: (e: any) => toast.error(e.message),
@@ -282,14 +282,14 @@ function Lab() {
   const exportSample = (s: any) => {
     const evts = s.id === selected?.id ? (events.data ?? []) : [];
     downloadPdf(`amostra-${s.barcode}.pdf`, `Amostra ${s.barcode}`, [
-      `Paciente: ${patientName(s.patient_id)}`,
+      `Patient: ${patientName(s.patient_id)}`,
       `Exame: ${examName(s.exam_id)}`,
       `Material: ${s.material ?? "-"}`,
       `Etapa atual: ${STAGES[stageIndex(s.current_stage)].label}`,
-      `Status: ${s.status === "rejected" ? `REJEITADA (${s.rejection_reason})` : s.status === "completed" ? "Concluída" : "Em andamento"}`,
+      `Status: ${s.status === "rejected" ? `REJECTED (${s.rejection_reason})` : s.status === "completed" ? "Completed" : "In progress"}`,
       `Registrada em: ${new Date(s.created_at).toLocaleString("pt-BR")}`,
       "",
-      "Cadeia de custódia:",
+      "Chain of custody:",
       ...evts.map(
         (e: any) =>
           `- ${new Date(e.performed_at).toLocaleString("pt-BR")} · ${STAGES.find((x) => x.key === e.stage)?.label ?? e.stage} · ${memberName(e.performed_by)}${e.notes ? ` · ${e.notes}` : ""}`,
@@ -310,15 +310,15 @@ function Lab() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Laboratório — amostras"
-        subtitle="Rastreabilidade completa: cada amostra percorre as 23 etapas com registro de usuário, hora e observação."
+        title="Laboratory - samples"
+        subtitle="Full traceability: each sample goes through 23 stages with user, time and note records."
       />
 
       <div className="grid gap-4 md:grid-cols-4">
-        <Stat label="Em andamento" value={stats.inProgress} sub="Amostras ativas" tone="olive" />
-        <Stat label="Aguardando validação" value={stats.awaitingValidation} sub="Técnica, clínica ou assinatura" tone="gold" />
-        <Stat label="Rejeitadas" value={stats.rejected} sub="Recoleta necessária" tone="wine" />
-        <Stat label="Liberadas" value={stats.released} sub="Resultado comunicável" tone="moss" />
+        <Stat label="In progress" value={stats.inProgress} sub="Amostras ativas" tone="olive" />
+        <Stat label="Awaiting validation" value={stats.awaitingValidation} sub="Technical, clinical or signature" tone="gold" />
+        <Stat label="Rejected" value={stats.rejected} sub="Recollection needed" tone="wine" />
+        <Stat label="Released" value={stats.released} sub="Communicable result" tone="moss" />
       </div>
 
       <Card className="space-y-3 p-6">
@@ -329,14 +329,14 @@ function Lab() {
           <GlassSelect
             value={draft.patient_id}
             onChange={(v) => setDraft({ ...draft, patient_id: v })}
-            placeholder="Paciente"
+            placeholder="Patient"
             options={(patients.data ?? []).map((p: any) => ({ value: p.id, label: p.social_name || p.full_name }))}
           />
           <GlassSelect
             value={draft.exam_id}
             onChange={(v) => {
-              const e = (exams.data ?? []).find((x: any) => x.id === v);
-              setDraft({ ...draft, exam_id: v, material: e?.biological_material || draft.material });
+              const exam = (exams.data ?? []).find((x: any) => x.id === v);
+              setDraft({ ...draft, exam_id: v, material: exam?.biological_material || draft.material });
             }}
             placeholder="Exame"
             options={(exams.data ?? []).map((e: any) => ({ value: e.id, label: e.commercial_name || e.name }))}
@@ -351,7 +351,7 @@ function Lab() {
             disabled={createSample.isPending}
             className="inline-flex items-center justify-center gap-2 rounded-2xl bg-olive px-4 py-2.5 text-sm font-medium text-ivory shadow-soft hover:opacity-90 disabled:opacity-60"
           >
-            <Plus className="h-4 w-4" /> Gerar código e registrar
+            <Plus className="h-4 w-4" /> Generate code and register
           </button>
         </div>
       </Card>
@@ -361,10 +361,10 @@ function Lab() {
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Buscar por código, paciente, exame..."
+            placeholder="Search by code, patient, exam..."
             className="w-full rounded-2xl border border-white/70 bg-white/55 px-4 py-2.5 text-sm shadow-soft backdrop-blur-xl outline-none focus:border-olive/40"
           />
-          {filtered.length === 0 && <p className="text-sm text-muted-foreground">Nenhuma amostra encontrada.</p>}
+          {filtered.length === 0 && <p className="text-sm text-muted-foreground">No sample found.</p>}
           {filtered.map((s: any) => (
             <button
               key={s.id}
@@ -378,7 +378,7 @@ function Lab() {
                   <Barcode className="h-3.5 w-3.5" /> {s.barcode}
                 </span>
                 <Pill tone={s.status === "rejected" ? "wine" : s.status === "completed" ? "moss" : "gold"}>
-                  {s.status === "rejected" ? "rejeitada" : s.status === "completed" ? "concluída" : `${stageIndex(s.current_stage) + 1}/23`}
+                  {s.status === "rejected" ? "rejected" : s.status === "completed" ? "completed" : `${stageIndex(s.current_stage) + 1}/23`}
                 </Pill>
               </div>
               <p className="mt-1 truncate text-sm font-medium text-foreground">{patientName(s.patient_id)}</p>
@@ -398,14 +398,14 @@ function Lab() {
               </div>
               <div className="flex gap-2">
                 <button onClick={() => exportSample(selected)} className="inline-flex items-center gap-1.5 rounded-full border border-border bg-white/55 px-4 py-2 text-xs">
-                  <FileDown className="h-3.5 w-3.5" /> Cadeia de custódia (PDF)
+                  <FileDown className="h-3.5 w-3.5" /> Chain of custody (PDF)
                 </button>
               </div>
             </div>
 
             {selected.status === "rejected" && (
               <div className="rounded-2xl border border-wine/25 bg-wine/5 p-4 text-sm text-wine">
-                Amostra rejeitada: {selected.rejection_reason}. Alerta de recoleta criado.
+                Sample rejected: {selected.rejection_reason}. Recollection alert created.
               </div>
             )}
 
@@ -437,7 +437,7 @@ function Lab() {
                 <input
                   value={stageNote}
                   onChange={(e) => setStageNote(e.target.value)}
-                  placeholder="Observação da etapa (opcional)"
+                  placeholder="Step note (optional)"
                   className="min-w-64 flex-1 rounded-2xl border border-white/70 bg-white/55 px-4 py-2.5 text-sm shadow-soft backdrop-blur-xl outline-none focus:border-olive/40"
                 />
                 <button
@@ -445,7 +445,7 @@ function Lab() {
                   disabled={advance.isPending}
                   className="rounded-full bg-olive px-5 py-2 text-sm font-medium text-ivory shadow-soft hover:opacity-90 disabled:opacity-60"
                 >
-                  Avançar etapa →
+                    Advance stage
                 </button>
                 <button
                   onClick={() => reject.mutate()}
@@ -458,13 +458,13 @@ function Lab() {
             )}
 
             <div>
-              <h4 className="text-sm font-semibold text-foreground">Histórico (cadeia de custódia)</h4>
+              <h4 className="text-sm font-semibold text-foreground">History (chain of custody)</h4>
               <div className="mt-2 space-y-1.5">
                 {(events.data ?? []).map((e: any) => (
                   <div key={e.id} className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-white/70 bg-white/45 px-3 py-2 text-xs">
                     <span className="font-medium text-foreground">
                       {STAGES.find((x) => x.key === e.stage)?.label ?? e.stage}
-                      {e.status === "rejected" ? " · REJEIÇÃO" : ""}
+                      {e.status === "rejected" ? " - REJECTION" : ""}
                     </span>
                     <span className="text-muted-foreground">
                       {new Date(e.performed_at).toLocaleString("pt-BR")} · {memberName(e.performed_by)}
@@ -476,7 +476,7 @@ function Lab() {
             </div>
           </Card>
         ) : (
-          <EmptyState title="Nenhuma amostra selecionada" hint="Registre uma amostra para iniciar o fluxo de 23 etapas." />
+          <EmptyState title="No sample selected" hint="Register a sample to start the 23-stage flow." />
         )}
       </div>
     </div>

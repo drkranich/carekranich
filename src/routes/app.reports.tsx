@@ -22,8 +22,8 @@ const STATUS_LABEL: Record<string, string> = {
 const NEXT_ACTION: Record<string, string> = {
   draft: "Enviar para revisão",
   review: "Validar tecnicamente",
-  validated: "Assinar laudo",
-  signed: "Liberar ao paciente",
+  validated: "Sign report",
+  signed: "Release to patient",
 };
 
 async function sha256Hex(value: string) {
@@ -138,11 +138,11 @@ function Reports() {
 
   const patientName = (id: string | null) => {
     const p = (patients.data ?? []).find((x: any) => x.id === id);
-    return p ? p.social_name || p.full_name : "Sem paciente";
+    return p ? p.social_name || p.full_name : "No patient";
   };
   const examName = (id: string | null) => {
-    const e = (exams.data ?? []).find((x: any) => x.id === id);
-    return e ? e.commercial_name || e.name : "";
+    const exam = (exams.data ?? []).find((x: any) => x.id === id);
+    return exam ? exam.commercial_name || exam.name : "";
   };
 
   const refresh = () => {
@@ -152,9 +152,9 @@ function Reports() {
 
   const createReport = useMutation({
     mutationFn: async () => {
-      if (!effTenant) throw new Error("Nenhuma organização disponível.");
-      if (!draft.patient_id) throw new Error("Selecione o paciente.");
-      if (!draft.title.trim()) throw new Error("Informe o título do laudo.");
+      if (!effTenant) throw new Error("No organization available.");
+      if (!draft.patient_id) throw new Error("Select the patient.");
+      if (!draft.title.trim()) throw new Error("Enter the report title.");
       if (!draft.result_text.trim()) throw new Error("Informe o resultado técnico.");
       const base: Record<string, unknown> = {
         tenant_id: effTenant,
@@ -202,7 +202,7 @@ function Reports() {
       setSelectedId(id);
       refresh();
     },
-    onError: (e: any) => toast.error(e.message ?? "Não foi possível criar o laudo"),
+    onError: (e: any) => toast.error(e.message ?? "Could not create the report"),
   });
 
   const advance = useMutation({
@@ -211,7 +211,7 @@ function Reports() {
       const idx = STATUS_FLOW.indexOf(selected.status);
       if (idx < 0 || idx >= STATUS_FLOW.length - 1) return;
       const next = STATUS_FLOW[idx + 1];
-      if (next === "signed" && !canSign) throw new Error("Somente médicos ou administradores assinam laudos.");
+      if (next === "signed" && !canSign) throw new Error("Only doctors or administrators can sign reports.");
       if (next === "released" && selected.is_critical) {
         const c = critical.data;
         const attempts = Array.isArray(c?.contact_attempts) ? c.contact_attempts : [];
@@ -242,7 +242,7 @@ function Reports() {
   const registerContact = useMutation({
     mutationFn: async () => {
       if (!selected || !critical.data) throw new Error("Protocolo crítico não encontrado.");
-      if (!contactNote.trim()) throw new Error("Descreva o contato (quem foi comunicado e como).");
+      if (!contactNote.trim()) throw new Error("Describe the contact (who was notified and how).");
       const attempts = Array.isArray(critical.data.contact_attempts) ? critical.data.contact_attempts : [];
       const { error } = await (supabase as any)
         .from("critical_results")
@@ -274,7 +274,7 @@ function Reports() {
       if (error) throw error;
     },
     onSuccess: () => {
-      toast.success("Protocolo crítico encerrado");
+      toast.success("Protocolo crítico ended");
       refresh();
     },
     onError: (e: any) => toast.error(e.message),
@@ -298,8 +298,8 @@ function Reports() {
   };
 
   const exportPdf = (r: any) => {
-    downloadPdf(`laudo-${r.title}.pdf`, r.title, [
-      `Paciente: ${patientName(r.patient_id)}`,
+    downloadPdf(`report-${r.title}.pdf`, r.title, [
+      `Patient: ${patientName(r.patient_id)}`,
       r.exam_id ? `Exame: ${examName(r.exam_id)}` : "",
       `Versão: ${r.version}${r.kind === "retificacao" ? " (retificação)" : ""}`,
       `Status: ${STATUS_LABEL[r.status] ?? r.status}${r.is_critical ? " · RESULTADO CRÍTICO" : ""}`,
@@ -313,7 +313,7 @@ function Reports() {
       r.comments ? `Comentários: ${r.comments}` : "",
       "",
       r.signed_hash ? `Verificação (SHA-256): ${r.signed_hash}` : "",
-      "Este laudo não substitui a interpretação do seu médico.",
+      "This report does not replace your doctor interpretation.",
     ].filter((l) => l !== ""));
   };
 
@@ -330,8 +330,8 @@ function Reports() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Laudos e resultados"
-        subtitle="Laudos versionados com revisão, validação, assinatura com hash e liberação — críticos só saem após contato registrado."
+        title="Reports and results"
+        subtitle="Versioned reports with review, validation, hash signature and release - critical results are released only after registered contact."
         action={
           <button
             onClick={() => {
@@ -340,35 +340,35 @@ function Reports() {
             }}
             className="inline-flex items-center gap-2 rounded-full bg-olive px-4 py-2 text-sm font-medium text-ivory shadow-soft hover:opacity-90"
           >
-            <Plus className="h-4 w-4" /> Novo laudo
+            <Plus className="h-4 w-4" /> New report
           </button>
         }
       />
 
       <div className="grid gap-4 md:grid-cols-4">
-        <Stat label="Em elaboração" value={stats.drafts} sub="Rascunhos e revisão" tone="gold" />
-        <Stat label="Aguardando assinatura" value={stats.toSign} sub="Validados" tone="olive" />
+        <Stat label="In progress" value={stats.drafts} sub="Drafts and review" tone="gold" />
+        <Stat label="Awaiting signature" value={stats.toSign} sub="Validated" tone="olive" />
         <Stat label="Críticos pendentes" value={stats.critical} sub="Protocolo aberto" tone="wine" />
-        <Stat label="Liberados" value={stats.released} sub="Visíveis ao paciente" tone="moss" />
+        <Stat label="Released" value={stats.released} sub="Visible to the patient" tone="moss" />
       </div>
 
       {openForm && (
         <Card className="space-y-3 p-6">
           <h3 className="text-sm font-semibold text-foreground">
-            {amending ? `Retificação — nova versão de "${selected?.title}"` : "Novo laudo"}
+            {amending ? `Correction - new version of "${selected?.title}"` : "New report"}
           </h3>
           <div className="grid gap-3 md:grid-cols-3">
             <GlassSelect
               value={draft.patient_id}
               onChange={(v) => setDraft({ ...draft, patient_id: v })}
-              placeholder="Paciente *"
+              placeholder="Patient *"
               options={(patients.data ?? []).map((p: any) => ({ value: p.id, label: p.social_name || p.full_name }))}
             />
             <GlassSelect
               value={draft.exam_id}
               onChange={(v) => setDraft({ ...draft, exam_id: v })}
               placeholder="Exame (opcional)"
-              options={[{ value: "", label: "Sem exame vinculado" }, ...(exams.data ?? []).map((e: any) => ({ value: e.id, label: e.commercial_name || e.name }))]}
+              options={[{ value: "", label: "No linked exam" }, ...(exams.data ?? []).map((e: any) => ({ value: e.id, label: e.commercial_name || e.name }))]}
             />
             <GlassSelect
               value={draft.sample_id}
@@ -380,7 +380,7 @@ function Reports() {
           <input
             value={draft.title}
             onChange={(e) => setDraft({ ...draft, title: e.target.value })}
-            placeholder="Título do laudo * (ex.: Hemograma completo)"
+            placeholder="Report title * (e.g. Complete blood count)"
             className="w-full rounded-2xl border border-white/70 bg-white/55 px-4 py-2.5 text-sm shadow-soft backdrop-blur-xl outline-none focus:border-olive/40"
           />
           <textarea
@@ -402,7 +402,7 @@ function Reports() {
               value={draft.comments}
               onChange={(e) => setDraft({ ...draft, comments: e.target.value })}
               rows={3}
-              placeholder="Comentários e observações"
+              placeholder="Comments and observations"
               className="w-full rounded-2xl border border-white/70 bg-white/55 px-4 py-2.5 text-sm shadow-soft backdrop-blur-xl outline-none focus:border-olive/40"
             />
           </div>
@@ -424,10 +424,10 @@ function Reports() {
               disabled={createReport.isPending}
               className="rounded-full bg-olive px-5 py-2 text-sm font-medium text-ivory shadow-soft hover:opacity-90 disabled:opacity-60"
             >
-              {createReport.isPending ? "Salvando..." : amending ? "Criar retificação" : "Criar laudo"}
+              {createReport.isPending ? "Saving..." : amending ? "Criar retificação" : "Create report"}
             </button>
             <button onClick={() => { setOpenForm(false); setAmending(false); }} className="rounded-full border border-white/70 bg-white/55 px-5 py-2 text-sm backdrop-blur-xl">
-              Cancelar
+              Cancel
             </button>
           </div>
         </Card>
@@ -436,7 +436,7 @@ function Reports() {
       <div className="grid gap-6 xl:grid-cols-[360px_1fr]">
         <Card className="space-y-2 p-5">
           <h3 className="text-sm font-semibold text-foreground">Laudos recentes</h3>
-          {(reports.data ?? []).length === 0 && <p className="text-sm text-muted-foreground">Nenhum laudo ainda.</p>}
+          {(reports.data ?? []).length === 0 && <p className="text-sm text-muted-foreground">No reports yet.</p>}
           {(reports.data ?? []).map((r: any) => (
             <button
               key={r.id}
@@ -511,7 +511,7 @@ function Reports() {
               <div className="space-y-3 rounded-2xl border border-wine/25 bg-wine/5 p-4">
                 <p className="flex items-center gap-2 text-sm font-semibold text-wine">
                   <AlertTriangle className="h-4 w-4" /> Protocolo de resultado crítico —{" "}
-                  {critical.data?.status === "closed" ? "encerrado" : critical.data?.status === "contacting" ? "em contato" : "aberto"}
+                  {critical.data?.status === "closed" ? "ended" : critical.data?.status === "contacting" ? "em contato" : "aberto"}
                 </p>
                 {(Array.isArray(critical.data?.contact_attempts) ? critical.data.contact_attempts : []).map(
                   (a: any, i: number) => (
@@ -525,7 +525,7 @@ function Reports() {
                     <input
                       value={contactNote}
                       onChange={(e) => setContactNote(e.target.value)}
-                      placeholder="Quem foi comunicado, por qual meio e horário"
+                      placeholder="Who was notified, through which channel and time"
                       className="min-w-64 flex-1 rounded-xl border border-border bg-ivory px-3 py-2 text-xs"
                     />
                     <button onClick={() => registerContact.mutate()} className="rounded-full bg-wine px-4 py-1.5 text-xs font-medium text-ivory">
@@ -559,12 +559,12 @@ function Reports() {
               </button>
             </div>
             <p className="text-xs text-muted-foreground">
-              Laudos assinados são imutáveis: correções geram uma nova versão preservando a anterior. Pacientes e
-              autorizados só enxergam laudos liberados.
+              Signed reports are immutable: corrections generate a new version while preserving the previous one. Patients e
+              authorized users only see released reports.
             </p>
           </Card>
         ) : (
-          <EmptyState title="Nenhum laudo selecionado" hint="Crie um laudo para iniciar o fluxo de revisão, assinatura e liberação." />
+          <EmptyState title="No report selected" hint="Create a report to start the review, signature and release flow." />
         )}
       </div>
     </div>

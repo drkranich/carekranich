@@ -17,7 +17,7 @@ export function GlassSelect({
   onChange,
   options,
   name,
-  placeholder = "Selecionar",
+  placeholder = "Select",
   className = "",
   disabled = false,
 }: {

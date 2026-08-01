@@ -32,7 +32,7 @@ const CATEGORIES = [
   { value: "mobility", label: "Mobilidade" },
   { value: "mood", label: "Humor" },
   { value: "incident", label: "Incidente" },
-  { value: "memory", label: "Memória" },
+  { value: "memory", label: "Memory" },
   { value: "alert", label: "Alerta" },
 ];
 const SEVERITIES = [
@@ -120,10 +120,10 @@ function TimelinePage() {
 
   const grouped = useMemo(() => {
     const m = new Map<string, EventRow[]>();
-    for (const e of events) {
-      const k = toDayKey(new Date(e.occurred_at));
+    for (const event of events) {
+      const k = toDayKey(new Date(event.occurred_at));
       if (!m.has(k)) m.set(k, []);
-      m.get(k)!.push(e);
+      m.get(k)!.push(event);
     }
     return Array.from(m.entries());
   }, [events]);
@@ -138,14 +138,14 @@ function TimelinePage() {
     <>
       <PageHeader
         title="Linha do tempo"
-        subtitle="Um fluxo unificado e em tempo real de cada momento de cuidado."
+        subtitle="Um fluxo unificado and em tempo real de cada momento de cuidado."
         action={
           canLog && profile?.tenant_id && (
             <button
               onClick={() => setShowForm((v) => !v)}
               className="rounded-full bg-olive px-4 py-2 text-xs text-ivory hover:opacity-90"
             >
-              {showForm ? "Cancelar" : "+ Registrar evento"}
+              {showForm ? "Cancel" : "+ Registrar evento"}
             </button>
           )
         }
@@ -254,7 +254,7 @@ function TimelinePage() {
         <Card className="p-10 text-center">
           <p className="text-lg font-semibold text-foreground">Um dia tranquilo.</p>
           <p className="mt-1 text-sm text-muted-foreground">
-            Nenhum evento registrado em {dayLabel(date)}.
+            No event recorded em {dayLabel(date)}.
           </p>
         </Card>
       ) : (

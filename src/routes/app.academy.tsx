@@ -66,7 +66,7 @@ function Academy() {
 
   const toggleLesson = useMutation({
     mutationFn: async (lessonId: string) => {
-      if (!user) throw new Error("Sessão expirada");
+      if (!user) throw new Error("Session expired");
       if (completedIds.has(lessonId)) {
         const { error } = await (supabase as any)
           .from("academy_progress")
@@ -82,7 +82,7 @@ function Academy() {
       }
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["academy-progress", user?.id] }),
-    onError: (error: any) => toast.error(error.message ?? "Não foi possível atualizar o progresso"),
+    onError: (error: any) => toast.error(error.message ?? "Could not update progress"),
   });
 
   const createCourse = useMutation({
@@ -101,12 +101,12 @@ function Academy() {
       setNewCourse({ title: "", description: "", duration: "20" });
       qc.invalidateQueries({ queryKey: ["academy-courses"] });
     },
-    onError: (error: any) => toast.error(error.message ?? "Não foi possível criar o curso"),
+    onError: (error: any) => toast.error(error.message ?? "Could not create the course"),
   });
 
   const createLesson = useMutation({
     mutationFn: async () => {
-      if (!selectedCourse) throw new Error("Selecione um curso");
+      if (!selectedCourse) throw new Error("Select a course");
       const position = lessonsFor(selectedCourse).length + 1;
       const { error } = await (supabase as any).from("academy_lessons").insert({
         course_id: selectedCourse,
@@ -117,11 +117,11 @@ function Academy() {
       if (error) throw error;
     },
     onSuccess: () => {
-      toast.success("Lição adicionada");
+      toast.success("Lesson added");
       setNewLesson({ title: "", body: "" });
       qc.invalidateQueries({ queryKey: ["academy-lessons"] });
     },
-    onError: (error: any) => toast.error(error.message ?? "Não foi possível adicionar a lição"),
+    onError: (error: any) => toast.error(error.message ?? "Could not add the lesson"),
   });
 
   const activeCourse = (courses.data ?? []).find((course: any) => course.id === selectedCourse) ?? null;
@@ -131,18 +131,18 @@ function Academy() {
   return (
     <>
       <PageHeader
-        title="Academia de cuidadores"
-        subtitle="Cursos práticos com progresso real por lição. Conteúdo global da plataforma e cursos próprios da sua organização."
+        title="Caregiver Academy"
+        subtitle="Practical courses with real progress by lesson. Global platform content and courses from your organization."
         action={<Pill tone="olive">Progresso salvo</Pill>}
       />
 
       <div className="grid gap-4 md:grid-cols-3">
-        <Stat label="Cursos" value={courses.data?.length ?? "-"} sub="Disponíveis para você" tone="olive" />
-        <Stat label="Lições concluídas" value={`${totalDone}/${totalLessons}`} sub="Seu progresso" tone="moss" />
+        <Stat label="Courses" value={courses.data?.length ?? "-"} sub="Available to you" tone="olive" />
+        <Stat label="Completed lessons" value={`${totalDone}/${totalLessons}`} sub="Your progress" tone="moss" />
         <Stat
-          label="Conclusão geral"
+          label="Overall completion"
           value={`${totalLessons ? Math.round((totalDone / totalLessons) * 100) : 0}%`}
-          sub="Todas as trilhas"
+          sub="All tracks"
           tone="gold"
         />
       </div>
@@ -154,10 +154,10 @@ function Academy() {
             <h2 className="text-lg font-semibold text-foreground">Novo curso</h2>
           </div>
           <div className="mt-3 grid gap-3 md:grid-cols-4">
-            <input value={newCourse.title} onChange={(e) => setNewCourse({ ...newCourse, title: e.target.value })} placeholder="Título do curso *" className="rounded-xl border border-border bg-ivory px-3 py-2 text-sm md:col-span-2" />
-            <input value={newCourse.duration} onChange={(e) => setNewCourse({ ...newCourse, duration: e.target.value.replace(/\D/g, "") })} placeholder="Duração (min)" className="rounded-xl border border-border bg-ivory px-3 py-2 text-sm" />
-            <button onClick={() => createCourse.mutate()} disabled={!newCourse.title.trim() || createCourse.isPending} className="rounded-xl bg-olive px-4 py-2 text-sm text-ivory disabled:opacity-50">Criar curso</button>
-            <input value={newCourse.description} onChange={(e) => setNewCourse({ ...newCourse, description: e.target.value })} placeholder="Descrição" className="rounded-xl border border-border bg-ivory px-3 py-2 text-sm md:col-span-4" />
+            <input value={newCourse.title} onChange={(e) => setNewCourse({ ...newCourse, title: e.target.value })} placeholder="Course title *" className="rounded-xl border border-border bg-ivory px-3 py-2 text-sm md:col-span-2" />
+            <input value={newCourse.duration} onChange={(e) => setNewCourse({ ...newCourse, duration: e.target.value.replace(/\D/g, "") })} placeholder="Duration (min)" className="rounded-xl border border-border bg-ivory px-3 py-2 text-sm" />
+            <button onClick={() => createCourse.mutate()} disabled={!newCourse.title.trim() || createCourse.isPending} className="rounded-xl bg-olive px-4 py-2 text-sm text-ivory disabled:opacity-50">Create course</button>
+            <input value={newCourse.description} onChange={(e) => setNewCourse({ ...newCourse, description: e.target.value })} placeholder="Description" className="rounded-xl border border-border bg-ivory px-3 py-2 text-sm md:col-span-4" />
           </div>
         </Card>
       )}
@@ -187,13 +187,13 @@ function Academy() {
                   <div className="h-full rounded-full bg-olive transition-all" style={{ width: `${pct}%` }} />
                 </div>
                 <p className="mt-2 text-[11px] text-muted-foreground">
-                  {lessonsFor(course.id).length} lições · ~{course.duration_minutes} min {course.tenant_id ? "· da sua organização" : "· Care Kranich"}
+                  {lessonsFor(course.id).length} lessons · ~{course.duration_minutes} min {course.tenant_id ? "· from your organization" : "· Care Kranich"}
                 </p>
               </button>
             );
           })}
           {(courses.data ?? []).length === 0 && (
-            <EmptyState title="Nenhum curso disponível" hint="Os administradores podem criar cursos acima." />
+            <EmptyState title="No courses available" hint="Administrators can create courses above." />
           )}
         </div>
 
@@ -206,7 +206,7 @@ function Academy() {
                   <h2 className="mt-1 text-2xl font-semibold text-foreground">{activeCourse.title}</h2>
                 </div>
                 <Pill tone={courseProgress(activeCourse.id) === 100 ? "moss" : "gold"}>
-                  {courseProgress(activeCourse.id) === 100 ? "Concluído" : `${courseProgress(activeCourse.id)}% concluído`}
+                  {courseProgress(activeCourse.id) === 100 ? "Completed" : `${courseProgress(activeCourse.id)}% completed`}
                 </Pill>
               </div>
               {activeCourse.description && <p className="mt-2 text-sm leading-6 text-muted-foreground">{activeCourse.description}</p>}
@@ -235,7 +235,7 @@ function Academy() {
                         >
                           <span className="inline-flex items-center gap-1.5">
                             <CheckCircle2 className="h-3.5 w-3.5" />
-                            {done ? "Concluída" : "Marcar concluída"}
+                            {done ? "Completed" : "Mark completed"}
                           </span>
                         </button>
                       </div>
@@ -243,18 +243,18 @@ function Academy() {
                   );
                 })}
                 {lessonsFor(activeCourse.id).length === 0 && (
-                  <p className="text-sm text-muted-foreground">Este curso ainda não tem lições.</p>
+                  <p className="text-sm text-muted-foreground">This course has no lessons yet.</p>
                 )}
               </div>
 
               {canManage && (
                 <div className="mt-6 rounded-2xl border border-dashed border-olive/30 bg-baby/10 p-4">
-                  <p className="text-xs font-semibold uppercase text-muted-foreground">Adicionar lição a este curso</p>
+                  <p className="text-xs font-semibold uppercase text-muted-foreground">Add lesson to this course</p>
                   <div className="mt-3 grid gap-3">
-                    <input value={newLesson.title} onChange={(e) => setNewLesson({ ...newLesson, title: e.target.value })} placeholder="Título da lição *" className="rounded-xl border border-border bg-ivory px-3 py-2 text-sm" />
-                    <textarea value={newLesson.body} onChange={(e) => setNewLesson({ ...newLesson, body: e.target.value })} rows={3} placeholder="Conteúdo da lição" className="rounded-xl border border-border bg-ivory px-3 py-2 text-sm" />
+                    <input value={newLesson.title} onChange={(e) => setNewLesson({ ...newLesson, title: e.target.value })} placeholder="Lesson title *" className="rounded-xl border border-border bg-ivory px-3 py-2 text-sm" />
+                    <textarea value={newLesson.body} onChange={(e) => setNewLesson({ ...newLesson, body: e.target.value })} rows={3} placeholder="Lesson content" className="rounded-xl border border-border bg-ivory px-3 py-2 text-sm" />
                     <button onClick={() => createLesson.mutate()} disabled={!newLesson.title.trim() || createLesson.isPending} className="justify-self-start rounded-full bg-olive px-4 py-2 text-xs font-semibold text-ivory disabled:opacity-50">
-                      Adicionar lição
+                      Add lesson
                     </button>
                   </div>
                 </div>
@@ -263,8 +263,8 @@ function Academy() {
           ) : (
             <div className="grid place-items-center py-20 text-center">
               <BookOpen className="h-10 w-10 text-olive/50" />
-              <p className="mt-4 text-lg font-semibold text-foreground">Escolha um curso ao lado</p>
-              <p className="mt-1 text-sm text-muted-foreground">Seu progresso é salvo lição por lição.</p>
+              <p className="mt-4 text-lg font-semibold text-foreground">Choose a course on the side</p>
+              <p className="mt-1 text-sm text-muted-foreground">Your progress is saved lesson by lesson.</p>
             </div>
           )}
         </Card>

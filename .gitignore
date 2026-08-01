@@ -23,6 +23,7 @@ dist-ssr
 .wrangler/
 .dev.vars
 supabase/.temp/
+tmp/
 
 # Editor directories and files
 .vscode/*

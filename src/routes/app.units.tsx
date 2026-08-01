@@ -67,7 +67,7 @@ const FLAGS: Array<{ key: keyof UnitForm; label: string }> = [
   { key: "parking", label: "Estacionamento" },
   { key: "child_collection", label: "Coleta infantil" },
   { key: "home_collection", label: "Coleta domiciliar" },
-  { key: "imaging", label: "Diagnóstico por imagem" },
+  { key: "imaging", label: "Diagnostic imaging" },
 ];
 
 const glassInput =
@@ -96,7 +96,7 @@ function Units() {
 
   const save = useMutation({
     mutationFn: async () => {
-      if (form.name.trim().length < 2) throw new Error("Informe o nome da unidade.");
+      if (form.name.trim().length < 2) throw new Error("Enter the unit name.");
       const payload: Record<string, unknown> = {
         name: form.name.trim(),
         address: form.address.trim() || null,
@@ -128,7 +128,7 @@ function Units() {
       setEditingId(null);
       qc.invalidateQueries({ queryKey: ["clinic-units"] });
     },
-    onError: (e: any) => toast.error(e.message ?? "Não foi possível salvar a unidade"),
+    onError: (e: any) => toast.error(e.message ?? "Could not save the unit"),
   });
 
   const toggleStatus = useMutation({
@@ -165,14 +165,14 @@ function Units() {
 
   const exportPdf = (unit: UnitRow) => {
     downloadPdf(`unidade-${unit.name}.pdf`, `Unidade ${unit.name}`, [
-      `Endereço: ${unit.address ?? "-"}, ${unit.city ?? "-"} / ${unit.state ?? "-"}`,
+      `Address: ${unit.address ?? "-"}, ${unit.city ?? "-"} / ${unit.state ?? "-"}`,
       `CEP: ${unit.postal_code ?? "-"}`,
       `Telefone: ${unit.phone ?? "-"}  E-mail: ${unit.email ?? "-"}`,
-      `Acessibilidade: ${unit.accessibility ? "sim" : "não"}  Estacionamento: ${unit.parking ? "sim" : "não"}`,
-      `Coleta infantil: ${unit.child_collection ? "sim" : "não"}  Coleta domiciliar: ${unit.home_collection ? "sim" : "não"}`,
-      `Diagnóstico por imagem: ${unit.imaging ? "sim" : "não"}`,
+      `Accessibility: ${unit.accessibility ? "yes" : "no"}  Parking: ${unit.parking ? "yes" : "no"}`,
+      `Child collection: ${unit.child_collection ? "yes" : "no"}  Home collection: ${unit.home_collection ? "yes" : "no"}`,
+      `Diagnostic imaging: ${unit.imaging ? "yes" : "no"}`,
       `Status: ${unit.status === "active" ? "Ativa" : "Inativa"}`,
-      `Observações: ${unit.notes ?? "-"}`,
+      `Notes: ${unit.notes ?? "-"}`,
     ]);
   };
 
@@ -188,8 +188,8 @@ function Units() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Gestão de unidades"
-        subtitle="Unidades físicas da organização: endereços, capacidades e serviços disponíveis."
+        title="Unit management"
+        subtitle="Physical organization units: addresses, capacities and available services."
         action={
           <button
             onClick={() => {
@@ -199,7 +199,7 @@ function Units() {
             }}
             className="inline-flex items-center gap-2 rounded-full bg-olive px-4 py-2 text-sm font-medium text-ivory shadow-soft hover:opacity-90"
           >
-            <Plus className="h-4 w-4" /> Nova unidade
+            <Plus className="h-4 w-4" /> New unit
           </button>
         }
       />
@@ -207,17 +207,17 @@ function Units() {
       {open && (
         <Card className="space-y-4 p-6">
           <h3 className="text-sm font-semibold text-foreground">
-            {editingId ? "Editar unidade" : "Nova unidade"}
+            {editingId ? "Edit unidade" : "New unit"}
           </h3>
           <div className="grid gap-3 md:grid-cols-3">
             <input className={glassInput} placeholder="Nome da unidade *" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
             <input className={glassInput} placeholder="Telefone" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
             <input className={glassInput} placeholder="E-mail" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
-            <input className={`${glassInput} md:col-span-2`} placeholder="Endereço" value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} />
+            <input className={`${glassInput} md:col-span-2`} placeholder="Address" value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} />
             <input className={glassInput} placeholder="CEP" value={form.postal_code} onChange={(e) => setForm({ ...form, postal_code: e.target.value })} />
-            <input className={glassInput} placeholder="Cidade" value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} />
-            <input className={glassInput} placeholder="Estado (UF)" value={form.state} onChange={(e) => setForm({ ...form, state: e.target.value })} />
-            <input className={glassInput} placeholder="Observações" value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} />
+            <input className={glassInput} placeholder="City" value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} />
+            <input className={glassInput} placeholder="State" value={form.state} onChange={(e) => setForm({ ...form, state: e.target.value })} />
+            <input className={glassInput} placeholder="Notes" value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} />
           </div>
           <div className="flex flex-wrap gap-2">
             {FLAGS.map((flag) => (
@@ -241,7 +241,7 @@ function Units() {
               disabled={save.isPending}
               className="rounded-full bg-olive px-5 py-2 text-sm font-medium text-ivory shadow-soft hover:opacity-90 disabled:opacity-60"
             >
-              {save.isPending ? "Salvando..." : editingId ? "Salvar alterações" : "Criar unidade"}
+              {save.isPending ? "Saving..." : editingId ? "Salvar alterações" : "Create unit"}
             </button>
             <button
               onClick={() => {
@@ -250,7 +250,7 @@ function Units() {
               }}
               className="rounded-full border border-white/70 bg-white/55 px-5 py-2 text-sm backdrop-blur-xl"
             >
-              Cancelar
+              Cancel
             </button>
           </div>
         </Card>
@@ -258,8 +258,8 @@ function Units() {
 
       {(units.data ?? []).length === 0 ? (
         <EmptyState
-          title="Nenhuma unidade cadastrada"
-          hint="Cadastre a primeira unidade para habilitar agendamento por unidade, recepção e coleta domiciliar."
+          title="No unit registered"
+          hint="Register the first unit to enable scheduling by unit, reception and home collection."
         />
       ) : (
         <div className="grid gap-4 md:grid-cols-2">
@@ -273,7 +273,7 @@ function Units() {
                   <div>
                     <p className="font-semibold text-foreground">{unit.name}</p>
                     <p className="text-xs text-muted-foreground">
-                      {[unit.address, unit.city, unit.state].filter(Boolean).join(", ") || "Endereço não informado"}
+                      {[unit.address, unit.city, unit.state].filter(Boolean).join(", ") || "Address not provided"}
                     </p>
                   </div>
                 </div>
@@ -288,7 +288,7 @@ function Units() {
               </div>
               <div className="flex flex-wrap gap-2 text-xs">
                 <button onClick={() => startEdit(unit)} className="inline-flex items-center gap-1 rounded-full border border-white/70 bg-white/55 px-3 py-1.5 backdrop-blur-xl hover:bg-white/80">
-                  <Pencil className="h-3.5 w-3.5" /> Editar
+                  <Pencil className="h-3.5 w-3.5" /> Edit
                 </button>
                 <button onClick={() => toggleStatus.mutate(unit)} className="rounded-full border border-white/70 bg-white/55 px-3 py-1.5 backdrop-blur-xl hover:bg-white/80">
                   {unit.status === "active" ? "Desativar" : "Reativar"}

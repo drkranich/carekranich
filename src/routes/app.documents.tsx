@@ -135,7 +135,7 @@ function Documents() {
       `Status: ${doc.status}`,
       `Enviado em: ${new Date(doc.created_at).toLocaleString("pt-BR")}`,
       `Summary: ${doc.ai_summary ?? "No summary available yet."}`,
-      `Caminho no cofre: ${doc.storage_path}`,
+      `Vault path: ${doc.storage_path}`,
     ]);
   };
 

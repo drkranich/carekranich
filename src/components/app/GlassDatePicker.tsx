@@ -11,9 +11,9 @@ function toDayKey(d: Date) {
 }
 
 /**
- * Calendário com glassmorphism — substitui o input date nativo em toda a plataforma.
- * O painel renderiza em portal (document.body) para nunca ser coberto por outros cards.
- * value/onChange usam o formato "yyyy-MM-dd".
+ * Glassmorphism calendar - replaces the native date input across the platform.
+ * The panel renders in a portal (document.body) so it is never covered by other cards.
+ * value/onChange use the "yyyy-MM-dd" format.
  */
 export function GlassDatePicker({
   value: controlledValue,
@@ -66,7 +66,7 @@ export function GlassDatePicker({
 
   const label = selected
     ? selected.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" })
-    : "Selecionar data";
+    : "Select date";
 
   return (
     <div className={`relative ${className}`}>
@@ -127,7 +127,7 @@ export function GlassDatePicker({
 }
 
 /**
- * Variante com data + hora (substitui input datetime-local nativo).
+ * Date + time variant (replaces the native datetime-local input).
  * value/onChange usam o formato "yyyy-MM-ddTHH:mm" (vazio = sem agendamento).
  */
 export function GlassDateTimePicker({

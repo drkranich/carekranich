@@ -13,6 +13,7 @@ import {
   inputCls,
 } from "@/components/app/twin/shared";
 import { GlassSelect } from "@/components/app/GlassSelect";
+import { GlassDatePicker } from "@/components/app/GlassDatePicker";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/app/twin")({ component: TwinPage });
@@ -101,18 +102,25 @@ const DOMAINS: {
   },
 ];
 const EXTRA_DOMAIN_OPTIONS = [
-  { value: "environment", label: "Ambiente" },
-  { value: "routine", label: "Rotina" },
-  { value: "behavior", label: "Comportamento" },
+  { value: "environment", label: "Environment" },
+  { value: "routine", label: "Routine" },
+  { value: "behavior", label: "Behavior" },
 ];
 const SOURCE_OPTIONS = [
   { value: "manual", label: "Manual" },
-  { value: "caregiver", label: "Cuidador" },
-  { value: "nurse", label: "Enfermagem" },
-  { value: "doctor", label: "Médico" },
+  { value: "caregiver", label: "Caregiver" },
+  { value: "nurse", label: "Nursing" },
+  { value: "doctor", label: "Doctor" },
   { value: "device", label: "Dispositivo" },
-  { value: "family", label: "Família" },
+  { value: "family", label: "Family" },
 ];
+
+function dayKey(date = new Date()) {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, "0");
+  const d = String(date.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
+}
 
 function TwinPage() {
   const { user, profile, hasAnyRole, isSuperAdmin } = useAuth();
@@ -122,6 +130,7 @@ function TwinPage() {
 
   const [residentId, setResidentId] = useState("");
   const [window, setWindow] = useState<7 | 30 | 90 | 365>(30);
+  const [anchorDate, setAnchorDate] = useState(() => dayKey());
   const [showForm, setShowForm] = useState(false);
 
   const { data: residents = [] } = useResidents(profile?.tenant_id, isSuperAdmin);
@@ -130,14 +139,16 @@ function TwinPage() {
     if (residents.length && !residentId) setResidentId(residents[0].id);
   }, [residentId, residents]);
 
-  const sinceISO = useMemo(() => {
-    const d = new Date();
-    d.setDate(d.getDate() - window);
-    return d.toISOString();
-  }, [window]);
+  const { sinceISO, untilISO } = useMemo(() => {
+    const end = anchorDate ? new Date(`${anchorDate}T23:59:59`) : new Date();
+    const start = new Date(end);
+    start.setDate(start.getDate() - window + 1);
+    start.setHours(0, 0, 0, 0);
+    return { sinceISO: start.toISOString(), untilISO: end.toISOString() };
+  }, [anchorDate, window]);
 
   const { data: observations = [] } = useQuery({
-    queryKey: ["twin-obs", residentId, sinceISO],
+    queryKey: ["twin-obs", residentId, sinceISO, untilISO],
     enabled: !!residentId,
     queryFn: async () => {
       const { data } = await supabase
@@ -145,6 +156,7 @@ function TwinPage() {
         .select("*")
         .eq("resident_id", residentId)
         .gte("observed_at", sinceISO)
+        .lte("observed_at", untilISO)
         .order("observed_at", { ascending: true });
       return (data ?? []) as Obs[];
     },
@@ -244,6 +256,7 @@ function TwinPage() {
         action={
           <div className="flex flex-wrap items-center gap-2">
             <ResidentPicker residents={residents} value={residentId} onChange={setResidentId} />
+            <GlassDatePicker value={anchorDate} onChange={setAnchorDate} />
             <div className="flex rounded-full border border-border bg-ivory p-1 text-xs">
               {[7, 30, 90, 365].map((d) => (
                 <button

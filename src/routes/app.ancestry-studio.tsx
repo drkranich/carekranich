@@ -15,7 +15,7 @@ export const Route = createFileRoute("/app/ancestry-studio")({ component: Ancest
 const STATUS_LABEL: Record<string, string> = {
   draft: "Rascunho",
   review: "Em revisão",
-  approved: "Aprovado",
+  approved: "Approved",
   published: "Publicado",
   archived: "Arquivado",
 };
@@ -31,14 +31,14 @@ const TEMPLATES = [
   { value: "classica", label: "Revelação Clássica" },
   { value: "cinematografica", label: "Jornada Cinematográfica" },
   { value: "atlas", label: "Atlas Científico" },
-  { value: "familiar", label: "História Familiar" },
+  { value: "familiar", label: "Family History" },
   { value: "minimalista", label: "Descoberta Minimalista" },
   { value: "luzes", label: "Mapa de Luzes" },
   { value: "migracoes", label: "Migrações Ancestrais" },
 ];
 
 const SPEEDS = [
-  { value: "lenta", label: "Ritmo contemplativo" },
+  { value: "lenta", label: "Ritmo contemplactive" },
   { value: "normal", label: "Ritmo equilibrado" },
   { value: "rapida", label: "Ritmo direto" },
 ];
@@ -216,7 +216,7 @@ function AncestryStudio() {
 
   const patientName = (id: string | null) => {
     const p = (patients.data ?? []).find((x: any) => x.id === id);
-    return p ? p.social_name || p.full_name : "Paciente";
+    return p ? p.social_name || p.full_name : "Patient";
   };
 
   const refresh = () => {
@@ -248,18 +248,18 @@ function AncestryStudio() {
   const issues = useMemo(() => {
     const list: string[] = [];
     const rs = regions.data ?? [];
-    if (rs.length === 0) list.push("Nenhuma origem cadastrada.");
+    if (rs.length === 0) list.push("No origins registered.");
     if (totalPct > 100.5) list.push(`Soma dos percentuais acima de 100% (${totalPct.toFixed(1)}%).`);
     if (rs.length > 0 && totalPct < 95) list.push(`Soma dos percentuais abaixo de 95% (${totalPct.toFixed(1)}%).`);
-    if (rs.some((r: any) => r.latitude === null || r.longitude === null)) list.push("Existe origem sem coordenadas no mapa.");
+    if (rs.some((r: any) => r.latitude === null || r.longitude === null)) list.push("An origin is missing map coordinates.");
     if (rs.some((r: any) => !r.summary)) list.push("Existe origem sem descrição resumida.");
     return list;
   }, [regions.data, totalPct]);
 
   const createResult = useMutation({
     mutationFn: async () => {
-      if (!effTenant) throw new Error("Nenhuma organização disponível.");
-      if (!newResult.patient_id) throw new Error("Selecione o paciente.");
+      if (!effTenant) throw new Error("No organization available.");
+      if (!newResult.patient_id) throw new Error("Select the patient.");
       const { data, error } = await (supabase as any)
         .from("ancestry_results")
         .insert({
@@ -289,9 +289,9 @@ function AncestryStudio() {
 
   const addRegion = useMutation({
     mutationFn: async () => {
-      if (!selected) throw new Error("Selecione um resultado.");
+      if (!selected) throw new Error("Select a result.");
       const pct = Number(region.percentage.replace(",", "."));
-      if (!pct || pct <= 0) throw new Error("Informe o percentual da origem.");
+      if (!pct || pct <= 0) throw new Error("Enter the origin percentage.");
       if (!region.genetic_region && !region.country && !region.macro_region) {
         throw new Error("Informe ao menos a região genética, macrorregião ou país.");
       }
@@ -337,7 +337,7 @@ function AncestryStudio() {
   };
 
   const removeRegion = async (id: string) => {
-    if (!window.confirm("Remover esta origem do resultado?")) return;
+    if (!window.confirm("Remove esta origem do resultado?")) return;
     const { error } = await (supabase as any).from("ancestry_regions").delete().eq("id", id);
     if (error) return toast.error(error.message);
     await audit("origem_removida");
@@ -379,7 +379,7 @@ function AncestryStudio() {
       return data;
     },
     onSuccess: () => {
-      toast.success("Resultado publicado — o paciente já pode ver a experiência");
+      toast.success("Result published - the patient can now see the experience");
       refresh();
     },
     onError: (e: any) => toast.error(e.message ?? "Não foi possível publicar"),
@@ -482,7 +482,7 @@ function AncestryStudio() {
 
   const addRoute = async () => {
     if (!selected) return;
-    if (!routeDraft.label.trim()) return toast.error("Informe o nome da rota.");
+    if (!routeDraft.label.trim()) return toast.error("Enter the route name.");
     const { error } = await (supabase as any).from("ancestry_routes").insert({
       tenant_id: selected.tenant_id,
       result_id: selected.id,
@@ -509,7 +509,7 @@ function AncestryStudio() {
 
   const addEvent = async () => {
     if (!selected) return;
-    if (!eventDraft.period.trim() || !eventDraft.title.trim()) return toast.error("Informe período e título do marco.");
+    if (!eventDraft.period.trim() || !eventDraft.title.trim()) return toast.error("Enter the milestone period and title.");
     const { error } = await (supabase as any).from("ancestry_timeline_events").insert({
       tenant_id: selected.tenant_id,
       result_id: selected.id,
@@ -546,8 +546,8 @@ function AncestryStudio() {
       created_by: user?.id ?? null,
     });
     if (error) return toast.error(error.message);
-    await audit("compartilhamento", `Link criado para ${shareDraft.recipient || "destinatário não informado"} (${days} dias)`);
-    toast.success("Link criado — copie e envie ao destinatário");
+    await audit("sharing", `Link created for ${shareDraft.recipient || "destinatário não informado"} (${days} days)`);
+    toast.success("Link created - copy and send it to the recipient");
     setShareDraft({ recipient: "", days: "30", allow_download: true });
     refresh();
   };
@@ -555,7 +555,7 @@ function AncestryStudio() {
   const revokeShare = async (id: string) => {
     const { error } = await (supabase as any).from("ancestry_shares").update({ revoked_at: new Date().toISOString() }).eq("id", id);
     if (error) return toast.error(error.message);
-    await audit("compartilhamento_revogado");
+    await audit("sharing_revogado");
     toast.success("Link revogado");
     refresh();
   };
@@ -628,14 +628,14 @@ function AncestryStudio() {
     <div className="space-y-6">
       <PageHeader
         title="Estúdio de Resultados Ancestrais"
-        subtitle="Construa a experiência Minhas Origens sem código: origens, percentuais validados, animação, revisão, versões e publicação."
+        subtitle="Build the My Origins experience without code: origins, validated percentages, animation, review, versions and publishing."
         action={
           <div className="flex flex-wrap gap-2">
             <button
               onClick={() => setShowArchived(!showArchived)}
               className="rounded-full border border-border bg-white/55 px-4 py-2 text-xs"
             >
-              {showArchived ? "Ver ativos" : "Ver arquivados"}
+              {showArchived ? "View active" : "View archived"}
             </button>
             <button
               onClick={() => setOpenNew(!openNew)}
@@ -649,28 +649,28 @@ function AncestryStudio() {
 
       <div className="grid gap-4 md:grid-cols-4">
         <Stat label="Rascunhos" value={stats.drafts} sub="Em preenchimento" tone="gold" />
-        <Stat label="Em revisão" value={stats.review} sub="Aguardando parecer" tone="olive" />
-        <Stat label="Aprovados" value={stats.approved} sub="Prontos para publicar" tone="terracotta" />
-        <Stat label="Publicados" value={stats.published} sub="Visíveis ao paciente" tone="moss" />
+        <Stat label="Em revisão" value={stats.review} sub="Awaiting review" tone="olive" />
+        <Stat label="Approveds" value={stats.approved} sub="Ready to publish" tone="terracotta" />
+        <Stat label="Published" value={stats.published} sub="Visible to the patient" tone="moss" />
       </div>
 
       {openNew && (
         <Card className="space-y-3 p-6">
           <h3 className="flex items-center gap-2 text-sm font-semibold text-foreground">
-            <Dna className="h-4 w-4" /> Etapa 1 e 2 — paciente e exame
+            <Dna className="h-4 w-4" /> Steps 1 and 2 - patient and exam
           </h3>
           <div className="grid gap-3 md:grid-cols-3">
             <GlassSelect
               value={newResult.patient_id}
               onChange={(v) => setNewResult({ ...newResult, patient_id: v })}
-              placeholder="Paciente *"
+              placeholder="Patient *"
               options={(patients.data ?? []).map((p: any) => ({ value: p.id, label: p.social_name || p.full_name }))}
             />
             <GlassSelect
               value={newResult.exam_id}
               onChange={(v) => setNewResult({ ...newResult, exam_id: v })}
               placeholder="Teste genético"
-              options={[{ value: "", label: "Sem exame vinculado" }, ...(exams.data ?? []).map((e: any) => ({ value: e.id, label: e.commercial_name || e.name }))]}
+              options={[{ value: "", label: "No linked exam" }, ...(exams.data ?? []).map((e: any) => ({ value: e.id, label: e.commercial_name || e.name }))]}
             />
             <input className={glassInput} placeholder="Laboratório responsável" value={newResult.lab_name} onChange={(e) => setNewResult({ ...newResult, lab_name: e.target.value })} />
             <input className={glassInput} placeholder="Versão do algoritmo (ex.: CK-Ancestry 2.1)" value={newResult.algorithm_version} onChange={(e) => setNewResult({ ...newResult, algorithm_version: e.target.value })} />
@@ -681,7 +681,7 @@ function AncestryStudio() {
             </div>
           </div>
           <button onClick={() => createResult.mutate()} disabled={createResult.isPending} className="rounded-full bg-olive px-5 py-2 text-sm font-medium text-ivory shadow-soft hover:opacity-90 disabled:opacity-60">
-            {createResult.isPending ? "Criando..." : "Criar rascunho"}
+            {createResult.isPending ? "Creating..." : "Create draft"}
           </button>
         </Card>
       )}
@@ -689,7 +689,7 @@ function AncestryStudio() {
       <div className="grid gap-6 xl:grid-cols-[340px_1fr]">
         <Card className="space-y-2 p-5">
           <h3 className="text-sm font-semibold text-foreground">{showArchived ? "Arquivados" : "Resultados"}</h3>
-          {(results.data ?? []).length === 0 && <p className="text-sm text-muted-foreground">Nenhum resultado nesta lista.</p>}
+          {(results.data ?? []).length === 0 && <p className="text-sm text-muted-foreground">No results in this list.</p>}
           {(results.data ?? []).map((r: any) => (
             <button
               key={r.id}
@@ -718,7 +718,7 @@ function AncestryStudio() {
                 <div>
                   <h3 className="text-lg font-semibold text-foreground">{patientName(selected.patient_id)}</h3>
                   <p className="text-xs text-muted-foreground">
-                    {selected.lab_name ?? "Laboratório não informado"} · {selected.algorithm_version ?? "algoritmo n/d"} ·{" "}
+                    {selected.lab_name ?? "Laboratório não informado"} · {selected.algorithm_version ?? "algorithm n/a"} ·{" "}
                     população {selected.reference_population ?? "n/d"} · versão {selected.version}
                   </p>
                 </div>
@@ -734,7 +734,7 @@ function AncestryStudio() {
                 {selected.status === "review" && (
                   <>
                     <button onClick={() => setStatus("approved")} className="rounded-full bg-moss px-4 py-2 font-medium text-ivory">
-                      Aprovar
+                      Approve
                     </button>
                     <button onClick={() => setStatus("draft")} className="rounded-full border border-border bg-white/55 px-4 py-2">
                       Solicitar correção
@@ -743,7 +743,7 @@ function AncestryStudio() {
                 )}
                 {selected.status === "approved" && (
                   <button onClick={() => publish.mutate()} disabled={publish.isPending} className="rounded-full bg-moss px-4 py-2 font-medium text-ivory disabled:opacity-60">
-                    {publish.isPending ? "Publicando..." : "Publicar para o paciente"}
+                    {publish.isPending ? "Publishing..." : "Publish to patient"}
                   </button>
                 )}
                 {selected.status === "published" && (
@@ -756,13 +756,13 @@ function AncestryStudio() {
                 </button>
                 <button onClick={() => archive(!selected.archived_at)} className="inline-flex items-center gap-1 rounded-full border border-border bg-white/55 px-4 py-2">
                   {selected.archived_at ? <RotateCcw className="h-3 w-3" /> : <Archive className="h-3 w-3" />}
-                  {selected.archived_at ? "Desarquivar" : "Arquivar"}
+                  {selected.archived_at ? "Unarchive" : "Archive"}
                 </button>
                 <button onClick={exportPremiumPdf} className="inline-flex items-center gap-1 rounded-full border border-border bg-white/55 px-4 py-2">
-                  <FileDown className="h-3 w-3" /> Relatório técnico
+                  <FileDown className="h-3 w-3" /> Technical report
                 </button>
                 <button onClick={softDelete} className="inline-flex items-center gap-1 rounded-full border border-wine/30 bg-wine/5 px-4 py-2 text-wine">
-                  <Trash2 className="h-3 w-3" /> Excluir
+                  <Trash2 className="h-3 w-3" /> Delete
                 </button>
               </div>
 
@@ -820,8 +820,8 @@ function AncestryStudio() {
                     <input className={glassInput} placeholder="Longitude (ex.: 13.40)" inputMode="decimal" value={region.longitude} onChange={(e) => setRegion({ ...region, longitude: e.target.value })} />
                   </div>
                   <input className={glassInput} placeholder="Descrição resumida (aparece no mapa)" value={region.summary} onChange={(e) => setRegion({ ...region, summary: e.target.value })} />
-                  <textarea className={glassInput} rows={2} placeholder="Texto completo apresentado ao paciente" value={region.full_text} onChange={(e) => setRegion({ ...region, full_text: e.target.value })} />
-                  <textarea className={glassInput} rows={2} placeholder="Contexto histórico e migrações" value={region.historical_text} onChange={(e) => setRegion({ ...region, historical_text: e.target.value })} />
+                  <textarea className={glassInput} rows={2} placeholder="Full text shown to the patient" value={region.full_text} onChange={(e) => setRegion({ ...region, full_text: e.target.value })} />
+                  <textarea className={glassInput} rows={2} placeholder="Historical context and migrations" value={region.historical_text} onChange={(e) => setRegion({ ...region, historical_text: e.target.value })} />
                   <input className={glassInput} placeholder="Limitações desta estimativa" value={region.limitations} onChange={(e) => setRegion({ ...region, limitations: e.target.value })} />
                   <button onClick={() => addRegion.mutate()} disabled={addRegion.isPending} className="rounded-full bg-olive px-5 py-2 text-xs font-medium text-ivory disabled:opacity-60">
                     Adicionar origem
@@ -898,11 +898,11 @@ function AncestryStudio() {
                 {(routesQ.data ?? []).map((r: any) => (
                   <div key={r.id} className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-white/70 bg-white/45 px-3 py-2 text-xs">
                     <span className="text-foreground">{r.label}{r.period ? ` · ${r.period}` : ""}</span>
-                    <button onClick={() => removeRoute(r.id)} className="text-wine">Remover</button>
+                    <button onClick={() => removeRoute(r.id)} className="text-wine">Remove</button>
                   </div>
                 ))}
                 <p className="text-xs text-muted-foreground">
-                  As rotas são referências populacionais e históricas, não a reconstrução exata da genealogia individual.
+                  Routes are population and historical references, not an exact reconstruction of individual genealogy.
                 </p>
               </Card>
 
@@ -928,7 +928,7 @@ function AncestryStudio() {
                 {(eventsQ.data ?? []).map((t: any) => (
                   <div key={t.id} className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-white/70 bg-white/45 px-3 py-2 text-xs">
                     <span className="text-foreground">{t.period} · {t.title}</span>
-                    <button onClick={() => removeEvent(t.id)} className="text-wine">Remover</button>
+                    <button onClick={() => removeEvent(t.id)} className="text-wine">Remove</button>
                   </div>
                 ))}
               </Card>
@@ -939,7 +939,7 @@ function AncestryStudio() {
                 </h3>
                 <div className="grid gap-2 md:grid-cols-4">
                   <input className={`${glassInput} md:col-span-2`} placeholder="Destinatário (nome ou e-mail)" value={shareDraft.recipient} onChange={(e) => setShareDraft({ ...shareDraft, recipient: e.target.value })} />
-                  <input className={glassInput} placeholder="Validade em dias" inputMode="numeric" value={shareDraft.days} onChange={(e) => setShareDraft({ ...shareDraft, days: e.target.value })} />
+                  <input className={glassInput} placeholder="Validade em days" inputMode="numeric" value={shareDraft.days} onChange={(e) => setShareDraft({ ...shareDraft, days: e.target.value })} />
                   <button
                     onClick={() => setShareDraft({ ...shareDraft, allow_download: !shareDraft.allow_download })}
                     className={`rounded-2xl border px-4 py-2.5 text-xs font-medium ${shareDraft.allow_download ? "border-olive bg-olive text-ivory" : "border-border bg-white/55"}`}
@@ -953,7 +953,7 @@ function AncestryStudio() {
                 {(sharesQ.data ?? []).map((sh: any) => (
                   <div key={sh.id} className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-white/70 bg-white/45 px-3 py-2 text-xs">
                     <span className="min-w-0 truncate text-foreground">
-                      {sh.recipient ?? "Sem destinatário"} · {sh.access_count} acesso(s)
+                      {sh.recipient ?? "Sem destinatário"} · {sh.access_count} access(es)
                       {sh.expires_at ? ` · expira ${new Date(sh.expires_at).toLocaleDateString("pt-BR")}` : ""}
                       {sh.revoked_at ? " · REVOGADO" : ""}
                     </span>
@@ -970,7 +970,7 @@ function AncestryStudio() {
                   </div>
                 ))}
                 <p className="text-xs text-muted-foreground">
-                  O link abre uma versão pública somente leitura do atlas, com expiração e revogação imediata.
+                  The link opens a read-only public atlas version with expiration and immediate revocation.
                 </p>
               </Card>
 
@@ -1012,7 +1012,7 @@ function AncestryStudio() {
                 <h3 className="flex items-center gap-2 text-sm font-semibold text-foreground">
                   <MessageSquare className="h-4 w-4" /> Comentários internos
                 </h3>
-                <p className="text-xs text-muted-foreground">Não visíveis ao paciente.</p>
+                <p className="text-xs text-muted-foreground">Not visible to the patient.</p>
                 <div className="flex gap-2">
                   <input className={glassInput} placeholder="Ex.: revisar percentual da Europa Central" value={comment} onChange={(e) => setComment(e.target.value)} />
                   <button onClick={addComment} className="rounded-full bg-olive px-4 py-2 text-xs font-medium text-ivory">
@@ -1039,7 +1039,7 @@ function AncestryStudio() {
             </div>
           </div>
         ) : (
-          <EmptyState title="Nenhum resultado selecionado" hint="Crie um resultado ancestral para montar a experiência do paciente." />
+          <EmptyState title="No result selected" hint="Create an ancestry result to build the patient experience." />
         )}
       </div>
     </div>

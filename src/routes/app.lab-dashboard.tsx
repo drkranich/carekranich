@@ -9,11 +9,11 @@ import { supabase } from "@/integrations/supabase/client";
 export const Route = createFileRoute("/app/lab-dashboard")({ component: LabDashboard });
 
 const STAGE_GROUPS: Array<{ label: string; stages: string[]; tone: "olive" | "gold" | "moss" | "wine" | "terracotta" }> = [
-  { label: "Pré-coleta", stages: ["pedido_recebido", "cadastro_validado", "agendamento_confirmado", "paciente_identificado"], tone: "gold" },
-  { label: "Coleta e transporte", stages: ["coleta_realizada", "etiqueta_vinculada", "amostra_transportada", "amostra_recebida"], tone: "olive" },
+  { label: "Pre-collection", stages: ["pedido_recebido", "cadastro_validado", "agendamento_confirmado", "paciente_identificado"], tone: "gold" },
+  { label: "Collection and transport", stages: ["coleta_realizada", "etiqueta_vinculada", "amostra_transportada", "amostra_recebida"], tone: "olive" },
   { label: "Processamento", stages: ["triagem_tecnica", "centrifugacao", "separacao", "aliquota", "processamento", "controle_qualidade", "analise"], tone: "terracotta" },
-  { label: "Validação e assinatura", stages: ["revisao", "validacao_tecnica", "validacao_clinica", "assinatura"], tone: "wine" },
-  { label: "Liberação e pós", stages: ["liberacao", "comunicacao", "arquivamento", "descarte"], tone: "moss" },
+  { label: "Validation and signature", stages: ["revisao", "validacao_tecnica", "validacao_clinica", "assinatura"], tone: "wine" },
+  { label: "Release and pós", stages: ["liberacao", "comunicacao", "arquivamento", "descarte"], tone: "moss" },
 ];
 
 function brl(cents: number) {
@@ -46,9 +46,9 @@ function LabDashboard() {
         db.from("critical_results").select("id,status,created_at").neq("status", "closed"),
         db.from("checkins").select("id,status,priority,arrived_at,called_at").gte("arrived_at", startOfDay),
         db.from("appointments").select("id,status,starts_at").gte("starts_at", startOfDay).limit(300),
-        db.from("exam_orders").select("id,status,total_cents,created_at").limit(400),
-        db.from("exam_order_items").select("id,exam_id,order_id").limit(800),
-        db.from("exam_catalog").select("id,name,commercial_name").limit(400),
+        db.from("exam_orders").select("id,status,created_at").limit(400),
+        db.from("exam_order_items").select("id,exam_id,order_id,price_cents,covered_by_insurance").limit(800),
+        db.from("exam_catalog").select("id,name,commercial_name,price_cents").limit(400),
         db.from("alerts").select("id,severity,status,category").eq("status", "open").limit(200),
       ]);
       const errs = [samples, reports, criticals, checkins, appointments, orders, items, exams, alerts]
@@ -80,8 +80,10 @@ function LabDashboard() {
       ? Math.round(waiting.reduce((acc: number, c: any) => acc + minutesSince(c.arrived_at), 0) / waiting.length)
       : 0;
     const apptToday = d.appointments.filter((a: any) => a.status !== "canceled");
-    const paidOrders = d.orders.filter((o: any) => o.status === "paid");
-    const revenue = paidOrders.reduce((acc: number, o: any) => acc + (o.total_cents ?? 0), 0);
+    const paidOrderIds = new Set(d.orders.filter((o: any) => o.status === "paid").map((o: any) => o.id));
+    const revenue = d.items
+      .filter((i: any) => paidOrderIds.has(i.order_id) && !i.covered_by_insurance)
+      .reduce((acc: number, i: any) => acc + (i.price_cents ?? 0), 0);
     const releasedToday = d.reports.filter(
       (r: any) => r.status === "released" && r.released_at && r.released_at >= startOfDay,
     );
@@ -98,8 +100,8 @@ function LabDashboard() {
       .sort((a, b) => b[1] - a[1])
       .slice(0, 6)
       .map(([id, qty]) => {
-        const e = d.exams.find((x: any) => x.id === id);
-        return { name: e ? e.commercial_name || e.name : "Exame", qty };
+        const exam = d.exams.find((x: any) => x.id === id);
+        return { name: exam ? exam.commercial_name || exam.name : "Exam", qty };
       });
   }, [d]);
 
@@ -108,8 +110,8 @@ function LabDashboard() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Central operacional do laboratório"
-        subtitle="Visão em tempo real: fila, amostras por fase, laudos, críticos e vendas — atualiza a cada 30 segundos."
+        title="Laboratory operations hub"
+        subtitle="Real-time view: queue, samples by stage, reports, criticals and sales - updates every 30 seconds."
         action={<Pill tone={data.isError ? "wine" : "moss"}>{data.isError ? "Erro de leitura" : "Ao vivo"}</Pill>}
       />
 
@@ -123,9 +125,9 @@ function LabDashboard() {
       {d && kpis && (
         <>
           <div className="grid gap-4 md:grid-cols-4">
-            <Stat label="Pacientes aguardando" value={kpis.waiting.length} sub={`Espera média ${kpis.avgWait} min`} tone="gold" />
-            <Stat label="Atendidos hoje" value={kpis.done.length} sub={`${kpis.noShow.length} não compareceram`} tone="moss" />
-            <Stat label="Agendamentos do dia" value={kpis.apptToday.length} sub="Confirmados e agendados" tone="olive" />
+            <Stat label="Waiting patients" value={kpis.waiting.length} sub={`Average wait ${kpis.avgWait} min`} tone="gold" />
+            <Stat label="Served today" value={kpis.done.length} sub={`${kpis.noShow.length} no-shows`} tone="moss" />
+            <Stat label="Today appointments" value={kpis.apptToday.length} sub="Confirmed and scheduled" tone="olive" />
             <Stat label="Receita paga" value={brl(kpis.revenue)} sub="Pedidos pagos (acumulado)" tone="wine" />
           </div>
 
@@ -148,10 +150,10 @@ function LabDashboard() {
             </div>
             <div className="flex flex-wrap gap-2 text-xs">
               <Pill tone="wine">
-                {d.samples.filter((s: any) => s.status === "rejected").length} rejeitadas (recoleta)
+                {d.samples.filter((s: any) => s.status === "rejected").length} rejected (recollection)
               </Pill>
               <Pill tone="moss">
-                {d.samples.filter((s: any) => s.status === "completed").length} concluídas
+                {d.samples.filter((s: any) => s.status === "completed").length} completed
               </Pill>
             </div>
           </Card>
@@ -162,9 +164,9 @@ function LabDashboard() {
                 <Activity className="h-4 w-4" /> Laudos
               </h3>
               {[
-                { label: "Em elaboração", value: d.reports.filter((r: any) => ["draft", "review"].includes(r.status)).length, tone: "gold" as const },
+                { label: "In preparation", value: d.reports.filter((r: any) => ["draft", "review"].includes(r.status)).length, tone: "gold" as const },
                 { label: "Aguardando assinatura", value: d.reports.filter((r: any) => r.status === "validated").length, tone: "olive" as const },
-                { label: "Assinados (não liberados)", value: d.reports.filter((r: any) => r.status === "signed").length, tone: "terracotta" as const },
+                { label: "Signed (not released)", value: d.reports.filter((r: any) => r.status === "signed").length, tone: "terracotta" as const },
                 { label: "Liberados hoje", value: kpis.releasedToday.length, tone: "moss" as const },
               ].map((row) => (
                 <div key={row.label} className="flex items-center justify-between rounded-xl border border-white/70 bg-white/45 px-4 py-2.5 text-sm">
@@ -176,10 +178,10 @@ function LabDashboard() {
 
             <Card className="space-y-3 p-6">
               <h3 className="flex items-center gap-2 text-sm font-semibold text-foreground">
-                <AlertTriangle className="h-4 w-4 text-wine" /> Atenção imediata
+                <AlertTriangle className="h-4 w-4 text-wine" /> Immediate attention
               </h3>
               <div className="flex items-center justify-between rounded-xl border border-wine/25 bg-wine/5 px-4 py-2.5 text-sm">
-                <span className="text-wine">Resultados críticos abertos</span>
+                <span className="text-wine">Open critical results</span>
                 <Pill tone="wine">{d.criticals.length}</Pill>
               </div>
               <div className="flex items-center justify-between rounded-xl border border-white/70 bg-white/45 px-4 py-2.5 text-sm">
@@ -187,7 +189,7 @@ function LabDashboard() {
                 <Pill tone="gold">{d.alerts.length}</Pill>
               </div>
               <div className="flex items-center justify-between rounded-xl border border-white/70 bg-white/45 px-4 py-2.5 text-sm">
-                <span className="text-muted-foreground">Alertas críticos</span>
+                <span className="text-muted-foreground">Critical alerts</span>
                 <Pill tone="wine">{d.alerts.filter((a: any) => a.severity === "critical").length}</Pill>
               </div>
               <div className="flex items-center justify-between rounded-xl border border-white/70 bg-white/45 px-4 py-2.5 text-sm">
@@ -198,10 +200,10 @@ function LabDashboard() {
 
             <Card className="space-y-3 p-6">
               <h3 className="flex items-center gap-2 text-sm font-semibold text-foreground">
-                <TrendingUp className="h-4 w-4" /> Exames mais vendidos
+                <TrendingUp className="h-4 w-4" /> Exams mais vendidos
               </h3>
               {topExams.length === 0 && (
-                <p className="text-sm text-muted-foreground">Sem vendas registradas ainda.</p>
+                <p className="text-sm text-muted-foreground">No sales recorded ainda.</p>
               )}
               {topExams.map((t) => (
                 <div key={t.name} className="space-y-1">
@@ -219,13 +221,13 @@ function LabDashboard() {
 
           <Card className="space-y-3 p-6">
             <h3 className="flex items-center gap-2 text-sm font-semibold text-foreground">
-              <Clock3 className="h-4 w-4" /> Pedidos e orçamentos
+              <Clock3 className="h-4 w-4" /> Orders and quotes
             </h3>
             <div className="grid gap-3 md:grid-cols-4">
               {[
                 { label: "Carrinhos abertos", value: d.orders.filter((o: any) => o.status === "cart").length },
-                { label: "Orçamentos", value: d.orders.filter((o: any) => o.status === "quote").length },
-                { label: "Confirmados", value: d.orders.filter((o: any) => o.status === "ordered").length },
+                { label: "Quotes", value: d.orders.filter((o: any) => o.status === "quote").length },
+                { label: "Confirmed", value: d.orders.filter((o: any) => o.status === "ordered").length },
                 { label: "Pagos", value: d.orders.filter((o: any) => o.status === "paid").length },
               ].map((row) => (
                 <div key={row.label} className="rounded-2xl border border-white/70 bg-white/50 p-4 text-center">

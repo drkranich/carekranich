@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useState, type CSSProperties } from "react";
 
 /**
- * Sequência de revelação "Minhas Origens":
- * 1) preparação com partículas  2) hélice de DNA formada por pontos
- * 3) hélice se desfaz em partículas que viajam para o mapa.
+ * "My Origins" reveal sequence:
+ * 1) preparation with particles  2) DNA helix formed by dots
+ * 3) helix breaks into particles that travel to the map.
  */
 export function AncestryReveal({
   patientName,
@@ -65,7 +65,7 @@ export function AncestryReveal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center overflow-hidden bg-[#0b1512]">
-      {/* partículas de fundo */}
+      {/* background particles */}
       {!reducedMotion && (
         <div className="pointer-events-none absolute inset-0">
           {particles.map((p) => (
@@ -98,13 +98,13 @@ export function AncestryReveal({
             className="font-display text-2xl leading-relaxed text-[#f4efe2] md:text-3xl"
             style={{ animation: "ck-fade-in 1.2s ease both" }}
           >
-            Seu DNA guarda caminhos percorridos por muitas gerações.
+            Your DNA carries paths traveled across many generations.
           </p>
           <p
             className="mt-6 text-base text-[#c9c2ae]"
             style={{ animation: "ck-fade-in 1.2s ease 1.6s both" }}
           >
-            Agora, parte dessa história pode ser revelada, {patientName}.
+            Now, part of that story can be revealed, {patientName}.
           </p>
           <button
             onClick={start}
@@ -114,7 +114,7 @@ export function AncestryReveal({
             Descobrir minhas origens
           </button>
           {reducedMotion && (
-            <p className="mt-4 text-xs text-[#8f9a8e]">Modo acessível: a animação será ignorada.</p>
+            <p className="mt-4 text-xs text-[#8f9a8e]">Accessible mode: the animation will be skipped.</p>
           )}
         </div>
       )}
@@ -147,7 +147,7 @@ export function AncestryReveal({
             })}
           </div>
           <p className="mt-8 text-sm text-[#c9c2ae]">
-            {stage === "helix" ? "Lendo os marcadores do seu genoma..." : "Traçando o mapa das suas origens..."}
+            {stage === "helix" ? "Reading your genome markers..." : "Tracing the map of your origins..."}
           </p>
         </div>
       )}

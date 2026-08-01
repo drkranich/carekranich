@@ -32,7 +32,7 @@ const CATEGORIES = [
   { value: "emotional", label: "Emocional" },
   { value: "inactivity", label: "Inatividade" },
   { value: "environmental", label: "Ambiente" },
-  { value: "smart-home", label: "Casa inteligente" },
+  { value: "smart-home", label: "Smart home" },
   { value: "caregiver", label: "Cuidador" },
   { value: "ai-predictive", label: "IA preditiva" },
 ];

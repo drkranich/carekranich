@@ -87,8 +87,8 @@ function Companies() {
 
   const saveCompany = useMutation({
     mutationFn: async () => {
-      if (!effTenant) throw new Error("Nenhuma organização disponível.");
-      if (company.name.trim().length < 2) throw new Error("Informe o nome da empresa.");
+      if (!effTenant) throw new Error("No organization available.");
+      if (company.name.trim().length < 2) throw new Error("Enter the company name.");
       const { data, error } = await (supabase as any)
         .from("companies")
         .insert({
@@ -118,8 +118,8 @@ function Companies() {
 
   const addEmployee = useMutation({
     mutationFn: async () => {
-      if (!selected) throw new Error("Selecione a empresa.");
-      if (employee.full_name.trim().length < 3) throw new Error("Informe o nome do colaborador.");
+      if (!selected) throw new Error("Select the company.");
+      if (employee.full_name.trim().length < 3) throw new Error("Enter the employee name.");
       const { error } = await (supabase as any).from("company_employees").insert({
         tenant_id: selected.tenant_id,
         company_id: selected.id,
@@ -143,7 +143,7 @@ function Companies() {
 
   const importBulk = useMutation({
     mutationFn: async () => {
-      if (!selected) throw new Error("Selecione a empresa.");
+      if (!selected) throw new Error("Select the company.");
       const lines = bulk.split("\n").map((l) => l.trim()).filter(Boolean);
       if (lines.length === 0) throw new Error("Cole ao menos uma linha.");
       const rows = lines.map((line) => {
@@ -179,7 +179,7 @@ function Companies() {
   };
 
   const removeEmployee = async (row: any) => {
-    if (!window.confirm(`Remover ${row.full_name} da campanha?`)) return;
+    if (!window.confirm(`Remove ${row.full_name} from the campaign?`)) return;
     const { error } = await (supabase as any).from("company_employees").delete().eq("id", row.id);
     if (error) return toast.error(error.message);
     refresh();
@@ -193,7 +193,7 @@ function Companies() {
       `Contato: ${selected.contact_name ?? "-"} · ${selected.email ?? "-"} · ${selected.phone ?? "-"}`,
       `Emitido em: ${new Date().toLocaleString("pt-BR")}`,
       "",
-      `Colaboradores: ${list.length}`,
+      `Employees: ${list.length}`,
       ...list.map(
         (e: any) =>
           `- ${e.full_name}${e.cpf ? ` (${e.cpf})` : ""} · ${EXAM_TYPES.find((t) => t.value === e.exam_type)?.label ?? e.exam_type} · ${STATUS_LABEL[e.status] ?? e.status}${e.scheduled_for ? ` · ${new Date(e.scheduled_for + "T00:00:00").toLocaleDateString("pt-BR")}` : ""}`,
@@ -215,7 +215,7 @@ function Companies() {
     <div className="space-y-6">
       <PageHeader
         title="Portal de empresas"
-        subtitle="Saúde ocupacional: contratos corporativos, colaboradores, campanhas de exames e faturamento por centro de custo."
+        subtitle="Saúde ocupacional: corporate contracts, employees, exam campaigns, and cost-center billing."
         action={
           <button
             onClick={() => setOpenCompany(!openCompany)}
@@ -241,10 +241,10 @@ function Companies() {
           </div>
           <div className="flex gap-2">
             <button onClick={() => saveCompany.mutate()} disabled={saveCompany.isPending} className="rounded-full bg-olive px-5 py-2 text-sm font-medium text-ivory shadow-soft hover:opacity-90 disabled:opacity-60">
-              {saveCompany.isPending ? "Salvando..." : "Cadastrar empresa"}
+              {saveCompany.isPending ? "Saving..." : "Register company"}
             </button>
             <button onClick={() => setOpenCompany(false)} className="rounded-full border border-white/70 bg-white/55 px-5 py-2 text-sm backdrop-blur-xl">
-              Cancelar
+              Cancel
             </button>
           </div>
         </Card>
@@ -253,7 +253,7 @@ function Companies() {
       <div className="grid gap-6 xl:grid-cols-[320px_1fr]">
         <Card className="space-y-2 p-5">
           <h3 className="text-sm font-semibold text-foreground">Empresas</h3>
-          {(companies.data ?? []).length === 0 && <p className="text-sm text-muted-foreground">Nenhuma empresa ainda.</p>}
+          {(companies.data ?? []).length === 0 && <p className="text-sm text-muted-foreground">No companies yet.</p>}
           {(companies.data ?? []).map((c: any) => (
             <button
               key={c.id}
@@ -271,10 +271,10 @@ function Companies() {
         {selected ? (
           <div className="space-y-6">
             <div className="grid gap-4 md:grid-cols-4">
-              <Stat label="Colaboradores" value={stats.total} sub="Na campanha" tone="olive" />
+              <Stat label="Employees" value={stats.total} sub="In campaign" tone="olive" />
               <Stat label="Pendentes" value={stats.pending} sub="Sem agendamento" tone="gold" />
               <Stat label="Agendados" value={stats.scheduled} sub="Com data" tone="moss" />
-              <Stat label="Concluídos" value={stats.done} sub="Exames realizados" tone="wine" />
+              <Stat label="Concluídos" value={stats.done} sub="Completed exams" tone="wine" />
             </div>
 
             <Card className="space-y-3 p-6">
@@ -287,7 +287,7 @@ function Companies() {
                     <Upload className="h-3.5 w-3.5" /> Importar lista
                   </button>
                   <button onClick={exportPdf} className="inline-flex items-center gap-1.5 rounded-full border border-border bg-white/55 px-4 py-2 text-xs">
-                    <FileDown className="h-3.5 w-3.5" /> Relatório PDF
+                    <FileDown className="h-3.5 w-3.5" /> PDF report
                   </button>
                 </div>
               </div>
@@ -324,8 +324,8 @@ function Companies() {
             </Card>
 
             <Card className="space-y-2 p-5">
-              <h3 className="text-sm font-semibold text-foreground">Colaboradores da campanha</h3>
-              {(employees.data ?? []).length === 0 && <p className="text-sm text-muted-foreground">Nenhum colaborador ainda.</p>}
+              <h3 className="text-sm font-semibold text-foreground">Campaign employees</h3>
+              {(employees.data ?? []).length === 0 && <p className="text-sm text-muted-foreground">No employees yet.</p>}
               {(employees.data ?? []).map((e: any) => (
                 <div key={e.id} className="flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-white/70 bg-white/50 px-4 py-3">
                   <div className="min-w-0">
@@ -357,7 +357,7 @@ function Companies() {
                       </button>
                     )}
                     <button onClick={() => removeEmployee(e)} className="rounded-full border border-wine/30 bg-wine/5 px-3 py-1.5 text-wine">
-                      Remover
+                      Remove
                     </button>
                   </div>
                 </div>
@@ -365,7 +365,7 @@ function Companies() {
             </Card>
           </div>
         ) : (
-          <EmptyState title="Nenhuma empresa selecionada" hint="Cadastre a primeira empresa contratante para montar campanhas ocupacionais." />
+          <EmptyState title="No company selected" hint="Register the first contracting company to build occupational campaigns." />
         )}
       </div>
     </div>

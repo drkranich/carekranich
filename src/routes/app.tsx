@@ -294,12 +294,6 @@ const ALL_SECTIONS: NavSection[] = [
         icon: "M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67 10.94 4.61a5.5 5.5 0 0 0-7.78 7.78l8.84 8.84 8.84-8.84a5.5 5.5 0 0 0 0-7.78z",
         userKinds: ["family", "clinic", "staff"],
       },
-      {
-        to: "/app/origins",
-        label: "My Origins",
-        icon: "M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20z M2 12h20 M12 2c2.5 3 4 6.5 4 10s-1.5 7-4 10c-2.5-3-4-6.5-4-10s1.5-7 4-10z",
-        userKinds: ["family", "clinic", "staff"],
-      },
     ],
   },
   {

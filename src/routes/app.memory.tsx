@@ -50,8 +50,8 @@ const memoryTypes = [
 ];
 const visibilityOptions = [
   { value: "private", label: "Privado" },
-  { value: "family", label: "Família" },
-  { value: "tenant", label: "Organização" },
+  { value: "family", label: "Family" },
+  { value: "tenant", label: "Organization" },
 ];
 
 function Memory() {
@@ -135,7 +135,7 @@ function Memory() {
     const selectedResident = residents.data?.find((resident) => resident.id === draft.resident_id);
     const tenantId = profile?.tenant_id ?? selectedResident?.tenant_id;
     if (!tenantId || !user) {
-      toast.error("Selecione um residente com organização antes de criar memórias.");
+      toast.error("Select a resident com organização antes de criar memórias.");
       return;
     }
     if (!draft.title.trim() && !file) {
@@ -165,7 +165,7 @@ function Memory() {
         resident_id: draft.resident_id || null,
         owner_id: user.id,
         uploaded_by: user.id,
-        title: draft.title.trim() || file?.name || "Memória sem título",
+        title: draft.title.trim() || file?.name || "Untitled memory",
         memory_type: draft.memory_type,
         memory_date: draft.memory_date || null,
         memory_year: draft.memory_year ? Number(draft.memory_year) : null,
@@ -190,7 +190,7 @@ function Memory() {
         prompt: "",
         description: "",
       });
-      toast.success("Memória salva no arquivo privado");
+      toast.success("Memory saved to the private archive");
       qc.invalidateQueries({ queryKey: ["legacy-memories", profile?.tenant_id] });
     } catch (err: any) {
       toast.error(err.message ?? "Não foi possível salvar a memória");
@@ -217,8 +217,8 @@ function Memory() {
   const exportMemory = (memory: MemoryRow) => {
     downloadPdf(`${memory.title}-legado.pdf`, memory.title, [
       `Tipo: ${memory.memory_type}`,
-      `Residente: ${memory.resident_id ? residentName.get(memory.resident_id) ?? memory.resident_id : "Não vinculado"}`,
-      `Data: ${memory.memory_date ?? memory.memory_year ?? "Não definida"}`,
+      `Resident: ${memory.resident_id ? residentName.get(memory.resident_id) ?? memory.resident_id : "Não vinculado"}`,
+      `Date: ${memory.memory_date ?? memory.memory_year ?? "Não definida"}`,
       `Visibilidade: ${memory.visibility}`,
       `Prompt: ${memory.prompt ?? "Sem prompt"}`,
       `Descrição: ${memory.description ?? "Sem descrição"}`,
@@ -236,7 +236,7 @@ function Memory() {
       .update({ title: newTitle.trim() })
       .eq("id", memory.id);
     if (error) return toast.error(error.message);
-    toast.success("Memória renomeada");
+    toast.success("Memory renamed");
     setRenaming(false);
     setNewTitle("");
     qc.invalidateQueries({ queryKey: ["legacy-memories", profile?.tenant_id] });
@@ -249,7 +249,7 @@ function Memory() {
       .update({ status: archive ? "archived" : "active" })
       .eq("id", memory.id);
     if (error) return toast.error(error.message);
-    toast.success(archive ? "Memória arquivada" : "Memória restaurada");
+    toast.success(archive ? "Memory archived" : "Memory restored");
     qc.invalidateQueries({ queryKey: ["legacy-memories", profile?.tenant_id] });
   };
 
@@ -258,28 +258,28 @@ function Memory() {
       const { data, error } = await supabase.storage
         .from(memory.bucket)
         .createSignedUrl(memory.storage_path, 60 * 60 * 24);
-      if (error || !data?.signedUrl) return toast.error(error?.message ?? "NÃ£o foi possÃ­vel gerar link da memÃ³ria");
+      if (error || !data?.signedUrl) return toast.error(error?.message ?? "Could not generate the memory link");
       try {
         await navigator.clipboard.writeText(data.signedUrl);
-        toast.success("Link assinado copiado por 24 horas");
+        toast.success("Signed link copied for 24 hours");
       } catch {
-        window.prompt("Copie o link assinado:", data.signedUrl);
+        window.prompt("Copy the signed link:", data.signedUrl);
       }
       return;
     }
-    const text = [memory.title, memory.description ?? "", memory.prompt ? `Pergunta: ${memory.prompt}` : ""]
+    const text = [memory.title, memory.description ?? "", memory.prompt ? `Prompt: ${memory.prompt}` : ""]
       .filter(Boolean)
       .join("\n\n");
     try {
       await navigator.clipboard.writeText(text);
-      toast.success("Texto da memÃ³ria copiado");
+      toast.success("Memory text copied");
     } catch {
-      window.prompt("Copie a memÃ³ria:", text);
+      window.prompt("Copy the memory:", text);
     }
   };
 
   const deleteMemory = async (memory: MemoryRow) => {
-    if (!window.confirm("Excluir esta memória definitivamente? O arquivo também será removido.")) return;
+    if (!window.confirm("Delete this memory permanently? The file will also be removed.")) return;
     if (memory.storage_path) {
       await supabase.storage.from(memory.bucket).remove([memory.storage_path]);
     }
@@ -290,8 +290,8 @@ function Memory() {
       .select("id")
       .maybeSingle();
     if (error) return toast.error(error.message);
-    if (!data) return toast.error("MemÃ³ria nÃ£o foi excluÃ­da. Verifique suas permissÃµes.");
-    toast.success("Memória excluída");
+    if (!data) return toast.error("Memory was not deleted. Check your permissions.");
+    toast.success("Memory deleted");
     setSelectedId(null);
     qc.invalidateQueries({ queryKey: ["legacy-memories", profile?.tenant_id] });
   };
@@ -299,8 +299,8 @@ function Memory() {
   return (
     <>
       <PageHeader
-        title="Memória e legado"
-        subtitle="Arquivo privado para fotos reais, áudios, cartas, diários e documentos de legado."
+        title="Memory and legacy"
+        subtitle="Arquivo privado para fotos reais, áudios, cartas, diários and documentos de legado."
         action={<Pill tone="olive">Storage privado + RLS</Pill>}
       />
 
@@ -359,7 +359,7 @@ function Memory() {
               value={draft.resident_id}
               onChange={(value) => setDraft({ ...draft, resident_id: value })}
               options={[
-                { value: "", label: "Não vinculado a nenhum residente" },
+                { value: "", label: "Not linked to any resident" },
                 ...(residents.data ?? []).map((resident) => ({
                   value: resident.id,
                   label: resident.preferred_name || resident.full_name,
@@ -398,7 +398,7 @@ function Memory() {
               disabled={uploading || !(profile?.tenant_id || draft.resident_id)}
               className="w-full rounded-xl bg-olive px-4 py-2.5 text-sm font-medium text-ivory disabled:opacity-50"
             >
-              {uploading ? "Salvando..." : "Salvar memória"}
+              {uploading ? "Saving..." : "Salvar memória"}
             </button>
           </div>
         </Card>
@@ -411,7 +411,7 @@ function Memory() {
                 <input
                   value={query}
                   onChange={(event) => setQuery(event.target.value)}
-                  placeholder="Buscar memórias, residentes, prompts..."
+                  placeholder="Search memories, residents, prompts..."
                   className="flex-1 bg-transparent text-sm outline-none"
                 />
               </div>
@@ -434,7 +434,7 @@ function Memory() {
           </Card>
 
           {!profile?.tenant_id && !isSuperAdmin ? (
-            <EmptyState title="Entre em uma organização aprovada primeiro" hint="Memórias ficam restritas à organização por privacidade." />
+            <EmptyState title="Join an approved organization first" hint="Memories are restricted to the organization for privacy." />
           ) : memories.isLoading ? (
             <p className="text-sm text-muted-foreground">Carregando memórias...</p>
           ) : memories.isError ? (
@@ -466,7 +466,7 @@ function Memory() {
               {selectedMemory && (
                 <Card>
                   <p className="text-xs font-semibold uppercase text-muted-foreground">
-                    Memória selecionada
+                    Selected memory
                   </p>
                   <h2 className="mt-2 text-2xl font-semibold text-foreground">
                     {selectedMemory.title}
@@ -523,7 +523,7 @@ function Memory() {
                             Salvar
                           </button>
                           <button onClick={() => setRenaming(false)} className="rounded-full border border-border px-4 py-2 text-xs">
-                            Cancelar
+                            Cancel
                           </button>
                         </div>
                       ) : (
@@ -533,7 +533,7 @@ function Memory() {
                             setNewTitle(selectedMemory.title);
                           }}
                           onArchive={() => archiveMemory(selectedMemory)}
-                          archiveLabel={selectedMemory.status === "archived" ? "Restaurar" : "Arquivar"}
+                          archiveLabel={selectedMemory.status === "archived" ? "Restaurar" : "Archive"}
                           onShare={() => shareMemory(selectedMemory)}
                           onDelete={() => deleteMemory(selectedMemory)}
                         />
@@ -601,7 +601,7 @@ function MemoryCard({
       <div className="p-4">
         <p className="truncate text-sm font-semibold text-foreground">{memory.title}</p>
         <p className="mt-1 text-xs text-muted-foreground">
-          {resident ?? "Sem residente"} · {memory.memory_date ?? memory.memory_year ?? formatDate(memory.created_at)}
+          {resident ?? "No resident"} · {memory.memory_date ?? memory.memory_year ?? formatDate(memory.created_at)}
         </p>
         {memory.description && (
           <p className="mt-3 line-clamp-2 text-xs leading-5 text-foreground/70">{memory.description}</p>

@@ -82,7 +82,7 @@ function Medications() {
 
   const prescribe = useMutation({
     mutationFn: async () => {
-      if (!resident) throw new Error("Selecione um residente.");
+      if (!resident) throw new Error("Select a resident.");
       if (!form.name.trim()) throw new Error("Informe o medicamento.");
       const times = form.times.split(",").map((t) => t.trim()).filter((t) => /^\d{1,2}:\d{2}$/.test(t));
       const { error } = await (supabase as any).from("medications").insert({
@@ -175,7 +175,7 @@ function Medications() {
     <>
       <PageHeader
         title="Gestão medicamentosa (eMAR)"
-        subtitle="Prescrições ativas, mapa de horários do dia e confirmação de administração dose a dose."
+        subtitle="Prescrições ativas, mapa de horários do dia and confirmação de administração dose a dose."
         action={
           <div className="flex items-center gap-2">
             <Pill tone="olive">eMAR</Pill>
@@ -189,9 +189,9 @@ function Medications() {
       />
 
       <div className="grid gap-4 md:grid-cols-3">
-        <Stat label="Medicamentos ativos" value={residentId ? medications.data?.length ?? "-" : "—"} sub={residentLabel || "Selecione um residente"} tone="olive" />
+        <Stat label="Active medications" value={residentId ? medications.data?.length ?? "-" : "—"} sub={residentLabel || "Select a resident"} tone="olive" />
         <Stat label="Doses do dia" value={residentId ? `${doneSlots}/${totalSlots}` : "—"} sub="Registradas / previstas" tone={doneSlots === totalSlots && totalSlots > 0 ? "moss" : "gold"} />
-        <Stat label="Registros no dia" value={residentId ? administrations.data?.length ?? "-" : "—"} sub={new Date(day + "T12:00:00").toLocaleDateString("pt-BR")} tone="moss" />
+        <Stat label="Records today" value={residentId ? administrations.data?.length ?? "-" : "—"} sub={new Date(day + "T12:00:00").toLocaleDateString("pt-BR")} tone="moss" />
       </div>
 
       <Card className="mt-6">
@@ -199,7 +199,7 @@ function Medications() {
           <GlassSelect
             value={residentId}
             onChange={setResidentId}
-            placeholder="Selecione o residente"
+            placeholder="Select resident"
             className="min-w-64"
             options={(residents.data ?? []).map((item: any) => ({ value: item.id, label: item.preferred_name || item.full_name }))}
           />
@@ -208,14 +208,14 @@ function Medications() {
       </Card>
 
       {!resident ? (
-        <div className="mt-6"><EmptyState title="Escolha um residente" hint="O mapa de medicação é individual e registrado dose a dose." /></div>
+        <div className="mt-6"><EmptyState title="Choose a resident" hint="O mapa de medicação é individual and registrado dose a dose." /></div>
       ) : (
         <>
           {canPrescribe && (
             <Card className="mt-6">
               <div className="flex items-center gap-2">
                 <Plus className="h-4 w-4 text-olive" />
-                <h2 className="text-lg font-semibold text-foreground">Prescrever medicamento</h2>
+                <h2 className="text-lg font-semibold text-foreground">Prescribe medicamento</h2>
               </div>
               <div className="mt-3 grid gap-3 md:grid-cols-3 xl:grid-cols-6">
                 <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Medicamento *" className="rounded-xl border border-border bg-ivory px-3 py-2 text-sm xl:col-span-2" />
@@ -231,7 +231,7 @@ function Medications() {
                   <GlassDatePicker value={form.end_date} onChange={(value) => setForm({ ...form, end_date: value })} />
                 </div>
                 <button onClick={() => prescribe.mutate()} disabled={prescribe.isPending || !form.name.trim()} className="rounded-xl bg-olive px-4 py-2 text-sm font-semibold text-ivory disabled:opacity-50">
-                  {prescribe.isPending ? "Salvando..." : "Prescrever"}
+                  {prescribe.isPending ? "Saving..." : "Prescribe"}
                 </button>
               </div>
             </Card>
@@ -243,7 +243,7 @@ function Medications() {
               <h2 className="text-lg font-semibold text-foreground">Mapa de medicação — {residentLabel}</h2>
             </div>
             {(medications.data ?? []).length === 0 ? (
-              <p className="mt-4 text-sm text-muted-foreground">Nenhum medicamento ativo para este residente.</p>
+              <p className="mt-4 text-sm text-muted-foreground">No active medications for this resident.</p>
             ) : (
               <div className="mt-4 space-y-4">
                 {(medications.data ?? []).map((med: any) => (

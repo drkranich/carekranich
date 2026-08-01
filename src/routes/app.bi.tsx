@@ -12,13 +12,13 @@ import { downloadPdf } from "@/lib/pdf";
 export const Route = createFileRoute("/app/bi")({ component: BI });
 
 const METRICS = [
-  { value: "exames_mes", label: "Exames realizados no mês" },
-  { value: "receita_mes", label: "Receita paga no mês (R$)" },
-  { value: "pacientes_novos", label: "Novos pacientes no mês" },
-  { value: "laudos_liberados", label: "Laudos liberados no mês" },
-  { value: "taxa_no_show", label: "Taxa de não comparecimento (%)" },
-  { value: "recoletas", label: "Recoletas (amostras rejeitadas)" },
-  { value: "ticket_medio", label: "Ticket médio (R$)" },
+  { value: "exams_mes", label: "Exams performed this month" },
+  { value: "receita_mes", label: "Paid revenue this month (BRL)" },
+  { value: "pacientes_novos", label: "New patients this month" },
+  { value: "laudos_liberados", label: "Released reports this month" },
+  { value: "taxa_no_show", label: "No-show rate (%)" },
+  { value: "recoletas", label: "Recollections (rejected samples)" },
+  { value: "ticket_medio", label: "Average ticket (BRL)" },
 ];
 
 const glassInput =
@@ -32,7 +32,7 @@ function BI() {
   const qc = useQueryClient();
   const { profile, user, isSuperAdmin, isAdmin } = useAuth();
   const tenantId = profile?.tenant_id ?? null;
-  const [goal, setGoal] = useState({ metric: "exames_mes", target: "" });
+  const [goal, setGoal] = useState({ metric: "exams_mes", target: "" });
   const [open, setOpen] = useState(false);
   if (!isAdmin && !isSuperAdmin) return <Navigate to="/app" />;
 
@@ -61,8 +61,8 @@ function BI() {
     queryFn: async () => {
       const db = supabase as any;
       const [orders, items, patients, reports, samples, checkins, appointments, exams, criticals] = await Promise.all([
-        db.from("exam_orders").select("id,status,total_cents,created_at").limit(600),
-        db.from("exam_order_items").select("id,exam_id,order_id,created_at").limit(1200),
+        db.from("exam_orders").select("id,status,created_at").limit(600),
+        db.from("exam_order_items").select("id,exam_id,order_id,price_cents,covered_by_insurance,created_at").limit(1200),
         db.from("patients").select("id,created_at").limit(1000),
         db.from("lab_reports").select("id,status,released_at,created_at,is_critical").limit(600),
         db.from("samples").select("id,status,created_at").limit(600),
@@ -105,12 +105,15 @@ function BI() {
     if (!d) return null;
     const inMonth = (iso: string | null) => !!iso && iso >= monthStart;
     const paidMonth = d.orders.filter((o: any) => o.status === "paid" && inMonth(o.created_at));
-    const revenue = paidMonth.reduce((a: number, o: any) => a + (o.total_cents ?? 0), 0);
+    const paidOrderIds = new Set(paidMonth.map((o: any) => o.id));
+    const revenue = d.items
+      .filter((i: any) => paidOrderIds.has(i.order_id) && !i.covered_by_insurance)
+      .reduce((a: number, i: any) => a + (i.price_cents ?? 0), 0);
     const itemsMonth = d.items.filter((i: any) => inMonth(i.created_at));
     const checkinsMonth = d.checkins.filter((c: any) => inMonth(c.arrived_at));
     const noShow = checkinsMonth.filter((c: any) => c.status === "no_show").length;
     return {
-      exames_mes: itemsMonth.length,
+      exams_mes: itemsMonth.length,
       receita_mes: revenue / 100,
       pacientes_novos: d.patients.filter((p: any) => inMonth(p.created_at)).length,
       laudos_liberados: d.reports.filter((r: any) => r.status === "released" && inMonth(r.released_at)).length,
@@ -132,8 +135,8 @@ function BI() {
       .sort((a, b) => b[1] - a[1])
       .slice(0, 8)
       .map(([id, qty]) => {
-        const e = d.exams.find((x: any) => x.id === id);
-        return { name: e ? e.commercial_name || e.name : "Exame", qty, revenue: (e?.price_cents ?? 0) * qty };
+        const exam = d.exams.find((x: any) => x.id === id);
+        return { name: exam ? exam.commercial_name || exam.name : "Exam", qty, revenue: (exam?.price_cents ?? 0) * qty };
       });
   }, [d]);
 
@@ -141,9 +144,9 @@ function BI() {
 
   const saveGoal = useMutation({
     mutationFn: async () => {
-      if (!effTenant) throw new Error("Nenhuma organização disponível.");
+      if (!effTenant) throw new Error("No organization available.");
       const target = Number(goal.target.replace(",", "."));
-      if (!target || target <= 0) throw new Error("Informe a meta.");
+      if (!target || target <= 0) throw new Error("Enter the goal.");
       const label = METRICS.find((m) => m.value === goal.metric)?.label ?? goal.metric;
       const { error } = await (supabase as any).from("business_goals").insert({
         tenant_id: effTenant,
@@ -156,7 +159,7 @@ function BI() {
     },
     onSuccess: () => {
       toast.success("Meta definida");
-      setGoal({ metric: "exames_mes", target: "" });
+      setGoal({ metric: "exams_mes", target: "" });
       setOpen(false);
       qc.invalidateQueries({ queryKey: ["business-goals", tenantId] });
     },
@@ -171,17 +174,17 @@ function BI() {
 
   const exportPdf = () => {
     if (!metrics) return;
-    downloadPdf("bi-care-kranich.pdf", "Painel executivo — mês corrente", [
+    downloadPdf("bi-care-kranich.pdf", "Executive dashboard - current month", [
       `Emitido em: ${new Date().toLocaleString("pt-BR")}`,
       "",
-      `Exames realizados: ${metrics.exames_mes}`,
-      `Receita paga: ${brl(metrics.revenueCents)}`,
-      `Ticket médio: ${metrics.ticket_medio.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}`,
-      `Novos pacientes: ${metrics.pacientes_novos}`,
-      `Laudos liberados: ${metrics.laudos_liberados}`,
-      `Taxa de não comparecimento: ${metrics.taxa_no_show}%`,
-      `Recoletas: ${metrics.recoletas}`,
-      `Resultados críticos em aberto: ${metrics.criticalsOpen}`,
+      `Completed exams: ${metrics.exams_mes}`,
+      `Paid revenue: ${brl(metrics.revenueCents)}`,
+      `Average ticket: ${metrics.ticket_medio.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}`,
+      `New patients: ${metrics.pacientes_novos}`,
+      `Released reports: ${metrics.laudos_liberados}`,
+      `No-show rate: ${metrics.taxa_no_show}%`,
+      `Recollections: ${metrics.recoletas}`,
+      `Open critical results: ${metrics.criticalsOpen}`,
       "",
       "Metas:",
       ...(goals.data ?? []).map((g: any) => {
@@ -190,7 +193,7 @@ function BI() {
         return `- ${g.label}: ${current} de ${g.target} (${pct}%)`;
       }),
       "",
-      "Exames mais vendidos:",
+      "Exams mais vendidos:",
       ...topExams.map((t) => `- ${t.name}: ${t.qty}`),
     ]);
   };
@@ -199,11 +202,11 @@ function BI() {
     <div className="space-y-6">
       <PageHeader
         title="BI executivo"
-        subtitle="Indicadores operacionais, clínicos e financeiros do mês com acompanhamento de metas."
+        subtitle="Operational, clinical and financial indicators for the month with goal tracking."
         action={
           <div className="flex gap-2">
             <button onClick={exportPdf} className="inline-flex items-center gap-1.5 rounded-full border border-border bg-white/55 px-4 py-2 text-xs">
-              <FileDown className="h-3.5 w-3.5" /> Relatório PDF
+              <FileDown className="h-3.5 w-3.5" /> PDF report
             </button>
             <button onClick={() => setOpen(!open)} className="inline-flex items-center gap-2 rounded-full bg-olive px-4 py-2 text-sm font-medium text-ivory shadow-soft hover:opacity-90">
               <Plus className="h-4 w-4" /> Nova meta
@@ -222,13 +225,13 @@ function BI() {
       {open && (
         <Card className="space-y-3 p-6">
           <h3 className="flex items-center gap-2 text-sm font-semibold text-foreground">
-            <Target className="h-4 w-4" /> Definir meta do mês
+            <Target className="h-4 w-4" /> Set monthly goal
           </h3>
           <div className="grid gap-3 md:grid-cols-3">
             <GlassSelect value={goal.metric} onChange={(v) => setGoal({ ...goal, metric: v })} options={METRICS} />
-            <input className={glassInput} placeholder="Meta (número)" inputMode="decimal" value={goal.target} onChange={(e) => setGoal({ ...goal, target: e.target.value })} />
+            <input className={glassInput} placeholder="Goal (number)" inputMode="decimal" value={goal.target} onChange={(e) => setGoal({ ...goal, target: e.target.value })} />
             <button onClick={() => saveGoal.mutate()} disabled={saveGoal.isPending} className="rounded-2xl bg-olive px-4 py-2.5 text-sm font-medium text-ivory shadow-soft hover:opacity-90 disabled:opacity-60">
-              Salvar meta
+              Save meta
             </button>
           </div>
         </Card>
@@ -237,19 +240,19 @@ function BI() {
       {metrics && (
         <>
           <div className="grid gap-4 md:grid-cols-4">
-            <Stat label="Exames no mês" value={metrics.exames_mes} sub="Itens de pedidos" tone="olive" />
-            <Stat label="Receita paga" value={brl(metrics.revenueCents)} sub={`Ticket médio ${metrics.ticket_medio.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}`} tone="moss" />
-            <Stat label="Novos pacientes" value={metrics.pacientes_novos} sub="Cadastrados no mês" tone="gold" />
-            <Stat label="Laudos liberados" value={metrics.laudos_liberados} sub="No mês" tone="wine" />
+            <Stat label="Monthly exams" value={metrics.exams_mes} sub="Order items" tone="olive" />
+            <Stat label="Paid revenue" value={brl(metrics.revenueCents)} sub={`Average ticket ${metrics.ticket_medio.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}`} tone="moss" />
+            <Stat label="New patients" value={metrics.pacientes_novos} sub="Registered this month" tone="gold" />
+            <Stat label="Released reports" value={metrics.laudos_liberados} sub="This month" tone="wine" />
           </div>
 
           <div className="grid gap-6 lg:grid-cols-3">
             <Card className="space-y-3 p-6">
-              <h3 className="text-sm font-semibold text-foreground">Qualidade e operação</h3>
+              <h3 className="text-sm font-semibold text-foreground">Quality and operations</h3>
               {[
-                { label: "Taxa de não comparecimento", value: `${metrics.taxa_no_show}%`, tone: metrics.taxa_no_show > 15 ? ("wine" as const) : ("moss" as const) },
-                { label: "Recoletas no mês", value: metrics.recoletas, tone: metrics.recoletas > 0 ? ("gold" as const) : ("moss" as const) },
-                { label: "Críticos em aberto", value: metrics.criticalsOpen, tone: metrics.criticalsOpen > 0 ? ("wine" as const) : ("moss" as const) },
+                { label: "No-show rate", value: `${metrics.taxa_no_show}%`, tone: metrics.taxa_no_show > 15 ? ("wine" as const) : ("moss" as const) },
+                { label: "Recollections this month", value: metrics.recoletas, tone: metrics.recoletas > 0 ? ("gold" as const) : ("moss" as const) },
+                { label: "Open criticals", value: metrics.criticalsOpen, tone: metrics.criticalsOpen > 0 ? ("wine" as const) : ("moss" as const) },
               ].map((row) => (
                 <div key={row.label} className="flex items-center justify-between rounded-xl border border-white/70 bg-white/45 px-4 py-2.5 text-sm">
                   <span className="text-muted-foreground">{row.label}</span>
@@ -260,10 +263,10 @@ function BI() {
 
             <Card className="space-y-3 p-6 lg:col-span-2">
               <h3 className="flex items-center gap-2 text-sm font-semibold text-foreground">
-                <Target className="h-4 w-4" /> Metas do mês
+                <Target className="h-4 w-4" /> Monthly goals
               </h3>
               {(goals.data ?? []).length === 0 && (
-                <p className="text-sm text-muted-foreground">Nenhuma meta definida ainda. Crie metas para acompanhar o desempenho.</p>
+                <p className="text-sm text-muted-foreground">No goals defined yet. Create goals to track performance.</p>
               )}
               {(goals.data ?? []).map((g: any) => {
                 const current = Number((metrics as any)[g.metric] ?? 0);
@@ -297,9 +300,9 @@ function BI() {
           </div>
 
           <Card className="space-y-3 p-6">
-            <h3 className="text-sm font-semibold text-foreground">Exames mais vendidos</h3>
+            <h3 className="text-sm font-semibold text-foreground">Exams mais vendidos</h3>
             {topExams.length === 0 ? (
-              <EmptyState title="Sem vendas registradas" hint="Os exames aparecem aqui conforme os pedidos forem criados." />
+              <EmptyState title="No sales recorded" hint="Exams appear here as orders are created." />
             ) : (
               topExams.map((t) => (
                 <div key={t.name} className="space-y-1">

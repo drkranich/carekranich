@@ -132,7 +132,7 @@ function Emergency() {
   };
 
   const statusLabel = (status: string) =>
-    ({ open: "open", acknowledged: "reconhecido", resolved: "resolvido", closed: "encerrado" }[status] ?? status);
+    ({ open: "open", acknowledged: "reconhecido", resolved: "resolvido", closed: "ended" }[status] ?? status);
 
   return (
     <>
@@ -290,7 +290,7 @@ function Emergency() {
                               <Share2 className="h-3 w-3" /> Share
                             </button>
                             <button
-                              onClick={() => updateAlert(alert.id, { archived_at: new Date().toISOString() }, "Alerta archived")}
+                              onClick={() => updateAlert(alert.id, { archived_at: new Date().toISOString() }, "Alert archived")}
                               className="inline-flex items-center gap-1 rounded-full border border-border bg-white/55 px-3 py-1.5"
                             >
                               <Archive className="h-3 w-3" /> Archive

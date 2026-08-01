@@ -89,12 +89,12 @@ function Identity() {
           <div>
             <h2 className="text-xl font-semibold text-foreground">Minha verificação</h2>
             <p className="mt-1 text-sm text-muted-foreground">
-              Tire uma selfie agora. Ao enviar, você declara que é o titular desta conta (aceite eletrônico).
+              Take a selfie now. By submitting it, you declare that you are the account holder (electronic acceptance).
             </p>
           </div>
           <button onClick={() => setCameraOpen(true)} className="inline-flex items-center gap-2 rounded-full bg-olive px-4 py-2 text-sm text-ivory">
             <Camera className="h-4 w-4" />
-            Tirar selfie e aceitar
+            Take selfie and accept
           </button>
         </div>
       </Card>
@@ -212,7 +212,7 @@ function SelfieDialog({ onClose, onCapture }: { onClose: () => void; onCapture: 
             <video ref={videoRef} playsInline muted className="aspect-[4/3] w-full rounded-xl bg-foreground/10 object-cover" />
           )}
           <p className="mt-3 text-xs leading-5 text-muted-foreground">
-            Ao enviar a selfie, você aceita os termos da plataforma e declara ser o titular desta conta.
+            By submitting the selfie, you accept the platform terms and declare that you are the account holder.
           </p>
           <div className="mt-4 flex flex-wrap justify-end gap-2">
             <input
@@ -223,13 +223,13 @@ function SelfieDialog({ onClose, onCapture }: { onClose: () => void; onCapture: 
               className="hidden"
               onChange={(event) => sendFile(event.target.files?.[0] ?? null)}
             />
-            <button onClick={onClose} className="rounded-full border border-border bg-white/55 px-4 py-2 text-xs">Cancelar</button>
+            <button onClick={onClose} className="rounded-full border border-border bg-white/55 px-4 py-2 text-xs">Cancel</button>
             <button
               onClick={() => fileRef.current?.click()}
               disabled={sending}
               className="rounded-full border border-border bg-white/55 px-4 py-2 text-xs disabled:opacity-50"
             >
-              {sending ? "Enviando..." : "Enviar foto do dispositivo"}
+              {sending ? "Sending..." : "Enviar foto do dispositivo"}
             </button>
             {!error && (
               <button
@@ -238,7 +238,7 @@ function SelfieDialog({ onClose, onCapture }: { onClose: () => void; onCapture: 
                 className="inline-flex items-center gap-2 rounded-full bg-olive px-4 py-2 text-xs font-semibold text-ivory disabled:opacity-50"
               >
                 <Camera className="h-3.5 w-3.5" />
-                {sending ? "Enviando..." : "Capturar e enviar"}
+                {sending ? "Sending..." : "Capture and submit"}
               </button>
             )}
           </div>

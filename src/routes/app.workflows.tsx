@@ -15,13 +15,13 @@ const WORKFLOWS: { key: WorkflowKey; title: string; description: string; steps: 
     key: "critical_alert_escalation",
     title: "Escalonamento de alertas críticos",
     description: "Alertas abertos críticos/altos notificam toda a equipe da organização imediatamente.",
-    steps: ["Localizar alertas críticos abertos", "Notificar equipe e admins", "Registrar execução auditável"],
+    steps: ["Find open critical alerts", "Notify team and admins", "Register auditable run"],
   },
   {
     key: "overdue_task_follow_up",
     title: "Cobrança de tarefas vencidas",
-    description: "Tarefas de cuidado vencidas sobem para prioridade alta e notificam os responsáveis.",
-    steps: ["Localizar tarefas vencidas", "Elevar prioridade para alta", "Notificar responsável e criador"],
+    description: "Tarefas de cuidado vencidas sobem para prioridade alta and notificam os responsáveis.",
+    steps: ["Localizar tarefas vencidas", "Elevar prioridade para alta", "Notificar responsável and criador"],
   },
   {
     key: "inbox_triage",
@@ -111,7 +111,7 @@ function Workflows() {
                 tenant_id: task.tenant_id,
                 user_id: userId,
                 title: `Tarefa vencida: ${task.title}`,
-                body: `Vencida em ${new Date(task.due_at).toLocaleString("pt-BR")} — prioridade elevada para alta.`,
+                body: `Overdue at ${new Date(task.due_at).toLocaleString("pt-BR")} — priority raised to high.`,
                 link: "/app/care-plan",
                 severity: "warning",
               })),
@@ -160,7 +160,7 @@ function Workflows() {
       return { key, processed };
     },
     onSuccess: ({ processed }) => {
-      toast.success(processed > 0 ? `Automação executada — ${processed} item(ns) processado(s)` : "Nada pendente para processar");
+      toast.success(processed > 0 ? `Automação executada — ${processed} item(s) processado(s)` : "Nada pendente para processar");
       qc.invalidateQueries({ queryKey: ["workflow-runs", profile?.tenant_id] });
     },
     onError: (error: any) => toast.error(error.message ?? "Falha ao executar a automação"),
@@ -172,12 +172,12 @@ function Workflows() {
     <>
       <PageHeader
         title="Automação de cuidados"
-        subtitle="Workflows executáveis sobre dados reais: alertas, tarefas e conversas. Cada execução fica registrada e auditável."
-        action={<Pill tone="olive">Motor ativo</Pill>}
+        subtitle="Executable workflows over real data: alerts, tasks and conversations. Every run is registered and auditable."
+        action={<Pill tone="olive">Motor active</Pill>}
       />
 
       <div className="grid gap-4 md:grid-cols-3">
-        <Stat label="Execuções registradas" value={runs.data?.length ?? "-"} sub="Últimas 40" tone="olive" />
+        <Stat label="Execuções registradas" value={runs.data?.length ?? "-"} sub="Latests 40" tone="olive" />
         <Stat
           label="Itens processados"
           value={(runs.data ?? []).reduce((total: number, run: any) => total + (run.processed ?? 0), 0)}
@@ -185,9 +185,9 @@ function Workflows() {
           tone="moss"
         />
         <Stat
-          label="Última execução"
+          label="Latest run"
           value={runs.data?.[0] ? new Date(runs.data[0].created_at).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }) : "-"}
-          sub={runs.data?.[0] ? new Date(runs.data[0].created_at).toLocaleDateString("pt-BR") : "Nenhuma ainda"}
+          sub={runs.data?.[0] ? new Date(runs.data[0].created_at).toLocaleDateString("pt-BR") : "None yet"}
           tone="gold"
         />
       </div>
@@ -229,7 +229,7 @@ function Workflows() {
               )}
               {history[0] && (
                 <p className="mt-3 text-[11px] text-muted-foreground">
-                  Última: {new Date(history[0].created_at).toLocaleString("pt-BR")} · {history[0].processed} item(ns)
+                  Latest: {new Date(history[0].created_at).toLocaleString("pt-BR")} · {history[0].processed} item(s)
                 </p>
               )}
             </Card>
@@ -240,7 +240,7 @@ function Workflows() {
       <Card className="mt-6">
         <h2 className="text-xl font-semibold text-foreground">Histórico de execuções</h2>
         {(runs.data ?? []).length === 0 ? (
-          <div className="mt-4"><EmptyState title="Nenhuma execução ainda" hint="Execute uma automação acima para registrar a primeira." /></div>
+          <div className="mt-4"><EmptyState title="No runs yet" hint="Run an automation above to record the first one." /></div>
         ) : (
           <div className="mt-4 space-y-2">
             {(runs.data ?? []).map((run: any) => (
@@ -255,7 +255,7 @@ function Workflows() {
                   <Pill tone={run.status === "completed" ? "moss" : run.status === "failed" ? "wine" : "muted"}>
                     {run.status === "completed" ? "concluída" : run.status === "failed" ? "falhou" : "sem pendências"}
                   </Pill>
-                  <Pill tone="olive">{run.processed} item(ns)</Pill>
+                  <Pill tone="olive">{run.processed} item(s)</Pill>
                 </div>
               </div>
             ))}
@@ -264,7 +264,7 @@ function Workflows() {
       </Card>
 
       <p className="mt-6 text-xs leading-5 text-muted-foreground">
-        Agendamento automático (execução recorrente via cron do worker) entra na fase de integrações, junto com Stripe e APIs Google.
+        Automatic scheduling (recurring execution via worker cron) enters the integrations phase, together with Stripe and Google APIs.
       </p>
     </>
   );

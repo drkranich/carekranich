@@ -62,7 +62,7 @@ const DIMENSIONS = [
 ] as const;
 const SOURCE_OPTIONS = [
   { value: "manual", label: "Manual" },
-  { value: "caregiver", label: "Observação do cuidador" },
+  { value: "caregiver", label: "Caregiver observation" },
   { value: "nurse", label: "Observação de enfermagem" },
   { value: "doctor", label: "Avaliação medica" },
   { value: "assessment", label: "Avaliação padronizada" },
