@@ -221,11 +221,11 @@ function workspaceFor(
     return {
       eyebrow: "Super admin",
       title: "Ecossistema Care Kranich",
-      subtitle: "Painel global para aprovar usuarios, planos, contratos e operacao.",
-      body: "Aqui ficam as decisoes de plataforma: acesso, receita, contratos, inbox, verificacoes e saude operacional.",
+      subtitle: "Painel global para aprovar usuarios, planos, contratos e operação.",
+      body: "Aqui ficam as decisoes de plataforma: acesso, receita, contratos, inbox, verificacoes e saúde operacional.",
       links: [
-        { to: "/app/admin", label: "Super Admin", hint: "Visao global" },
-        { to: "/app/approvals", label: "Aprovacoes", hint: "Usuarios e clinicas" },
+        { to: "/app/admin", label: "Super Admin", hint: "Visão global" },
+        { to: "/app/approvals", label: "Aprovações", hint: "Usuarios e clinicas" },
         { to: "/app/billing", label: "Planos", hint: "Assinaturas e acesso" },
         { to: "/app/inbox", label: "Inbox", hint: "Conversas do ecossistema" },
       ],
@@ -233,15 +233,15 @@ function workspaceFor(
   }
   if (isAdmin || userKind === "clinic") {
     return {
-      eyebrow: "Clinica",
-      title: "Operacao da clinica",
+      eyebrow: "Clínica",
+      title: "Operação da clínica",
       subtitle: "Area para gerir residentes, equipe, cuidado e qualidade.",
-      body: "A clinica acompanha alertas, tarefas, documentos, equipe e indicadores sem entrar nas ferramentas de dono da plataforma.",
+      body: "A clínica acompanha alertas, tarefas, documentos, equipe e indicadores sem entrar nas ferramentas de dono da plataforma.",
       links: [
         { to: "/app/residents", label: "Residentes", hint: "Perfis e cuidado" },
-        { to: "/app/tenants", label: "Organizacao", hint: "Equipe e permissoes" },
-        { to: "/app/command", label: "Comando", hint: "Operacao do dia" },
-        { to: "/app/care-plan", label: "Plano de cuidado", hint: "Rotina clinica" },
+        { to: "/app/tenants", label: "Organização", hint: "Equipe e permissoes" },
+        { to: "/app/command", label: "Comando", hint: "Operação do dia" },
+        { to: "/app/care-plan", label: "Plano de cuidado", hint: "Rotina clínica" },
       ],
     };
   }
@@ -250,12 +250,12 @@ function workspaceFor(
       eyebrow: "Prestador",
       title: "Area do prestador de servicos",
       subtitle: "Espaco para identidade, contatos, documentos e oportunidades.",
-      body: "Prestadores entram pelo marketplace, conversam pelo inbox, mantem verificacao facial e organizam documentos profissionais.",
+      body: "Prestadores entram pelo marketplace, conversam pelo inbox, mantem verificação facial e organizam documentos profissionais.",
       links: [
         { to: "/app/marketplace", label: "Marketplace", hint: "Presenca publica" },
         { to: "/app/inbox", label: "Inbox", hint: "Conversas com clientes" },
         { to: "/app/documents", label: "Documentos", hint: "Certificados e contratos" },
-        { to: "/app/identity", label: "Verificacao", hint: "Reconhecimento facial" },
+        { to: "/app/identity", label: "Verificação", hint: "Reconhecimento facial" },
       ],
     };
   }
@@ -269,17 +269,17 @@ function workspaceFor(
         { to: "/app/caregiver", label: "App cuidador", hint: "Tarefas do turno" },
         { to: "/app/timeline", label: "Timeline", hint: "Registrar cuidado" },
         { to: "/app/alerts", label: "Alertas", hint: "Resolver incidentes" },
-        { to: "/app/medical", label: "Medico", hint: "Notas clinicas" },
+        { to: "/app/medical", label: "Médico", hint: "Notas clinicas" },
       ],
     };
   }
   return {
-    eyebrow: "Familia",
+    eyebrow: "Família",
     title: "Cuidado familiar",
-    subtitle: "Area para acompanhar quem voce ama, memorias, casa inteligente e alertas.",
-    body: "Usuarios comuns veem o que importa para a familia: residentes vinculados, memorias, rotina, documentos, alertas e comunicacao com a equipe.",
+    subtitle: "Area para acompanhar quem você ama, memorias, casa inteligente e alertas.",
+    body: "Usuarios comuns veem o que importa para a família: residentes vinculados, memorias, rotina, documentos, alertas e comunicacao com a equipe.",
     links: [
-      { to: "/app/residents", label: "Residentes", hint: "Quem voce acompanha" },
+      { to: "/app/residents", label: "Residentes", hint: "Quem você acompanha" },
       { to: "/app/memory", label: "Memorias", hint: "Historia e legado" },
       { to: "/app/smart-home", label: "Casa inteligente", hint: "Sensores e ambiente" },
       { to: "/app/inbox", label: "Inbox", hint: "Fale com a equipe" },
