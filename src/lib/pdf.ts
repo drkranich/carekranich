@@ -1,5 +1,9 @@
 function escapePdfText(value: string) {
-  return value.replace(/\\/g, "\\\\").replace(/\(/g, "\\(").replace(/\)/g, "\\)");
+  // Normaliza para Latin-1 (WinAnsi) para que acentos renderizem corretamente.
+  const latin = Array.from(value)
+    .map((ch) => (ch.charCodeAt(0) <= 255 ? ch : "?"))
+    .join("");
+  return latin.replace(/\\/g, "\\\\").replace(/\(/g, "\\(").replace(/\)/g, "\\)");
 }
 
 export function createSimplePdf(title: string, lines: string[]) {
@@ -22,7 +26,7 @@ export function createSimplePdf(title: string, lines: string[]) {
     "1 0 obj << /Type /Catalog /Pages 2 0 R >> endobj\n",
     "2 0 obj << /Type /Pages /Kids [3 0 R] /Count 1 >> endobj\n",
     "3 0 obj << /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 4 0 R >> >> /Contents 5 0 R >> endobj\n",
-    "4 0 obj << /Type /Font /Subtype /Type1 /BaseFont /Helvetica >> endobj\n",
+    "4 0 obj << /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >> endobj\n",
     `5 0 obj << /Length ${stream.length} >> stream\n${stream}\nendstream endobj\n`,
   ];
   let body = "%PDF-1.4\n";
@@ -38,7 +42,9 @@ export function createSimplePdf(title: string, lines: string[]) {
     .map((offset) => `${String(offset).padStart(10, "0")} 00000 n \n`)
     .join("");
   body += `trailer << /Size ${objects.length + 1} /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF`;
-  return new Blob([body], { type: "application/pdf" });
+  const bytes = new Uint8Array(body.length);
+  for (let i = 0; i < body.length; i++) bytes[i] = body.charCodeAt(i) & 0xff;
+  return new Blob([bytes], { type: "application/pdf" });
 }
 
 export function downloadPdf(filename: string, title: string, lines: string[]) {
