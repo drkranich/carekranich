@@ -154,6 +154,13 @@ const ALL_SECTIONS: NavSection[] = [
         userKinds: ["clinic", "staff"],
       },
       {
+        to: "/app/doctor",
+        label: "Portal do médico",
+        icon: "M4.8 2.3A.3.3 0 1 0 5 2.6a.3.3 0 0 0-.2-.3 M8 2a2 2 0 0 1 2 2v5a6 6 0 0 1-12 0V4a2 2 0 0 1 2-2 M2 2v2 M8 15a6 6 0 0 0 12 0v-3 M20 8a2 2 0 1 0 0 4 2 2 0 0 0 0-4z",
+        roles: ["doctor", "clinic_admin", "super_admin"],
+        userKinds: ["clinic", "staff"],
+      },
+      {
         to: "/app/reports",
         label: "Laudos e resultados",
         icon: "M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z M14 2v6h6 M8 13h8 M8 17h5",
