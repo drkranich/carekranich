@@ -94,6 +94,11 @@ const ALL_SECTIONS: NavSection[] = [
         label: "Marketplace",
         icon: "M3 9l1-5h16l1 5 M3 9h18v11H3z M9 13h6",
       },
+      {
+        to: "/app/exams",
+        label: "Clínica de exames",
+        icon: "M9 3h6v4l3 8a4 4 0 0 1-4 5H10a4 4 0 0 1-4-5l3-8z M9 7h6 M10 14h4",
+      },
     ],
   },
   {
