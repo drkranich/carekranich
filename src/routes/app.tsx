@@ -99,6 +99,13 @@ const ALL_SECTIONS: NavSection[] = [
         label: "Clínica de exames",
         icon: "M9 3h6v4l3 8a4 4 0 0 1-4 5H10a4 4 0 0 1-4-5l3-8z M9 7h6 M10 14h4",
       },
+      {
+        to: "/app/geriatrics",
+        label: "Gestão geriátrica",
+        icon: "M12 21s-7-4.5-9-9a5 5 0 0 1 9-3 5 5 0 0 1 9 3c-2 4.5-9 9-9 9z M8 12h2l1-2 2 4 1-2h2",
+        roles: ["caregiver", "nurse", "doctor", "clinic_admin", "super_admin"],
+        userKinds: ["clinic", "staff"],
+      },
     ],
   },
   {
