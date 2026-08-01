@@ -25,8 +25,8 @@ type DocumentRow = {
 };
 
 const documentTypeOptions = [
-  { value: "medical", label: "Medico" },
-  { value: "prescription", label: "Prescricao" },
+  { value: "medical", label: "Médico" },
+  { value: "prescription", label: "Prescrição" },
   { value: "contract", label: "Contrato" },
   { value: "insurance", label: "Seguro" },
   { value: "certification", label: "Certificacao" },
@@ -121,7 +121,7 @@ function Documents() {
   return (
     <>
       <PageHeader
-        title="Inteligencia de documentos"
+        title="Inteligência de documentos"
         subtitle="Uploads privados, acesso assinado, geracao de PDFs e metadados prontos para auditoria."
         action={<Pill tone="olive">Armazenamento privado Supabase</Pill>}
       />
@@ -129,7 +129,7 @@ function Documents() {
       <Card className="relative z-30 mb-6 overflow-visible">
         <div className="grid gap-3 lg:grid-cols-[1fr_180px_180px_auto]">
           <input
-            placeholder="Titulo do documento"
+            placeholder="Título do documento"
             value={title}
             onChange={(event) => setTitle(event.target.value)}
             className="rounded-xl border border-border bg-ivory px-3 py-2 text-sm"
@@ -181,11 +181,11 @@ function Documents() {
       </Card>
 
       {!profile?.tenant_id && !isSuperAdmin ? (
-        <EmptyState title="Entre em uma organizacao aprovada primeiro" hint="Documentos privados ficam vinculados a uma organizacao." />
+        <EmptyState title="Entre em uma organização aprovada primeiro" hint="Documentos privados ficam vinculados a uma organização." />
       ) : docs.isLoading ? (
         <p className="text-sm text-muted-foreground">Carregando...</p>
       ) : filteredDocs.length === 0 ? (
-        <EmptyState title="Ainda nao ha documentos." hint="Faca o upload do primeiro arquivo real para criar o cofre." />
+        <EmptyState title="Ainda não ha documentos." hint="Faca o upload do primeiro arquivo real para criar o cofre." />
       ) : (
         <div className="grid gap-4 lg:grid-cols-2">
           {filteredDocs.map((doc) => (
