@@ -1,5 +1,6 @@
 import { ChevronDown } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 
 export type GlassSelectOption = {
   value: string;
@@ -7,6 +8,10 @@ export type GlassSelectOption = {
   disabled?: boolean;
 };
 
+/**
+ * Dropdown com glassmorphism. O painel renderiza em portal (document.body)
+ * para nunca ser cortado ou coberto por cards com backdrop-blur.
+ */
 export function GlassSelect({
   value,
   onChange,
@@ -25,21 +30,42 @@ export function GlassSelect({
   disabled?: boolean;
 }) {
   const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement | null>(null);
+  const btnRef = useRef<HTMLButtonElement | null>(null);
+  const panelRef = useRef<HTMLDivElement | null>(null);
+  const [pos, setPos] = useState<{ top: number; left: number; width: number } | null>(null);
   const selected = useMemo(() => options.find((option) => option.value === value), [options, value]);
 
+  const place = () => {
+    const rect = btnRef.current?.getBoundingClientRect();
+    if (rect) setPos({ top: rect.bottom + 6, left: rect.left, width: rect.width });
+  };
+
+  useLayoutEffect(() => {
+    if (open) place();
+  }, [open]);
+
   useEffect(() => {
+    if (!open) return;
     const close = (event: MouseEvent) => {
-      if (!ref.current?.contains(event.target as Node)) setOpen(false);
+      const target = event.target as Node;
+      if (!btnRef.current?.contains(target) && !panelRef.current?.contains(target)) setOpen(false);
     };
+    const reposition = () => place();
     document.addEventListener("mousedown", close);
-    return () => document.removeEventListener("mousedown", close);
-  }, []);
+    window.addEventListener("scroll", reposition, true);
+    window.addEventListener("resize", reposition);
+    return () => {
+      document.removeEventListener("mousedown", close);
+      window.removeEventListener("scroll", reposition, true);
+      window.removeEventListener("resize", reposition);
+    };
+  }, [open]);
 
   return (
-    <div ref={ref} className={`relative ${className}`}>
+    <div className={`relative ${className}`}>
       {name && <input type="hidden" name={name} value={value} />}
       <button
+        ref={btnRef}
         type="button"
         disabled={disabled}
         onClick={() => setOpen((current) => !current)}
@@ -48,30 +74,38 @@ export function GlassSelect({
         <span className="min-w-0 truncate">{selected?.label ?? placeholder}</span>
         <ChevronDown className={`h-4 w-4 flex-none text-olive transition ${open ? "rotate-180" : ""}`} />
       </button>
-      {open && !disabled && (
-        <div className="absolute left-0 right-0 z-[1000] mt-2 overflow-hidden rounded-lg border border-white/75 bg-white/85 p-1 shadow-elevated backdrop-blur-2xl">
-          <div className="max-h-72 overflow-y-auto app-scrollbar">
-            {options.map((option) => (
-              <button
-                key={option.value}
-                type="button"
-                disabled={option.disabled}
-                onClick={() => {
-                  onChange(option.value);
-                  setOpen(false);
-                }}
-                className={`block w-full rounded-md px-3 py-2 text-left text-sm transition ${
-                  option.value === value
-                    ? "bg-olive text-ivory"
-                    : "text-foreground hover:bg-olive/10"
-                } disabled:cursor-not-allowed disabled:opacity-45`}
-              >
-                {option.label}
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
+      {open &&
+        !disabled &&
+        pos &&
+        createPortal(
+          <div
+            ref={panelRef}
+            style={{ position: "fixed", top: pos.top, left: pos.left, minWidth: pos.width, zIndex: 9999 }}
+            className="overflow-hidden rounded-lg border border-white/75 bg-white/92 p-1 shadow-elevated ring-1 ring-white/40 backdrop-blur-2xl"
+          >
+            <div className="max-h-72 overflow-y-auto app-scrollbar">
+              {options.map((option) => (
+                <button
+                  key={option.value}
+                  type="button"
+                  disabled={option.disabled}
+                  onClick={() => {
+                    onChange(option.value);
+                    setOpen(false);
+                  }}
+                  className={`block w-full rounded-md px-3 py-2 text-left text-sm transition ${
+                    option.value === value
+                      ? "bg-olive text-ivory"
+                      : "text-foreground hover:bg-olive/10"
+                  } disabled:cursor-not-allowed disabled:opacity-45`}
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
+          </div>,
+          document.body,
+        )}
     </div>
   );
 }

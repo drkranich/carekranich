@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { ptBR } from "date-fns/locale";
 import { Calendar } from "@/components/ui/calendar";
 
@@ -11,6 +12,7 @@ function toDayKey(d: Date) {
 
 /**
  * Calendário com glassmorphism — substitui o input date nativo em toda a plataforma.
+ * O painel renderiza em portal (document.body) para nunca ser coberto por outros cards.
  * value/onChange usam o formato "yyyy-MM-dd".
  */
 export function GlassDatePicker({
@@ -25,24 +27,45 @@ export function GlassDatePicker({
   disabled?: boolean;
 }) {
   const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement | null>(null);
+  const btnRef = useRef<HTMLButtonElement | null>(null);
+  const panelRef = useRef<HTMLDivElement | null>(null);
+  const [pos, setPos] = useState<{ top: number; left: number } | null>(null);
   const selected = useMemo(() => (value ? new Date(value + "T12:00:00") : undefined), [value]);
 
+  const place = () => {
+    const rect = btnRef.current?.getBoundingClientRect();
+    if (rect) setPos({ top: rect.bottom + 6, left: rect.left });
+  };
+
+  useLayoutEffect(() => {
+    if (open) place();
+  }, [open]);
+
   useEffect(() => {
+    if (!open) return;
     const close = (event: MouseEvent) => {
-      if (!ref.current?.contains(event.target as Node)) setOpen(false);
+      const target = event.target as Node;
+      if (!btnRef.current?.contains(target) && !panelRef.current?.contains(target)) setOpen(false);
     };
+    const reposition = () => place();
     document.addEventListener("mousedown", close);
-    return () => document.removeEventListener("mousedown", close);
-  }, []);
+    window.addEventListener("scroll", reposition, true);
+    window.addEventListener("resize", reposition);
+    return () => {
+      document.removeEventListener("mousedown", close);
+      window.removeEventListener("scroll", reposition, true);
+      window.removeEventListener("resize", reposition);
+    };
+  }, [open]);
 
   const label = selected
     ? selected.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" })
     : "Selecionar data";
 
   return (
-    <div ref={ref} className={`relative ${className}`}>
+    <div className={`relative ${className}`}>
       <button
+        ref={btnRef}
         type="button"
         disabled={disabled}
         onClick={() => setOpen((current) => !current)}
@@ -62,26 +85,34 @@ export function GlassDatePicker({
         </svg>
         {label}
       </button>
-      {open && !disabled && (
-        <div className="absolute left-0 top-10 z-[1000] rounded-2xl border border-white/75 bg-white/80 p-2 shadow-elevated ring-1 ring-white/40 backdrop-blur-2xl">
-          <Calendar
-            mode="single"
-            locale={ptBR}
-            selected={selected}
-            defaultMonth={selected}
-            onSelect={(day) => {
-              if (day) {
-                onChange(toDayKey(day));
-                setOpen(false);
-              }
-            }}
-            className="bg-transparent"
-            classNames={{
-              today: "rounded-md bg-baby/40 text-olive",
-            }}
-          />
-        </div>
-      )}
+      {open &&
+        !disabled &&
+        pos &&
+        createPortal(
+          <div
+            ref={panelRef}
+            style={{ position: "fixed", top: pos.top, left: pos.left, zIndex: 9999 }}
+            className="rounded-2xl border border-white/75 bg-white/92 p-2 shadow-elevated ring-1 ring-white/40 backdrop-blur-2xl"
+          >
+            <Calendar
+              mode="single"
+              locale={ptBR}
+              selected={selected}
+              defaultMonth={selected}
+              onSelect={(day) => {
+                if (day) {
+                  onChange(toDayKey(day));
+                  setOpen(false);
+                }
+              }}
+              className="bg-transparent"
+              classNames={{
+                today: "rounded-md bg-baby/40 text-olive",
+              }}
+            />
+          </div>,
+          document.body,
+        )}
     </div>
   );
 }
