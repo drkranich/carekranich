@@ -34,7 +34,7 @@ export function PublicChatBox() {
         toast.info("Inbox publico aguardando ativacao segura. Abrindo e-mail como fallback.");
         return;
       }
-      toast.error(error.message ?? "Nao foi possivel enviar a mensagem");
+      toast.error(error.message ?? "Não foi possível enviar a mensagem");
     },
   });
 
