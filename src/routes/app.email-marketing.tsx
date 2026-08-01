@@ -5,6 +5,7 @@ import { Archive, MailPlus, Pencil, Sparkles, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Card, PageHeader, Pill, Stat } from "@/components/app/primitives";
 import { GlassSelect } from "@/components/app/GlassSelect";
+import { GlassDateTimePicker } from "@/components/app/GlassDatePicker";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 
@@ -216,12 +217,7 @@ function EmailMarketing() {
                     onChange={(value) => setEditingCampaign({ ...editingCampaign, status: value })}
                     options={campaignStatusOptions}
                   />
-                  <input
-                    type="datetime-local"
-                    value={toDateTimeLocal(editingCampaign.scheduled_at)}
-                    onChange={(event) => setEditingCampaign({ ...editingCampaign, scheduled_at: event.target.value ? new Date(event.target.value).toISOString() : null })}
-                    className="rounded-xl border border-border bg-ivory px-3 py-2 text-sm"
-                  />
+                  <GlassDateTimePicker value={toDateTimeLocal(editingCampaign.scheduled_at)} onChange={(value) => setEditingCampaign({ ...editingCampaign, scheduled_at: value ? new Date(value).toISOString() : null })} />
                   <div className="flex gap-2">
                     <button onClick={() => updateCampaign.mutate(editingCampaign)} className="rounded-full bg-olive px-3 py-1.5 text-xs text-ivory">Salvar</button>
                     <button onClick={() => setEditingCampaign(null)} className="rounded-full border border-border px-3 py-1.5 text-xs">Cancelar</button>
