@@ -6,6 +6,7 @@ import { Card, PageHeader, Pill, Stat } from "@/components/app/primitives";
 import { GlassSelect } from "@/components/app/GlassSelect";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
+import { downloadPdf } from "@/lib/pdf";
 
 export const Route = createFileRoute("/app/billing")({ component: Billing });
 
@@ -71,7 +72,7 @@ function Billing() {
       if (error) throw error;
     },
     onSuccess: () => {
-      toast.success("Plan created");
+      toast.success("Plano criado");
       setPlan({
         name: "",
         audience: "clinic",
@@ -84,7 +85,7 @@ function Billing() {
       });
       qc.invalidateQueries({ queryKey: ["platform-plans"] });
     },
-    onError: (error: any) => toast.error(error.message ?? "Could not save plan"),
+    onError: (error: any) => toast.error(error.message ?? "Não foi possível salvar o plano"),
   });
 
   const updatePlan = useMutation({
@@ -108,12 +109,12 @@ function Billing() {
       if (error) throw error;
     },
     onSuccess: () => {
-      toast.success("Plan updated");
+      toast.success("Plano atualizado");
       setEditingId(null);
       setDraft(null);
       qc.invalidateQueries({ queryKey: ["platform-plans"] });
     },
-    onError: (error: any) => toast.error(error.message ?? "Could not update plan"),
+    onError: (error: any) => toast.error(error.message ?? "Não foi possível atualizar o plano"),
   });
 
   const revoke = async (subscription: any) => {
@@ -124,45 +125,95 @@ function Billing() {
         access_status: next,
         revoked_at: next === "revoked" ? new Date().toISOString() : null,
         revoked_by: next === "revoked" ? user?.id : null,
-        revocation_reason: next === "revoked" ? "Manual super admin payment control" : null,
+        revocation_reason: next === "revoked" ? "Controle manual de pagamento pelo super admin" : null,
       })
       .eq("id", subscription.id);
     if (error) toast.error(error.message);
     else {
-      toast.success(next === "revoked" ? "Access revoked" : "Access restored");
+      toast.success(next === "revoked" ? "Acesso revogado" : "Acesso restaurado");
       qc.invalidateQueries({ queryKey: ["tenant-subscriptions", profile?.tenant_id, isSuperAdmin] });
     }
+  };
+
+  const exportPlanPdf = (p: any) => {
+    downloadPdf(`plano-${p.name}`, `Plano ${p.name}`, [
+      `Público: ${audienceLabel(p.audience)}`,
+      `Preço: $${((p.unit_amount ?? 0) / 100).toFixed(2)} / ${p.interval ?? "mês"}`,
+      `Status: ${p.active ? "ativo" : "inativo"}`,
+      `Limite de residentes: ${p.resident_limit ?? "ilimitado"}`,
+      `Limite de assentos: ${p.seat_limit ?? "ilimitado"}`,
+      `Stripe Price ID: ${p.stripe_price_id ?? "não configurado"}`,
+      "",
+      `Descrição: ${p.description ?? "-"}`,
+      "",
+      "Recursos incluídos:",
+      ...(Array.isArray(p.features) ? p.features.map((f: string) => `- ${f}`) : []),
+      "",
+      `Gerado em ${new Date().toLocaleString("pt-BR")} - Care Kranich`,
+    ]);
+  };
+
+  const exportBillingReport = () => {
+    const planLines = (plans.data ?? []).flatMap((p: any) => [
+      `${p.name} (${audienceLabel(p.audience)}) - $${((p.unit_amount ?? 0) / 100).toFixed(2)}/${p.interval ?? "mês"} - ${p.active ? "ativo" : "inativo"}`,
+    ]);
+    const subLines = (subscriptions.data ?? []).flatMap((s: any) => [
+      `${s.stripe_subscription_id ?? s.id} - status ${s.status} - acesso ${s.access_status}`,
+    ]);
+    downloadPdf("relatorio-planos-faturamento", "Relatório de Planos e Faturamento", [
+      `Planos cadastrados: ${plans.data?.length ?? 0}`,
+      `Assinaturas: ${subscriptions.data?.length ?? 0}`,
+      `Acessos revogados: ${(subscriptions.data ?? []).filter((s: any) => s.access_status === "revoked").length}`,
+      "",
+      "PLANOS",
+      ...planLines,
+      "",
+      "ASSINATURAS",
+      ...(subLines.length ? subLines : ["Nenhuma assinatura registrada."]),
+      "",
+      `Gerado em ${new Date().toLocaleString("pt-BR")} - Care Kranich`,
+    ]);
   };
 
   return (
     <>
       <PageHeader
-        title="Plans & billing"
-        subtitle="Plans stay connected to Stripe Price IDs so billing can sync without changing values manually in Stripe."
-        action={<Pill tone="olive">Stripe Price ID ready</Pill>}
+        title="Planos e faturamento"
+        subtitle="Os planos ficam conectados a Stripe Price IDs para a cobrança sincronizar sem alterar valores manualmente no Stripe."
+        action={
+          <div className="flex items-center gap-2">
+            <Pill tone="olive">Stripe Price ID</Pill>
+            <button
+              onClick={exportBillingReport}
+              className="rounded-full border border-moss/40 bg-white/60 px-4 py-2 text-xs font-medium text-foreground transition hover:bg-moss/15"
+            >
+              Relatório PDF
+            </button>
+          </div>
+        }
       />
       <div className="grid gap-4 md:grid-cols-3">
-        <Stat label="Plans" value={plans.data?.length ?? "-"} sub="Editable catalog" tone="olive" />
-        <Stat label="Subscriptions" value={subscriptions.data?.length ?? "-"} sub="Tenant access" tone="moss" />
-        <Stat label="Revoked" value={(subscriptions.data ?? []).filter((s: any) => s.access_status === "revoked").length} sub="Payment blocked" tone="wine" />
+        <Stat label="Planos" value={plans.data?.length ?? "-"} sub="Catálogo editável" tone="olive" />
+        <Stat label="Assinaturas" value={subscriptions.data?.length ?? "-"} sub="Acesso das organizações" tone="moss" />
+        <Stat label="Revogadas" value={(subscriptions.data ?? []).filter((s: any) => s.access_status === "revoked").length} sub="Pagamento bloqueado" tone="wine" />
       </div>
       {isSuperAdmin && (
         <Card className="mt-6">
-          <h2 className="text-xl font-semibold text-foreground">Create plan</h2>
+          <h2 className="text-xl font-semibold text-foreground">Criar plano</h2>
           <div className="mt-4 grid gap-3 md:grid-cols-4">
-            <input value={plan.name} onChange={(e) => setPlan({ ...plan, name: e.target.value })} placeholder="Plan name" className="rounded-xl border border-border bg-ivory px-3 py-2 text-sm" />
+            <input value={plan.name} onChange={(e) => setPlan({ ...plan, name: e.target.value })} placeholder="Nome do plano" className="rounded-xl border border-border bg-ivory px-3 py-2 text-sm" />
             <GlassSelect
               value={plan.audience}
               onChange={(value) => setPlan({ ...plan, audience: value })}
               options={audienceOptions}
             />
             <input value={plan.stripe_price_id} onChange={(e) => setPlan({ ...plan, stripe_price_id: e.target.value })} placeholder="price_..." className="rounded-xl border border-border bg-ivory px-3 py-2 text-sm" />
-            <input value={plan.unit_amount} onChange={(e) => setPlan({ ...plan, unit_amount: e.target.value })} placeholder="Monthly price" className="rounded-xl border border-border bg-ivory px-3 py-2 text-sm" />
-            <input value={plan.resident_limit} onChange={(e) => setPlan({ ...plan, resident_limit: e.target.value })} placeholder="Resident limit" className="rounded-xl border border-border bg-ivory px-3 py-2 text-sm" />
-            <input value={plan.seat_limit} onChange={(e) => setPlan({ ...plan, seat_limit: e.target.value })} placeholder="Seat limit" className="rounded-xl border border-border bg-ivory px-3 py-2 text-sm" />
-            <input value={plan.description} onChange={(e) => setPlan({ ...plan, description: e.target.value })} placeholder="Plan description" className="rounded-xl border border-border bg-ivory px-3 py-2 text-sm md:col-span-2" />
-            <textarea value={plan.features} onChange={(e) => setPlan({ ...plan, features: e.target.value })} placeholder="One feature per line" rows={3} className="rounded-xl border border-border bg-ivory px-3 py-2 text-sm md:col-span-3" />
-            <button onClick={() => createPlan.mutate()} disabled={!plan.name || !plan.stripe_price_id} className="rounded-xl bg-olive px-4 py-2 text-sm text-ivory disabled:opacity-50">Save plan</button>
+            <input value={plan.unit_amount} onChange={(e) => setPlan({ ...plan, unit_amount: e.target.value })} placeholder="Preço mensal" className="rounded-xl border border-border bg-ivory px-3 py-2 text-sm" />
+            <input value={plan.resident_limit} onChange={(e) => setPlan({ ...plan, resident_limit: e.target.value })} placeholder="Limite de residentes" className="rounded-xl border border-border bg-ivory px-3 py-2 text-sm" />
+            <input value={plan.seat_limit} onChange={(e) => setPlan({ ...plan, seat_limit: e.target.value })} placeholder="Limite de assentos" className="rounded-xl border border-border bg-ivory px-3 py-2 text-sm" />
+            <input value={plan.description} onChange={(e) => setPlan({ ...plan, description: e.target.value })} placeholder="Descrição do plano" className="rounded-xl border border-border bg-ivory px-3 py-2 text-sm md:col-span-2" />
+            <textarea value={plan.features} onChange={(e) => setPlan({ ...plan, features: e.target.value })} placeholder="Um recurso por linha" rows={3} className="rounded-xl border border-border bg-ivory px-3 py-2 text-sm md:col-span-3" />
+            <button onClick={() => createPlan.mutate()} disabled={!plan.name || !plan.stripe_price_id} className="rounded-xl bg-olive px-4 py-2 text-sm text-ivory disabled:opacity-50">Salvar plano</button>
           </div>
         </Card>
       )}
@@ -185,7 +236,7 @@ function Billing() {
                 )}
                 <p className="mt-1 text-xs text-muted-foreground">{audienceLabel(p.audience)}</p>
               </div>
-              <Pill tone={p.active ? "moss" : "muted"}>{p.active ? "active" : "inactive"}</Pill>
+              <Pill tone={p.active ? "moss" : "muted"}>{p.active ? "ativo" : "inativo"}</Pill>
             </div>
             {isEditing ? (
               <div className="mt-4 grid gap-3 md:grid-cols-2">
@@ -196,8 +247,8 @@ function Billing() {
                 />
                 <input value={current.unit_amount_display} onChange={(e) => setDraft({ ...current, unit_amount_display: e.target.value })} className="rounded-xl border border-border bg-ivory px-3 py-2 text-sm" />
                 <input value={current.stripe_price_id ?? ""} onChange={(e) => setDraft({ ...current, stripe_price_id: e.target.value })} placeholder="Stripe Price ID" className="rounded-xl border border-border bg-ivory px-3 py-2 text-sm md:col-span-2" />
-                <input value={current.resident_limit_display} onChange={(e) => setDraft({ ...current, resident_limit_display: e.target.value })} placeholder="Resident limit" className="rounded-xl border border-border bg-ivory px-3 py-2 text-sm" />
-                <input value={current.seat_limit_display} onChange={(e) => setDraft({ ...current, seat_limit_display: e.target.value })} placeholder="Seat limit" className="rounded-xl border border-border bg-ivory px-3 py-2 text-sm" />
+                <input value={current.resident_limit_display} onChange={(e) => setDraft({ ...current, resident_limit_display: e.target.value })} placeholder="Limite de residentes" className="rounded-xl border border-border bg-ivory px-3 py-2 text-sm" />
+                <input value={current.seat_limit_display} onChange={(e) => setDraft({ ...current, seat_limit_display: e.target.value })} placeholder="Limite de assentos" className="rounded-xl border border-border bg-ivory px-3 py-2 text-sm" />
                 <textarea value={current.description ?? ""} onChange={(e) => setDraft({ ...current, description: e.target.value })} rows={3} className="rounded-xl border border-border bg-ivory px-3 py-2 text-sm md:col-span-2" />
                 <textarea value={current.features_text} onChange={(e) => setDraft({ ...current, features_text: e.target.value })} rows={5} className="rounded-xl border border-border bg-ivory px-3 py-2 text-sm md:col-span-2" />
                 <label className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -205,13 +256,13 @@ function Billing() {
                   Plano ativo
                 </label>
                 <div className="flex justify-end gap-2">
-                  <button onClick={() => { setEditingId(null); setDraft(null); }} className="rounded-full border border-border px-3 py-1.5 text-xs">Cancel</button>
-                  <button onClick={() => updatePlan.mutate(current)} className="rounded-full bg-olive px-3 py-1.5 text-xs text-ivory">Save changes</button>
+                  <button onClick={() => { setEditingId(null); setDraft(null); }} className="rounded-full border border-border px-3 py-1.5 text-xs">Cancelar</button>
+                  <button onClick={() => updatePlan.mutate(current)} className="rounded-full bg-olive px-3 py-1.5 text-xs text-ivory">Salvar alterações</button>
                 </div>
               </div>
             ) : (
               <>
-                <p className="mt-4 text-3xl font-semibold text-olive">${((p.unit_amount ?? 0) / 100).toFixed(0)}<span className="text-sm text-muted-foreground">/{p.interval}</span></p>
+                <p className="mt-4 text-3xl font-semibold text-olive">${((p.unit_amount ?? 0) / 100).toFixed(0)}<span className="text-sm text-muted-foreground">/{p.interval === "month" ? "mês" : p.interval}</span></p>
                 {p.description && <p className="mt-3 text-sm leading-6 text-muted-foreground">{p.description}</p>}
                 <div className="mt-4 rounded-2xl border border-white/70 bg-white/45 p-4">
                   <p className="text-xs font-semibold uppercase text-muted-foreground">Stripe Price ID</p>
@@ -222,17 +273,25 @@ function Billing() {
                     <li key={feature} className="rounded-xl bg-white/45 px-3 py-2">{feature}</li>
                   ))}
                 </ul>
-                {isSuperAdmin && (
+                <div className="mt-4 flex flex-wrap gap-2">
+                  {isSuperAdmin && (
+                    <button
+                      onClick={() => {
+                        setEditingId(p.id);
+                        setDraft(planToDraft(p));
+                      }}
+                      className="rounded-full border border-olive/25 bg-white/50 px-3 py-1.5 text-xs text-olive"
+                    >
+                      Editar plano
+                    </button>
+                  )}
                   <button
-                    onClick={() => {
-                      setEditingId(p.id);
-                      setDraft(planToDraft(p));
-                    }}
-                    className="mt-4 rounded-full border border-olive/25 bg-white/50 px-3 py-1.5 text-xs text-olive"
+                    onClick={() => exportPlanPdf(p)}
+                    className="rounded-full border border-moss/40 bg-white/50 px-3 py-1.5 text-xs text-foreground hover:bg-moss/15"
                   >
-                    Edit plan
+                    PDF do plano
                   </button>
-                )}
+                </div>
               </>
             )}
           </Card>
@@ -240,18 +299,18 @@ function Billing() {
         })}
       </div>
       <Card className="mt-6">
-        <h2 className="text-xl font-semibold text-foreground">Access by payment status</h2>
+        <h2 className="text-xl font-semibold text-foreground">Acesso por status de pagamento</h2>
         <div className="mt-4 space-y-3">
           {(subscriptions.data ?? []).map((s: any) => (
             <div key={s.id} className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-white/70 bg-white/50 p-4">
               <div>
                 <p className="font-medium text-foreground">{s.stripe_subscription_id ?? s.id}</p>
-                <p className="text-xs text-muted-foreground">{s.status} - {s.access_status} - {s.stripe_price_id ?? "no price"}</p>
+                <p className="text-xs text-muted-foreground">{s.status} - {s.access_status} - {s.stripe_price_id ?? "sem preço"}</p>
               </div>
-              {isSuperAdmin && <button onClick={() => revoke(s)} className="rounded-full border border-wine/25 px-3 py-1.5 text-xs text-wine">{s.access_status === "revoked" ? "Restore access" : "Revoke access"}</button>}
+              {isSuperAdmin && <button onClick={() => revoke(s)} className="rounded-full border border-wine/25 px-3 py-1.5 text-xs text-wine">{s.access_status === "revoked" ? "Restaurar acesso" : "Revogar acesso"}</button>}
             </div>
           ))}
-          {subscriptions.data?.length === 0 && <p className="py-6 text-center text-sm text-muted-foreground">No subscriptions yet.</p>}
+          {subscriptions.data?.length === 0 && <p className="py-6 text-center text-sm text-muted-foreground">Ainda não há assinaturas.</p>}
         </div>
       </Card>
     </>
