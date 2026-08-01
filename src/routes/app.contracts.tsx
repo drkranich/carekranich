@@ -12,9 +12,9 @@ export const Route = createFileRoute("/app/contracts")({ component: Contracts })
 
 const contractTypeOptions = [
   { value: "subscription", label: "Assinatura" },
-  { value: "clinic", label: "Clinica" },
+  { value: "clinic", label: "Clínica" },
   { value: "provider", label: "Prestador" },
-  { value: "employment", label: "Funcionario" },
+  { value: "employment", label: "Funcionário" },
 ];
 
 function Contracts() {
