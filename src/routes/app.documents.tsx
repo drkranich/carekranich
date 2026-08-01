@@ -29,7 +29,7 @@ const documentTypeOptions = [
   { value: "prescription", label: "Prescrição" },
   { value: "contract", label: "Contrato" },
   { value: "insurance", label: "Seguro" },
-  { value: "certification", label: "Certificacao" },
+  { value: "certification", label: "Certificação" },
   { value: "identity", label: "Identidade" },
 ];
 
@@ -122,7 +122,7 @@ function Documents() {
     <>
       <PageHeader
         title="Inteligência de documentos"
-        subtitle="Uploads privados, acesso assinado, geracao de PDFs e metadados prontos para auditoria."
+        subtitle="Uploads privados, acesso assinado, geração de PDFs e metadados prontos para auditoria."
         action={<Pill tone="olive">Armazenamento privado Supabase</Pill>}
       />
 
