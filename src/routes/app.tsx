@@ -128,6 +128,20 @@ const ALL_SECTIONS: NavSection[] = [
         userKinds: ["clinic", "staff"],
       },
       {
+        to: "/app/bi",
+        label: "BI executivo",
+        icon: "M3 3v18h18 M8 17V9 M12 17V5 M16 17v-6",
+        roles: ["clinic_admin", "super_admin"],
+        userKinds: ["clinic", "staff"],
+      },
+      {
+        to: "/app/companies",
+        label: "Portal de empresas",
+        icon: "M3 21h18 M5 21V7l7-4v18 M12 21V9l7 3v9 M9 9h.01 M9 13h.01 M9 17h.01",
+        roles: ["nurse", "doctor", "clinic_admin", "super_admin"],
+        userKinds: ["clinic", "staff"],
+      },
+      {
         to: "/app/finance",
         label: "Financeiro",
         icon: "M3 21h18 M4 21V8l8-5 8 5v13 M9 21v-6h6v6 M12 8v.01",
@@ -329,6 +343,12 @@ const ALL_SECTIONS: NavSection[] = [
         label: "Organization",
         icon: "M3 21h18 M5 21V7l8-4v18 M19 21V11l-6-4",
         roles: ["clinic_admin", "super_admin"],
+      },
+      {
+        to: "/app/cms",
+        label: "CMS do site",
+        icon: "M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20z M2 12h20 M12 2c2.5 3 4 6.5 4 10s-1.5 7-4 10c-2.5-3-4-6.5-4-10s1.5-7 4-10z",
+        roles: ["super_admin"],
       },
       {
         to: "/app/admin",
