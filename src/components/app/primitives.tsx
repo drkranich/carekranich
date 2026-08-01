@@ -131,7 +131,7 @@ export function Spark({
         `${i === 0 ? "M" : "L"} ${i * step} ${height - ((p - min) / range) * (height - 4) - 2}`,
     )
     .join(" ");
-  const area = `${path} L ${w} ${height} L 0 ${height} Z`;
+  const área = `${path} L ${w} ${height} L 0 ${height} Z`;
   return (
     <svg
       viewBox={`0 0 ${w} ${height}`}
@@ -139,7 +139,7 @@ export function Spark({
       className="w-full"
       style={{ height }}
     >
-      <path d={area} fill={color} opacity="0.12" />
+      <path d={área} fill={color} opacity="0.12" />
       <path
         d={path}
         fill="none"
