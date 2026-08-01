@@ -75,7 +75,7 @@ function buildLanguageOptions(displayLocale: string, countries: { value: string;
     .sort((a, b) => a.label.localeCompare(b.label))
     .forEach(add);
   countries
-    .map((country) => ({ value: `und-${country.value}`, label: `Padrao local (${country.label})` }))
+    .map((country) => ({ value: `und-${country.value}`, label: `Padrão local (${country.label})` }))
     .sort((a, b) => a.label.localeCompare(b.label))
     .forEach(add);
 
