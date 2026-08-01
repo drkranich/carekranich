@@ -7,6 +7,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { Gate } from "@/components/app/Gate";
 import { GeoAddressField } from "@/components/app/GeoAddressField";
 import { GlassSelect } from "@/components/app/GlassSelect";
+import { GlassDatePicker } from "@/components/app/GlassDatePicker";
 import type { GeoAddress } from "@/lib/geocoding";
 
 export const Route = createFileRoute("/app/residents")({ component: Residents });
@@ -74,12 +75,12 @@ function Residents() {
   return (
     <>
       <PageHeader
-        title="Residents"
-        subtitle="People, not patients. Each profile is a living document co-built with family and care staff."
+        title="Residentes"
+        subtitle="Pessoas, não pacientes. Cada perfil é um documento vivo construído com a família e a equipe de cuidado."
         action={
           <Gate
             roles={["caregiver", "nurse", "doctor", "clinic_admin", "super_admin"]}
-            fallback={<Pill tone="gold">Read-only - family role</Pill>}
+            fallback={<Pill tone="gold">Somente leitura - perfil família</Pill>}
           >
             <button
               onClick={() => setCreating(true)}
@@ -96,9 +97,9 @@ function Residents() {
       {!profile?.tenant_id && !isSuperAdmin && (
         <Card className="mb-6 border-gold/30 bg-gold/5">
           <p className="text-sm text-foreground">
-            You're not part of an organization yet. Visit{" "}
-            <span className="font-medium text-olive">Tenants</span> to create or join one before
-            adding residents.
+            Você ainda não faz parte de uma organização. Visite{" "}
+            <span className="font-medium text-olive">Organizações</span> para criar ou entrar em uma
+            antes de adicionar residentes.
           </p>
         </Card>
       )}
@@ -106,19 +107,19 @@ function Residents() {
       {!profile?.tenant_id && isSuperAdmin && (
         <Card className="mb-6 border-olive/25 bg-olive/5">
           <p className="text-sm text-foreground">
-            Super admin global view. Residents from approved organizations appear here; creating a
-            resident still requires a tenant context.
+            Visão global de super admin. Residentes de organizações aprovadas aparecem aqui; criar um
+            residente ainda exige o contexto de uma organização.
           </p>
         </Card>
       )}
 
       {isLoading ? (
-        <p className="text-sm text-muted-foreground">Loading...</p>
+        <p className="text-sm text-muted-foreground">Carregando...</p>
       ) : residents.length === 0 ? (
         <Card className="text-center py-16">
           <p className="text-xl font-semibold text-foreground">Nenhum residente ainda</p>
           <p className="mt-2 text-sm text-muted-foreground">
-            When you add someone, their story begins here.
+            Quando você adicionar alguém, a história dessa pessoa começa aqui.
           </p>
         </Card>
       ) : (
@@ -130,7 +131,7 @@ function Residents() {
                 <div className="min-w-0 flex-1">
                   <p className="text-lg font-semibold text-foreground truncate">{r.full_name}</p>
                   <p className="text-xs text-muted-foreground">
-                    {r.date_of_birth ? `${ageFrom(r.date_of_birth)} yrs` : "Age -"}
+                    {r.date_of_birth ? `${ageFrom(r.date_of_birth)} anos` : "Idade -"}
                     {r.language ? ` - ${r.language}` : ""}
                   </p>
                   {r.bio && <p className="mt-2 text-sm text-foreground/80 line-clamp-3">{r.bio}</p>}
@@ -291,7 +292,7 @@ function ResidentDialog({
         </div>
 
         <div className="app-scrollbar overflow-y-auto px-8 pb-6 pr-6">
-        <p className="mt-4 text-sm text-muted-foreground">Cadastre a pessoa por tras do cuidado.</p>
+        <p className="mt-4 text-sm text-muted-foreground">Cadastre a pessoa por trás do cuidado.</p>
 
         {requireTenantPicker && (
           <div className="mt-5">
@@ -341,10 +342,10 @@ function ResidentDialog({
             label="Idioma"
             value={form.language}
             onChange={(v) => setForm({ ...form, language: v })}
-            placeholder="Portugues - Frances"
+            placeholder="Português - Francês"
           />
           <Field
-            label="Hobbies (separados por virgula)"
+            label="Hobbies (separados por vírgula)"
             value={form.hobbies}
             onChange={(v) => setForm({ ...form, hobbies: v })}
             placeholder="Jardinagem, Leitura"
@@ -390,7 +391,7 @@ function ResidentDialog({
             disabled={saving || !tenantId}
             className="rounded-lg bg-olive px-5 py-2 text-sm text-ivory hover:opacity-90 disabled:opacity-50"
           >
-            {saving ? "Salvando..." : resident ? "Salvar alteracoes" : "Criar residente"}
+            {saving ? "Salvando..." : resident ? "Salvar alterações" : "Criar residente"}
           </button>
         </div>
       </form>
@@ -413,6 +414,19 @@ function Field({
   type?: string;
   placeholder?: string;
 }) {
+  if (type === "date") {
+    return (
+      <label className="block text-sm">
+        <span className="text-foreground/80">
+          {label}
+          {required && " *"}
+        </span>
+        <div className="mt-1">
+          <GlassDatePicker value={value} onChange={onChange} />
+        </div>
+      </label>
+    );
+  }
   return (
     <label className="block text-sm">
       <span className="text-foreground/80">
