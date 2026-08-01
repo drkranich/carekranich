@@ -14,9 +14,9 @@ type ProfileTab = "identity" | "location" | "preferences" | "security";
 
 const tabs: { id: ProfileTab; label: string; icon: typeof UserRound }[] = [
   { id: "identity", label: "Identidade", icon: UserRound },
-  { id: "location", label: "Localização", icon: MapPin },
-  { id: "preferences", label: "Preferências", icon: Languages },
-  { id: "security", label: "Segurança", icon: Lock },
+  { id: "location", label: "Location", icon: MapPin },
+  { id: "preferences", label: "Preferences", icon: Languages },
+  { id: "security", label: "Security", icon: Lock },
 ];
 
 const baseLanguageCodes =
@@ -75,7 +75,7 @@ function buildLanguageOptions(displayLocale: string, countries: { value: string;
     .sort((a, b) => a.label.localeCompare(b.label))
     .forEach(add);
   countries
-    .map((country) => ({ value: `und-${country.value}`, label: `Padrão local (${country.label})` }))
+    .map((country) => ({ value: `und-${country.value}`, label: `Local default (${country.label})` }))
     .sort((a, b) => a.label.localeCompare(b.label))
     .forEach(add);
 
@@ -194,7 +194,7 @@ function Profile() {
 
     if (error) toast.error(error.message);
     else {
-      toast.success("Perfil atualizado");
+      toast.success("Profile updated");
       await refresh();
     }
   };
@@ -220,7 +220,7 @@ function Profile() {
     setUploading(false);
     if (pe) toast.error(pe.message);
     else {
-      toast.success("Foto atualizada");
+      toast.success("Photo updated");
       await refresh();
     }
   };
@@ -228,9 +228,9 @@ function Profile() {
   return (
     <>
       <PageHeader
-        title="Seu perfil"
-        subtitle="Identidade, localização mundial, preferências e segurança em um painel glass."
-        action={<Pill tone="olive">{primaryRole ? ROLE_LABELS[primaryRole] : "Membro"}</Pill>}
+        title="Your profile"
+        subtitle="Identity, worldwide location, preferences and security in one glass panel."
+        action={<Pill tone="olive">{primaryRole ? ROLE_LABELS[primaryRole] : "Member"}</Pill>}
       />
 
       <div className="grid gap-6 xl:grid-cols-[360px_1fr]">
@@ -242,7 +242,7 @@ function Profile() {
                 type="button"
                 onClick={() => fileRef.current?.click()}
                 className="absolute -bottom-1 -right-1 rounded-full bg-olive p-2.5 text-ivory shadow-soft hover:opacity-90"
-                title="Alterar foto"
+                title="Change photo"
               >
                 <Camera className="h-4 w-4" />
               </button>
@@ -281,28 +281,28 @@ function Profile() {
           <div className="mt-6">
             {tab === "identity" && (
               <div className="grid gap-4 md:grid-cols-2">
-                <Field label="Nome completo" value={fullName} onChange={setFullName} />
-                <Field label="Nome preferido" value={preferredName} onChange={setPreferredName} hint="Usado em cumprimentos dentro do SaaS." />
-                <Field label="Telefone" value={phone} onChange={setPhone} placeholder="+55 11 99999 9999" />
+                <Field label="Full name" value={fullName} onChange={setFullName} />
+                <Field label="Preferred name" value={preferredName} onChange={setPreferredName} hint="Used in greetings across the SaaS." />
+                <Field label="Phone" value={phone} onChange={setPhone} placeholder="+55 11 99999 9999" />
                 <Readonly label="E-mail" value={user.email ?? "-"} />
               </div>
             )}
 
             {tab === "location" && (
               <div className="grid gap-5 lg:grid-cols-2">
-                <GeoAddressField label="Endereço com GPS mundial" value={geo} onChange={(value) => {
+                <GeoAddressField label="Address with worldwide GPS" value={geo} onChange={(value) => {
                   setGeo(value);
                   if (value?.city) setCity(value.city);
                   if (value?.state) setState(value.state);
                   if (value?.country_code) setCountryCode(value.country_code);
                 }} />
                 <div className="grid gap-4">
-                  <GlassCombobox label="País" value={countryCode} options={countryOptions} onChange={setCountryCode} />
-                  <Field label="Estado / Região" value={state} onChange={setState} />
-                  <Field label="Cidade" value={city} onChange={setCity} />
+                  <GlassCombobox label="Country" value={countryCode} options={countryOptions} onChange={setCountryCode} />
+                  <Field label="State / Region" value={state} onChange={setState} />
+                  <Field label="City" value={city} onChange={setCity} />
                   <Readonly
-                    label="Coordenadas"
-                    value={geo?.latitude && geo?.longitude ? `${geo.latitude.toFixed(6)}, ${geo.longitude.toFixed(6)}` : "Aguardando endereço com GPS"}
+                    label="Coordinates"
+                    value={geo?.latitude && geo?.longitude ? `${geo.latitude.toFixed(6)}, ${geo.longitude.toFixed(6)}` : "Waiting for GPS address"}
                   />
                 </div>
               </div>
@@ -310,31 +310,31 @@ function Profile() {
 
             {tab === "preferences" && (
               <div className="grid gap-5 lg:grid-cols-2">
-                <GlassCombobox label="Fuso horário" value={tz} options={timeZones.map((zone) => ({ value: zone, label: zone }))} onChange={setTz} />
-                <GlassCombobox label="Idioma de preferência" value={language} options={languageOptions} onChange={setLanguage} />
-                <Readonly label="Formato regional" value={selectedCountry?.label ?? countryCode} />
-                <Readonly label="Horário local estimado" value={new Intl.DateTimeFormat(displayLocale, { timeZone: tz, dateStyle: "medium", timeStyle: "short" }).format(new Date())} />
+                <GlassCombobox label="Time zone" value={tz} options={timeZones.map((zone) => ({ value: zone, label: zone }))} onChange={setTz} />
+                <GlassCombobox label="Preferred language" value={language} options={languageOptions} onChange={setLanguage} />
+                <Readonly label="Regional format" value={selectedCountry?.label ?? countryCode} />
+                <Readonly label="Estimated local time" value={new Intl.DateTimeFormat(displayLocale, { timeZone: tz, dateStyle: "medium", timeStyle: "short" }).format(new Date())} />
               </div>
             )}
 
             {tab === "security" && (
               <div className="grid gap-4 md:grid-cols-3">
-                <SecurityCard title="Senha" body="Redefina através do link enviado por e-mail.">
+                <SecurityCard title="Password" body="Reset through the link sent by email.">
                   <button
                     onClick={async () => {
                       const { error } = await supabase.auth.resetPasswordForEmail(user.email!, {
                         redirectTo: `${window.location.origin}/login`,
                       });
                       if (error) toast.error(error.message);
-                      else toast.success("E-mail de redefinição enviado");
+                      else toast.success("Password reset email sent");
                     }}
                     className="mt-3 rounded-full border border-border bg-white/45 px-3 py-1.5 text-xs hover:bg-white/70"
                   >
-                    Enviar link
+                    Send link
                   </button>
                 </SecurityCard>
                 <TotpCard />
-                <SecurityCard title="Sessões" body="Sessão atual ativa neste dispositivo." />
+                <SecurityCard title="Sessions" body="Current session active on this device." />
               </div>
             )}
           </div>
@@ -345,7 +345,7 @@ function Profile() {
               disabled={saving}
               className="rounded-lg bg-olive px-5 py-2 text-sm text-ivory shadow-soft hover:opacity-90 disabled:opacity-50"
             >
-              {saving ? "Salvando..." : "Salvar alterações"}
+              {saving ? "Saving..." : "Save changes"}
             </button>
           </div>
         </Card>
@@ -388,7 +388,7 @@ function GlassCombobox({ label, value, options, onChange }: { label: string; val
       </button>
       {open && (
         <div className="absolute z-40 mt-2 w-full overflow-hidden rounded-lg border border-white/70 bg-white/82 p-2 shadow-elevated backdrop-blur-2xl">
-          <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Buscar..." className="mb-2 w-full rounded-md border border-border/60 bg-ivory/70 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-olive/25" />
+          <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search..." className="mb-2 w-full rounded-md border border-border/60 bg-ivory/70 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-olive/25" />
           <div className="app-scrollbar max-h-64 overflow-y-auto">
             {filtered.map((item) => (
               <button
@@ -455,7 +455,7 @@ function TotpCard() {
     const verify = await supabase.auth.mfa.verify({ factorId: enrolling.id, challengeId: challenge.data.id, code: code.trim() });
     setBusy(false);
     if (verify.error) return toast.error(verify.error.message);
-    toast.success("Autenticação de dois fatores ativada");
+    toast.success("Two-factor authentication enabled");
     setEnrolling(null);
     setCode("");
     loadFactors();
@@ -466,33 +466,33 @@ function TotpCard() {
     const { error } = await supabase.auth.mfa.unenroll({ factorId });
     setBusy(false);
     if (error) return toast.error(error.message);
-    toast.success("Autenticação de dois fatores desativada");
+    toast.success("Two-factor authentication disabled");
     loadFactors();
   };
 
   return (
     <div className="rounded-lg border border-white/70 bg-white/38 p-5 shadow-soft backdrop-blur-xl">
-      <p className="font-medium text-foreground">Autenticação de dois fatores</p>
+      <p className="font-medium text-foreground">Two-factor authentication</p>
       {verified ? (
         <>
-          <p className="mt-1 text-xs leading-5 text-moss">Ativa — códigos gerados pelo seu aplicativo autenticador.</p>
+          <p className="mt-1 text-xs leading-5 text-moss">Active - codes generated by your authenticator app.</p>
           <button onClick={() => disable(verified.id)} disabled={busy} className="mt-3 rounded-full border border-wine/30 bg-white/45 px-3 py-1.5 text-xs text-wine hover:bg-wine/5 disabled:opacity-50">Desativar 2FA</button>
         </>
       ) : enrolling ? (
         <div className="mt-2 space-y-3">
-          <p className="text-xs leading-5 text-muted-foreground">Escaneie o QR code no Google Authenticator, 1Password ou similar e digite o código de 6 dígitos.</p>
+          <p className="text-xs leading-5 text-muted-foreground">Scan the QR code in Google Authenticator, 1Password or similar, then enter the 6-digit code.</p>
           {enrolling.totp?.qr_code && (
             <img src={enrolling.totp.qr_code} alt="QR code 2FA" className="h-36 w-36 rounded-xl border border-white/70 bg-white p-2" />
           )}
           <input value={code} onChange={(event) => setCode(event.target.value.replace(/\D/g, "").slice(0, 6))} placeholder="000000" inputMode="numeric" className="w-full rounded-xl border border-white/70 bg-white/60 px-3 py-2 text-center font-mono text-lg tracking-[0.4em] shadow-soft outline-none focus:ring-2 focus:ring-olive/30" />
           <div className="flex gap-2">
             <button onClick={confirmEnroll} disabled={busy || code.length < 6} className="rounded-full bg-olive px-4 py-1.5 text-xs font-semibold text-ivory disabled:opacity-45">Confirmar</button>
-            <button onClick={() => { setEnrolling(null); setCode(""); }} className="rounded-full border border-border bg-white/45 px-3 py-1.5 text-xs">Cancelar</button>
+            <button onClick={() => { setEnrolling(null); setCode(""); }} className="rounded-full border border-border bg-white/45 px-3 py-1.5 text-xs">Cancel</button>
           </div>
         </div>
       ) : (
         <>
-          <p className="mt-1 text-xs leading-5 text-muted-foreground">Proteja sua conta com códigos TOTP de um aplicativo autenticador.</p>
+          <p className="mt-1 text-xs leading-5 text-muted-foreground">Protect your account with TOTP codes from an authenticator app.</p>
           <button onClick={startEnroll} disabled={busy} className="mt-3 rounded-full bg-olive px-3 py-1.5 text-xs font-semibold text-ivory disabled:opacity-50">Ativar 2FA</button>
         </>
       )}

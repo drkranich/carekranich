@@ -119,7 +119,7 @@ function Inbox() {
       .select("id")
       .maybeSingle();
     if (error) return toast.error(error.message);
-    if (!data) return toast.error("Conversa nÃ£o foi atualizada. Verifique suas permissÃµes.");
+    if (!data) return toast.error("Conversation was not updated. Check your permissions.");
     toast.success(success);
     qc.invalidateQueries({ queryKey: ["inbox-threads", profile?.tenant_id, isSuperAdmin] });
   };
@@ -134,14 +134,14 @@ function Inbox() {
     const url = `${window.location.origin}/app/inbox?thread=${thread.id}`;
     try {
       await navigator.clipboard.writeText(url);
-      toast.success("Link interno da conversa copiado");
+      toast.success("Internal conversation link copied");
     } catch {
-      window.prompt("Copie o link da conversa:", url);
+      window.prompt("Copy the conversation link:", url);
     }
   };
 
   const deleteThread = async (thread: any) => {
-    if (!window.confirm(`Excluir definitivamente "${thread.subject}" e suas mensagens?`)) return;
+    if (!window.confirm(`Permanently delete "${thread.subject}" and its messages?`)) return;
     const { data, error } = await (supabase as any)
       .from("inbox_threads")
       .delete()
@@ -149,8 +149,8 @@ function Inbox() {
       .select("id")
       .maybeSingle();
     if (error) return toast.error(error.message);
-    if (!data) return toast.error("Conversa nÃ£o foi excluÃ­da. Verifique suas permissÃµes.");
-    toast.success("Conversa excluÃ­da");
+    if (!data) return toast.error("Conversation was not deleted. Check your permissions.");
+    toast.success("Conversation deleted");
     setSelectedId(null);
     qc.invalidateQueries({ queryKey: ["inbox-threads", profile?.tenant_id, isSuperAdmin] });
   };
@@ -191,8 +191,8 @@ function Inbox() {
                         onChange={(event) => setEditingSubject(event.target.value)}
                         className="rounded-xl border border-border bg-ivory px-3 py-2 text-sm"
                       />
-                      <button onClick={saveThreadSubject} className="rounded-full bg-olive px-3 py-1.5 text-xs text-ivory">Salvar</button>
-                      <button onClick={() => setEditingSubject("")} className="rounded-full border border-border px-3 py-1.5 text-xs">Cancelar</button>
+                      <button onClick={saveThreadSubject} className="rounded-full bg-olive px-3 py-1.5 text-xs text-ivory">Save</button>
+                      <button onClick={() => setEditingSubject("")} className="rounded-full border border-border px-3 py-1.5 text-xs">Cancel</button>
                     </div>
                   ) : (
                     <h2 className="text-xl font-semibold text-foreground">{selected.subject}</h2>
@@ -204,8 +204,8 @@ function Inbox() {
               <CrudActions
                 className="mt-4"
                 onEdit={() => setEditingSubject(selected.subject)}
-                onArchive={() => updateThread(selected, { status: selected.status === "archived" ? "open" : "archived" }, selected.status === "archived" ? "Conversa restaurada" : "Conversa arquivada")}
-                archiveLabel={selected.status === "archived" ? "Restaurar" : "Arquivar"}
+                onArchive={() => updateThread(selected, { status: selected.status === "archived" ? "open" : "archived" }, selected.status === "archived" ? "Conversa restaurada" : "Conversa archived")}
+                archiveLabel={selected.status === "archived" ? "Restore" : "Archive"}
                 onShare={() => shareThread(selected)}
                 onDelete={() => deleteThread(selected)}
               />

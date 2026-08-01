@@ -138,7 +138,7 @@ function Tenants() {
   const saveTenant = useMutation({
     mutationFn: async ({ id, data }: { id: string | null; data: OrgForm }) => {
       const trimmed = data.name.trim();
-      if (trimmed.length < 3) throw new Error("O nome da organização precisa de pelo menos 3 caracteres.");
+      if (trimmed.length < 3) throw new Error("The organization name must have at least 3 characters.");
       const payload: Record<string, unknown> = {
         name: trimmed,
         legal_name: data.legal_name.trim() || null,
@@ -167,7 +167,7 @@ function Tenants() {
         .single();
       if (error) throw error;
 
-      // Quem cria sem organização vira admin dela e entra automaticamente.
+      // A user who creates without an organization becomes its admin and enters automatically.
       if (!isSuperAdmin && user && !tenantId) {
         const { error: profileError } = await (supabase as any)
           .from("profiles")
@@ -182,14 +182,14 @@ function Tenants() {
       return { ...tenant, created: true };
     },
     onSuccess: async (result: any) => {
-      toast.success(result.created ? `Organização "${result.name}" criada` : "Organização atualizada");
+      toast.success(result.created ? `Organization "${result.name}" created` : "Organization updated");
       setForm(EMPTY_FORM);
       setFormOpen(false);
       setEditingId(null);
       await refresh();
       invalidateOrgQueries();
     },
-    onError: (error: any) => toast.error(error.message ?? "Não foi possível salvar a organização"),
+    onError: (error: any) => toast.error(error.message ?? "Could not save the organization"),
   });
 
   const archiveTenant = useMutation({
@@ -202,10 +202,10 @@ function Tenants() {
       return archive;
     },
     onSuccess: (archived) => {
-      toast.success(archived ? "Organização arquivada" : "Organização desarquivada");
+      toast.success(archived ? "Organization archived" : "Organization unarchived");
       invalidateOrgQueries();
     },
-    onError: (error: any) => toast.error(error.message ?? "Não foi possível arquivar"),
+    onError: (error: any) => toast.error(error.message ?? "Could not archive"),
   });
 
   const deleteTenant = useMutation({
@@ -214,10 +214,10 @@ function Tenants() {
       if (error) throw error;
     },
     onSuccess: () => {
-      toast.success("Organização excluída");
+      toast.success("Organization deleted");
       invalidateOrgQueries();
     },
-    onError: (error: any) => toast.error(error.message ?? "Não foi possível excluir"),
+    onError: (error: any) => toast.error(error.message ?? "Could not delete"),
   });
 
   const tenantStatus = useMutation({
@@ -241,11 +241,11 @@ function Tenants() {
       if (error) throw error;
     },
     onSuccess: () => {
-      toast.success("Status da organização atualizado");
+      toast.success("Organization status updated");
       invalidateOrgQueries();
       qc.invalidateQueries({ queryKey: ["super-admin-control-plane"] });
     },
-    onError: (error: any) => toast.error(error.message ?? "Não foi possível atualizar a organização"),
+    onError: (error: any) => toast.error(error.message ?? "Could not update the organization"),
   });
 
   const brandingUpdate = useMutation({
@@ -272,10 +272,10 @@ function Tenants() {
       if (error) throw error;
     },
     onSuccess: () => {
-      toast.success("Marca atualizada");
+      toast.success("Marca updated");
       qc.invalidateQueries({ queryKey: ["platform-branding"] });
     },
-    onError: (error: any) => toast.error(error.message ?? "Não foi possível atualizar a marca"),
+    onError: (error: any) => toast.error(error.message ?? "Could not update a marca"),
   });
 
   const uploadBrandAsset = useMutation({
@@ -294,7 +294,7 @@ function Tenants() {
 
       const { data } = (supabase as any).storage.from("branding").getPublicUrl(path);
       const publicUrl = data?.publicUrl;
-      if (!publicUrl) throw new Error("Não foi possível gerar a URL pública do arquivo.");
+      if (!publicUrl) throw new Error("Could not generate the public file URL.");
 
       await brandingUpdate.mutateAsync(
         kind === "logo"
@@ -305,7 +305,7 @@ function Tenants() {
     onSuccess: (_, variables) => {
       toast.success(variables.kind === "logo" ? "Logo publicada" : "Favicon publicado");
     },
-    onError: (error: any) => toast.error(error.message ?? "Upload não concluído"),
+    onError: (error: any) => toast.error(error.message ?? "Upload did not finish"),
   });
 
   if (loading) return <p className="text-sm text-muted-foreground">Carregando...</p>;
@@ -320,7 +320,7 @@ function Tenants() {
   const copy = () => {
     if (!currentTenant?.invite_code) return;
     navigator.clipboard.writeText(currentTenant.invite_code);
-    toast.success("Código de convite copiado");
+    toast.success("Invite code copied");
   };
 
   const startCreate = () => {
@@ -355,31 +355,31 @@ function Tenants() {
     ]);
     const line = (label: string, value: unknown) => `${label}: ${value ?? "-"}`;
     downloadPdf(
-      `organizacao-${tenant.slug ?? tenant.id}`,
-      stripAccents(`Relatorio da organizacao - ${tenant.name}`),
+      `organization-${tenant.slug ?? tenant.id}`,
+      stripAccents(`Organization report - ${tenant.name}`),
       [
         line("Nome", tenant.name),
         line("Razao social", tenant.legal_name),
         line("CNPJ", tenant.cnpj),
         line("E-mail", tenant.email),
-        line("Telefone", tenant.phone),
+        line("Phone", tenant.phone),
         line("Responsavel", tenant.responsible_name),
         line("Endereco", tenant.address),
-        line("Cidade/UF", [tenant.city, tenant.state].filter(Boolean).join(" / ")),
+        line("City/UF", [tenant.city, tenant.state].filter(Boolean).join(" / ")),
         line("CEP", tenant.postal_code),
         line("Pais", tenant.country),
         "",
         line("Status", tenant.status),
         line("Cobranca", tenant.billing_status),
-        line("Arquivada", tenant.archived_at ? new Date(tenant.archived_at).toLocaleDateString("pt-BR") : "Nao"),
+        line("Archived", tenant.archived_at ? new Date(tenant.archived_at).toLocaleDateString("pt-BR") : "Nao"),
         line("Codigo de convite", tenant.invite_code),
         line("Criada em", tenant.created_at ? new Date(tenant.created_at).toLocaleDateString("pt-BR") : "-"),
         "",
-        line("Membros", memberCount ?? 0),
-        line("Residentes", residentCount ?? 0),
+        line("Members", memberCount ?? 0),
+        line("Residents", residentCount ?? 0),
         line("Observacoes", tenant.notes),
         "",
-        `Gerado em ${new Date().toLocaleString("pt-BR")} - Care Kranich`,
+        `Generated at ${new Date().toLocaleString("pt-BR")} - Care Kranich`,
       ].map((item) => stripAccents(String(item))),
     );
   };
@@ -399,20 +399,20 @@ function Tenants() {
   return (
     <>
       <PageHeader
-        title={isSuperAdmin ? "Organizações" : currentTenant?.name || "Organização"}
+        title={isSuperAdmin ? "Organizations" : currentTenant?.name || "Organization"}
         subtitle={
           isSuperAdmin
-            ? "Registros globais de organizações, membros e assinaturas."
-            : "Gerencie sua organização, convide membros e configure acessos."
+            ? "Global organization, member and subscription records."
+            : "Manage your organization, invite members and configure access."
         }
         action={
           <div className="flex items-center gap-2">
-            <Pill tone="olive">{isSuperAdmin ? "Super admin global" : "Admin da organização"}</Pill>
+            <Pill tone="olive">{isSuperAdmin ? "Global super admin" : "Organization admin"}</Pill>
             <button
               onClick={() => (formOpen ? setFormOpen(false) : startCreate())}
               className="rounded-full bg-olive px-4 py-2 text-xs font-semibold text-ivory shadow-soft hover:opacity-90"
             >
-              {formOpen ? "Fechar formulário" : "+ Criar organização"}
+              {formOpen ? "Close form" : "+ Create organization"}
             </button>
           </div>
         }
@@ -422,9 +422,9 @@ function Tenants() {
         <Card className="mb-6">
           <div className="flex items-center justify-between">
             <p className="text-xs uppercase text-muted-foreground">
-              {editingId ? "Editar organização" : "Nova organização"}
+              {editingId ? "Edit organization" : "New organization"}
             </p>
-            {editingId && <Pill tone="gold">Editando</Pill>}
+            {editingId && <Pill tone="gold">Editing</Pill>}
           </div>
           <form
             onSubmit={(event) => {
@@ -433,22 +433,22 @@ function Tenants() {
             }}
             className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-3"
           >
-            {field("name", "Nome da organização *", "Ex.: Lar São Vicente")}
-            {field("legal_name", "Razão social", "Ex.: Lar São Vicente Ltda.")}
+            {field("name", "Organization name *", "E.g. Saint Vincent Home")}
+            {field("legal_name", "Legal name", "E.g. Saint Vincent Home Ltda.")}
             {field("cnpj", "CNPJ", "00.000.000/0000-00")}
-            {field("email", "E-mail", "contato@organizacao.com.br")}
-            {field("phone", "Telefone", "+55 (11) 99999-9999")}
-            {field("responsible_name", "Responsável", "Nome do responsável legal")}
-            {field("address", "Endereço", "Rua, número, complemento", 2)}
+            {field("email", "E-mail", "contact@organization.com")}
+            {field("phone", "Phone", "+55 (11) 99999-9999")}
+            {field("responsible_name", "Responsible person", "Legal representative name")}
+            {field("address", "Address", "Street, number, complement", 2)}
             {field("postal_code", "CEP", "00000-000")}
-            {field("city", "Cidade", "São Paulo")}
+            {field("city", "City", "New York")}
             {field("state", "UF", "SP")}
             <label className="block">
-              <span className="mb-1 block text-[11px] font-semibold uppercase text-muted-foreground">Observações</span>
+              <span className="mb-1 block text-[11px] font-semibold uppercase text-muted-foreground">Observations</span>
               <input
                 value={form.notes}
                 onChange={(event) => setForm((current) => ({ ...current, notes: event.target.value }))}
-                placeholder="Notas internas"
+                placeholder="Internal notes"
                 className="w-full rounded-xl border border-white/70 bg-white/60 px-3 py-2 text-sm shadow-soft backdrop-blur-xl outline-none transition focus:border-olive/40 focus:ring-2 focus:ring-olive/20"
               />
             </label>
@@ -458,7 +458,7 @@ function Tenants() {
                 disabled={saveTenant.isPending || form.name.trim().length < 3}
                 className="rounded-full bg-olive px-6 py-2 text-xs font-semibold text-ivory disabled:opacity-45"
               >
-                {saveTenant.isPending ? "Salvando..." : editingId ? "Salvar alterações" : "Criar organização"}
+                {saveTenant.isPending ? "Saving..." : editingId ? "Save changes" : "Create organization"}
               </button>
               <button
                 type="button"
@@ -469,12 +469,12 @@ function Tenants() {
                 }}
                 className="rounded-full border border-border bg-white/55 px-4 py-2 text-xs font-semibold text-foreground"
               >
-                Cancelar
+                Cancel
               </button>
               {!editingId && (
                 <p className="text-[11px] text-muted-foreground">
-                  O código de convite é gerado automaticamente.{" "}
-                  {!isSuperAdmin && "Você se tornará admin da nova organização."}
+                  The invite code is generated automatically.{" "}
+                  {!isSuperAdmin && "You will become admin of the new organization."}
                 </p>
               )}
             </div>
@@ -483,13 +483,13 @@ function Tenants() {
       )}
 
       <div className="grid gap-4 md:grid-cols-4">
-        <Stat label="Organizações" value={tenants.data?.length ?? "-"} sub="Tabela tenants" tone="olive" />
-        <Stat label="Membros" value={members.data?.length ?? "-"} sub="Tabela profiles" tone="moss" />
-        <Stat label="Residentes" value={residents.data ?? "-"} sub="Em cuidado" tone="wine" />
+        <Stat label="Organizations" value={tenants.data?.length ?? "-"} sub="Tenants table" tone="olive" />
+        <Stat label="Members" value={members.data?.length ?? "-"} sub="Profiles table" tone="moss" />
+        <Stat label="Residents" value={residents.data ?? "-"} sub="In care" tone="wine" />
         <Stat
-          label="Acesso de cobrança"
+          label="Billing access"
           value={revokedSubscriptions.length ? `${revokedSubscriptions.length} revogadas` : `${activeSubscriptions.length} ativas`}
-          sub="Assinaturas das organizações"
+          sub="Organization subscriptions"
           tone={revokedSubscriptions.length ? "wine" : "gold"}
         />
       </div>
@@ -497,38 +497,38 @@ function Tenants() {
       <div className="mt-6 grid gap-6 lg:grid-cols-3">
         <Card className="lg:col-span-1">
           <p className="text-xs uppercase text-muted-foreground">
-            {currentTenant ? "Convidar membros" : "Configuração da organização"}
+            {currentTenant ? "Invite members" : "Organization settings"}
           </p>
           {currentTenant ? (
             <>
               <p className="mt-2 text-sm text-foreground/80">
-                Compartilhe este código para famílias e cuidadores entrarem nesta organização.
+                Share this code so families and caregivers can join this organization.
               </p>
               <div className="mt-4 rounded-2xl bg-cream/60 p-4">
-                <p className="text-[10px] uppercase text-muted-foreground">Código de convite</p>
+                <p className="text-[10px] uppercase text-muted-foreground">Invite code</p>
                 <p className="mt-1 font-mono text-2xl text-olive">{currentTenant.invite_code ?? "-"}</p>
                 <button
                   onClick={copy}
                   disabled={!currentTenant.invite_code}
                   className="mt-3 w-full rounded-full bg-olive px-4 py-2 text-xs text-ivory hover:opacity-90 disabled:opacity-50"
                 >
-                  Copiar código
+                  Copy code
                 </button>
               </div>
               <p className="mt-3 text-[11px] text-muted-foreground">
-                Status: {currentTenant.status ?? "desconhecido"} - Cobrança: {currentTenant.billing_status ?? "desconhecida"}
+                Status: {currentTenant.status ?? "unknown"} - Billing: {currentTenant.billing_status ?? "unknown"}
               </p>
             </>
           ) : (
             <>
               <p className="mt-3 text-sm text-muted-foreground">
-                Ainda não existe organização. Crie a primeira agora mesmo.
+                No organization exists yet. Create the first one now.
               </p>
               <button
                 onClick={startCreate}
                 className="mt-4 w-full rounded-full bg-olive px-4 py-2 text-xs font-semibold text-ivory hover:opacity-90"
               >
-                + Criar organização
+                + Create organization
               </button>
             </>
           )}
@@ -536,8 +536,8 @@ function Tenants() {
 
         <Card className="lg:col-span-2">
           <div className="flex items-center justify-between">
-            <p className="text-xs uppercase text-muted-foreground">Membros</p>
-            <Pill tone="moss">{members.data?.length ?? 0} visíveis</Pill>
+            <p className="text-xs uppercase text-muted-foreground">Members</p>
+            <Pill tone="moss">{members.data?.length ?? 0} visible</Pill>
           </div>
           <ul className="mt-4 divide-y divide-border/60">
             {members.data?.map((member: any) => (
@@ -548,7 +548,7 @@ function Tenants() {
                     {member.preferred_name || member.full_name || "Sem nome"}
                   </p>
                   <p className="text-xs text-muted-foreground">
-                    {member.user_kind ?? "usuário"} - {member.account_status ?? "desconhecido"}
+                    {member.user_kind ?? "user"} - {member.account_status ?? "unknown"}
                   </p>
                   <div className="mt-1 flex flex-wrap gap-1">
                     {member.roles.length === 0 && <span className="text-[10px] text-muted-foreground">sem papel</span>}
@@ -562,7 +562,7 @@ function Tenants() {
               </li>
             ))}
             {members.data?.length === 0 && (
-              <li className="py-4 text-sm text-muted-foreground">Ainda não há membros.</li>
+              <li className="py-4 text-sm text-muted-foreground">No members yet.</li>
             )}
           </ul>
         </Card>
@@ -583,9 +583,9 @@ function Tenants() {
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <p className="text-xs uppercase text-muted-foreground">Controle operacional</p>
-              <h2 className="mt-1 text-xl font-semibold text-foreground">Acesso das organizações</h2>
+              <h2 className="mt-1 text-xl font-semibold text-foreground">Organization access</h2>
             </div>
-            <Pill tone="olive">RLS ativo</Pill>
+            <Pill tone="olive">RLS active</Pill>
           </div>
           <div className="mt-5 grid gap-3 xl:grid-cols-2">
             {(tenants.data ?? []).map((tenant: any) => (
@@ -597,7 +597,7 @@ function Tenants() {
                   <div className="min-w-0">
                     <p className="truncate font-medium text-foreground">{tenant.name}</p>
                     <p className="text-xs text-muted-foreground">
-                      {tenant.slug} - {tenant.invite_code ?? "sem código de convite"}
+                      {tenant.slug} - {tenant.invite_code ?? "no invite code"}
                     </p>
                     {(tenant.cnpj || tenant.city) && (
                       <p className="mt-0.5 text-xs text-muted-foreground">
@@ -608,7 +608,7 @@ function Tenants() {
                     )}
                   </div>
                   <div className="flex flex-wrap gap-1">
-                    {tenant.archived_at && <Pill tone="muted">Arquivada</Pill>}
+                    {tenant.archived_at && <Pill tone="muted">Archived</Pill>}
                     <Pill tone={tenant.status === "active" ? "moss" : tenant.status === "suspended" ? "wine" : "gold"}>
                       {tenant.status}
                     </Pill>
@@ -623,20 +623,20 @@ function Tenants() {
                     onClick={() => startEdit(tenant)}
                     className="rounded-full border border-olive/30 bg-white/60 px-3 py-1.5 text-xs font-medium text-olive transition hover:bg-olive hover:text-ivory"
                   >
-                    Editar
+                    Edit
                   </button>
                   <button
                     disabled={archiveTenant.isPending}
                     onClick={() => archiveTenant.mutate({ id: tenant.id, archive: !tenant.archived_at })}
                     className="rounded-full border border-gold/40 bg-white/60 px-3 py-1.5 text-xs font-medium text-foreground transition hover:bg-gold/20 disabled:opacity-45"
                   >
-                    {tenant.archived_at ? "Desarquivar" : "Arquivar"}
+                    {tenant.archived_at ? "Unarchive" : "Archive"}
                   </button>
                   <button
                     onClick={() => orgReport(tenant)}
                     className="rounded-full border border-moss/40 bg-white/60 px-3 py-1.5 text-xs font-medium text-foreground transition hover:bg-moss/15"
                   >
-                    Relatório PDF
+                    PDF report
                   </button>
                   {isSuperAdmin && (
                     <button
@@ -644,7 +644,7 @@ function Tenants() {
                       onClick={() => {
                         if (
                           window.confirm(
-                            `Excluir definitivamente "${tenant.name}"? Todos os dados vinculados (residentes, planos, eventos) serão removidos.`,
+                            `Permanently delete "${tenant.name}"? All linked data (residents, plans, events) will be removed.`,
                           )
                         ) {
                           deleteTenant.mutate(tenant.id);
@@ -652,7 +652,7 @@ function Tenants() {
                       }}
                       className="rounded-full border border-wine/35 bg-white/60 px-3 py-1.5 text-xs font-medium text-wine transition hover:bg-wine hover:text-ivory disabled:opacity-45"
                     >
-                      Excluir
+                      Delete
                     </button>
                   )}
                 </div>
@@ -669,7 +669,7 @@ function Tenants() {
               </div>
             ))}
             {tenants.data?.length === 0 && (
-              <p className="py-8 text-center text-sm text-muted-foreground">Ainda não há organizações.</p>
+              <p className="py-8 text-center text-sm text-muted-foreground">No organizations yet.</p>
             )}
           </div>
         </Card>
@@ -708,9 +708,9 @@ function BrandingPanel({
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <p className="text-xs uppercase text-muted-foreground">Branding global</p>
-          <h2 className="mt-1 text-xl font-semibold text-foreground">Logo e favicon do projeto</h2>
+          <h2 className="mt-1 text-xl font-semibold text-foreground">Project logo and favicon</h2>
           <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
-            Esses arquivos renderizam no site público, no SaaS e no ícone da aba do navegador.
+            These files render on the public site, the SaaS and the browser tab icon.
           </p>
         </div>
         <Pill tone={branding?.logo_url || branding?.favicon_url ? "moss" : "gold"}>
@@ -752,20 +752,20 @@ function BrandingPanel({
               onClick={() => onSaveName(brandName.trim())}
               className="rounded-full bg-olive px-4 py-2 text-xs font-semibold text-ivory disabled:opacity-45"
             >
-              Salvar
+              Save
             </button>
           </div>
           <div className="mt-4 grid gap-3 sm:grid-cols-2">
             <AssetUpload
-              label="Enviar logo"
-              hint="PNG, JPG, WebP ou SVG até 5 MB."
+              label="Upload logo"
+              hint="PNG, JPG, WebP or SVG up to 5 MB."
               accept="image/png,image/jpeg,image/webp,image/svg+xml"
               disabled={busy}
               onChange={(files) => handleFile("logo", files)}
             />
             <AssetUpload
-              label="Enviar favicon"
-              hint="ICO, PNG, SVG ou WebP até 1 MB."
+              label="Upload favicon"
+              hint="ICO, PNG, SVG or WebP up to 1 MB."
               accept="image/x-icon,image/vnd.microsoft.icon,image/png,image/svg+xml,image/webp"
               disabled={busy}
               onChange={(files) => handleFile("favicon", files)}
@@ -820,10 +820,10 @@ function validateBrandAsset(kind: "logo" | "favicon", file: File) {
       ? ["png", "jpg", "jpeg", "webp", "svg"].includes(extension)
       : ["ico", "png", "webp", "svg"].includes(extension);
   if (!allowed.includes(file.type) && !extensionAllowed) {
-    throw new Error(kind === "logo" ? "Use PNG, JPG, WebP ou SVG para a logo." : "Use ICO, PNG, SVG ou WebP para o favicon.");
+    throw new Error(kind === "logo" ? "Use PNG, JPG, WebP or SVG for the logo." : "Use ICO, PNG, SVG or WebP for the favicon.");
   }
   if (file.size > maxSize) {
-    throw new Error(kind === "logo" ? "A logo deve ter até 5 MB." : "O favicon deve ter até 1 MB.");
+    throw new Error(kind === "logo" ? "The logo must be up to 5 MB." : "The favicon must be up to 1 MB.");
   }
 }
 
@@ -862,31 +862,31 @@ function TenantStatusControls({
       className: "border border-olive/25 text-olive",
     },
     {
-      label: "Pagamento pendente",
+      label: "Payment pendente",
       status: "active",
       billing: "past_due",
-      reason: "Pagamento em atraso; acesso mantido sob monitoramento.",
+      reason: "Payment em atraso; acesso mantido sob monitoramento.",
       className: "border border-gold/35 text-wine",
     },
     {
-      label: "Bloquear cobrança",
+      label: "Block billing",
       status: "active",
       billing: "revoked",
-      reason: "Acesso revogado pelo super admin por status de cobrança.",
+      reason: "Access revoked by the super admin due to billing status.",
       className: "border border-wine/35 text-wine",
     },
     {
       label: "Suspender",
       status: "suspended",
       billing: "suspended",
-      reason: "Organização suspensa pelo super admin.",
+      reason: "Organization suspended by the super admin.",
       className: "border border-wine/35 bg-wine/5 text-wine",
     },
     {
       label: "Rejeitar",
       status: "rejected",
       billing: "revoked",
-      reason: "Organização rejeitada pelo super admin.",
+      reason: "Organization rejected by the super admin.",
       className: "border border-wine/35 text-wine",
     },
   ];

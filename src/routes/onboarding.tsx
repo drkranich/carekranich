@@ -1,4 +1,4 @@
-import { createFileRoute, Navigate } from "@tanstack/react-router";
+﻿import { createFileRoute, Navigate } from "@tanstack/react-router";
 import { useState, type FormEvent } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Building2, HeartHandshake, KeyRound, Sparkles, Stethoscope } from "lucide-react";
@@ -18,26 +18,26 @@ type UseKind = "clinic" | "family" | "service_provider";
 const USE_OPTIONS: { value: UseKind | "join"; title: string; description: string; icon: typeof Building2 }[] = [
   {
     value: "clinic",
-    title: "Sou uma clínica ou instituição",
-    description: "Casa de repouso, home care, clínica ou hospital que cuida de residentes e pacientes.",
+    title: "I represent a clinic or institution",
+    description: "Care home, home care agency, clinic or hospital caring for residents and patients.",
     icon: Building2,
   },
   {
     value: "family",
-    title: "Quero monitorar um ente querido",
-    description: "Acompanhe a rotina, saúde e alertas de quem você ama, em tempo real.",
+    title: "I want to monitor a loved one",
+    description: "Follow routines, health and alerts for someone you love in real time.",
     icon: HeartHandshake,
   },
   {
     value: "service_provider",
-    title: "Sou prestador de serviços",
-    description: "Cuidadores, enfermeiros e profissionais que atendem pelo ecossistema Care Kranich.",
+    title: "I am a service provider",
+    description: "Caregivers, nurses and professionals serving through the Care Kranich ecosystem.",
     icon: Stethoscope,
   },
   {
     value: "join",
-    title: "Tenho um código de convite",
-    description: "Entre em uma organização existente como equipe ou família convidada.",
+    title: "I have an invite code",
+    description: "Join an existing organization as invited staff or family.",
     icon: KeyRound,
   },
 ];
@@ -89,7 +89,7 @@ function Onboarding() {
       });
       if (error) throw error;
       await refresh();
-      // Ativa o período de degustação de 15 dias na organização recém-solicitada
+      // Activates the 15-day trial for the newly requested organization.
       const { data: fresh } = await (supabase as any)
         .from("profiles")
         .select("tenant_id")
@@ -98,8 +98,8 @@ function Onboarding() {
       if (fresh?.tenant_id) {
         await (supabase as any).rpc("start_trial", { _tenant_id: fresh.tenant_id });
       }
-      setErr("Pedido enviado com teste de 15 dias reservado. A equipe Care Kranich aprova seu acesso em breve.");
-    } catch (e: any) { setErr(e.message ?? "Falha ao solicitar a criação da organização"); }
+      setErr("Request sent with a 15-day trial reserved. The Care Kranich team will approve your access soon.");
+    } catch (e: any) { setErr(e.message ?? "Could not request organization creation"); }
     finally { setBusy(false); }
   };
 
@@ -112,8 +112,8 @@ function Onboarding() {
       });
       if (error) throw error;
       await refresh();
-      setErr("Pedido enviado. Um administrador precisa aprovar seu acesso antes da liberação.");
-    } catch (e: any) { setErr(e.message ?? "Falha ao solicitar acesso"); }
+      setErr("Request sent. An administrator must approve your access before release.");
+    } catch (e: any) { setErr(e.message ?? "Could not request access"); }
     finally { setBusy(false); }
   };
 
@@ -129,7 +129,7 @@ function Onboarding() {
           <span className="font-display text-xl text-olive">Care Kranich</span>
         </div>
         <h1 className="mt-6 font-display text-2xl text-foreground">
-          Bem-vindo{profile?.full_name ? `, ${profile.full_name.split(" ")[0]}` : ""}
+          Welcome{profile?.full_name ? `, ${profile.full_name.split(" ")[0]}` : ""}
         </h1>
 
         {profile?.account_status && profile.account_status !== "active" && profile.tenant_id && (
@@ -139,14 +139,14 @@ function Onboarding() {
               : "border-gold/25 bg-gold/10 text-foreground"
           }`}>
             {profile.account_status === "rejected"
-              ? "Este pedido de acesso foi rejeitado. Fale com o suporte Care Kranich antes de tentar novamente."
-              : "Seu pedido de acesso está aguardando aprovação. Você entrará no SaaS assim que for aprovado."}
+              ? "This access request was rejected. Contact Care Kranich support before trying again."
+              : "Your access request is awaiting approval. You will enter the SaaS as soon as it is approved."}
           </div>
         )}
 
         {step === "use" && (
           <>
-            <p className="mt-1 text-sm text-muted-foreground">Para começar, conte para a gente como você vai usar a plataforma.</p>
+            <p className="mt-1 text-sm text-muted-foreground">To begin, tell us how you will use the platform.</p>
             <div className="mt-6 grid gap-3 md:grid-cols-2">
               {USE_OPTIONS.map((option) => {
                 const Icon = option.icon;
@@ -171,19 +171,19 @@ function Onboarding() {
         {step === "plans" && (
           <>
             <p className="mt-1 text-sm text-muted-foreground">
-              Planos para {userKind === "clinic" ? "clínicas e instituições" : userKind === "family" ? "famílias" : "prestadores de serviços"} — todos começam com
-              <span className="font-semibold text-olive"> 15 dias de teste grátis</span>, sem cartão.
+              Plans for {userKind === "clinic" ? "clinics and institutions" : userKind === "family" ? "families" : "service providers"} - all start with
+              <span className="font-semibold text-olive"> a free 15-day trial</span>, no card required.
             </p>
             <div className="mt-6 grid gap-3 md:grid-cols-2">
               {plansForKind.map((plan: any) => (
                 <div key={plan.id} className="rounded-2xl border border-white/70 bg-white/50 p-5 shadow-soft backdrop-blur-xl">
                   <div className="flex items-start justify-between gap-2">
                     <p className="font-semibold text-foreground">{plan.name}</p>
-                    <span className="rounded-full bg-baby/40 px-2.5 py-1 text-[10px] font-semibold uppercase text-olive">15 dias grátis</span>
+                    <span className="rounded-full bg-baby/40 px-2.5 py-1 text-[10px] font-semibold uppercase text-olive">15 free days</span>
                   </div>
                   <p className="mt-2 text-2xl font-semibold text-olive">
                     ${((plan.unit_amount ?? 0) / 100).toFixed(0)}
-                    <span className="text-xs text-muted-foreground">/{plan.interval === "month" ? "mês" : plan.interval}</span>
+                    <span className="text-xs text-muted-foreground">/{plan.interval === "month" ? "month" : plan.interval}</span>
                   </p>
                   {plan.description && <p className="mt-2 text-xs leading-5 text-muted-foreground">{plan.description}</p>}
                   <ul className="mt-3 space-y-1">
@@ -197,16 +197,16 @@ function Onboarding() {
               ))}
               {plansForKind.length === 0 && !plans.isLoading && (
                 <p className="rounded-2xl border border-gold/25 bg-gold/10 px-4 py-3 text-sm text-foreground md:col-span-2">
-                  Os planos para este perfil estão sendo preparados — você começa com os 15 dias de teste grátis normalmente.
+                  Plans for this profile are being prepared - you still start with the standard free 15-day trial.
                 </p>
               )}
             </div>
             <div className="mt-6 flex flex-wrap gap-2">
               <button onClick={() => setStep("form")} className="rounded-full bg-olive px-6 py-2.5 text-sm font-semibold text-ivory hover:opacity-90">
-                Começar teste grátis de 15 dias
+                Start free 15-day trial
               </button>
               <button onClick={() => setStep("use")} className="rounded-full border border-border bg-white/55 px-4 py-2.5 text-sm">
-                Voltar
+                Back
               </button>
             </div>
           </>
@@ -216,24 +216,24 @@ function Onboarding() {
           <form onSubmit={create} className="mt-6 space-y-4">
             <p className="text-sm text-muted-foreground">
               {userKind === "family"
-                ? "Dê um nome ao espaço de cuidado da sua família (ex.: Família Lopes)."
-                : "Dados da sua organização para criarmos o ambiente."}
+                ? "Name your family care space (e.g. Lopes Family)."
+                : "Your organization details so we can create the workspace."}
             </p>
             <label className="block text-sm">
-              <span className="text-foreground/80">{userKind === "family" ? "Nome do espaço da família *" : "Nome da organização *"}</span>
-              <input required value={orgName} onChange={(e) => setOrgName(e.target.value)} placeholder={userKind === "family" ? "Família Lopes" : "Clínica Vida Plena"} className="mt-1 w-full rounded-xl border border-border bg-ivory px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-olive/40" />
+              <span className="text-foreground/80">{userKind === "family" ? "Family space name *" : "Organization name *"}</span>
+              <input required value={orgName} onChange={(e) => setOrgName(e.target.value)} placeholder={userKind === "family" ? "Lopes Family" : "Vita Plena Clinic"} className="mt-1 w-full rounded-xl border border-border bg-ivory px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-olive/40" />
             </label>
-            <GeoAddressField label="Endereço" value={address} onChange={setAddress} />
+            <GeoAddressField label="Address" value={address} onChange={setAddress} />
             <p className="rounded-xl bg-cream/60 px-3 py-2 text-xs text-muted-foreground">
-              Seu teste de 15 dias fica reservado agora. O acesso é liberado após a aprovação da equipe Care Kranich.
+              Your 15-day trial is reserved now. Access is released after Care Kranich team approval.
             </p>
             {err && <p className="rounded-lg bg-moss/10 px-3 py-2 text-xs text-foreground">{err}</p>}
             <div className="flex flex-wrap gap-2">
               <button disabled={busy} className="rounded-full bg-olive px-6 py-2.5 text-sm font-semibold text-ivory hover:opacity-90 disabled:opacity-50">
-                {busy ? "Enviando..." : "Criar e iniciar teste grátis"}
+                {busy ? "Sending..." : "Create and start free trial"}
               </button>
               <button type="button" onClick={() => setStep("plans")} className="rounded-full border border-border bg-white/55 px-4 py-2.5 text-sm">
-                Voltar
+                Back
               </button>
             </div>
           </form>
@@ -242,19 +242,19 @@ function Onboarding() {
         {step === "join" && (
           <form onSubmit={join} className="mt-6 space-y-4">
             <label className="block text-sm">
-              <span className="text-foreground/80">Código de convite *</span>
+              <span className="text-foreground/80">Invite code *</span>
               <input required value={code} onChange={(e) => setCode(e.target.value)} placeholder="ex.: a1b2c3d4e5" className="mt-1 w-full rounded-xl border border-border bg-ivory px-3 py-2 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-olive/40" />
             </label>
             <p className="rounded-xl bg-cream/60 px-3 py-2 text-xs text-muted-foreground">
-              Peça o código ao administrador da organização. O pedido ainda passa por aprovação.
+              Ask the organization administrator for the code. The request still goes through approval.
             </p>
             {err && <p className="rounded-lg bg-wine/10 px-3 py-2 text-xs text-wine">{err}</p>}
             <div className="flex flex-wrap gap-2">
               <button disabled={busy} className="rounded-full bg-olive px-6 py-2.5 text-sm font-semibold text-ivory hover:opacity-90 disabled:opacity-50">
-                {busy ? "Enviando..." : "Solicitar acesso"}
+                {busy ? "Sending..." : "Request access"}
               </button>
               <button type="button" onClick={() => setStep("use")} className="rounded-full border border-border bg-white/55 px-4 py-2.5 text-sm">
-                Voltar
+                Back
               </button>
             </div>
           </form>
@@ -263,3 +263,4 @@ function Onboarding() {
     </div>
   );
 }
+

@@ -12,10 +12,10 @@ import { downloadPdf } from "@/lib/pdf";
 export const Route = createFileRoute("/app/contracts")({ component: Contracts });
 
 const contractTypeOptions = [
-  { value: "subscription", label: "Assinatura" },
-  { value: "clinic", label: "Clínica" },
-  { value: "provider", label: "Prestador" },
-  { value: "employment", label: "Funcionário" },
+  { value: "subscription", label: "Subscription" },
+  { value: "clinic", label: "Clinic" },
+  { value: "provider", label: "Provider" },
+  { value: "employment", label: "Staff member" },
 ];
 
 async function sha256Hex(text: string) {
@@ -30,9 +30,9 @@ async function detectIp(): Promise<string> {
   try {
     const response = await fetch("https://api.ipify.org?format=json");
     const json = await response.json();
-    return json.ip ?? "desconhecido";
+    return json.ip ?? "unknown";
   } catch {
-    return "desconhecido";
+    return "unknown";
   }
 }
 
@@ -78,16 +78,16 @@ function Contracts() {
       if (error) throw error;
     },
     onSuccess: () => {
-      toast.success("Contrato salvo");
+      toast.success("Contract salvo");
       setDraft({ title: "", body: "", contract_type: "subscription" });
       qc.invalidateQueries({ queryKey: ["contracts", profile?.tenant_id, isSuperAdmin] });
     },
-    onError: (error: any) => toast.error(error.message ?? "Não foi possível salvar o contrato"),
+    onError: (error: any) => toast.error(error.message ?? "Could not save the contract"),
   });
 
   const sign = useMutation({
     mutationFn: async (contract: any) => {
-      if (!user) throw new Error("Sessão expirada.");
+      if (!user) throw new Error("Session expired.");
       const [hash, ip] = await Promise.all([sha256Hex(`${contract.id}\n${contract.title}\n${contract.body}`), detectIp()]);
       const { error } = await (supabase as any).from("contract_signatures").insert({
         tenant_id: contract.tenant_id ?? profile?.tenant_id,
@@ -104,11 +104,11 @@ function Contracts() {
       return { hash, ip };
     },
     onSuccess: ({ hash }) => {
-      toast.success(`Contrato assinado — hash ${hash.slice(0, 12)}...`);
+      toast.success(`Contract assinado — hash ${hash.slice(0, 12)}...`);
       qc.invalidateQueries({ queryKey: ["contracts", profile?.tenant_id, isSuperAdmin] });
       qc.invalidateQueries({ queryKey: ["contract-signatures", profile?.tenant_id] });
     },
-    onError: (error: any) => toast.error(error.message ?? "Não foi possível assinar"),
+    onError: (error: any) => toast.error(error.message ?? "Could not sign"),
   });
 
   const setStatus = async (id: string, status: string) => {
@@ -119,13 +119,13 @@ function Contracts() {
       .select("id")
       .maybeSingle();
     if (error) toast.error(error.message);
-    else if (!data) toast.error("Contrato nÃ£o foi atualizado. Verifique suas permissÃµes.");
+    else if (!data) toast.error("Contract was not updated. Check your permissions.");
     else qc.invalidateQueries({ queryKey: ["contracts", profile?.tenant_id, isSuperAdmin] });
   };
 
   const saveContractEdit = async () => {
     if (!editingContract?.title?.trim() || !editingContract?.body?.trim()) {
-      toast.error("Informe tÃ­tulo e corpo do contrato.");
+      toast.error("Enter the contract title and body.");
       return;
     }
     const { data, error } = await (supabase as any)
@@ -139,24 +139,24 @@ function Contracts() {
       .select("id")
       .maybeSingle();
     if (error) return toast.error(error.message);
-    if (!data) return toast.error("Contrato nÃ£o foi editado. Verifique suas permissÃµes.");
-    toast.success("Contrato atualizado");
+    if (!data) return toast.error("Contract was not edited. Check your permissions.");
+    toast.success("Contract atualizado");
     setEditingContract(null);
     qc.invalidateQueries({ queryKey: ["contracts", profile?.tenant_id, isSuperAdmin] });
   };
 
   const shareContract = async (contract: any) => {
-    const text = [`Contrato: ${contract.title}`, `Status: ${contract.status}`, "", contract.body].join("\n");
+    const text = [`Contract: ${contract.title}`, `Status: ${contract.status}`, "", contract.body].join("\n");
     try {
       await navigator.clipboard.writeText(text);
-      toast.success("Contrato copiado para compartilhamento");
+      toast.success("Contract copiado para compartilhamento");
     } catch {
-      window.prompt("Copie o contrato:", text);
+      window.prompt("Copy the contract:", text);
     }
   };
 
   const deleteContract = async (contract: any) => {
-    if (!window.confirm(`Excluir definitivamente "${contract.title}"?`)) return;
+    if (!window.confirm(`Permanently delete "${contract.title}"?`)) return;
     const { data, error } = await (supabase as any)
       .from("contracts")
       .delete()
@@ -164,8 +164,8 @@ function Contracts() {
       .select("id")
       .maybeSingle();
     if (error) return toast.error(error.message);
-    if (!data) return toast.error("Contrato nÃ£o foi excluÃ­do. Verifique suas permissÃµes.");
-    toast.success("Contrato excluÃ­do");
+    if (!data) return toast.error("Contract was not deleted. Check your permissions.");
+    toast.success("Contract deleted");
     qc.invalidateQueries({ queryKey: ["contracts", profile?.tenant_id, isSuperAdmin] });
   };
 
@@ -174,12 +174,12 @@ function Contracts() {
       contract.body,
       "",
       "----------------------------------------",
-      "COMPROVANTE DE ASSINATURA ELETRÔNICA",
+      "ELECTRONIC SIGNATURE RECEIPT",
       `Assinado por: ${signature.signer_name ?? "-"} (${signature.signer_email ?? "-"})`,
       `Data/hora: ${new Date(signature.signed_at).toLocaleString("pt-BR")}`,
-      `Endereço IP: ${signature.ip_address ?? "-"}`,
-      `Hash SHA-256 do conteúdo: ${signature.content_hash}`,
-      "A integridade deste documento pode ser verificada comparando o hash acima com o conteúdo original.",
+      `IP address: ${signature.ip_address ?? "-"}`,
+      `Content SHA-256 hash: ${signature.content_hash}`,
+      "This document integrity can be verified by comparing the hash above with the original content.",
     ]);
   };
 
@@ -189,22 +189,22 @@ function Contracts() {
   return (
     <>
       <PageHeader
-        title="Contratos"
-        subtitle="Crie, aprove, assine eletronicamente (com IP e hash criptográfico) e exporte contratos em PDF."
-        action={<Pill tone="olive">Assinatura com IP + SHA-256</Pill>}
+        title="Contracts"
+        subtitle="Create, approve, sign electronically with IP and cryptographic hash, and export contracts as PDF."
+        action={<Pill tone="olive">Subscription com IP + SHA-256</Pill>}
       />
       <Card>
-        <h2 className="text-xl font-semibold text-foreground">Novo contrato</h2>
+        <h2 className="text-xl font-semibold text-foreground">New contract</h2>
         <div className="mt-4 grid gap-3 md:grid-cols-[1fr_180px]">
-          <input value={draft.title} onChange={(e) => setDraft({ ...draft, title: e.target.value })} placeholder="Título do contrato" className="rounded-xl border border-border bg-ivory px-3 py-2 text-sm" />
+          <input value={draft.title} onChange={(e) => setDraft({ ...draft, title: e.target.value })} placeholder="Contract title" className="rounded-xl border border-border bg-ivory px-3 py-2 text-sm" />
           <GlassSelect
             value={draft.contract_type}
             onChange={(value) => setDraft({ ...draft, contract_type: value })}
             options={contractTypeOptions}
           />
         </div>
-        <textarea value={draft.body} onChange={(e) => setDraft({ ...draft, body: e.target.value })} rows={5} placeholder="Termos do contrato..." className="mt-3 w-full rounded-xl border border-border bg-ivory px-3 py-2 text-sm" />
-        <button onClick={() => save.mutate()} disabled={!draft.title || !draft.body} className="mt-3 rounded-full bg-olive px-4 py-2 text-sm text-ivory disabled:opacity-50">Salvar contrato</button>
+        <textarea value={draft.body} onChange={(e) => setDraft({ ...draft, body: e.target.value })} rows={5} placeholder="Contract terms..." className="mt-3 w-full rounded-xl border border-border bg-ivory px-3 py-2 text-sm" />
+        <button onClick={() => save.mutate()} disabled={!draft.title || !draft.body} className="mt-3 rounded-full bg-olive px-4 py-2 text-sm text-ivory disabled:opacity-50">Save contract</button>
       </Card>
       <div className="mt-6 grid gap-4 lg:grid-cols-2">
         {(contracts.data ?? []).map((contract: any) => {
@@ -237,8 +237,8 @@ function Contracts() {
                     className="w-full rounded-xl border border-border bg-ivory px-3 py-2 text-sm"
                   />
                   <div className="flex justify-end gap-2">
-                    <button onClick={() => setEditingContract(null)} className="rounded-full border border-border px-3 py-1.5 text-xs">Cancelar</button>
-                    <button onClick={saveContractEdit} className="rounded-full bg-olive px-3 py-1.5 text-xs text-ivory">Salvar alteraÃ§Ãµes</button>
+                    <button onClick={() => setEditingContract(null)} className="rounded-full border border-border px-3 py-1.5 text-xs">Cancel</button>
+                    <button onClick={saveContractEdit} className="rounded-full bg-olive px-3 py-1.5 text-xs text-ivory">Save changes</button>
                   </div>
                 </div>
               ) : (
@@ -247,7 +247,7 @@ function Contracts() {
 
               {sigs.length > 0 && (
                 <div className="mt-4 space-y-2 rounded-2xl border border-moss/25 bg-moss/5 p-3">
-                  <p className="text-[10px] font-semibold uppercase text-muted-foreground">Assinaturas registradas</p>
+                  <p className="text-[10px] font-semibold uppercase text-muted-foreground">Subscriptions registradas</p>
                   {sigs.map((signature: any) => (
                     <div key={signature.id} className="flex flex-wrap items-center justify-between gap-2 text-xs">
                       <span className="min-w-0 truncate text-foreground">
@@ -272,15 +272,15 @@ function Contracts() {
                 >
                   {sign.isPending ? "Assinando..." : "Assinar eletronicamente"}
                 </button>
-                <button onClick={() => downloadPdf(`${contract.title}.pdf`, contract.title, [contract.body])} className="rounded-full border border-border px-3 py-1.5 text-xs">Gerar PDF</button>
-                <button onClick={() => setStatus(contract.id, "active")} className="rounded-full bg-olive px-3 py-1.5 text-xs text-ivory">Aprovar</button>
-                <button onClick={() => setStatus(contract.id, "void")} className="rounded-full border border-wine/25 px-3 py-1.5 text-xs text-wine">Anular</button>
+                <button onClick={() => downloadPdf(`${contract.title}.pdf`, contract.title, [contract.body])} className="rounded-full border border-border px-3 py-1.5 text-xs">Generate PDF</button>
+                <button onClick={() => setStatus(contract.id, "active")} className="rounded-full bg-olive px-3 py-1.5 text-xs text-ivory">Approve</button>
+                <button onClick={() => setStatus(contract.id, "void")} className="rounded-full border border-wine/25 px-3 py-1.5 text-xs text-wine">Void</button>
               </div>
               <CrudActions
                 className="mt-3"
                 onEdit={() => setEditingContract(contract)}
                 onArchive={() => setStatus(contract.id, contract.status === "archived" ? "draft" : "archived")}
-                archiveLabel={contract.status === "archived" ? "Restaurar" : "Arquivar"}
+                archiveLabel={contract.status === "archived" ? "Restore" : "Archive"}
                 onShare={() => shareContract(contract)}
                 onDelete={() => deleteContract(contract)}
               />
@@ -288,7 +288,7 @@ function Contracts() {
           );
         })}
       </div>
-      {contracts.data?.length === 0 && <div className="mt-6"><EmptyState title="Ainda não há contratos" hint="Crie o primeiro contrato, assine eletronicamente e exporte em PDF." /></div>}
+      {contracts.data?.length === 0 && <div className="mt-6"><EmptyState title="No contracts yet" hint="Create the first contract, sign it electronically and export it as PDF." /></div>}
     </>
   );
 }

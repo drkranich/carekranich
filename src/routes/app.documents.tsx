@@ -25,16 +25,16 @@ type DocumentRow = {
 };
 
 const documentTypeOptions = [
-  { value: "medical", label: "Médico" },
-  { value: "prescription", label: "Prescrição" },
-  { value: "contract", label: "Contrato" },
-  { value: "insurance", label: "Convênio/Seguro" },
-  { value: "certification", label: "Certificação" },
+  { value: "medical", label: "Medical" },
+  { value: "prescription", label: "Prescription" },
+  { value: "contract", label: "Contract" },
+  { value: "insurance", label: "Insurance" },
+  { value: "certification", label: "Certification" },
   { value: "identity", label: "Identidade" },
 ];
 
 const TAGS = [
-  { value: "All", label: "Todos" },
+  { value: "All", label: "All" },
   ...documentTypeOptions,
 ];
 
@@ -85,7 +85,7 @@ function Documents() {
 
   const uploadDocument = async () => {
     if (!file || !effTenant || !user) {
-      toast.error("Escolha um arquivo antes de carregar.");
+      toast.error("Choose a file before uploading.");
       return;
     }
     setUploading(true);
@@ -107,15 +107,15 @@ function Documents() {
         storage_path: path,
         mime_type: file.type || "application/octet-stream",
         file_size: file.size,
-        ai_summary: "Enviado com segurança. OCR e extração por IA rodam em um serviço dedicado após a conexão dos provedores.",
+        ai_summary: "Uploaded securely. OCR and AI extraction run in a dedicated service after provider connection.",
       });
       if (rowError) throw rowError;
       setFile(null);
       setTitle("");
-      toast.success("Documento enviado ao cofre privado");
+      toast.success("Document uploaded to the private vault");
       qc.invalidateQueries({ queryKey: ["documents"] });
     } catch (err: any) {
-      toast.error(err.message ?? "Falha no upload");
+      toast.error(err.message ?? "Upload failed");
     } finally {
       setUploading(false);
     }
@@ -125,7 +125,7 @@ function Documents() {
     const { data, error } = await supabase.storage
       .from(doc.bucket)
       .createSignedUrl(doc.storage_path, 60 * 5);
-    if (error || !data?.signedUrl) return toast.error(error?.message ?? "Não foi possível abrir o documento");
+    if (error || !data?.signedUrl) return toast.error(error?.message ?? "Could not open the document");
     window.open(data.signedUrl, "_blank", "noopener,noreferrer");
   };
 
@@ -134,7 +134,7 @@ function Documents() {
       `Tipo: ${documentTypeOptions.find((t) => t.value === doc.document_type)?.label ?? doc.document_type}`,
       `Status: ${doc.status}`,
       `Enviado em: ${new Date(doc.created_at).toLocaleString("pt-BR")}`,
-      `Resumo: ${doc.ai_summary ?? "Sem resumo disponível ainda."}`,
+      `Summary: ${doc.ai_summary ?? "No summary available yet."}`,
       `Caminho no cofre: ${doc.storage_path}`,
     ]);
   };
@@ -149,7 +149,7 @@ function Documents() {
   };
 
   const saveDocumentEdit = async (doc: DocumentRow) => {
-    if (!editDocDraft.title.trim()) return toast.error("Informe o título do documento.");
+    if (!editDocDraft.title.trim()) return toast.error("Enter the document title.");
     const { data, error } = await (supabase as any)
       .from("documents")
       .update({
@@ -161,8 +161,8 @@ function Documents() {
       .select("id")
       .maybeSingle();
     if (error) return toast.error(error.message);
-    if (!data) return toast.error("Documento não foi atualizado. Verifique suas permissões.");
-    toast.success("Documento atualizado");
+    if (!data) return toast.error("Document was not updated. Check your permissions.");
+    toast.success("Document updated");
     setEditingDocId(null);
     qc.invalidateQueries({ queryKey: ["documents"] });
   };
@@ -176,24 +176,24 @@ function Documents() {
       .select("id")
       .maybeSingle();
     if (error) return toast.error(error.message);
-    if (!data) return toast.error("Documento não foi arquivado. Verifique suas permissões.");
-    toast.success(nextStatus === "archived" ? "Documento arquivado" : "Documento restaurado");
+    if (!data) return toast.error("Document was not archived. Check your permissions.");
+    toast.success(nextStatus === "archived" ? "Document archived" : "Document restored");
     qc.invalidateQueries({ queryKey: ["documents"] });
   };
 
   const shareDocument = async (doc: DocumentRow) => {
     const { data, error } = await supabase.storage.from(doc.bucket).createSignedUrl(doc.storage_path, 60 * 60 * 24);
-    if (error || !data?.signedUrl) return toast.error(error?.message ?? "Não foi possível gerar link de compartilhamento");
+    if (error || !data?.signedUrl) return toast.error(error?.message ?? "Could not generate sharing link");
     try {
       await navigator.clipboard.writeText(data.signedUrl);
-      toast.success("Link assinado copiado por 24 horas");
+      toast.success("Signed link copied for 24 hours");
     } catch {
-      window.prompt("Copie o link assinado:", data.signedUrl);
+      window.prompt("Copy the signed link:", data.signedUrl);
     }
   };
 
   const deleteDocument = async (doc: DocumentRow) => {
-    if (!window.confirm(`Excluir definitivamente "${doc.title}"?`)) return;
+    if (!window.confirm(`Permanently delete "${doc.title}"?`)) return;
     const { data, error } = await (supabase as any)
       .from("documents")
       .delete()
@@ -201,25 +201,25 @@ function Documents() {
       .select("id,bucket,storage_path")
       .maybeSingle();
     if (error) return toast.error(error.message);
-    if (!data) return toast.error("Documento não foi excluído. Verifique suas permissões.");
+    if (!data) return toast.error("Document was not deleted. Check your permissions.");
     const { error: storageError } = await supabase.storage.from(doc.bucket).remove([doc.storage_path]);
-    if (storageError) toast.warning(`Registro excluído, mas o arquivo não foi removido: ${storageError.message}`);
-    else toast.success("Documento excluído");
+    if (storageError) toast.warning(`Record deleted, but the file was not removed: ${storageError.message}`);
+    else toast.success("Document deleted");
     qc.invalidateQueries({ queryKey: ["documents"] });
   };
 
   return (
     <>
       <PageHeader
-        title="Inteligência de documentos"
-        subtitle="Uploads privados, acesso assinado, geração de PDFs e metadados prontos para auditoria."
-        action={<Pill tone="olive">Armazenamento privado</Pill>}
+        title="Document intelligence"
+        subtitle="Private uploads, signed access, PDF generation and audit-ready metadata."
+        action={<Pill tone="olive">Private storage</Pill>}
       />
 
       <Card className="relative z-30 mb-6 overflow-visible">
         <div className="grid gap-3 lg:grid-cols-[1fr_180px_180px_auto]">
           <input
-            placeholder="Título do documento"
+            placeholder="Document title"
             value={title}
             onChange={(event) => setTitle(event.target.value)}
             className="rounded-xl border border-border bg-ivory px-3 py-2 text-sm"
@@ -231,7 +231,7 @@ function Documents() {
           />
           <label className="flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-border bg-ivory px-3 py-2 text-sm">
             <Upload className="h-4 w-4" />
-            {file ? file.name.slice(0, 22) : "Selecionar arquivo"}
+            {file ? file.name.slice(0, 22) : "Select file"}
             <input type="file" className="hidden" onChange={(event) => setFile(event.target.files?.[0] ?? null)} />
           </label>
           <button
@@ -248,12 +248,12 @@ function Documents() {
         <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-border bg-cream/40 px-4 py-3">
           <FileText className="h-5 w-5 text-muted-foreground" />
           <input
-            placeholder="Pesquisar receitas médicas, contratos, resultados de exames, datas..."
+            placeholder="Search prescriptions, contracts, exam results, dates..."
             value={query}
             onChange={(event) => setQuery(event.target.value)}
             className="min-w-52 flex-1 bg-transparent text-sm focus:outline-none"
           />
-          <Pill tone="gold">Somente arquivos reais</Pill>
+          <Pill tone="gold">Real files only</Pill>
         </div>
         <div className="mt-3 flex flex-wrap gap-2 text-xs">
           {TAGS.map((t) => (
@@ -271,11 +271,11 @@ function Documents() {
       </Card>
 
       {!profile?.tenant_id && !isSuperAdmin ? (
-        <EmptyState title="Entre em uma organização aprovada primeiro" hint="Documentos privados ficam vinculados a uma organização." />
+        <EmptyState title="Join an approved organization first" hint="Private documents are linked to an organization." />
       ) : docs.isLoading ? (
         <p className="text-sm text-muted-foreground">Carregando...</p>
       ) : filteredDocs.length === 0 ? (
-        <EmptyState title="Ainda não há documentos." hint="Faça o upload do primeiro arquivo real para criar o cofre." />
+        <EmptyState title="No documents yet." hint="Upload the first real file to create the vault." />
       ) : (
         <div className="grid gap-4 lg:grid-cols-2">
           {filteredDocs.map((doc) => (
@@ -305,10 +305,10 @@ function Documents() {
                       />
                       <div className="flex flex-wrap gap-2">
                         <button onClick={() => saveDocumentEdit(doc)} className="rounded-full bg-olive px-3 py-1.5 text-xs font-medium text-ivory">
-                          Salvar
+                          Save
                         </button>
                         <button onClick={() => setEditingDocId(null)} className="rounded-full border border-border px-3 py-1.5 text-xs">
-                          Cancelar
+                          Cancel
                         </button>
                       </div>
                     </div>
@@ -317,7 +317,7 @@ function Documents() {
                       <div className="flex flex-wrap items-center gap-2">
                         <p className="truncate text-sm font-medium text-foreground">{doc.title}</p>
                         <Pill tone="muted">{documentTypeOptions.find((t) => t.value === doc.document_type)?.label ?? doc.document_type}</Pill>
-                        {doc.status === "archived" && <Pill tone="gold">arquivado</Pill>}
+                        {doc.status === "archived" && <Pill tone="gold">archived</Pill>}
                       </div>
                       <p className="mt-1 text-xs text-muted-foreground">
                         {new Date(doc.created_at).toLocaleDateString("pt-BR")} · {formatBytes(doc.file_size)} · {doc.status}
@@ -330,16 +330,16 @@ function Documents() {
                           Abrir arquivo assinado
                         </button>
                         <button onClick={() => startEditDocument(doc)} className="inline-flex items-center gap-1 rounded-full border border-border px-3 py-1.5 text-xs">
-                          <Pencil className="h-3 w-3" /> Editar
+                          <Pencil className="h-3 w-3" /> Edit
                         </button>
                         <button onClick={() => shareDocument(doc)} className="inline-flex items-center gap-1 rounded-full border border-border px-3 py-1.5 text-xs">
-                          <Share2 className="h-3 w-3" /> Compartilhar
+                          <Share2 className="h-3 w-3" /> Share
                         </button>
                         <button onClick={() => archiveDocument(doc)} className="inline-flex items-center gap-1 rounded-full border border-border px-3 py-1.5 text-xs">
-                          <Archive className="h-3 w-3" /> {doc.status === "archived" ? "Restaurar" : "Arquivar"}
+                          <Archive className="h-3 w-3" /> {doc.status === "archived" ? "Restore" : "Archive"}
                         </button>
                         <button onClick={() => deleteDocument(doc)} className="inline-flex items-center gap-1 rounded-full border border-wine/30 bg-wine/5 px-3 py-1.5 text-xs text-wine">
-                          <Trash2 className="h-3 w-3" /> Excluir
+                          <Trash2 className="h-3 w-3" /> Delete
                         </button>
                         <button onClick={() => exportSummary(doc)} className="inline-flex items-center gap-1 rounded-full border border-border px-3 py-1.5 text-xs">
                           <Download className="h-3 w-3" /> Exportar PDF

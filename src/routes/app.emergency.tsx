@@ -51,7 +51,7 @@ function Emergency() {
 
   const memberName = (id: string | null) => {
     const m = (data.data?.members ?? []).find((x: any) => x.id === id);
-    return m ? m.preferred_name || m.full_name || "Funcionário" : null;
+    return m ? m.preferred_name || m.full_name || "Staff member" : null;
   };
 
   const activeEmergencies = (data.data?.alerts ?? []).filter(
@@ -66,25 +66,25 @@ function Emergency() {
     if (!user) return;
     const selectedResident = (data.data?.residents ?? []).find((resident: any) => resident.id === residentId);
     const tenantId = profile?.tenant_id ?? selectedResident?.tenant_id;
-    if (!tenantId) return toast.error("Selecione um residente com organização antes de criar o SOS.");
+    if (!tenantId) return toast.error("Select a resident with an organization before creating the SOS.");
     setSending(true);
     try {
       const { error } = await (supabase as any).from("alerts").insert({
         tenant_id: tenantId,
         resident_id: residentId || null,
         created_by: user.id,
-        title: "Acionamento de emergência SOS",
-        description: description.trim() || "SOS manual acionado pela central de emergência.",
+        title: "SOS emergency escalation",
+        description: description.trim() || "Manual SOS triggered from the emergency center.",
         severity: "critical",
         category: "emergency",
         status: "open",
       });
       if (error) throw error;
-      toast.success("Alerta SOS criado");
+      toast.success("SOS alert created");
       setDescription("");
       refresh();
     } catch (err: any) {
-      toast.error(err.message ?? "Não foi possível criar o alerta SOS");
+      toast.error(err.message ?? "Could not create the SOS alert");
     } finally {
       setSending(false);
     }
@@ -98,7 +98,7 @@ function Emergency() {
       .select("id")
       .maybeSingle();
     if (error) return toast.error(error.message);
-    if (!data) return toast.error("Alerta nÃ£o foi atualizado. Verifique suas permissÃµes.");
+    if (!data) return toast.error("Alert was not updated. Check your permissions.");
     toast.success(message);
     setEditingId(null);
     setDelegatingId(null);
@@ -107,46 +107,46 @@ function Emergency() {
   };
 
   const deleteAlert = async (id: string) => {
-    if (!window.confirm("Excluir este alerta definitivamente?")) return;
+    if (!window.confirm("Permanently delete this alert?")) return;
     const { data: deleted, error } = await (supabase as any).from("alerts").delete().eq("id", id).select("id").maybeSingle();
     if (error) return toast.error(error.message);
-    if (!deleted) return toast.error("Alerta não foi excluído. Verifique suas permissões.");
-    toast.success("Alerta excluído");
+    if (!deleted) return toast.error("Alert was not deleted. Check your permissions.");
+    toast.success("Alert deleted");
     refresh();
   };
 
   const shareAlert = async (alert: any) => {
     const text = [
-      `Alerta de emergência: ${alert.title}`,
+      `Emergency alert: ${alert.title}`,
       `Status: ${statusLabel(alert.status)}`,
-      `Descrição: ${alert.description ?? "Sem descrição."}`,
+      `Description: ${alert.description ?? "No description."}`,
       `Criado em: ${new Date(alert.created_at).toLocaleString("pt-BR")}`,
       `${window.location.origin}/app/emergency?alert=${alert.id}`,
     ].join("\n");
     try {
       await navigator.clipboard.writeText(text);
-      toast.success("Alerta copiado para compartilhamento");
+      toast.success("Alert copied for sharing");
     } catch {
-      window.prompt("Copie o alerta:", text);
+      window.prompt("Copy the alert:", text);
     }
   };
 
   const statusLabel = (status: string) =>
-    ({ open: "aberto", acknowledged: "reconhecido", resolved: "resolvido", closed: "encerrado" }[status] ?? status);
+    ({ open: "open", acknowledged: "reconhecido", resolved: "resolvido", closed: "encerrado" }[status] ?? status);
 
   return (
     <>
       <PageHeader
-        title="Central de emergência"
-        subtitle="Cria e acompanha alertas críticos reais. Disparo por telefone e SMS será conectado na fase de integrações."
-        action={<Pill tone={activeEmergencies.length ? "wine" : "moss"}>{activeEmergencies.length} ativo(s)</Pill>}
+        title="Emergency center"
+        subtitle="Create and track real critical alerts. Phone and SMS dispatch will be connected in the integrations phase."
+        action={<Pill tone={activeEmergencies.length ? "wine" : "moss"}>{activeEmergencies.length} active(s)</Pill>}
       />
 
       {data.isLoading ? (
-        <p className="text-sm text-muted-foreground">Carregando registros de emergência...</p>
+        <p className="text-sm text-muted-foreground">Loading emergency records...</p>
       ) : data.isError ? (
         <Card className="border-wine/25 bg-wine/5">
-          <p className="font-medium text-wine">Não foi possível carregar a central de emergência.</p>
+          <p className="font-medium text-wine">Could not load the emergency center.</p>
           <p className="mt-2 text-sm text-muted-foreground">{(data.error as Error).message}</p>
         </Card>
       ) : (
@@ -157,8 +157,8 @@ function Emergency() {
                 <Siren className="h-6 w-6" />
               </span>
               <div>
-                <h2 className="text-2xl font-semibold text-foreground">Criar alerta SOS</h2>
-                <p className="text-sm text-muted-foreground">Registra um alerta crítico imediatamente.</p>
+                <h2 className="text-2xl font-semibold text-foreground">Create SOS alert</h2>
+                <p className="text-sm text-muted-foreground">Registers a critical alert immediately.</p>
               </div>
             </div>
             <div className="mt-5 space-y-3">
@@ -166,16 +166,16 @@ function Emergency() {
                 value={residentId}
                 onChange={setResidentId}
                 options={[
-                  { value: "", label: "Nenhum residente selecionado" },
+                  { value: "", label: "No resident selected" },
                   ...(data.data?.residents ?? []).map((resident: any) => ({
                     value: resident.id,
                     label: resident.preferred_name || resident.full_name,
                   })),
                 ]}
               />
-              <textarea value={description} onChange={(event) => setDescription(event.target.value)} rows={4} placeholder="O que aconteceu?" className="w-full rounded-xl border border-border bg-ivory px-3 py-2 text-sm" />
+              <textarea value={description} onChange={(event) => setDescription(event.target.value)} rows={4} placeholder="What happened?" className="w-full rounded-xl border border-border bg-ivory px-3 py-2 text-sm" />
               <button onClick={createSOS} disabled={sending || (!profile?.tenant_id && !residentId)} className="w-full rounded-2xl bg-wine px-4 py-3 text-sm font-semibold text-ivory disabled:opacity-50">
-                {sending ? "Criando..." : "Criar alerta crítico"}
+                {sending ? "Creating..." : "Create critical alert"}
               </button>
             </div>
           </Card>
@@ -183,11 +183,11 @@ function Emergency() {
           <Card>
             <div className="flex items-center gap-3">
               <AlertTriangle className="h-5 w-5 text-wine" />
-              <h2 className="text-xl font-semibold text-foreground">Alertas de emergência ativos</h2>
+              <h2 className="text-xl font-semibold text-foreground">Active emergency alerts</h2>
             </div>
             {activeEmergencies.length === 0 ? (
               <div className="mt-5">
-                <EmptyState title="Nenhuma emergência ativa" hint="Alertas críticos criados aqui ou na Central de alertas aparecem nesta lista." />
+                <EmptyState title="No active emergencies" hint="Critical alerts created here or in the Alert center appear in this list." />
               </div>
             ) : (
               <div className="mt-5 space-y-3">
@@ -209,14 +209,14 @@ function Emergency() {
                         <div className="flex gap-2">
                           <button
                             onClick={() =>
-                              updateAlert(alert.id, { title: editDraft.title.trim(), description: editDraft.description.trim() || null }, "Alerta atualizado")
+                              updateAlert(alert.id, { title: editDraft.title.trim(), description: editDraft.description.trim() || null }, "Alert updated")
                             }
                             className="rounded-full bg-olive px-4 py-1.5 text-xs font-medium text-ivory"
                           >
-                            Salvar
+                            Save
                           </button>
                           <button onClick={() => setEditingId(null)} className="rounded-full border border-border px-4 py-1.5 text-xs">
-                            Cancelar
+                            Cancel
                           </button>
                         </div>
                       </div>
@@ -226,7 +226,7 @@ function Emergency() {
                           <p className="font-medium text-foreground">{alert.title}</p>
                           <Pill tone="wine">{statusLabel(alert.status)}</Pill>
                         </div>
-                        <p className="mt-1 text-sm text-muted-foreground">{alert.description ?? "Sem descrição."}</p>
+                        <p className="mt-1 text-sm text-muted-foreground">{alert.description ?? "No description."}</p>
                         <p className="mt-2 text-xs text-muted-foreground">
                           {new Date(alert.created_at).toLocaleString("pt-BR")}
                           {alert.assigned_to && memberName(alert.assigned_to) ? ` · delegado a ${memberName(alert.assigned_to)}` : ""}
@@ -237,30 +237,30 @@ function Emergency() {
                             <GlassSelect
                               value={delegateTo}
                               onChange={setDelegateTo}
-                              placeholder="Escolher funcionário"
+                              placeholder="Choose staff member"
                               className="min-w-56"
                               options={(data.data?.members ?? []).map((m: any) => ({
                                 value: m.id,
-                                label: m.preferred_name || m.full_name || "Funcionário",
+                                label: m.preferred_name || m.full_name || "Staff member",
                               }))}
                             />
                             <button
                               onClick={() => {
-                                if (!delegateTo) return toast.error("Escolha o funcionário responsável.");
-                                updateAlert(alert.id, { assigned_to: delegateTo, status: "acknowledged" }, "Alerta delegado");
+                                if (!delegateTo) return toast.error("Choose the responsible staff member.");
+                                updateAlert(alert.id, { assigned_to: delegateTo, status: "acknowledged" }, "Alert delegated");
                               }}
                               className="rounded-full bg-olive px-4 py-1.5 text-xs font-medium text-ivory"
                             >
                               Delegar
                             </button>
                             <button onClick={() => setDelegatingId(null)} className="rounded-full border border-border px-4 py-1.5 text-xs">
-                              Cancelar
+                              Cancel
                             </button>
                           </div>
                         ) : (
                           <div className="mt-3 flex flex-wrap gap-2 text-xs">
                             <button
-                              onClick={() => updateAlert(alert.id, { status: "resolved", resolved_by: user?.id ?? null, resolved_at: new Date().toISOString() }, "Alerta resolvido")}
+                              onClick={() => updateAlert(alert.id, { status: "resolved", resolved_by: user?.id ?? null, resolved_at: new Date().toISOString() }, "Alert resolved")}
                               className="rounded-full bg-olive px-3 py-1.5 font-medium text-ivory"
                             >
                               Resolver
@@ -272,7 +272,7 @@ function Emergency() {
                               }}
                               className="inline-flex items-center gap-1 rounded-full border border-border bg-white/55 px-3 py-1.5"
                             >
-                              <Pencil className="h-3 w-3" /> Editar
+                              <Pencil className="h-3 w-3" /> Edit
                             </button>
                             <button
                               onClick={() => {
@@ -287,20 +287,20 @@ function Emergency() {
                               onClick={() => shareAlert(alert)}
                               className="inline-flex items-center gap-1 rounded-full border border-border bg-white/55 px-3 py-1.5"
                             >
-                              <Share2 className="h-3 w-3" /> Compartilhar
+                              <Share2 className="h-3 w-3" /> Share
                             </button>
                             <button
-                              onClick={() => updateAlert(alert.id, { archived_at: new Date().toISOString() }, "Alerta arquivado")}
+                              onClick={() => updateAlert(alert.id, { archived_at: new Date().toISOString() }, "Alerta archived")}
                               className="inline-flex items-center gap-1 rounded-full border border-border bg-white/55 px-3 py-1.5"
                             >
-                              <Archive className="h-3 w-3" /> Arquivar
+                              <Archive className="h-3 w-3" /> Archive
                             </button>
                             {canManage && (
                               <button
                                 onClick={() => deleteAlert(alert.id)}
                                 className="inline-flex items-center gap-1 rounded-full border border-wine/30 bg-wine/5 px-3 py-1.5 text-wine"
                               >
-                                <Trash2 className="h-3 w-3" /> Excluir
+                                <Trash2 className="h-3 w-3" /> Delete
                               </button>
                             )}
                           </div>
@@ -320,12 +320,12 @@ function Emergency() {
                     <div key={alert.id} className="flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-border/60 bg-cream/40 px-4 py-2.5 text-xs text-muted-foreground">
                       <span>{alert.title} · {new Date(alert.created_at).toLocaleDateString("pt-BR")}</span>
                       <span className="flex gap-2">
-                        <button onClick={() => updateAlert(alert.id, { archived_at: null }, "Alerta restaurado")} className="hover:underline">
-                          Restaurar
+                        <button onClick={() => updateAlert(alert.id, { archived_at: null }, "Alert restored")} className="hover:underline">
+                          Restore
                         </button>
                         {canManage && (
                           <button onClick={() => deleteAlert(alert.id)} className="text-wine hover:underline">
-                            Excluir
+                            Delete
                           </button>
                         )}
                       </span>
@@ -337,7 +337,7 @@ function Emergency() {
           </Card>
 
           <Card className="lg:col-span-2">
-            <h2 className="text-xl font-semibold text-foreground">Endereços de emergência dos residentes</h2>
+            <h2 className="text-xl font-semibold text-foreground">Resident emergency addresses</h2>
             <div className="mt-4 grid gap-3 md:grid-cols-2">
               {(data.data?.locations ?? []).map((location: any) => (
                 <div key={location.id} className="rounded-2xl border border-border/60 bg-cream/40 p-4">
@@ -348,7 +348,7 @@ function Emergency() {
                   </p>
                 </div>
               ))}
-              {(data.data?.locations ?? []).length === 0 && <p className="text-sm text-muted-foreground">Nenhum endereço de residente salvo.</p>}
+              {(data.data?.locations ?? []).length === 0 && <p className="text-sm text-muted-foreground">No resident address saved.</p>}
             </div>
           </Card>
         </div>

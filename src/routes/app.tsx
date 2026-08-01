@@ -1,4 +1,4 @@
-import {
+﻿import {
   Link,
   Outlet,
   createFileRoute,
@@ -96,162 +96,162 @@ const ALL_SECTIONS: NavSection[] = [
       },
       {
         to: "/app/exams",
-        label: "Clínica de exames",
+        label: "Diagnostics clinic",
         icon: "M9 3h6v4l3 8a4 4 0 0 1-4 5H10a4 4 0 0 1-4-5l3-8z M9 7h6 M10 14h4",
       },
       {
         to: "/app/geriatrics",
-        label: "Gestão geriátrica",
+        label: "Geriatric management",
         icon: "M12 21s-7-4.5-9-9a5 5 0 0 1 9-3 5 5 0 0 1 9 3c-2 4.5-9 9-9 9z M8 12h2l1-2 2 4 1-2h2",
         roles: ["caregiver", "nurse", "doctor", "clinic_admin", "super_admin"],
         userKinds: ["clinic", "staff"],
       },
       {
         to: "/app/schedule",
-        label: "Agenda inteligente",
+        label: "Smart schedule",
         icon: "M8 2v4 M16 2v4 M3 10h18 M5 4h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z M12 14v3 M10.5 15.5h3",
         roles: ["caregiver", "nurse", "doctor", "clinic_admin", "super_admin"],
         userKinds: ["clinic", "staff"],
       },
       {
         to: "/app/records",
-        label: "Prontuário eletrônico",
+        label: "Electronic health record",
         icon: "M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z M14 2v6h6 M12 11v6 M9 14h6",
         roles: ["nurse", "doctor", "clinic_admin", "super_admin"],
         userKinds: ["clinic", "staff"],
       },
       {
         to: "/app/medications",
-        label: "Medicação (eMAR)",
+        label: "Medication (eMAR)",
         icon: "M10.5 3.5a5 5 0 0 1 7 7l-7 7a5 5 0 0 1-7-7z M7 7l7 7",
         roles: ["caregiver", "nurse", "doctor", "clinic_admin", "super_admin"],
         userKinds: ["clinic", "staff"],
       },
       {
         to: "/app/bi",
-        label: "BI executivo",
+        label: "Executive BI",
         icon: "M3 3v18h18 M8 17V9 M12 17V5 M16 17v-6",
         roles: ["clinic_admin", "super_admin"],
         userKinds: ["clinic", "staff"],
       },
       {
         to: "/app/companies",
-        label: "Portal de empresas",
+        label: "Company portal",
         icon: "M3 21h18 M5 21V7l7-4v18 M12 21V9l7 3v9 M9 9h.01 M9 13h.01 M9 17h.01",
         roles: ["nurse", "doctor", "clinic_admin", "super_admin"],
         userKinds: ["clinic", "staff"],
       },
       {
         to: "/app/finance",
-        label: "Financeiro",
+        label: "Finance",
         icon: "M3 21h18 M4 21V8l8-5 8 5v13 M9 21v-6h6v6 M12 8v.01",
         roles: ["clinic_admin", "super_admin"],
         userKinds: ["clinic", "staff"],
       },
       {
         to: "/app/inventory",
-        label: "Estoque e insumos",
+        label: "Inventory and supplies",
         icon: "M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z M3.3 7l8.7 5 8.7-5 M12 22V12",
         roles: ["nurse", "doctor", "clinic_admin", "super_admin"],
         userKinds: ["clinic", "staff"],
       },
       {
         to: "/app/equipment",
-        label: "Equipamentos",
+        label: "Equipment",
         icon: "M14.7 6.3a5 5 0 0 0-6.8 6.6l-5.6 5.6a2 2 0 1 0 2.8 2.8l5.6-5.6a5 5 0 0 0 6.6-6.8l-3 3-2.8-2.8z",
         roles: ["nurse", "doctor", "clinic_admin", "super_admin"],
         userKinds: ["clinic", "staff"],
       },
       {
         to: "/app/units",
-        label: "Unidades",
+        label: "Units",
         icon: "M3 21h18 M5 21V7l7-4 7 4v14 M9 9h2 M13 9h2 M9 13h2 M13 13h2 M11 21v-4h2v4",
         roles: ["clinic_admin", "super_admin"],
         userKinds: ["clinic", "staff"],
       },
       {
         to: "/app/origins",
-        label: "Minhas Origens",
+        label: "My Origins",
         icon: "M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20z M2 12h20 M12 2c2.5 3 4 6.5 4 10s-1.5 7-4 10c-2.5-3-4-6.5-4-10s1.5-7 4-10z",
       },
       {
         to: "/app/patient-portal",
-        label: "Portal do paciente",
+        label: "Patient portal",
         icon: "M12 21s-7-4.5-9-9a5 5 0 0 1 9-3 5 5 0 0 1 9 3c-2 4.5-9 9-9 9z",
       },
       {
         to: "/app/catalog",
-        label: "Catálogo de exames",
+        label: "Test catalog",
         icon: "M4 19.5A2.5 2.5 0 0 1 6.5 17H20 M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z M9 7h7 M9 11h7",
         roles: ["nurse", "doctor", "clinic_admin", "super_admin"],
         userKinds: ["clinic", "staff"],
       },
       {
         to: "/app/lab-dashboard",
-        label: "Central do laboratório",
+        label: "Laboratory hub",
         icon: "M3 3v18h18 M7 15l4-5 4 3 5-7",
         roles: ["nurse", "doctor", "clinic_admin", "super_admin"],
         userKinds: ["clinic", "staff"],
       },
       {
         to: "/app/lab",
-        label: "Laboratório (amostras)",
+        label: "Laboratory samples",
         icon: "M10 2v7.5L4.5 19a2 2 0 0 0 1.8 3h11.4a2 2 0 0 0 1.8-3L14 9.5V2 M8.5 2h7 M7 15h10",
         roles: ["nurse", "doctor", "clinic_admin", "super_admin"],
         userKinds: ["clinic", "staff"],
       },
       {
         to: "/app/home-collection",
-        label: "Coleta domiciliar",
+        label: "Home collection",
         icon: "M1 3h15v13H1z M16 8h4l3 3v5h-7 M5.5 21a2 2 0 1 0 0-4 2 2 0 0 0 0 4z M18.5 21a2 2 0 1 0 0-4 2 2 0 0 0 0 4z",
         roles: ["caregiver", "nurse", "doctor", "clinic_admin", "super_admin"],
         userKinds: ["clinic", "staff"],
       },
       {
         to: "/app/ancestry-studio",
-        label: "Estúdio de ancestralidade",
+        label: "Ancestry studio",
         icon: "M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20z M2 12h20 M12 2c2.5 3 4 6.5 4 10s-1.5 7-4 10c-2.5-3-4-6.5-4-10s1.5-7 4-10z M8 8l1 1 M15 15l1 1",
         roles: ["doctor", "clinic_admin", "super_admin"],
         userKinds: ["clinic", "staff"],
       },
       {
         to: "/app/genetics",
-        label: "Genética (kits)",
+        label: "Genetics kits",
         icon: "M4 2c0 5 3 6 8 10s8 5 8 10 M20 2c0 5-3 6-8 10S4 17 4 22 M6 5h12 M6 19h12 M8.5 9h7 M8.5 15h7",
         roles: ["doctor", "clinic_admin", "super_admin"],
         userKinds: ["clinic", "staff"],
       },
       {
         to: "/app/doctor",
-        label: "Portal do médico",
+        label: "Doctor portal",
         icon: "M4.8 2.3A.3.3 0 1 0 5 2.6a.3.3 0 0 0-.2-.3 M8 2a2 2 0 0 1 2 2v5a6 6 0 0 1-12 0V4a2 2 0 0 1 2-2 M2 2v2 M8 15a6 6 0 0 0 12 0v-3 M20 8a2 2 0 1 0 0 4 2 2 0 0 0 0-4z",
         roles: ["doctor", "clinic_admin", "super_admin"],
         userKinds: ["clinic", "staff"],
       },
       {
         to: "/app/reports",
-        label: "Laudos e resultados",
+        label: "Reports and results",
         icon: "M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z M14 2v6h6 M8 13h8 M8 17h5",
         roles: ["nurse", "doctor", "clinic_admin", "super_admin"],
         userKinds: ["clinic", "staff"],
       },
       {
         to: "/app/orders",
-        label: "Pedidos e orçamentos",
+        label: "Orders and quotes",
         icon: "M6 6h15l-1.5 9h-12z M6 6L5 2H2 M9 20a1 1 0 1 0 0-2 1 1 0 0 0 0 2z M18 20a1 1 0 1 0 0-2 1 1 0 0 0 0 2z",
         roles: ["nurse", "doctor", "clinic_admin", "super_admin"],
         userKinds: ["clinic", "staff"],
       },
       {
         to: "/app/reception",
-        label: "Recepção e check-in",
+        label: "Reception and check-in",
         icon: "M4 21V8a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v13 M4 21h16 M9 6V4h6v2 M9 11h6 M9 15h4",
         roles: ["caregiver", "nurse", "doctor", "clinic_admin", "super_admin"],
         userKinds: ["clinic", "staff"],
       },
       {
         to: "/app/patients",
-        label: "Pacientes",
+        label: "Patients",
         icon: "M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2 M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8 M22 21v-2a4 4 0 0 0-3-3.87 M16 3.13a4 4 0 0 1 0 7.75",
         roles: ["nurse", "doctor", "clinic_admin", "super_admin"],
         userKinds: ["clinic", "staff"],
@@ -296,7 +296,7 @@ const ALL_SECTIONS: NavSection[] = [
       },
       {
         to: "/app/origins",
-        label: "Minhas Origens",
+        label: "My Origins",
         icon: "M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20z M2 12h20 M12 2c2.5 3 4 6.5 4 10s-1.5 7-4 10c-2.5-3-4-6.5-4-10s1.5-7 4-10z",
         userKinds: ["family", "clinic", "staff"],
       },
@@ -546,7 +546,7 @@ function AppLayout() {
   if (!isPlatformUser && profile?.tenant_id && tenantAccess.isLoading)
     return (
       <div className="min-h-screen grid place-items-center text-muted-foreground text-sm">
-        Verificando acesso da organização...
+        Checking organization access...
       </div>
     );
   if (!isPlatformUser && profile?.tenant_id && !tenantIsOperational(tenantAccess.data)) {
@@ -873,28 +873,28 @@ function AccessDenied({
   return (
     <>
       <PageHeader
-        title="Acesso restrito"
-        subtitle={`Esta área pertence a outro perfil operacional do SaaS: ${routeLabel}.`}
-        action={<Pill tone="gold">Permissões por perfil</Pill>}
+        title="Restricted access"
+        subtitle={`This area belongs to another SaaS operating profile: ${routeLabel}.`}
+        action={<Pill tone="gold">Profile permissions</Pill>}
       />
       <Card className="max-w-3xl">
         <p className="text-sm leading-6 text-muted-foreground">
-          Seu acesso atual está configurado como{" "}
+          Your current access is configured as{" "}
           <span className="font-medium text-foreground">
-            {primaryRole ? ROLE_LABELS[primaryRole] : "membro"}
+            {primaryRole ? ROLE_LABELS[primaryRole] : "member"}
           </span>
-          {userKind ? ` / ${USER_KIND_LABELS[userKind]}` : ""}. Para evitar mistura entre super admin,
-          clínicas, equipe, prestadores e famílias, esta rota fica bloqueada fora do perfil correto.
+          {userKind ? ` / ${USER_KIND_LABELS[userKind]}` : ""}. To keep super admin,
+          clinics, staff, providers and families separated, this route is blocked outside the correct profile.
         </p>
         <div className="mt-5 flex flex-wrap gap-2">
           <Link to="/app" className="rounded-full bg-olive px-4 py-2 text-xs font-semibold text-ivory">
-            Voltar ao painel
+            Back to dashboard
           </Link>
           <Link
             to="/app/profile"
             className="rounded-full border border-border bg-white/55 px-4 py-2 text-xs font-semibold text-foreground"
           >
-            Ver meu perfil
+            View my profile
           </Link>
         </div>
       </Card>
@@ -903,10 +903,10 @@ function AccessDenied({
 }
 
 const USER_KIND_LABELS: Record<NonNullable<UserKind>, string> = {
-  family: "família",
-  clinic: "clínica",
-  service_provider: "prestador de serviços",
-  staff: "equipe",
+  family: "family",
+  clinic: "clinic",
+  service_provider: "service provider",
+  staff: "staff",
 };
 
 function tenantIsOperational(tenant: any) {
@@ -923,11 +923,11 @@ function TenantBlocked({ tenant, onSignOut }: { tenant: any; onSignOut: () => vo
   return (
     <div className="grid min-h-screen place-items-center bg-[linear-gradient(135deg,var(--ivory)_0%,var(--cream)_50%,oklch(0.93_0.035_155)_100%)] px-4 text-foreground">
       <Card className="max-w-xl">
-        <Pill tone="wine">Acesso pausado</Pill>
-        <h1 className="mt-4 text-2xl font-semibold text-foreground">Organização sem acesso operacional</h1>
+        <Pill tone="wine">Access paused</Pill>
+        <h1 className="mt-4 text-2xl font-semibold text-foreground">Organization without operational access</h1>
         <p className="mt-3 text-sm leading-6 text-muted-foreground">
-          {tenant?.name ? `${tenant.name} ` : "Esta organização "}
-          não está liberada para operar no SaaS neste momento. Status: {status}; cobrança: {billing}.
+          {tenant?.name ? `${tenant.name} ` : "This organization "}
+          is not cleared to operate in the SaaS right now. Status: {status}; billing: {billing}.
         </p>
         {tenant?.suspended_reason && (
           <p className="mt-3 rounded-2xl border border-wine/15 bg-wine/5 px-4 py-3 text-sm text-wine">
@@ -936,16 +936,17 @@ function TenantBlocked({ tenant, onSignOut }: { tenant: any; onSignOut: () => vo
         )}
         <div className="mt-5 flex flex-wrap gap-2">
           <button onClick={onSignOut} className="rounded-full bg-olive px-4 py-2 text-xs font-semibold text-ivory">
-            Sair
+            Sign out
           </button>
           <Link
             to="/"
             className="rounded-full border border-border bg-white/55 px-4 py-2 text-xs font-semibold text-foreground"
           >
-            Voltar ao site
+            Back to website
           </Link>
         </div>
       </Card>
     </div>
   );
 }
+

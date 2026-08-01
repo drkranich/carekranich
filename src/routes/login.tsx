@@ -33,7 +33,7 @@ function Login() {
       setGoogleLoading(false);
       setError(
         error.message.includes("provider is not enabled")
-          ? "Login com Google ainda não habilitado. Ative o provedor Google em Supabase → Authentication → Providers."
+          ? "Google login is not enabled yet. Enable the Google provider in Supabase -> Authentication -> Providers."
           : error.message,
       );
     }
@@ -48,8 +48,8 @@ function Login() {
           </div>
           <span className="font-display text-xl text-olive">Care Kranich</span>
         </Link>
-        <h1 className="mt-6 font-display text-2xl text-foreground">Bem-vindo de volta</h1>
-        <p className="mt-1 text-sm text-muted-foreground">Entre para continuar cuidando.</p>
+        <h1 className="mt-6 font-display text-2xl text-foreground">Welcome back</h1>
+        <p className="mt-1 text-sm text-muted-foreground">Sign in to continue caring.</p>
 
         <button
           onClick={signInWithGoogle}
@@ -62,11 +62,11 @@ function Login() {
             <path fill="#FBBC05" d="M5.84 14.1a6.6 6.6 0 0 1 0-4.2V7.06H2.18a11 11 0 0 0 0 9.88l3.66-2.84z" />
             <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15A11 11 0 0 0 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" />
           </svg>
-          {googleLoading ? "Redirecionando..." : "Entrar com Google"}
+          {googleLoading ? "Redirecting..." : "Sign in with Google"}
         </button>
 
         <div className="mt-5 flex items-center gap-3 text-[11px] uppercase text-muted-foreground">
-          <span className="h-px flex-1 bg-border" /> ou com e-mail <span className="h-px flex-1 bg-border" />
+          <span className="h-px flex-1 bg-border" /> or with email <span className="h-px flex-1 bg-border" />
         </div>
 
         <form onSubmit={onSubmit} className="mt-5 space-y-4">
@@ -75,16 +75,16 @@ function Login() {
             <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} className="mt-1 w-full rounded-xl border border-border bg-ivory px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-olive/40" />
           </label>
           <label className="block text-sm">
-            <span className="text-foreground/80">Senha</span>
+            <span className="text-foreground/80">Password</span>
             <input type="password" required value={password} onChange={(e) => setPassword(e.target.value)} className="mt-1 w-full rounded-xl border border-border bg-ivory px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-olive/40" />
           </label>
           {error && <p className="rounded-lg bg-wine/10 px-3 py-2 text-xs text-wine">{error}</p>}
           <button disabled={loading} className="w-full rounded-full bg-olive px-4 py-2.5 text-sm text-ivory hover:opacity-90 disabled:opacity-50">
-            {loading ? "Entrando..." : "Entrar"}
+            {loading ? "Signing in..." : "Sign in"}
           </button>
         </form>
         <p className="mt-4 text-center text-xs text-muted-foreground">
-          Novo por aqui? <Link to="/signup" className="text-olive hover:underline">Criar uma conta</Link>
+          New here? <Link to="/signup" className="text-olive hover:underline">Create an account</Link>
         </p>
       </div>
     </div>

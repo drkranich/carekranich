@@ -18,7 +18,7 @@ export function CrudActions({
   onArchive,
   onShare,
   onDelete,
-  archiveLabel = "Arquivar",
+  archiveLabel = "Archive",
   disabled = false,
   className = "",
 }: CrudActionsProps) {
@@ -32,7 +32,7 @@ export function CrudActions({
           className={`${base} border-border bg-ivory/85 text-foreground hover:bg-white`}
         >
           <Pencil className="h-3.5 w-3.5" />
-          Editar
+          Edit
         </button>
       )}
       {onArchive && (
@@ -54,7 +54,7 @@ export function CrudActions({
           className={`${base} border-sky/30 bg-sky/10 text-foreground hover:bg-sky/15`}
         >
           <Share2 className="h-3.5 w-3.5" />
-          Compartilhar
+          Share
         </button>
       )}
       {onDelete && (
@@ -65,7 +65,7 @@ export function CrudActions({
           className={`${base} border-sky/40 bg-sky/10 text-sky hover:bg-sky/15`}
         >
           <Trash2 className="h-3.5 w-3.5" />
-          Excluir
+          Delete
         </button>
       )}
     </div>

@@ -58,15 +58,15 @@ function SmartHome() {
       .select("id")
       .maybeSingle();
     if (error) return toast.error(error.message);
-    if (!data) return toast.error("Alerta nÃ£o foi resolvido. Verifique suas permissÃµes.");
-    toast.success("Alerta residencial resolvido");
+    if (!data) return toast.error("Alert was not resolved. Check your permissions.");
+    toast.success("Home alert resolved");
     qc.invalidateQueries({ queryKey: ["smart-home-real"] });
   };
 
   const addObservation = async () => {
     const tenantId = profile?.tenant_id ?? selectedResident?.tenant_id;
     if (!tenantId || !selectedResident || !draft.metric.trim()) {
-      toast.error("Informe a métrica e selecione um residente.");
+      toast.error("Enter the metric and select a resident.");
       return;
     }
     const { error } = await supabase.from("twin_observations").insert({
@@ -81,7 +81,7 @@ function SmartHome() {
     } as any);
     if (error) return toast.error(error.message);
     setDraft({ metric: "", value_text: "", domain: "environment", notes: "" });
-    toast.success("Observação residencial salva");
+    toast.success("Home observation saved");
     qc.invalidateQueries({ queryKey: ["smart-home-real"] });
   };
 
@@ -96,7 +96,7 @@ function SmartHome() {
   };
 
   const saveObservationEdit = async (item: any) => {
-    if (!editObservationDraft.metric.trim()) return toast.error("Informe a métrica da observação.");
+    if (!editObservationDraft.metric.trim()) return toast.error("Enter the observation metric.");
     const { data, error } = await (supabase as any)
       .from("twin_observations")
       .update({
@@ -110,8 +110,8 @@ function SmartHome() {
       .select("id")
       .maybeSingle();
     if (error) return toast.error(error.message);
-    if (!data) return toast.error("Observação não foi atualizada. Verifique suas permissões.");
-    toast.success("Observação atualizada");
+    if (!data) return toast.error("Observation was not updated. Check your permissions.");
+    toast.success("Observation updated");
     setEditingObservationId(null);
     qc.invalidateQueries({ queryKey: ["smart-home-real"] });
   };
@@ -126,30 +126,30 @@ function SmartHome() {
       .select("id")
       .maybeSingle();
     if (error) return toast.error(error.message);
-    if (!data) return toast.error("Observação não foi arquivada. Verifique suas permissões.");
-    toast.success("Observação arquivada");
+    if (!data) return toast.error("Observation was not archived. Check your permissions.");
+    toast.success("Observation archived");
     qc.invalidateQueries({ queryKey: ["smart-home-real"] });
   };
 
   const shareObservation = async (item: any) => {
     const value = [item.value_numeric ?? item.value_text ?? "-", item.unit ?? ""].filter(Boolean).join(" ");
     const text = [
-      `Observação da casa: ${item.metric}`,
-      `Valor: ${value}`,
-      `Domínio: ${item.domain}`,
+      `Home observation: ${item.metric}`,
+      `Value: ${value}`,
+      `Domain: ${item.domain}`,
       `Registrado em: ${new Date(item.observed_at).toLocaleString("pt-BR")}`,
       `${window.location.origin}/app/smart-home?observation=${item.id}`,
     ].join("\n");
     try {
       await navigator.clipboard.writeText(text);
-      toast.success("Observação copiada para compartilhamento");
+      toast.success("Observation copied for sharing");
     } catch {
-      window.prompt("Copie a observação:", text);
+      window.prompt("Copy the observation:", text);
     }
   };
 
   const deleteObservation = async (item: any) => {
-    if (!window.confirm(`Excluir definitivamente a observação "${item.metric}"?`)) return;
+    if (!window.confirm(`Permanently delete observation "${item.metric}"?`)) return;
     const { data, error } = await (supabase as any)
       .from("twin_observations")
       .delete()
@@ -157,34 +157,34 @@ function SmartHome() {
       .select("id")
       .maybeSingle();
     if (error) return toast.error(error.message);
-    if (!data) return toast.error("Observação não foi excluída. Verifique suas permissões.");
-    toast.success("Observação excluída");
+    if (!data) return toast.error("Observation was not deleted. Check your permissions.");
+    toast.success("Observation deleted");
     qc.invalidateQueries({ queryKey: ["smart-home-real"] });
   };
 
   return (
     <>
       <PageHeader
-        title="Guardião do lar"
-        subtitle="Visão da casa inteligente com observações reais, sinais manuais e alertas de segurança."
-        action={<Pill tone={home.isError ? "wine" : "olive"}>{home.isError ? "Erro de leitura" : "Observações ao vivo"}</Pill>}
+        title="Home guardian"
+        subtitle="Smart home view with real observations, manual signals and security alerts."
+        action={<Pill tone={home.isError ? "wine" : "olive"}>{home.isError ? "Read error" : "Live observations"}</Pill>}
       />
 
       {home.isLoading ? (
         <p className="text-sm text-muted-foreground">Carregando registros da casa...</p>
       ) : home.isError ? (
         <Card className="border-wine/25 bg-wine/5">
-          <p className="font-medium text-wine">Não foi possível carregar os registros da casa.</p>
+          <p className="font-medium text-wine">Could not load home records.</p>
           <p className="mt-2 text-sm text-muted-foreground">{(home.error as Error).message}</p>
         </Card>
       ) : !selectedResident ? (
-        <EmptyState title="Nenhum residente ainda" hint="Cadastre um residente antes de adicionar observações da casa." />
+        <EmptyState title="No residents yet" hint="Register a resident before adding home observations." />
       ) : (
         <>
           <Card className="mb-6">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
-                <p className="text-xs font-semibold uppercase text-muted-foreground">Residente</p>
+                <p className="text-xs font-semibold uppercase text-muted-foreground">Resident</p>
                 <h2 className="text-2xl font-semibold text-foreground">{selectedResident.preferred_name || selectedResident.full_name}</h2>
               </div>
               <GlassSelect
@@ -200,20 +200,20 @@ function SmartHome() {
           </Card>
 
           <div className="grid gap-4 md:grid-cols-4">
-            <Stat label="Observações" value={observations.length} sub="Observações do gêmeo digital" tone="olive" />
-            <Stat label="Fontes" value={deviceSources.size} sub="Fontes distintas" tone="moss" />
-            <Stat label="Alertas de segurança" value={alerts.length} sub="Categoria casa/segurança" tone="wine" />
-            <Stat label="Residentes" value={home.data?.residents.length ?? 0} sub="Na organização" tone="gold" />
+            <Stat label="Observations" value={observations.length} sub="Digital twin observations" tone="olive" />
+            <Stat label="Sources" value={deviceSources.size} sub="Sources distintas" tone="moss" />
+            <Stat label="Security alerts" value={alerts.length} sub="Home/security category" tone="wine" />
+            <Stat label="Residents" value={home.data?.residents.length ?? 0} sub="In the organization" tone="gold" />
           </div>
 
           <div className="mt-6 grid gap-4 lg:grid-cols-2">
             <Card>
-              <h2 className="text-xl font-semibold text-foreground">Fontes de sinal conectadas</h2>
+              <h2 className="text-xl font-semibold text-foreground">Sources de sinal conectadas</h2>
               {deviceSources.size === 0 ? (
                 <div className="mt-4">
                   <EmptyState
-                    title="Nenhum sinal de dispositivo ainda"
-                    hint="Conecte um provedor de casa inteligente ou adicione observações manuais para criar registros reais."
+                    title="No device signal yet"
+                    hint="Connect a smart home provider or add manual observations to create real records."
                   />
                 </div>
               ) : (
@@ -225,10 +225,10 @@ function SmartHome() {
               )}
             </Card>
             <Card>
-              <h2 className="text-xl font-semibold text-foreground">Alertas de segurança do lar</h2>
+              <h2 className="text-xl font-semibold text-foreground">Security alerts do lar</h2>
               {alerts.length === 0 ? (
                 <div className="mt-4">
-                  <EmptyState title="Nenhum alerta residencial" hint="Alertas de segurança da Central de alertas aparecem aqui." />
+                  <EmptyState title="No home alert" hint="Security alerts from the Alert center appear here." />
                 </div>
               ) : (
                 <div className="mt-4 space-y-3">
@@ -240,7 +240,7 @@ function SmartHome() {
                           <p className="text-xs text-muted-foreground">{alert.category} · {new Date(alert.created_at).toLocaleString("pt-BR")}</p>
                         </div>
                         <div className="flex items-center gap-2">
-                          <Pill tone={alert.severity === "critical" ? "wine" : "gold"}>{alert.status === "open" ? "aberto" : alert.status}</Pill>
+                          <Pill tone={alert.severity === "critical" ? "wine" : "gold"}>{alert.status === "open" ? "open" : alert.status}</Pill>
                           {alert.status !== "resolved" && (
                             <button onClick={() => resolveAlert(alert.id)} className="rounded-full border border-border px-3 py-1 text-xs">
                               Resolver
@@ -259,11 +259,11 @@ function SmartHome() {
             <Card>
               <div className="flex items-center gap-3">
                 <Home className="h-5 w-5 text-olive" />
-                <h2 className="text-xl font-semibold text-foreground">Observações da casa</h2>
+                <h2 className="text-xl font-semibold text-foreground">Observations da casa</h2>
               </div>
               {observations.length === 0 ? (
                 <div className="mt-5">
-                  <EmptyState title="Nenhuma observação da casa" hint="Adicione observações manualmente ou conecte dispositivos depois." />
+                  <EmptyState title="No home observation" hint="Add observations manually or connect devices later." />
                 </div>
               ) : (
                 <div className="mt-5 space-y-3">
@@ -294,10 +294,10 @@ function SmartHome() {
                           />
                           <div className="flex flex-wrap gap-2">
                             <button onClick={() => saveObservationEdit(item)} className="rounded-full bg-olive px-3 py-1.5 text-xs font-medium text-ivory">
-                              Salvar
+                              Save
                             </button>
                             <button onClick={() => setEditingObservationId(null)} className="rounded-full border border-border px-3 py-1.5 text-xs">
-                              Cancelar
+                              Cancel
                             </button>
                           </div>
                         </div>
@@ -314,16 +314,16 @@ function SmartHome() {
                           )}
                           <div className="mt-3 flex flex-wrap gap-2 text-xs">
                             <button onClick={() => startEditObservation(item)} className="inline-flex items-center gap-1 rounded-full border border-border px-3 py-1.5">
-                              <Pencil className="h-3 w-3" /> Editar
+                              <Pencil className="h-3 w-3" /> Edit
                             </button>
                             <button onClick={() => shareObservation(item)} className="inline-flex items-center gap-1 rounded-full border border-border px-3 py-1.5">
-                              <Share2 className="h-3 w-3" /> Compartilhar
+                              <Share2 className="h-3 w-3" /> Share
                             </button>
                             <button onClick={() => archiveObservation(item)} className="inline-flex items-center gap-1 rounded-full border border-border px-3 py-1.5">
-                              <Archive className="h-3 w-3" /> Arquivar
+                              <Archive className="h-3 w-3" /> Archive
                             </button>
                             <button onClick={() => deleteObservation(item)} className="inline-flex items-center gap-1 rounded-full border border-wine/30 bg-wine/5 px-3 py-1.5 text-wine">
-                              <Trash2 className="h-3 w-3" /> Excluir
+                              <Trash2 className="h-3 w-3" /> Delete
                             </button>
                           </div>
                         </>
@@ -337,18 +337,18 @@ function SmartHome() {
             <Card>
               <div className="flex items-center gap-3">
                 <Plus className="h-5 w-5 text-olive" />
-                <h2 className="text-xl font-semibold text-foreground">Adicionar observação</h2>
+                <h2 className="text-xl font-semibold text-foreground">Add observation</h2>
               </div>
               <div className="mt-4 space-y-3">
-                <input value={draft.metric} onChange={(event) => setDraft({ ...draft, metric: event.target.value })} placeholder="Métrica, ex.: porta da frente" className="w-full rounded-xl border border-border bg-ivory px-3 py-2 text-sm" />
-                <input value={draft.value_text} onChange={(event) => setDraft({ ...draft, value_text: event.target.value })} placeholder="Valor, ex.: trancada" className="w-full rounded-xl border border-border bg-ivory px-3 py-2 text-sm" />
+                <input value={draft.metric} onChange={(event) => setDraft({ ...draft, metric: event.target.value })} placeholder="Metric, e.g. front door" className="w-full rounded-xl border border-border bg-ivory px-3 py-2 text-sm" />
+                <input value={draft.value_text} onChange={(event) => setDraft({ ...draft, value_text: event.target.value })} placeholder="Value, e.g. locked" className="w-full rounded-xl border border-border bg-ivory px-3 py-2 text-sm" />
                 <GlassSelect
                   value={draft.domain}
                   onChange={(value) => setDraft({ ...draft, domain: value })}
                   options={HOME_DOMAIN_OPTIONS}
                 />
-                <textarea value={draft.notes} onChange={(event) => setDraft({ ...draft, notes: event.target.value })} placeholder="Observações" rows={3} className="w-full rounded-xl border border-border bg-ivory px-3 py-2 text-sm" />
-                <button onClick={addObservation} className="w-full rounded-xl bg-olive px-4 py-2 text-sm text-ivory">Salvar observação</button>
+                <textarea value={draft.notes} onChange={(event) => setDraft({ ...draft, notes: event.target.value })} placeholder="Observations" rows={3} className="w-full rounded-xl border border-border bg-ivory px-3 py-2 text-sm" />
+                <button onClick={addObservation} className="w-full rounded-xl bg-olive px-4 py-2 text-sm text-ivory">Save observation</button>
               </div>
             </Card>
           </div>
@@ -369,6 +369,6 @@ function stripArchiveMarker(notes: string) {
 function sourceLabel(source: string | null) {
   if (source === "manual" || source === "manual_home_entry") return "registro manual";
   if (source === "device") return "dispositivo";
-  if (source === "family") return "família";
-  return source ?? "fonte não informada";
+  if (source === "family") return "family";
+  return source ?? "source not informed";
 }

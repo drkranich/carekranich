@@ -8,6 +8,7 @@ import {
   Scripts,
 } from "@tanstack/react-router";
 import { AuthProvider } from "@/hooks/use-auth";
+import { GoogleTranslateGuard } from "@/components/GoogleTranslateGuard";
 import { PlatformBrandRuntime } from "@/components/PlatformBrand";
 import { ScrollManager } from "@/components/ScrollManager";
 import { Toaster } from "sonner";
@@ -79,9 +80,9 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 
 function RootShell({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="en" translate="yes">
       <head><HeadContent /></head>
-      <body>{children}<Scripts /></body>
+      <body translate="yes">{children}<Scripts /></body>
     </html>
   );
 }
@@ -90,6 +91,7 @@ function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   return (
     <QueryClientProvider client={queryClient}>
+      <GoogleTranslateGuard />
       <PlatformBrandRuntime />
       <ScrollManager />
       <AuthProvider>

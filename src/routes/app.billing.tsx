@@ -12,9 +12,9 @@ import { downloadPdf } from "@/lib/pdf";
 export const Route = createFileRoute("/app/billing")({ component: Billing });
 
 const audienceOptions = [
-  { value: "family", label: "Família" },
-  { value: "clinic", label: "Clínica" },
-  { value: "service_provider", label: "Prestador de serviços" },
+  { value: "family", label: "Family" },
+  { value: "clinic", label: "Clinic" },
+  { value: "service_provider", label: "Service provider" },
 ];
 
 const audienceLabel = (value: string) =>
@@ -73,7 +73,7 @@ function Billing() {
       if (error) throw error;
     },
     onSuccess: () => {
-      toast.success("Plano criado");
+      toast.success("Plan created");
       setPlan({
         name: "",
         audience: "clinic",
@@ -86,7 +86,7 @@ function Billing() {
       });
       qc.invalidateQueries({ queryKey: ["platform-plans"] });
     },
-    onError: (error: any) => toast.error(error.message ?? "Não foi possível salvar o plano"),
+    onError: (error: any) => toast.error(error.message ?? "Could not save the plan"),
   });
 
   const updatePlan = useMutation({
@@ -110,12 +110,12 @@ function Billing() {
       if (error) throw error;
     },
     onSuccess: () => {
-      toast.success("Plano atualizado");
+      toast.success("Plan updated");
       setEditingId(null);
       setDraft(null);
       qc.invalidateQueries({ queryKey: ["platform-plans"] });
     },
-    onError: (error: any) => toast.error(error.message ?? "Não foi possível atualizar o plano"),
+    onError: (error: any) => toast.error(error.message ?? "Could not update the plan"),
   });
 
   const revoke = async (subscription: any) => {
@@ -131,7 +131,7 @@ function Billing() {
       .eq("id", subscription.id);
     if (error) toast.error(error.message);
     else {
-      toast.success(next === "revoked" ? "Acesso revogado" : "Acesso restaurado");
+      toast.success(next === "revoked" ? "Access revoked" : "Access restored");
       qc.invalidateQueries({ queryKey: ["tenant-subscriptions", profile?.tenant_id, isSuperAdmin] });
     }
   };
@@ -144,31 +144,31 @@ function Billing() {
       .select("id")
       .maybeSingle();
     if (error) return toast.error(error.message);
-    if (!data) return toast.error("Plano nÃ£o foi atualizado. Verifique suas permissÃµes.");
-    toast.success(p.active ? "Plano arquivado" : "Plano restaurado");
+    if (!data) return toast.error("Plan was not updated. Check your permissions.");
+    toast.success(p.active ? "Plan archived" : "Plan restored");
     qc.invalidateQueries({ queryKey: ["platform-plans"] });
   };
 
   const sharePlan = async (p: any) => {
     const text = [
-      `Plano: ${p.name}`,
-      `PÃºblico: ${audienceLabel(p.audience)}`,
-      `PreÃ§o: $${((p.unit_amount ?? 0) / 100).toFixed(2)} / ${p.interval ?? "mÃªs"}`,
-      `Stripe Price ID: ${p.stripe_price_id ?? "nÃ£o configurado"}`,
+      `Plan: ${p.name}`,
+      `Audience: ${audienceLabel(p.audience)}`,
+      `Price: $${((p.unit_amount ?? 0) / 100).toFixed(2)} / ${p.interval ?? "month"}`,
+      `Stripe Price ID: ${p.stripe_price_id ?? "not configured"}`,
       "",
       p.description ?? "",
       ...(Array.isArray(p.features) ? p.features.map((feature: string) => `- ${feature}`) : []),
     ].filter(Boolean).join("\n");
     try {
       await navigator.clipboard.writeText(text);
-      toast.success("Resumo do plano copiado");
+      toast.success("Plan summary copied");
     } catch {
-      window.prompt("Copie o plano:", text);
+      window.prompt("Copy the plan:", text);
     }
   };
 
   const deletePlan = async (p: any) => {
-    if (!window.confirm(`Excluir definitivamente o plano "${p.name}"?`)) return;
+    if (!window.confirm(`Permanently delete plan "${p.name}"?`)) return;
     const { data, error } = await (supabase as any)
       .from("platform_plans")
       .delete()
@@ -176,56 +176,56 @@ function Billing() {
       .select("id")
       .maybeSingle();
     if (error) return toast.error(error.message);
-    if (!data) return toast.error("Plano nÃ£o foi excluÃ­do. Verifique assinaturas vinculadas ou permissÃµes.");
-    toast.success("Plano excluÃ­do");
+    if (!data) return toast.error("Plan was not deleted. Check linked subscriptions or permissions.");
+    toast.success("Plan deleted");
     qc.invalidateQueries({ queryKey: ["platform-plans"] });
   };
 
   const exportPlanPdf = (p: any) => {
-    downloadPdf(`plano-${p.name}`, `Plano ${p.name}`, [
-      `Público: ${audienceLabel(p.audience)}`,
-      `Preço: $${((p.unit_amount ?? 0) / 100).toFixed(2)} / ${p.interval ?? "mês"}`,
-      `Status: ${p.active ? "ativo" : "inativo"}`,
-      `Limite de residentes: ${p.resident_limit ?? "ilimitado"}`,
-      `Limite de assentos: ${p.seat_limit ?? "ilimitado"}`,
-      `Stripe Price ID: ${p.stripe_price_id ?? "não configurado"}`,
+    downloadPdf(`plan-${p.name}`, `Plan ${p.name}`, [
+      `Audience: ${audienceLabel(p.audience)}`,
+      `Price: $${((p.unit_amount ?? 0) / 100).toFixed(2)} / ${p.interval ?? "month"}`,
+      `Status: ${p.active ? "active" : "inactive"}`,
+      `Resident limit: ${p.resident_limit ?? "unlimited"}`,
+      `Seat limit: ${p.seat_limit ?? "unlimited"}`,
+      `Stripe Price ID: ${p.stripe_price_id ?? "not configured"}`,
       "",
-      `Descrição: ${p.description ?? "-"}`,
+      `Description: ${p.description ?? "-"}`,
       "",
-      "Recursos incluídos:",
+      "Included features:",
       ...(Array.isArray(p.features) ? p.features.map((f: string) => `- ${f}`) : []),
       "",
-      `Gerado em ${new Date().toLocaleString("pt-BR")} - Care Kranich`,
+      `Generated at ${new Date().toLocaleString("pt-BR")} - Care Kranich`,
     ]);
   };
 
   const exportBillingReport = () => {
     const planLines = (plans.data ?? []).flatMap((p: any) => [
-      `${p.name} (${audienceLabel(p.audience)}) - $${((p.unit_amount ?? 0) / 100).toFixed(2)}/${p.interval ?? "mês"} - ${p.active ? "ativo" : "inativo"}`,
+      `${p.name} (${audienceLabel(p.audience)}) - $${((p.unit_amount ?? 0) / 100).toFixed(2)}/${p.interval ?? "month"} - ${p.active ? "active" : "inactive"}`,
     ]);
     const subLines = (subscriptions.data ?? []).flatMap((s: any) => [
-      `${s.stripe_subscription_id ?? s.id} - status ${s.status} - acesso ${s.access_status}`,
+      `${s.stripe_subscription_id ?? s.id} - status ${s.status} - access ${s.access_status}`,
     ]);
-    downloadPdf("relatorio-planos-faturamento", "Relatório de Planos e Faturamento", [
-      `Planos cadastrados: ${plans.data?.length ?? 0}`,
-      `Assinaturas: ${subscriptions.data?.length ?? 0}`,
-      `Acessos revogados: ${(subscriptions.data ?? []).filter((s: any) => s.access_status === "revoked").length}`,
+    downloadPdf("plans-billing-report", "Plans and Billing Report", [
+      `Registered plans: ${plans.data?.length ?? 0}`,
+      `Subscriptions: ${subscriptions.data?.length ?? 0}`,
+      `Revoked access: ${(subscriptions.data ?? []).filter((s: any) => s.access_status === "revoked").length}`,
       "",
-      "PLANOS",
+      "PLANS",
       ...planLines,
       "",
-      "ASSINATURAS",
-      ...(subLines.length ? subLines : ["Nenhuma assinatura registrada."]),
+      "SUBSCRIPTIONS",
+      ...(subLines.length ? subLines : ["No subscriptions registered."]),
       "",
-      `Gerado em ${new Date().toLocaleString("pt-BR")} - Care Kranich`,
+      `Generated at ${new Date().toLocaleString("pt-BR")} - Care Kranich`,
     ]);
   };
 
   return (
     <>
       <PageHeader
-        title="Planos e faturamento"
-        subtitle="Os planos ficam conectados a Stripe Price IDs para a cobrança sincronizar sem alterar valores manualmente no Stripe."
+        title="Plans and billing"
+        subtitle="Plans stay connected to Stripe Price IDs so billing can sync without manually changing values in Stripe."
         action={
           <div className="flex items-center gap-2">
             <Pill tone="olive">Stripe Price ID</Pill>
@@ -233,33 +233,33 @@ function Billing() {
               onClick={exportBillingReport}
               className="rounded-full border border-moss/40 bg-white/60 px-4 py-2 text-xs font-medium text-foreground transition hover:bg-moss/15"
             >
-              Relatório PDF
+              PDF report
             </button>
           </div>
         }
       />
       <div className="grid gap-4 md:grid-cols-3">
-        <Stat label="Planos" value={plans.data?.length ?? "-"} sub="Catálogo editável" tone="olive" />
-        <Stat label="Assinaturas" value={subscriptions.data?.length ?? "-"} sub="Acesso das organizações" tone="moss" />
-        <Stat label="Revogadas" value={(subscriptions.data ?? []).filter((s: any) => s.access_status === "revoked").length} sub="Pagamento bloqueado" tone="wine" />
+        <Stat label="Plans" value={plans.data?.length ?? "-"} sub="Editable catalog" tone="olive" />
+        <Stat label="Subscriptions" value={subscriptions.data?.length ?? "-"} sub="Organization access" tone="moss" />
+        <Stat label="Revoked" value={(subscriptions.data ?? []).filter((s: any) => s.access_status === "revoked").length} sub="Payment blocked" tone="wine" />
       </div>
       {isSuperAdmin && (
         <Card className="mt-6">
-          <h2 className="text-xl font-semibold text-foreground">Criar plano</h2>
+          <h2 className="text-xl font-semibold text-foreground">Create plan</h2>
           <div className="mt-4 grid gap-3 md:grid-cols-4">
-            <input value={plan.name} onChange={(e) => setPlan({ ...plan, name: e.target.value })} placeholder="Nome do plano" className="rounded-xl border border-border bg-ivory px-3 py-2 text-sm" />
+            <input value={plan.name} onChange={(e) => setPlan({ ...plan, name: e.target.value })} placeholder="Plan name" className="rounded-xl border border-border bg-ivory px-3 py-2 text-sm" />
             <GlassSelect
               value={plan.audience}
               onChange={(value) => setPlan({ ...plan, audience: value })}
               options={audienceOptions}
             />
             <input value={plan.stripe_price_id} onChange={(e) => setPlan({ ...plan, stripe_price_id: e.target.value })} placeholder="price_..." className="rounded-xl border border-border bg-ivory px-3 py-2 text-sm" />
-            <input value={plan.unit_amount} onChange={(e) => setPlan({ ...plan, unit_amount: e.target.value })} placeholder="Preço mensal" className="rounded-xl border border-border bg-ivory px-3 py-2 text-sm" />
-            <input value={plan.resident_limit} onChange={(e) => setPlan({ ...plan, resident_limit: e.target.value })} placeholder="Limite de residentes" className="rounded-xl border border-border bg-ivory px-3 py-2 text-sm" />
-            <input value={plan.seat_limit} onChange={(e) => setPlan({ ...plan, seat_limit: e.target.value })} placeholder="Limite de assentos" className="rounded-xl border border-border bg-ivory px-3 py-2 text-sm" />
-            <input value={plan.description} onChange={(e) => setPlan({ ...plan, description: e.target.value })} placeholder="Descrição do plano" className="rounded-xl border border-border bg-ivory px-3 py-2 text-sm md:col-span-2" />
-            <textarea value={plan.features} onChange={(e) => setPlan({ ...plan, features: e.target.value })} placeholder="Um recurso por linha" rows={3} className="rounded-xl border border-border bg-ivory px-3 py-2 text-sm md:col-span-3" />
-            <button onClick={() => createPlan.mutate()} disabled={!plan.name || !plan.stripe_price_id} className="rounded-xl bg-olive px-4 py-2 text-sm text-ivory disabled:opacity-50">Salvar plano</button>
+            <input value={plan.unit_amount} onChange={(e) => setPlan({ ...plan, unit_amount: e.target.value })} placeholder="Monthly price" className="rounded-xl border border-border bg-ivory px-3 py-2 text-sm" />
+            <input value={plan.resident_limit} onChange={(e) => setPlan({ ...plan, resident_limit: e.target.value })} placeholder="Resident limit" className="rounded-xl border border-border bg-ivory px-3 py-2 text-sm" />
+            <input value={plan.seat_limit} onChange={(e) => setPlan({ ...plan, seat_limit: e.target.value })} placeholder="Seat limit" className="rounded-xl border border-border bg-ivory px-3 py-2 text-sm" />
+            <input value={plan.description} onChange={(e) => setPlan({ ...plan, description: e.target.value })} placeholder="Plan description" className="rounded-xl border border-border bg-ivory px-3 py-2 text-sm md:col-span-2" />
+            <textarea value={plan.features} onChange={(e) => setPlan({ ...plan, features: e.target.value })} placeholder="One feature per line" rows={3} className="rounded-xl border border-border bg-ivory px-3 py-2 text-sm md:col-span-3" />
+            <button onClick={() => createPlan.mutate()} disabled={!plan.name || !plan.stripe_price_id} className="rounded-xl bg-olive px-4 py-2 text-sm text-ivory disabled:opacity-50">Save plan</button>
           </div>
         </Card>
       )}
@@ -282,7 +282,7 @@ function Billing() {
                 )}
                 <p className="mt-1 text-xs text-muted-foreground">{audienceLabel(p.audience)}</p>
               </div>
-              <Pill tone={p.active ? "moss" : "muted"}>{p.active ? "ativo" : "inativo"}</Pill>
+              <Pill tone={p.active ? "moss" : "muted"}>{p.active ? "active" : "inactive"}</Pill>
             </div>
             {isEditing ? (
               <div className="mt-4 grid gap-3 md:grid-cols-2">
@@ -293,26 +293,26 @@ function Billing() {
                 />
                 <input value={current.unit_amount_display} onChange={(e) => setDraft({ ...current, unit_amount_display: e.target.value })} className="rounded-xl border border-border bg-ivory px-3 py-2 text-sm" />
                 <input value={current.stripe_price_id ?? ""} onChange={(e) => setDraft({ ...current, stripe_price_id: e.target.value })} placeholder="Stripe Price ID" className="rounded-xl border border-border bg-ivory px-3 py-2 text-sm md:col-span-2" />
-                <input value={current.resident_limit_display} onChange={(e) => setDraft({ ...current, resident_limit_display: e.target.value })} placeholder="Limite de residentes" className="rounded-xl border border-border bg-ivory px-3 py-2 text-sm" />
-                <input value={current.seat_limit_display} onChange={(e) => setDraft({ ...current, seat_limit_display: e.target.value })} placeholder="Limite de assentos" className="rounded-xl border border-border bg-ivory px-3 py-2 text-sm" />
+                <input value={current.resident_limit_display} onChange={(e) => setDraft({ ...current, resident_limit_display: e.target.value })} placeholder="Resident limit" className="rounded-xl border border-border bg-ivory px-3 py-2 text-sm" />
+                <input value={current.seat_limit_display} onChange={(e) => setDraft({ ...current, seat_limit_display: e.target.value })} placeholder="Seat limit" className="rounded-xl border border-border bg-ivory px-3 py-2 text-sm" />
                 <textarea value={current.description ?? ""} onChange={(e) => setDraft({ ...current, description: e.target.value })} rows={3} className="rounded-xl border border-border bg-ivory px-3 py-2 text-sm md:col-span-2" />
                 <textarea value={current.features_text} onChange={(e) => setDraft({ ...current, features_text: e.target.value })} rows={5} className="rounded-xl border border-border bg-ivory px-3 py-2 text-sm md:col-span-2" />
                 <label className="flex items-center gap-2 text-sm text-muted-foreground">
                   <input type="checkbox" checked={current.active} onChange={(e) => setDraft({ ...current, active: e.target.checked })} className="h-4 w-4 accent-olive" />
-                  Plano ativo
+                  Plan active
                 </label>
                 <div className="flex justify-end gap-2">
-                  <button onClick={() => { setEditingId(null); setDraft(null); }} className="rounded-full border border-border px-3 py-1.5 text-xs">Cancelar</button>
-                  <button onClick={() => updatePlan.mutate(current)} className="rounded-full bg-olive px-3 py-1.5 text-xs text-ivory">Salvar alterações</button>
+                  <button onClick={() => { setEditingId(null); setDraft(null); }} className="rounded-full border border-border px-3 py-1.5 text-xs">Cancel</button>
+                  <button onClick={() => updatePlan.mutate(current)} className="rounded-full bg-olive px-3 py-1.5 text-xs text-ivory">Save changes</button>
                 </div>
               </div>
             ) : (
               <>
-                <p className="mt-4 text-3xl font-semibold text-olive">${((p.unit_amount ?? 0) / 100).toFixed(0)}<span className="text-sm text-muted-foreground">/{p.interval === "month" ? "mês" : p.interval}</span></p>
+                <p className="mt-4 text-3xl font-semibold text-olive">${((p.unit_amount ?? 0) / 100).toFixed(0)}<span className="text-sm text-muted-foreground">/{p.interval === "month" ? "month" : p.interval}</span></p>
                 {p.description && <p className="mt-3 text-sm leading-6 text-muted-foreground">{p.description}</p>}
                 <div className="mt-4 rounded-2xl border border-white/70 bg-white/45 p-4">
                   <p className="text-xs font-semibold uppercase text-muted-foreground">Stripe Price ID</p>
-                  <code className="mt-1 block break-all text-xs text-olive">{p.stripe_price_id ?? "Não configurado"}</code>
+                  <code className="mt-1 block break-all text-xs text-olive">{p.stripe_price_id ?? "Not configured"}</code>
                 </div>
                 <ul className="mt-4 grid gap-2 text-sm text-foreground/80">
                   {(Array.isArray(p.features) ? p.features : []).map((feature: string) => (
@@ -324,7 +324,7 @@ function Billing() {
                     onClick={() => exportPlanPdf(p)}
                     className="rounded-full border border-moss/40 bg-white/50 px-3 py-1.5 text-xs text-foreground hover:bg-moss/15"
                   >
-                    PDF do plano
+                    Plan PDF
                   </button>
                 </div>
                 <CrudActions
@@ -334,7 +334,7 @@ function Billing() {
                     setDraft(planToDraft(p));
                   } : undefined}
                   onArchive={isSuperAdmin ? () => archivePlan(p) : undefined}
-                  archiveLabel={p.active ? "Arquivar" : "Restaurar"}
+                  archiveLabel={p.active ? "Archive" : "Restore"}
                   onShare={() => sharePlan(p)}
                   onDelete={isSuperAdmin ? () => deletePlan(p) : undefined}
                 />
@@ -345,18 +345,18 @@ function Billing() {
         })}
       </div>
       <Card className="mt-6">
-        <h2 className="text-xl font-semibold text-foreground">Acesso por status de pagamento</h2>
+        <h2 className="text-xl font-semibold text-foreground">Access by payment status</h2>
         <div className="mt-4 space-y-3">
           {(subscriptions.data ?? []).map((s: any) => (
             <div key={s.id} className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-white/70 bg-white/50 p-4">
               <div>
                 <p className="font-medium text-foreground">{s.stripe_subscription_id ?? s.id}</p>
-                <p className="text-xs text-muted-foreground">{s.status} - {s.access_status} - {s.stripe_price_id ?? "sem preço"}</p>
+                <p className="text-xs text-muted-foreground">{s.status} - {s.access_status} - {s.stripe_price_id ?? "no price"}</p>
               </div>
-              {isSuperAdmin && <button onClick={() => revoke(s)} className="rounded-full border border-wine/25 px-3 py-1.5 text-xs text-wine">{s.access_status === "revoked" ? "Restaurar acesso" : "Revogar acesso"}</button>}
+              {isSuperAdmin && <button onClick={() => revoke(s)} className="rounded-full border border-wine/25 px-3 py-1.5 text-xs text-wine">{s.access_status === "revoked" ? "Restore acesso" : "Revogar acesso"}</button>}
             </div>
           ))}
-          {subscriptions.data?.length === 0 && <p className="py-6 text-center text-sm text-muted-foreground">Ainda não há assinaturas.</p>}
+          {subscriptions.data?.length === 0 && <p className="py-6 text-center text-sm text-muted-foreground">No subscriptions yet.</p>}
         </div>
       </Card>
     </>
