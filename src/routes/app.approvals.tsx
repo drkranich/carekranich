@@ -40,20 +40,20 @@ const accessRoutes = [
   { route: "/app/cognitive", label: "Cognitive twin", group: "IA" },
   { route: "/app/longevity", label: "Longevity", group: "IA" },
   { route: "/app/ai", label: "AI insights", group: "IA" },
-  { route: "/app/alerts", label: "Alertas", group: "Operacao" },
-  { route: "/app/workflows", label: "Workflows", group: "Operacao" },
-  { route: "/app/smart-home", label: "Casa inteligente", group: "Operacao" },
-  { route: "/app/telemedicine", label: "Telemedicina", group: "Operacao" },
+  { route: "/app/alerts", label: "Alertas", group: "Operação" },
+  { route: "/app/workflows", label: "Workflows", group: "Operação" },
+  { route: "/app/smart-home", label: "Casa inteligente", group: "Operação" },
+  { route: "/app/telemedicine", label: "Telemedicina", group: "Operação" },
   { route: "/app/command", label: "Command center", group: "Admin" },
   { route: "/app/documents", label: "Documentos", group: "Admin" },
-  { route: "/app/tenants", label: "Organizacao", group: "Admin" },
+  { route: "/app/tenants", label: "Organização", group: "Admin" },
   { route: "/app/contracts", label: "Contratos", group: "Admin" },
-  { route: "/app/billing", label: "Planos e cobranca", group: "Admin" },
+  { route: "/app/billing", label: "Planos e cobrança", group: "Admin" },
   { route: "/app/inbox", label: "Inbox", group: "Admin" },
   { route: "/app/email-marketing", label: "Email marketing", group: "Admin" },
   { route: "/app/identity", label: "Reconhecimento facial", group: "Admin" },
   { route: "/app/admin", label: "Super admin", group: "Plataforma" },
-  { route: "/app/approvals", label: "Aprovacoes e acessos", group: "Plataforma" },
+  { route: "/app/approvals", label: "Aprovações e acessos", group: "Plataforma" },
 ] as const;
 
 function Approvals() {
@@ -222,7 +222,7 @@ function Approvals() {
           onClick={() => setView("people")}
           className={`rounded-xl px-4 py-2 text-xs font-medium ${view === "people" ? "bg-olive text-ivory" : "text-foreground/70 hover:bg-white/60"}`}
         >
-          Pessoas e aprovacoes
+          Pessoas e aprovações
         </button>
         <button
           onClick={() => setView("roles")}
@@ -349,7 +349,7 @@ function Approvals() {
                   <GlassSelect
                     className="mt-3"
                     value=""
-                    placeholder="Adicionar permissao..."
+                    placeholder="Adicionar permissão..."
                     onChange={(value) => addRole(member.id, member.tenant_id, value as AppRole)}
                     options={roleOptions.map((role) => ({ value: role, label: ROLE_LABELS[role] }))}
                   />
