@@ -203,6 +203,13 @@ const ALL_SECTIONS: NavSection[] = [
         userKinds: ["clinic", "staff"],
       },
       {
+        to: "/app/ancestry-studio",
+        label: "Estúdio de ancestralidade",
+        icon: "M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20z M2 12h20 M12 2c2.5 3 4 6.5 4 10s-1.5 7-4 10c-2.5-3-4-6.5-4-10s1.5-7 4-10z M8 8l1 1 M15 15l1 1",
+        roles: ["doctor", "clinic_admin", "super_admin"],
+        userKinds: ["clinic", "staff"],
+      },
+      {
         to: "/app/genetics",
         label: "Genética (kits)",
         icon: "M4 2c0 5 3 6 8 10s8 5 8 10 M20 2c0 5-3 6-8 10S4 17 4 22 M6 5h12 M6 19h12 M8.5 9h7 M8.5 15h7",
