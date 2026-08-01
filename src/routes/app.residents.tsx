@@ -1,6 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
+import { CrudActions } from "@/components/app/CrudActions";
 import { Card, PageHeader, Pill, Avatar } from "@/components/app/primitives";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -25,6 +27,7 @@ type Resident = {
   hobbies: string[] | null;
   tenant_id: string;
   created_at: string;
+  archived_at?: string | null;
 };
 
 type TenantOption = { id: string; name: string };
@@ -63,11 +66,46 @@ function Residents() {
 
   const del = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from("residents").delete().eq("id", id);
+      const { data, error } = await supabase.from("residents").delete().eq("id", id).select("id").maybeSingle();
       if (error) throw error;
+      if (!data) throw new Error("Residente nÃ£o foi excluÃ­do. Verifique suas permissÃµes.");
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["residents"] }),
+    onSuccess: () => {
+      toast.success("Residente excluÃ­do");
+      qc.invalidateQueries({ queryKey: ["residents"] });
+    },
+    onError: (error: any) => toast.error(error.message ?? "NÃ£o foi possÃ­vel excluir"),
   });
+
+  const archiveResident = async (resident: Resident) => {
+    const archive = !resident.archived_at;
+    const { data, error } = await (supabase as any)
+      .from("residents")
+      .update({ archived_at: archive ? new Date().toISOString() : null })
+      .eq("id", resident.id)
+      .select("id")
+      .maybeSingle();
+    if (error) return toast.error(error.message);
+    if (!data) return toast.error("Residente nÃ£o foi arquivado. Verifique suas permissÃµes.");
+    toast.success(archive ? "Residente arquivado" : "Residente restaurado");
+    qc.invalidateQueries({ queryKey: ["residents"] });
+  };
+
+  const shareResident = async (resident: Resident) => {
+    const text = [
+      `Residente: ${resident.full_name}`,
+      resident.preferred_name ? `Nome preferido: ${resident.preferred_name}` : "",
+      resident.date_of_birth ? `Nascimento: ${resident.date_of_birth}` : "",
+      resident.language ? `Idioma: ${resident.language}` : "",
+      resident.bio ? `Bio: ${resident.bio}` : "",
+    ].filter(Boolean).join("\n");
+    try {
+      await navigator.clipboard.writeText(text);
+      toast.success("Resumo do residente copiado");
+    } catch {
+      window.prompt("Copie o resumo do residente:", text);
+    }
+  };
 
   const canEdit = hasAnyRole(["caregiver", "nurse", "doctor", "clinic_admin", "super_admin"]);
   const canDelete = hasAnyRole(["clinic_admin", "super_admin"]);
@@ -137,24 +175,14 @@ function Residents() {
                   {r.bio && <p className="mt-2 text-sm text-foreground/80 line-clamp-3">{r.bio}</p>}
                 </div>
               </div>
-              <div className="mt-4 flex gap-2">
-                {canEdit && (
-                  <button
-                    onClick={() => setEditing(r)}
-                    className="rounded-full border border-border bg-ivory px-3 py-1.5 text-xs hover:bg-cream"
-                  >
-                    Editar
-                  </button>
-                )}
-                {canDelete && (
-                  <button
-                    onClick={() => confirm(`Excluir ${r.full_name}?`) && del.mutate(r.id)}
-                    className="rounded-full border border-wine/30 px-3 py-1.5 text-xs text-wine hover:bg-wine/5"
-                  >
-                    Excluir
-                  </button>
-                )}
-              </div>
+              <CrudActions
+                className="mt-4"
+                onEdit={canEdit ? () => setEditing(r) : undefined}
+                onArchive={canEdit && "archived_at" in r ? () => archiveResident(r) : undefined}
+                archiveLabel={r.archived_at ? "Restaurar" : "Arquivar"}
+                onShare={() => shareResident(r)}
+                onDelete={canDelete ? () => confirm(`Excluir ${r.full_name}?`) && del.mutate(r.id) : undefined}
+              />
             </Card>
           ))}
         </div>

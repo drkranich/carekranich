@@ -1,7 +1,7 @@
 import { createFileRoute, Navigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { Archive, Expand, MailPlus, Pencil, Sparkles, Trash2, X } from "lucide-react";
+import { Archive, Expand, MailPlus, Pencil, Share2, Sparkles, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 import { Card, PageHeader, Pill, Stat } from "@/components/app/primitives";
 import { GlassSelect } from "@/components/app/GlassSelect";
@@ -187,8 +187,14 @@ function EmailMarketing() {
 
   const deleteTemplate = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await (supabase as any).from("email_templates").delete().eq("id", id);
+      const { data, error } = await (supabase as any)
+        .from("email_templates")
+        .delete()
+        .eq("id", id)
+        .select("id")
+        .maybeSingle();
       if (error) throw error;
+      if (!data) throw new Error("Template nÃ£o foi excluÃ­do. Verifique suas permissÃµes.");
     },
     onSuccess: () => {
       toast.success("Template excluído");
@@ -255,14 +261,24 @@ function EmailMarketing() {
 
   const archiveCampaign = useMutation({
     mutationFn: async (campaign: any) => {
-      const { error } = await (supabase as any)
+      const archived = campaign.status === "archived";
+      const { data, error } = await (supabase as any)
         .from("email_campaigns")
-        .update({ status: "archived", metrics: { ...(campaign.metrics ?? {}), archived_at: new Date().toISOString() } })
-        .eq("id", campaign.id);
+        .update({
+          status: archived ? "draft" : "archived",
+          metrics: {
+            ...(campaign.metrics ?? {}),
+            archived_at: archived ? null : new Date().toISOString(),
+          },
+        })
+        .eq("id", campaign.id)
+        .select("id")
+        .maybeSingle();
       if (error) throw error;
+      if (!data) throw new Error("Campanha nÃ£o foi arquivada. Verifique suas permissÃµes.");
     },
     onSuccess: () => {
-      toast.success("Campanha arquivada");
+      toast.success("Campanha atualizada");
       qc.invalidateQueries({ queryKey: ["email-campaigns", profile?.tenant_id] });
     },
     onError: (error: any) => toast.error(error.message ?? "Não foi possível arquivar"),
@@ -270,8 +286,14 @@ function EmailMarketing() {
 
   const deleteCampaign = useMutation({
     mutationFn: async (campaign: any) => {
-      const { error } = await (supabase as any).from("email_campaigns").delete().eq("id", campaign.id);
+      const { data, error } = await (supabase as any)
+        .from("email_campaigns")
+        .delete()
+        .eq("id", campaign.id)
+        .select("id")
+        .maybeSingle();
       if (error) throw error;
+      if (!data) throw new Error("Campanha nÃ£o foi excluÃ­da. Verifique suas permissÃµes.");
     },
     onSuccess: () => {
       toast.success("Campanha excluída");
@@ -279,6 +301,33 @@ function EmailMarketing() {
     },
     onError: (error: any) => toast.error(error.message ?? "Não foi possível excluir"),
   });
+
+  const shareTemplate = async (item: any) => {
+    const text = [`Template: ${item.name}`, `Assunto: ${item.subject}`, item.preview ?? "", item.body_html ?? ""]
+      .filter(Boolean)
+      .join("\n\n");
+    try {
+      await navigator.clipboard.writeText(text);
+      toast.success("Template copiado");
+    } catch {
+      window.prompt("Copie o template:", text);
+    }
+  };
+
+  const shareCampaign = async (item: any) => {
+    const text = [
+      `Campanha: ${item.name}`,
+      `AudiÃªncia: ${item.audience}`,
+      `Status: ${item.status}`,
+      item.scheduled_at ? `Agendada: ${new Date(item.scheduled_at).toLocaleString("pt-BR")}` : "Sem agendamento",
+    ].join("\n");
+    try {
+      await navigator.clipboard.writeText(text);
+      toast.success("Campanha copiada");
+    } catch {
+      window.prompt("Copie a campanha:", text);
+    }
+  };
 
   return (
     <>
@@ -369,6 +418,9 @@ function EmailMarketing() {
                 <button onClick={() => setFullPreview({ name: item.name, html: item.body_html })} className="inline-flex items-center gap-1 rounded-full border border-border bg-white/55 px-3 py-1.5 text-xs">
                   <Expand className="h-3.5 w-3.5" /> Corpo inteiro
                 </button>
+                <button onClick={() => shareTemplate(item)} className="inline-flex items-center gap-1 rounded-full border border-sky/30 bg-sky/10 px-3 py-1.5 text-xs">
+                  <Share2 className="h-3.5 w-3.5" /> Compartilhar
+                </button>
                 {!item.is_system && (
                   <>
                     <button onClick={() => startEditTemplate(item)} className="inline-flex items-center gap-1 rounded-full border border-olive/30 bg-white/55 px-3 py-1.5 text-xs text-olive">
@@ -416,8 +468,11 @@ function EmailMarketing() {
                     <button onClick={() => setEditingCampaign(item)} className="inline-flex items-center gap-1 rounded-full border border-border bg-ivory px-3 py-1.5 text-xs text-olive">
                       <Pencil className="h-3.5 w-3.5" /> Editar
                     </button>
-                    <button onClick={() => archiveCampaign.mutate(item)} disabled={item.status === "archived"} className="inline-flex items-center gap-1 rounded-full border border-gold/30 px-3 py-1.5 text-xs disabled:opacity-45">
-                      <Archive className="h-3.5 w-3.5" /> Arquivar
+                    <button onClick={() => archiveCampaign.mutate(item)} className="inline-flex items-center gap-1 rounded-full border border-gold/30 px-3 py-1.5 text-xs">
+                      <Archive className="h-3.5 w-3.5" /> {item.status === "archived" ? "Restaurar" : "Arquivar"}
+                    </button>
+                    <button onClick={() => shareCampaign(item)} className="inline-flex items-center gap-1 rounded-full border border-sky/30 bg-sky/10 px-3 py-1.5 text-xs">
+                      <Share2 className="h-3.5 w-3.5" /> Compartilhar
                     </button>
                     <button onClick={() => window.confirm("Excluir esta campanha?") && deleteCampaign.mutate(item)} className="inline-flex items-center gap-1 rounded-full border border-wine/30 px-3 py-1.5 text-xs text-wine">
                       <Trash2 className="h-3.5 w-3.5" /> Excluir

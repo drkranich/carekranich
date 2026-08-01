@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
 import { Send } from "lucide-react";
 import { toast } from "sonner";
+import { CrudActions } from "@/components/app/CrudActions";
 import { Card, EmptyState, PageHeader, Pill } from "@/components/app/primitives";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -16,6 +17,7 @@ function Inbox() {
   const [subject, setSubject] = useState("");
   const [body, setBody] = useState("");
   const [reply, setReply] = useState("");
+  const [editingSubject, setEditingSubject] = useState("");
 
   const threads = useQuery({
     queryKey: ["inbox-threads", profile?.tenant_id, isSuperAdmin],
@@ -109,6 +111,50 @@ function Inbox() {
     }
   };
 
+  const updateThread = async (thread: any, patch: Record<string, any>, success: string) => {
+    const { data, error } = await (supabase as any)
+      .from("inbox_threads")
+      .update(patch)
+      .eq("id", thread.id)
+      .select("id")
+      .maybeSingle();
+    if (error) return toast.error(error.message);
+    if (!data) return toast.error("Conversa nÃ£o foi atualizada. Verifique suas permissÃµes.");
+    toast.success(success);
+    qc.invalidateQueries({ queryKey: ["inbox-threads", profile?.tenant_id, isSuperAdmin] });
+  };
+
+  const saveThreadSubject = async () => {
+    if (!selected || !editingSubject.trim()) return;
+    await updateThread(selected, { subject: editingSubject.trim() }, "Assunto atualizado");
+    setEditingSubject("");
+  };
+
+  const shareThread = async (thread: any) => {
+    const url = `${window.location.origin}/app/inbox?thread=${thread.id}`;
+    try {
+      await navigator.clipboard.writeText(url);
+      toast.success("Link interno da conversa copiado");
+    } catch {
+      window.prompt("Copie o link da conversa:", url);
+    }
+  };
+
+  const deleteThread = async (thread: any) => {
+    if (!window.confirm(`Excluir definitivamente "${thread.subject}" e suas mensagens?`)) return;
+    const { data, error } = await (supabase as any)
+      .from("inbox_threads")
+      .delete()
+      .eq("id", thread.id)
+      .select("id")
+      .maybeSingle();
+    if (error) return toast.error(error.message);
+    if (!data) return toast.error("Conversa nÃ£o foi excluÃ­da. Verifique suas permissÃµes.");
+    toast.success("Conversa excluÃ­da");
+    setSelectedId(null);
+    qc.invalidateQueries({ queryKey: ["inbox-threads", profile?.tenant_id, isSuperAdmin] });
+  };
+
   return (
     <>
       <PageHeader title="Inbox" subtitle="One place for public-site chat, SaaS users, customers and internal conversations." action={<Pill tone="olive">In-app live record</Pill>} />
@@ -138,11 +184,31 @@ function Inbox() {
             <>
               <div className="flex items-start justify-between gap-3">
                 <div>
-                  <h2 className="text-xl font-semibold text-foreground">{selected.subject}</h2>
+                  {editingSubject ? (
+                    <div className="flex flex-wrap gap-2">
+                      <input
+                        value={editingSubject}
+                        onChange={(event) => setEditingSubject(event.target.value)}
+                        className="rounded-xl border border-border bg-ivory px-3 py-2 text-sm"
+                      />
+                      <button onClick={saveThreadSubject} className="rounded-full bg-olive px-3 py-1.5 text-xs text-ivory">Salvar</button>
+                      <button onClick={() => setEditingSubject("")} className="rounded-full border border-border px-3 py-1.5 text-xs">Cancelar</button>
+                    </div>
+                  ) : (
+                    <h2 className="text-xl font-semibold text-foreground">{selected.subject}</h2>
+                  )}
                   <p className="mt-1 text-xs text-muted-foreground">{selected.source} · {selected.status}</p>
                 </div>
                 <Pill tone="moss">{messages.data?.length ?? 0} messages</Pill>
               </div>
+              <CrudActions
+                className="mt-4"
+                onEdit={() => setEditingSubject(selected.subject)}
+                onArchive={() => updateThread(selected, { status: selected.status === "archived" ? "open" : "archived" }, selected.status === "archived" ? "Conversa restaurada" : "Conversa arquivada")}
+                archiveLabel={selected.status === "archived" ? "Restaurar" : "Arquivar"}
+                onShare={() => shareThread(selected)}
+                onDelete={() => deleteThread(selected)}
+              />
               <div className="mt-5 space-y-3">
                 {(messages.data ?? []).map((message: any) => (
                   <div key={message.id} className={`rounded-2xl p-4 ${message.sender_id === user?.id ? "ml-auto max-w-[82%] bg-olive text-ivory" : "max-w-[82%] bg-cream/80 text-foreground"}`}>

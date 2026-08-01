@@ -2,6 +2,7 @@ import { createFileRoute, Navigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
+import { CrudActions } from "@/components/app/CrudActions";
 import { Card, EmptyState, PageHeader, Pill } from "@/components/app/primitives";
 import { GlassSelect } from "@/components/app/GlassSelect";
 import { supabase } from "@/integrations/supabase/client";
@@ -39,6 +40,7 @@ function Contracts() {
   const { isAdmin, isSuperAdmin, profile, user, displayName } = useAuth();
   const qc = useQueryClient();
   const [draft, setDraft] = useState({ title: "", body: "", contract_type: "subscription" });
+  const [editingContract, setEditingContract] = useState<any | null>(null);
   if (!isAdmin && !isSuperAdmin) return <Navigate to="/app" />;
 
   const contracts = useQuery({
@@ -110,9 +112,61 @@ function Contracts() {
   });
 
   const setStatus = async (id: string, status: string) => {
-    const { error } = await (supabase as any).from("contracts").update({ status }).eq("id", id);
+    const { data, error } = await (supabase as any)
+      .from("contracts")
+      .update({ status })
+      .eq("id", id)
+      .select("id")
+      .maybeSingle();
     if (error) toast.error(error.message);
+    else if (!data) toast.error("Contrato nÃ£o foi atualizado. Verifique suas permissÃµes.");
     else qc.invalidateQueries({ queryKey: ["contracts", profile?.tenant_id, isSuperAdmin] });
+  };
+
+  const saveContractEdit = async () => {
+    if (!editingContract?.title?.trim() || !editingContract?.body?.trim()) {
+      toast.error("Informe tÃ­tulo e corpo do contrato.");
+      return;
+    }
+    const { data, error } = await (supabase as any)
+      .from("contracts")
+      .update({
+        title: editingContract.title.trim(),
+        body: editingContract.body.trim(),
+        contract_type: editingContract.contract_type,
+      })
+      .eq("id", editingContract.id)
+      .select("id")
+      .maybeSingle();
+    if (error) return toast.error(error.message);
+    if (!data) return toast.error("Contrato nÃ£o foi editado. Verifique suas permissÃµes.");
+    toast.success("Contrato atualizado");
+    setEditingContract(null);
+    qc.invalidateQueries({ queryKey: ["contracts", profile?.tenant_id, isSuperAdmin] });
+  };
+
+  const shareContract = async (contract: any) => {
+    const text = [`Contrato: ${contract.title}`, `Status: ${contract.status}`, "", contract.body].join("\n");
+    try {
+      await navigator.clipboard.writeText(text);
+      toast.success("Contrato copiado para compartilhamento");
+    } catch {
+      window.prompt("Copie o contrato:", text);
+    }
+  };
+
+  const deleteContract = async (contract: any) => {
+    if (!window.confirm(`Excluir definitivamente "${contract.title}"?`)) return;
+    const { data, error } = await (supabase as any)
+      .from("contracts")
+      .delete()
+      .eq("id", contract.id)
+      .select("id")
+      .maybeSingle();
+    if (error) return toast.error(error.message);
+    if (!data) return toast.error("Contrato nÃ£o foi excluÃ­do. Verifique suas permissÃµes.");
+    toast.success("Contrato excluÃ­do");
+    qc.invalidateQueries({ queryKey: ["contracts", profile?.tenant_id, isSuperAdmin] });
   };
 
   const exportSignedPdf = (contract: any, signature: any) => {
@@ -164,7 +218,32 @@ function Contracts() {
                 </div>
                 <Pill tone={contract.status === "signed" ? "moss" : contract.status === "active" ? "olive" : "gold"}>{contract.status}</Pill>
               </div>
-              <p className="mt-4 line-clamp-4 text-sm leading-6 text-foreground/80">{contract.body}</p>
+              {editingContract?.id === contract.id ? (
+                <div className="mt-4 space-y-3">
+                  <input
+                    value={editingContract.title}
+                    onChange={(event) => setEditingContract({ ...editingContract, title: event.target.value })}
+                    className="w-full rounded-xl border border-border bg-ivory px-3 py-2 text-sm"
+                  />
+                  <GlassSelect
+                    value={editingContract.contract_type}
+                    onChange={(value) => setEditingContract({ ...editingContract, contract_type: value })}
+                    options={contractTypeOptions}
+                  />
+                  <textarea
+                    value={editingContract.body}
+                    onChange={(event) => setEditingContract({ ...editingContract, body: event.target.value })}
+                    rows={5}
+                    className="w-full rounded-xl border border-border bg-ivory px-3 py-2 text-sm"
+                  />
+                  <div className="flex justify-end gap-2">
+                    <button onClick={() => setEditingContract(null)} className="rounded-full border border-border px-3 py-1.5 text-xs">Cancelar</button>
+                    <button onClick={saveContractEdit} className="rounded-full bg-olive px-3 py-1.5 text-xs text-ivory">Salvar alteraÃ§Ãµes</button>
+                  </div>
+                </div>
+              ) : (
+                <p className="mt-4 line-clamp-4 text-sm leading-6 text-foreground/80">{contract.body}</p>
+              )}
 
               {sigs.length > 0 && (
                 <div className="mt-4 space-y-2 rounded-2xl border border-moss/25 bg-moss/5 p-3">
@@ -197,6 +276,14 @@ function Contracts() {
                 <button onClick={() => setStatus(contract.id, "active")} className="rounded-full bg-olive px-3 py-1.5 text-xs text-ivory">Aprovar</button>
                 <button onClick={() => setStatus(contract.id, "void")} className="rounded-full border border-wine/25 px-3 py-1.5 text-xs text-wine">Anular</button>
               </div>
+              <CrudActions
+                className="mt-3"
+                onEdit={() => setEditingContract(contract)}
+                onArchive={() => setStatus(contract.id, contract.status === "archived" ? "draft" : "archived")}
+                archiveLabel={contract.status === "archived" ? "Restaurar" : "Arquivar"}
+                onShare={() => shareContract(contract)}
+                onDelete={() => deleteContract(contract)}
+              />
             </Card>
           );
         })}

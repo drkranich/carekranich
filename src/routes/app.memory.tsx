@@ -3,6 +3,7 @@ import { useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Download, FileArchive, ImageIcon, Upload } from "lucide-react";
 import { toast } from "sonner";
+import { CrudActions } from "@/components/app/CrudActions";
 import { Card, EmptyState, PageHeader, Pill } from "@/components/app/primitives";
 import { GlassSelect } from "@/components/app/GlassSelect";
 import { GlassDatePicker } from "@/components/app/GlassDatePicker";
@@ -252,13 +253,44 @@ function Memory() {
     qc.invalidateQueries({ queryKey: ["legacy-memories", profile?.tenant_id] });
   };
 
+  const shareMemory = async (memory: MemoryRow) => {
+    if (memory.storage_path) {
+      const { data, error } = await supabase.storage
+        .from(memory.bucket)
+        .createSignedUrl(memory.storage_path, 60 * 60 * 24);
+      if (error || !data?.signedUrl) return toast.error(error?.message ?? "NÃ£o foi possÃ­vel gerar link da memÃ³ria");
+      try {
+        await navigator.clipboard.writeText(data.signedUrl);
+        toast.success("Link assinado copiado por 24 horas");
+      } catch {
+        window.prompt("Copie o link assinado:", data.signedUrl);
+      }
+      return;
+    }
+    const text = [memory.title, memory.description ?? "", memory.prompt ? `Pergunta: ${memory.prompt}` : ""]
+      .filter(Boolean)
+      .join("\n\n");
+    try {
+      await navigator.clipboard.writeText(text);
+      toast.success("Texto da memÃ³ria copiado");
+    } catch {
+      window.prompt("Copie a memÃ³ria:", text);
+    }
+  };
+
   const deleteMemory = async (memory: MemoryRow) => {
     if (!window.confirm("Excluir esta memória definitivamente? O arquivo também será removido.")) return;
     if (memory.storage_path) {
       await supabase.storage.from(memory.bucket).remove([memory.storage_path]);
     }
-    const { error } = await (supabase as any).from("legacy_memories").delete().eq("id", memory.id);
+    const { data, error } = await (supabase as any)
+      .from("legacy_memories")
+      .delete()
+      .eq("id", memory.id)
+      .select("id")
+      .maybeSingle();
     if (error) return toast.error(error.message);
+    if (!data) return toast.error("MemÃ³ria nÃ£o foi excluÃ­da. Verifique suas permissÃµes.");
     toast.success("Memória excluída");
     setSelectedId(null);
     qc.invalidateQueries({ queryKey: ["legacy-memories", profile?.tenant_id] });
@@ -495,23 +527,16 @@ function Memory() {
                           </button>
                         </div>
                       ) : (
-                        <div className="flex flex-wrap gap-2">
-                          <button
-                            onClick={() => {
-                              setRenaming(true);
-                              setNewTitle(selectedMemory.title);
-                            }}
-                            className="rounded-full border border-border px-4 py-2 text-xs"
-                          >
-                            Renomear
-                          </button>
-                          <button onClick={() => archiveMemory(selectedMemory)} className="rounded-full border border-border px-4 py-2 text-xs">
-                            {selectedMemory.status === "archived" ? "Restaurar" : "Arquivar"}
-                          </button>
-                          <button onClick={() => deleteMemory(selectedMemory)} className="rounded-full border border-wine/30 bg-wine/5 px-4 py-2 text-xs text-wine">
-                            Excluir
-                          </button>
-                        </div>
+                        <CrudActions
+                          onEdit={() => {
+                            setRenaming(true);
+                            setNewTitle(selectedMemory.title);
+                          }}
+                          onArchive={() => archiveMemory(selectedMemory)}
+                          archiveLabel={selectedMemory.status === "archived" ? "Restaurar" : "Arquivar"}
+                          onShare={() => shareMemory(selectedMemory)}
+                          onDelete={() => deleteMemory(selectedMemory)}
+                        />
                       )}
                     </div>
                   ) : (

@@ -2,6 +2,7 @@ import { createFileRoute, Navigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
+import { CrudActions } from "@/components/app/CrudActions";
 import { Card, PageHeader, Pill, Stat } from "@/components/app/primitives";
 import { GlassSelect } from "@/components/app/GlassSelect";
 import { supabase } from "@/integrations/supabase/client";
@@ -133,6 +134,51 @@ function Billing() {
       toast.success(next === "revoked" ? "Acesso revogado" : "Acesso restaurado");
       qc.invalidateQueries({ queryKey: ["tenant-subscriptions", profile?.tenant_id, isSuperAdmin] });
     }
+  };
+
+  const archivePlan = async (p: any) => {
+    const { data, error } = await (supabase as any)
+      .from("platform_plans")
+      .update({ active: !p.active })
+      .eq("id", p.id)
+      .select("id")
+      .maybeSingle();
+    if (error) return toast.error(error.message);
+    if (!data) return toast.error("Plano nÃ£o foi atualizado. Verifique suas permissÃµes.");
+    toast.success(p.active ? "Plano arquivado" : "Plano restaurado");
+    qc.invalidateQueries({ queryKey: ["platform-plans"] });
+  };
+
+  const sharePlan = async (p: any) => {
+    const text = [
+      `Plano: ${p.name}`,
+      `PÃºblico: ${audienceLabel(p.audience)}`,
+      `PreÃ§o: $${((p.unit_amount ?? 0) / 100).toFixed(2)} / ${p.interval ?? "mÃªs"}`,
+      `Stripe Price ID: ${p.stripe_price_id ?? "nÃ£o configurado"}`,
+      "",
+      p.description ?? "",
+      ...(Array.isArray(p.features) ? p.features.map((feature: string) => `- ${feature}`) : []),
+    ].filter(Boolean).join("\n");
+    try {
+      await navigator.clipboard.writeText(text);
+      toast.success("Resumo do plano copiado");
+    } catch {
+      window.prompt("Copie o plano:", text);
+    }
+  };
+
+  const deletePlan = async (p: any) => {
+    if (!window.confirm(`Excluir definitivamente o plano "${p.name}"?`)) return;
+    const { data, error } = await (supabase as any)
+      .from("platform_plans")
+      .delete()
+      .eq("id", p.id)
+      .select("id")
+      .maybeSingle();
+    if (error) return toast.error(error.message);
+    if (!data) return toast.error("Plano nÃ£o foi excluÃ­do. Verifique assinaturas vinculadas ou permissÃµes.");
+    toast.success("Plano excluÃ­do");
+    qc.invalidateQueries({ queryKey: ["platform-plans"] });
   };
 
   const exportPlanPdf = (p: any) => {
@@ -274,17 +320,6 @@ function Billing() {
                   ))}
                 </ul>
                 <div className="mt-4 flex flex-wrap gap-2">
-                  {isSuperAdmin && (
-                    <button
-                      onClick={() => {
-                        setEditingId(p.id);
-                        setDraft(planToDraft(p));
-                      }}
-                      className="rounded-full border border-olive/25 bg-white/50 px-3 py-1.5 text-xs text-olive"
-                    >
-                      Editar plano
-                    </button>
-                  )}
                   <button
                     onClick={() => exportPlanPdf(p)}
                     className="rounded-full border border-moss/40 bg-white/50 px-3 py-1.5 text-xs text-foreground hover:bg-moss/15"
@@ -292,6 +327,17 @@ function Billing() {
                     PDF do plano
                   </button>
                 </div>
+                <CrudActions
+                  className="mt-3"
+                  onEdit={isSuperAdmin ? () => {
+                    setEditingId(p.id);
+                    setDraft(planToDraft(p));
+                  } : undefined}
+                  onArchive={isSuperAdmin ? () => archivePlan(p) : undefined}
+                  archiveLabel={p.active ? "Arquivar" : "Restaurar"}
+                  onShare={() => sharePlan(p)}
+                  onDelete={isSuperAdmin ? () => deletePlan(p) : undefined}
+                />
               </>
             )}
           </Card>

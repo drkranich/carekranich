@@ -102,6 +102,12 @@ function wrap(text: string, size: number, maxWidth: number) {
   return out;
 }
 
+function fitText(value: string, size: number, maxWidth: number) {
+  const max = Math.max(4, Math.floor(maxWidth / (size * 0.5)));
+  if (value.length <= max) return value;
+  return `${value.slice(0, Math.max(1, max - 3)).trimEnd()}...`;
+}
+
 class Page {
   ops: string[] = [];
 
@@ -240,7 +246,7 @@ function drawMap(p: Page, x: number, y: number, w: number, regions: PdfRegion[])
       if (lx > x + w - 130) lx = px - base - 128;
       placed.push({ x: lx, y: ly });
       p.fill({ r: 0.05, g: 0.09, b: 0.08 }).alpha("GS55").rect(lx - 3, ly - 3, 124, 11);
-      p.alpha("GS100").fill(CREAM).text(lx, ly, `${idx + 1}. ${r.label} — ${r.percentage.toFixed(1)}%`, 6.6);
+      p.alpha("GS100").fill(CREAM).text(lx, ly, fitText(`${idx + 1}. ${r.label} - ${r.percentage.toFixed(1)}%`, 6.6, 116), 6.6);
     });
 }
 
@@ -348,33 +354,37 @@ export function buildAncestryPdf(data: AncestryPdfData): Blob {
     const c = hexToRgb(r.color);
     p2.fill(c).circle(listX + 5, ly + 2, 6, "f");
     p2.fill(CREAM).textCenter(listX + 5, ly - 0.5, String(idx + 1), 6.5, "F2");
-    p2.fill(INK).text(listX + 18, ly, `${r.label}`, 9.5, "F2");
-    p2.fill(MUTED).text(listX + 18, ly - 10, `${r.path}`, 6.2);
+    p2.fill(INK).text(listX + 18, ly, fitText(r.label, 9.5, barW + 4), 9.5, "F2");
+    p2.fill(MUTED).text(listX + 18, ly - 10, fitText(r.path, 6.2, barW + 56), 6.2);
     p2.fill(INK).text(W - M - 40, ly, `${r.percentage.toFixed(1)}%`, 10, "F2");
     p2.fill({ r: 0.88, g: 0.86, b: 0.81 }).rect(listX + 18, ly - 20, barW, 4);
     p2.fill(c).rect(listX + 18, ly - 20, (barW * r.percentage) / 100, 4);
     ly -= 36;
   });
 
-  let fy = H - 660;
+  let fy = H - 650;
   p2.fill(INK).text(M, fy, "Faixas estimadas e confiança", 11, "F2");
-  fy -= 18;
-  data.regions.forEach((r) => {
+  fy -= 16;
+  const rangeColW = (CW - 18) / 2;
+  data.regions.forEach((r, idx) => {
+    const col = idx % 2;
+    const row = Math.floor(idx / 2);
+    const x = M + col * (rangeColW + 18);
+    const y = fy - row * 12;
     p2.fill(MUTED).text(
-      M,
-      fy,
-      `${r.label} — faixa ${r.rangeMin ?? "-"}-${r.rangeMax ?? "-"}% · ${r.confidence}`,
-      8.5,
+      x,
+      y,
+      fitText(`${r.label} - faixa ${r.rangeMin ?? "-"}-${r.rangeMax ?? "-"}% · ${r.confidence}`, 7.1, rangeColW),
+      7.1,
     );
-    fy -= 14;
   });
 
-  p2.fill({ r: 0.93, g: 0.9, b: 0.84 }).rect(M, 72, CW, 54);
+  p2.fill({ r: 0.93, g: 0.9, b: 0.84 }).rect(M, 72, CW, 42);
   p2.fill(MUTED).paragraph(
     M + 14,
-    108,
+    100,
     "Os percentuais são estimativas obtidas pela comparação do seu DNA com grupos populacionais de referência. Semelhança genética com uma região não determina pertencimento cultural.",
-    8,
+    7.4,
     CW - 28,
   );
   footer(p2, 2, 0);
