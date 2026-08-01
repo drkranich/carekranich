@@ -30,38 +30,67 @@ import { Route as CareersRouteImport } from './routes/careers'
 import { Route as AppRouteImport } from './routes/app'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ExamesIndexRouteImport } from './routes/exames.index'
 import { Route as AppIndexRouteImport } from './routes/app.index'
 import { Route as SolutionsSeniorLivingRouteImport } from './routes/solutions.senior-living'
 import { Route as SolutionsInsuranceRouteImport } from './routes/solutions.insurance'
 import { Route as SolutionsHospitalsRouteImport } from './routes/solutions.hospitals'
 import { Route as SolutionsHomeCareRouteImport } from './routes/solutions.home-care'
 import { Route as SolutionsClinicsRouteImport } from './routes/solutions.clinics'
+import { Route as PSlugRouteImport } from './routes/p.$slug'
+import { Route as OrigensTokenRouteImport } from './routes/origens.$token'
+import { Route as ExamesSlugRouteImport } from './routes/exames.$slug'
 import { Route as AppWorkflowsRouteImport } from './routes/app.workflows'
+import { Route as AppUnitsRouteImport } from './routes/app.units'
 import { Route as AppTwinRouteImport } from './routes/app.twin'
 import { Route as AppTimelineRouteImport } from './routes/app.timeline'
 import { Route as AppTenantsRouteImport } from './routes/app.tenants'
 import { Route as AppTelemedicineRouteImport } from './routes/app.telemedicine'
 import { Route as AppSmartHomeRouteImport } from './routes/app.smart-home'
+import { Route as AppScheduleRouteImport } from './routes/app.schedule'
 import { Route as AppResidentsRouteImport } from './routes/app.residents'
+import { Route as AppReportsRouteImport } from './routes/app.reports'
+import { Route as AppRecordsRouteImport } from './routes/app.records'
+import { Route as AppReceptionRouteImport } from './routes/app.reception'
 import { Route as AppQualityRouteImport } from './routes/app.quality'
 import { Route as AppProfileRouteImport } from './routes/app.profile'
+import { Route as AppPatientsRouteImport } from './routes/app.patients'
+import { Route as AppPatientPortalRouteImport } from './routes/app.patient-portal'
+import { Route as AppOriginsRouteImport } from './routes/app.origins'
+import { Route as AppOrdersRouteImport } from './routes/app.orders'
 import { Route as AppNotificationsRouteImport } from './routes/app.notifications'
 import { Route as AppMemoryRouteImport } from './routes/app.memory'
+import { Route as AppMedicationsRouteImport } from './routes/app.medications'
 import { Route as AppMedicalRouteImport } from './routes/app.medical'
 import { Route as AppMarketplaceRouteImport } from './routes/app.marketplace'
 import { Route as AppLongevityRouteImport } from './routes/app.longevity'
+import { Route as AppLabDashboardRouteImport } from './routes/app.lab-dashboard'
+import { Route as AppLabRouteImport } from './routes/app.lab'
+import { Route as AppInventoryRouteImport } from './routes/app.inventory'
 import { Route as AppInboxRouteImport } from './routes/app.inbox'
 import { Route as AppIdentityRouteImport } from './routes/app.identity'
+import { Route as AppHomeCollectionRouteImport } from './routes/app.home-collection'
+import { Route as AppGeriatricsRouteImport } from './routes/app.geriatrics'
+import { Route as AppGeneticsRouteImport } from './routes/app.genetics'
+import { Route as AppFinanceRouteImport } from './routes/app.finance'
+import { Route as AppExamsRouteImport } from './routes/app.exams'
+import { Route as AppEquipmentRouteImport } from './routes/app.equipment'
 import { Route as AppEmergencyRouteImport } from './routes/app.emergency'
 import { Route as AppEmailMarketingRouteImport } from './routes/app.email-marketing'
 import { Route as AppDocumentsRouteImport } from './routes/app.documents'
+import { Route as AppDoctorRouteImport } from './routes/app.doctor'
 import { Route as AppContractsRouteImport } from './routes/app.contracts'
+import { Route as AppCompaniesRouteImport } from './routes/app.companies'
 import { Route as AppCommandRouteImport } from './routes/app.command'
 import { Route as AppCognitiveRouteImport } from './routes/app.cognitive'
+import { Route as AppCmsRouteImport } from './routes/app.cms'
+import { Route as AppCatalogRouteImport } from './routes/app.catalog'
 import { Route as AppCaregiverRouteImport } from './routes/app.caregiver'
 import { Route as AppCarePlanRouteImport } from './routes/app.care-plan'
 import { Route as AppBillingRouteImport } from './routes/app.billing'
+import { Route as AppBiRouteImport } from './routes/app.bi'
 import { Route as AppApprovalsRouteImport } from './routes/app.approvals'
+import { Route as AppAncestryStudioRouteImport } from './routes/app.ancestry-studio'
 import { Route as AppAlertsRouteImport } from './routes/app.alerts'
 import { Route as AppAiRouteImport } from './routes/app.ai'
 import { Route as AppAgentsRouteImport } from './routes/app.agents'
@@ -175,6 +204,11 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ExamesIndexRoute = ExamesIndexRouteImport.update({
+  id: '/exames/',
+  path: '/exames/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AppIndexRoute = AppIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -205,9 +239,29 @@ const SolutionsClinicsRoute = SolutionsClinicsRouteImport.update({
   path: '/clinics',
   getParentRoute: () => SolutionsRoute,
 } as any)
+const PSlugRoute = PSlugRouteImport.update({
+  id: '/p/$slug',
+  path: '/p/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OrigensTokenRoute = OrigensTokenRouteImport.update({
+  id: '/origens/$token',
+  path: '/origens/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ExamesSlugRoute = ExamesSlugRouteImport.update({
+  id: '/exames/$slug',
+  path: '/exames/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AppWorkflowsRoute = AppWorkflowsRouteImport.update({
   id: '/workflows',
   path: '/workflows',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppUnitsRoute = AppUnitsRouteImport.update({
+  id: '/units',
+  path: '/units',
   getParentRoute: () => AppRoute,
 } as any)
 const AppTwinRoute = AppTwinRouteImport.update({
@@ -235,9 +289,29 @@ const AppSmartHomeRoute = AppSmartHomeRouteImport.update({
   path: '/smart-home',
   getParentRoute: () => AppRoute,
 } as any)
+const AppScheduleRoute = AppScheduleRouteImport.update({
+  id: '/schedule',
+  path: '/schedule',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppResidentsRoute = AppResidentsRouteImport.update({
   id: '/residents',
   path: '/residents',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppReportsRoute = AppReportsRouteImport.update({
+  id: '/reports',
+  path: '/reports',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppRecordsRoute = AppRecordsRouteImport.update({
+  id: '/records',
+  path: '/records',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppReceptionRoute = AppReceptionRouteImport.update({
+  id: '/reception',
+  path: '/reception',
   getParentRoute: () => AppRoute,
 } as any)
 const AppQualityRoute = AppQualityRouteImport.update({
@@ -250,6 +324,26 @@ const AppProfileRoute = AppProfileRouteImport.update({
   path: '/profile',
   getParentRoute: () => AppRoute,
 } as any)
+const AppPatientsRoute = AppPatientsRouteImport.update({
+  id: '/patients',
+  path: '/patients',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppPatientPortalRoute = AppPatientPortalRouteImport.update({
+  id: '/patient-portal',
+  path: '/patient-portal',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppOriginsRoute = AppOriginsRouteImport.update({
+  id: '/origins',
+  path: '/origins',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppOrdersRoute = AppOrdersRouteImport.update({
+  id: '/orders',
+  path: '/orders',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppNotificationsRoute = AppNotificationsRouteImport.update({
   id: '/notifications',
   path: '/notifications',
@@ -258,6 +352,11 @@ const AppNotificationsRoute = AppNotificationsRouteImport.update({
 const AppMemoryRoute = AppMemoryRouteImport.update({
   id: '/memory',
   path: '/memory',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppMedicationsRoute = AppMedicationsRouteImport.update({
+  id: '/medications',
+  path: '/medications',
   getParentRoute: () => AppRoute,
 } as any)
 const AppMedicalRoute = AppMedicalRouteImport.update({
@@ -275,6 +374,21 @@ const AppLongevityRoute = AppLongevityRouteImport.update({
   path: '/longevity',
   getParentRoute: () => AppRoute,
 } as any)
+const AppLabDashboardRoute = AppLabDashboardRouteImport.update({
+  id: '/lab-dashboard',
+  path: '/lab-dashboard',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppLabRoute = AppLabRouteImport.update({
+  id: '/lab',
+  path: '/lab',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppInventoryRoute = AppInventoryRouteImport.update({
+  id: '/inventory',
+  path: '/inventory',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppInboxRoute = AppInboxRouteImport.update({
   id: '/inbox',
   path: '/inbox',
@@ -283,6 +397,36 @@ const AppInboxRoute = AppInboxRouteImport.update({
 const AppIdentityRoute = AppIdentityRouteImport.update({
   id: '/identity',
   path: '/identity',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppHomeCollectionRoute = AppHomeCollectionRouteImport.update({
+  id: '/home-collection',
+  path: '/home-collection',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppGeriatricsRoute = AppGeriatricsRouteImport.update({
+  id: '/geriatrics',
+  path: '/geriatrics',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppGeneticsRoute = AppGeneticsRouteImport.update({
+  id: '/genetics',
+  path: '/genetics',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppFinanceRoute = AppFinanceRouteImport.update({
+  id: '/finance',
+  path: '/finance',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppExamsRoute = AppExamsRouteImport.update({
+  id: '/exams',
+  path: '/exams',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppEquipmentRoute = AppEquipmentRouteImport.update({
+  id: '/equipment',
+  path: '/equipment',
   getParentRoute: () => AppRoute,
 } as any)
 const AppEmergencyRoute = AppEmergencyRouteImport.update({
@@ -300,9 +444,19 @@ const AppDocumentsRoute = AppDocumentsRouteImport.update({
   path: '/documents',
   getParentRoute: () => AppRoute,
 } as any)
+const AppDoctorRoute = AppDoctorRouteImport.update({
+  id: '/doctor',
+  path: '/doctor',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppContractsRoute = AppContractsRouteImport.update({
   id: '/contracts',
   path: '/contracts',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppCompaniesRoute = AppCompaniesRouteImport.update({
+  id: '/companies',
+  path: '/companies',
   getParentRoute: () => AppRoute,
 } as any)
 const AppCommandRoute = AppCommandRouteImport.update({
@@ -313,6 +467,16 @@ const AppCommandRoute = AppCommandRouteImport.update({
 const AppCognitiveRoute = AppCognitiveRouteImport.update({
   id: '/cognitive',
   path: '/cognitive',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppCmsRoute = AppCmsRouteImport.update({
+  id: '/cms',
+  path: '/cms',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppCatalogRoute = AppCatalogRouteImport.update({
+  id: '/catalog',
+  path: '/catalog',
   getParentRoute: () => AppRoute,
 } as any)
 const AppCaregiverRoute = AppCaregiverRouteImport.update({
@@ -330,9 +494,19 @@ const AppBillingRoute = AppBillingRouteImport.update({
   path: '/billing',
   getParentRoute: () => AppRoute,
 } as any)
+const AppBiRoute = AppBiRouteImport.update({
+  id: '/bi',
+  path: '/bi',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppApprovalsRoute = AppApprovalsRouteImport.update({
   id: '/approvals',
   path: '/approvals',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppAncestryStudioRoute = AppAncestryStudioRouteImport.update({
+  id: '/ancestry-studio',
+  path: '/ancestry-studio',
   getParentRoute: () => AppRoute,
 } as any)
 const AppAlertsRoute = AppAlertsRouteImport.update({
@@ -399,38 +573,67 @@ export interface FileRoutesByFullPath {
   '/app/agents': typeof AppAgentsRouteWithChildren
   '/app/ai': typeof AppAiRoute
   '/app/alerts': typeof AppAlertsRoute
+  '/app/ancestry-studio': typeof AppAncestryStudioRoute
   '/app/approvals': typeof AppApprovalsRoute
+  '/app/bi': typeof AppBiRoute
   '/app/billing': typeof AppBillingRoute
   '/app/care-plan': typeof AppCarePlanRoute
   '/app/caregiver': typeof AppCaregiverRoute
+  '/app/catalog': typeof AppCatalogRoute
+  '/app/cms': typeof AppCmsRoute
   '/app/cognitive': typeof AppCognitiveRoute
   '/app/command': typeof AppCommandRoute
+  '/app/companies': typeof AppCompaniesRoute
   '/app/contracts': typeof AppContractsRoute
+  '/app/doctor': typeof AppDoctorRoute
   '/app/documents': typeof AppDocumentsRoute
   '/app/email-marketing': typeof AppEmailMarketingRoute
   '/app/emergency': typeof AppEmergencyRoute
+  '/app/equipment': typeof AppEquipmentRoute
+  '/app/exams': typeof AppExamsRoute
+  '/app/finance': typeof AppFinanceRoute
+  '/app/genetics': typeof AppGeneticsRoute
+  '/app/geriatrics': typeof AppGeriatricsRoute
+  '/app/home-collection': typeof AppHomeCollectionRoute
   '/app/identity': typeof AppIdentityRoute
   '/app/inbox': typeof AppInboxRoute
+  '/app/inventory': typeof AppInventoryRoute
+  '/app/lab': typeof AppLabRoute
+  '/app/lab-dashboard': typeof AppLabDashboardRoute
   '/app/longevity': typeof AppLongevityRoute
   '/app/marketplace': typeof AppMarketplaceRoute
   '/app/medical': typeof AppMedicalRoute
+  '/app/medications': typeof AppMedicationsRoute
   '/app/memory': typeof AppMemoryRoute
   '/app/notifications': typeof AppNotificationsRoute
+  '/app/orders': typeof AppOrdersRoute
+  '/app/origins': typeof AppOriginsRoute
+  '/app/patient-portal': typeof AppPatientPortalRoute
+  '/app/patients': typeof AppPatientsRoute
   '/app/profile': typeof AppProfileRoute
   '/app/quality': typeof AppQualityRoute
+  '/app/reception': typeof AppReceptionRoute
+  '/app/records': typeof AppRecordsRoute
+  '/app/reports': typeof AppReportsRoute
   '/app/residents': typeof AppResidentsRoute
+  '/app/schedule': typeof AppScheduleRoute
   '/app/smart-home': typeof AppSmartHomeRoute
   '/app/telemedicine': typeof AppTelemedicineRoute
   '/app/tenants': typeof AppTenantsRoute
   '/app/timeline': typeof AppTimelineRoute
   '/app/twin': typeof AppTwinRoute
+  '/app/units': typeof AppUnitsRoute
   '/app/workflows': typeof AppWorkflowsRoute
+  '/exames/$slug': typeof ExamesSlugRoute
+  '/origens/$token': typeof OrigensTokenRoute
+  '/p/$slug': typeof PSlugRoute
   '/solutions/clinics': typeof SolutionsClinicsRoute
   '/solutions/home-care': typeof SolutionsHomeCareRoute
   '/solutions/hospitals': typeof SolutionsHospitalsRoute
   '/solutions/insurance': typeof SolutionsInsuranceRoute
   '/solutions/senior-living': typeof SolutionsSeniorLivingRoute
   '/app/': typeof AppIndexRoute
+  '/exames/': typeof ExamesIndexRoute
   '/app/agents/$agentKey': typeof AppAgentsAgentKeyRoute
   '/app/agents/recommendations': typeof AppAgentsRecommendationsRoute
 }
@@ -460,38 +663,67 @@ export interface FileRoutesByTo {
   '/app/agents': typeof AppAgentsRouteWithChildren
   '/app/ai': typeof AppAiRoute
   '/app/alerts': typeof AppAlertsRoute
+  '/app/ancestry-studio': typeof AppAncestryStudioRoute
   '/app/approvals': typeof AppApprovalsRoute
+  '/app/bi': typeof AppBiRoute
   '/app/billing': typeof AppBillingRoute
   '/app/care-plan': typeof AppCarePlanRoute
   '/app/caregiver': typeof AppCaregiverRoute
+  '/app/catalog': typeof AppCatalogRoute
+  '/app/cms': typeof AppCmsRoute
   '/app/cognitive': typeof AppCognitiveRoute
   '/app/command': typeof AppCommandRoute
+  '/app/companies': typeof AppCompaniesRoute
   '/app/contracts': typeof AppContractsRoute
+  '/app/doctor': typeof AppDoctorRoute
   '/app/documents': typeof AppDocumentsRoute
   '/app/email-marketing': typeof AppEmailMarketingRoute
   '/app/emergency': typeof AppEmergencyRoute
+  '/app/equipment': typeof AppEquipmentRoute
+  '/app/exams': typeof AppExamsRoute
+  '/app/finance': typeof AppFinanceRoute
+  '/app/genetics': typeof AppGeneticsRoute
+  '/app/geriatrics': typeof AppGeriatricsRoute
+  '/app/home-collection': typeof AppHomeCollectionRoute
   '/app/identity': typeof AppIdentityRoute
   '/app/inbox': typeof AppInboxRoute
+  '/app/inventory': typeof AppInventoryRoute
+  '/app/lab': typeof AppLabRoute
+  '/app/lab-dashboard': typeof AppLabDashboardRoute
   '/app/longevity': typeof AppLongevityRoute
   '/app/marketplace': typeof AppMarketplaceRoute
   '/app/medical': typeof AppMedicalRoute
+  '/app/medications': typeof AppMedicationsRoute
   '/app/memory': typeof AppMemoryRoute
   '/app/notifications': typeof AppNotificationsRoute
+  '/app/orders': typeof AppOrdersRoute
+  '/app/origins': typeof AppOriginsRoute
+  '/app/patient-portal': typeof AppPatientPortalRoute
+  '/app/patients': typeof AppPatientsRoute
   '/app/profile': typeof AppProfileRoute
   '/app/quality': typeof AppQualityRoute
+  '/app/reception': typeof AppReceptionRoute
+  '/app/records': typeof AppRecordsRoute
+  '/app/reports': typeof AppReportsRoute
   '/app/residents': typeof AppResidentsRoute
+  '/app/schedule': typeof AppScheduleRoute
   '/app/smart-home': typeof AppSmartHomeRoute
   '/app/telemedicine': typeof AppTelemedicineRoute
   '/app/tenants': typeof AppTenantsRoute
   '/app/timeline': typeof AppTimelineRoute
   '/app/twin': typeof AppTwinRoute
+  '/app/units': typeof AppUnitsRoute
   '/app/workflows': typeof AppWorkflowsRoute
+  '/exames/$slug': typeof ExamesSlugRoute
+  '/origens/$token': typeof OrigensTokenRoute
+  '/p/$slug': typeof PSlugRoute
   '/solutions/clinics': typeof SolutionsClinicsRoute
   '/solutions/home-care': typeof SolutionsHomeCareRoute
   '/solutions/hospitals': typeof SolutionsHospitalsRoute
   '/solutions/insurance': typeof SolutionsInsuranceRoute
   '/solutions/senior-living': typeof SolutionsSeniorLivingRoute
   '/app': typeof AppIndexRoute
+  '/exames': typeof ExamesIndexRoute
   '/app/agents/$agentKey': typeof AppAgentsAgentKeyRoute
   '/app/agents/recommendations': typeof AppAgentsRecommendationsRoute
 }
@@ -523,38 +755,67 @@ export interface FileRoutesById {
   '/app/agents': typeof AppAgentsRouteWithChildren
   '/app/ai': typeof AppAiRoute
   '/app/alerts': typeof AppAlertsRoute
+  '/app/ancestry-studio': typeof AppAncestryStudioRoute
   '/app/approvals': typeof AppApprovalsRoute
+  '/app/bi': typeof AppBiRoute
   '/app/billing': typeof AppBillingRoute
   '/app/care-plan': typeof AppCarePlanRoute
   '/app/caregiver': typeof AppCaregiverRoute
+  '/app/catalog': typeof AppCatalogRoute
+  '/app/cms': typeof AppCmsRoute
   '/app/cognitive': typeof AppCognitiveRoute
   '/app/command': typeof AppCommandRoute
+  '/app/companies': typeof AppCompaniesRoute
   '/app/contracts': typeof AppContractsRoute
+  '/app/doctor': typeof AppDoctorRoute
   '/app/documents': typeof AppDocumentsRoute
   '/app/email-marketing': typeof AppEmailMarketingRoute
   '/app/emergency': typeof AppEmergencyRoute
+  '/app/equipment': typeof AppEquipmentRoute
+  '/app/exams': typeof AppExamsRoute
+  '/app/finance': typeof AppFinanceRoute
+  '/app/genetics': typeof AppGeneticsRoute
+  '/app/geriatrics': typeof AppGeriatricsRoute
+  '/app/home-collection': typeof AppHomeCollectionRoute
   '/app/identity': typeof AppIdentityRoute
   '/app/inbox': typeof AppInboxRoute
+  '/app/inventory': typeof AppInventoryRoute
+  '/app/lab': typeof AppLabRoute
+  '/app/lab-dashboard': typeof AppLabDashboardRoute
   '/app/longevity': typeof AppLongevityRoute
   '/app/marketplace': typeof AppMarketplaceRoute
   '/app/medical': typeof AppMedicalRoute
+  '/app/medications': typeof AppMedicationsRoute
   '/app/memory': typeof AppMemoryRoute
   '/app/notifications': typeof AppNotificationsRoute
+  '/app/orders': typeof AppOrdersRoute
+  '/app/origins': typeof AppOriginsRoute
+  '/app/patient-portal': typeof AppPatientPortalRoute
+  '/app/patients': typeof AppPatientsRoute
   '/app/profile': typeof AppProfileRoute
   '/app/quality': typeof AppQualityRoute
+  '/app/reception': typeof AppReceptionRoute
+  '/app/records': typeof AppRecordsRoute
+  '/app/reports': typeof AppReportsRoute
   '/app/residents': typeof AppResidentsRoute
+  '/app/schedule': typeof AppScheduleRoute
   '/app/smart-home': typeof AppSmartHomeRoute
   '/app/telemedicine': typeof AppTelemedicineRoute
   '/app/tenants': typeof AppTenantsRoute
   '/app/timeline': typeof AppTimelineRoute
   '/app/twin': typeof AppTwinRoute
+  '/app/units': typeof AppUnitsRoute
   '/app/workflows': typeof AppWorkflowsRoute
+  '/exames/$slug': typeof ExamesSlugRoute
+  '/origens/$token': typeof OrigensTokenRoute
+  '/p/$slug': typeof PSlugRoute
   '/solutions/clinics': typeof SolutionsClinicsRoute
   '/solutions/home-care': typeof SolutionsHomeCareRoute
   '/solutions/hospitals': typeof SolutionsHospitalsRoute
   '/solutions/insurance': typeof SolutionsInsuranceRoute
   '/solutions/senior-living': typeof SolutionsSeniorLivingRoute
   '/app/': typeof AppIndexRoute
+  '/exames/': typeof ExamesIndexRoute
   '/app/agents/$agentKey': typeof AppAgentsAgentKeyRoute
   '/app/agents/recommendations': typeof AppAgentsRecommendationsRoute
 }
@@ -587,38 +848,67 @@ export interface FileRouteTypes {
     | '/app/agents'
     | '/app/ai'
     | '/app/alerts'
+    | '/app/ancestry-studio'
     | '/app/approvals'
+    | '/app/bi'
     | '/app/billing'
     | '/app/care-plan'
     | '/app/caregiver'
+    | '/app/catalog'
+    | '/app/cms'
     | '/app/cognitive'
     | '/app/command'
+    | '/app/companies'
     | '/app/contracts'
+    | '/app/doctor'
     | '/app/documents'
     | '/app/email-marketing'
     | '/app/emergency'
+    | '/app/equipment'
+    | '/app/exams'
+    | '/app/finance'
+    | '/app/genetics'
+    | '/app/geriatrics'
+    | '/app/home-collection'
     | '/app/identity'
     | '/app/inbox'
+    | '/app/inventory'
+    | '/app/lab'
+    | '/app/lab-dashboard'
     | '/app/longevity'
     | '/app/marketplace'
     | '/app/medical'
+    | '/app/medications'
     | '/app/memory'
     | '/app/notifications'
+    | '/app/orders'
+    | '/app/origins'
+    | '/app/patient-portal'
+    | '/app/patients'
     | '/app/profile'
     | '/app/quality'
+    | '/app/reception'
+    | '/app/records'
+    | '/app/reports'
     | '/app/residents'
+    | '/app/schedule'
     | '/app/smart-home'
     | '/app/telemedicine'
     | '/app/tenants'
     | '/app/timeline'
     | '/app/twin'
+    | '/app/units'
     | '/app/workflows'
+    | '/exames/$slug'
+    | '/origens/$token'
+    | '/p/$slug'
     | '/solutions/clinics'
     | '/solutions/home-care'
     | '/solutions/hospitals'
     | '/solutions/insurance'
     | '/solutions/senior-living'
     | '/app/'
+    | '/exames/'
     | '/app/agents/$agentKey'
     | '/app/agents/recommendations'
   fileRoutesByTo: FileRoutesByTo
@@ -648,38 +938,67 @@ export interface FileRouteTypes {
     | '/app/agents'
     | '/app/ai'
     | '/app/alerts'
+    | '/app/ancestry-studio'
     | '/app/approvals'
+    | '/app/bi'
     | '/app/billing'
     | '/app/care-plan'
     | '/app/caregiver'
+    | '/app/catalog'
+    | '/app/cms'
     | '/app/cognitive'
     | '/app/command'
+    | '/app/companies'
     | '/app/contracts'
+    | '/app/doctor'
     | '/app/documents'
     | '/app/email-marketing'
     | '/app/emergency'
+    | '/app/equipment'
+    | '/app/exams'
+    | '/app/finance'
+    | '/app/genetics'
+    | '/app/geriatrics'
+    | '/app/home-collection'
     | '/app/identity'
     | '/app/inbox'
+    | '/app/inventory'
+    | '/app/lab'
+    | '/app/lab-dashboard'
     | '/app/longevity'
     | '/app/marketplace'
     | '/app/medical'
+    | '/app/medications'
     | '/app/memory'
     | '/app/notifications'
+    | '/app/orders'
+    | '/app/origins'
+    | '/app/patient-portal'
+    | '/app/patients'
     | '/app/profile'
     | '/app/quality'
+    | '/app/reception'
+    | '/app/records'
+    | '/app/reports'
     | '/app/residents'
+    | '/app/schedule'
     | '/app/smart-home'
     | '/app/telemedicine'
     | '/app/tenants'
     | '/app/timeline'
     | '/app/twin'
+    | '/app/units'
     | '/app/workflows'
+    | '/exames/$slug'
+    | '/origens/$token'
+    | '/p/$slug'
     | '/solutions/clinics'
     | '/solutions/home-care'
     | '/solutions/hospitals'
     | '/solutions/insurance'
     | '/solutions/senior-living'
     | '/app'
+    | '/exames'
     | '/app/agents/$agentKey'
     | '/app/agents/recommendations'
   id:
@@ -710,38 +1029,67 @@ export interface FileRouteTypes {
     | '/app/agents'
     | '/app/ai'
     | '/app/alerts'
+    | '/app/ancestry-studio'
     | '/app/approvals'
+    | '/app/bi'
     | '/app/billing'
     | '/app/care-plan'
     | '/app/caregiver'
+    | '/app/catalog'
+    | '/app/cms'
     | '/app/cognitive'
     | '/app/command'
+    | '/app/companies'
     | '/app/contracts'
+    | '/app/doctor'
     | '/app/documents'
     | '/app/email-marketing'
     | '/app/emergency'
+    | '/app/equipment'
+    | '/app/exams'
+    | '/app/finance'
+    | '/app/genetics'
+    | '/app/geriatrics'
+    | '/app/home-collection'
     | '/app/identity'
     | '/app/inbox'
+    | '/app/inventory'
+    | '/app/lab'
+    | '/app/lab-dashboard'
     | '/app/longevity'
     | '/app/marketplace'
     | '/app/medical'
+    | '/app/medications'
     | '/app/memory'
     | '/app/notifications'
+    | '/app/orders'
+    | '/app/origins'
+    | '/app/patient-portal'
+    | '/app/patients'
     | '/app/profile'
     | '/app/quality'
+    | '/app/reception'
+    | '/app/records'
+    | '/app/reports'
     | '/app/residents'
+    | '/app/schedule'
     | '/app/smart-home'
     | '/app/telemedicine'
     | '/app/tenants'
     | '/app/timeline'
     | '/app/twin'
+    | '/app/units'
     | '/app/workflows'
+    | '/exames/$slug'
+    | '/origens/$token'
+    | '/p/$slug'
     | '/solutions/clinics'
     | '/solutions/home-care'
     | '/solutions/hospitals'
     | '/solutions/insurance'
     | '/solutions/senior-living'
     | '/app/'
+    | '/exames/'
     | '/app/agents/$agentKey'
     | '/app/agents/recommendations'
   fileRoutesById: FileRoutesById
@@ -768,6 +1116,10 @@ export interface RootRouteChildren {
   SolutionsRoute: typeof SolutionsRouteWithChildren
   TelemedicineRoute: typeof TelemedicineRoute
   TermsRoute: typeof TermsRoute
+  ExamesSlugRoute: typeof ExamesSlugRoute
+  OrigensTokenRoute: typeof OrigensTokenRoute
+  PSlugRoute: typeof PSlugRoute
+  ExamesIndexRoute: typeof ExamesIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -919,6 +1271,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/exames/': {
+      id: '/exames/'
+      path: '/exames'
+      fullPath: '/exames/'
+      preLoaderRoute: typeof ExamesIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/app/': {
       id: '/app/'
       path: '/'
@@ -961,11 +1320,39 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SolutionsClinicsRouteImport
       parentRoute: typeof SolutionsRoute
     }
+    '/p/$slug': {
+      id: '/p/$slug'
+      path: '/p/$slug'
+      fullPath: '/p/$slug'
+      preLoaderRoute: typeof PSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/origens/$token': {
+      id: '/origens/$token'
+      path: '/origens/$token'
+      fullPath: '/origens/$token'
+      preLoaderRoute: typeof OrigensTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/exames/$slug': {
+      id: '/exames/$slug'
+      path: '/exames/$slug'
+      fullPath: '/exames/$slug'
+      preLoaderRoute: typeof ExamesSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/app/workflows': {
       id: '/app/workflows'
       path: '/workflows'
       fullPath: '/app/workflows'
       preLoaderRoute: typeof AppWorkflowsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/units': {
+      id: '/app/units'
+      path: '/units'
+      fullPath: '/app/units'
+      preLoaderRoute: typeof AppUnitsRouteImport
       parentRoute: typeof AppRoute
     }
     '/app/twin': {
@@ -1003,11 +1390,39 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppSmartHomeRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/schedule': {
+      id: '/app/schedule'
+      path: '/schedule'
+      fullPath: '/app/schedule'
+      preLoaderRoute: typeof AppScheduleRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/app/residents': {
       id: '/app/residents'
       path: '/residents'
       fullPath: '/app/residents'
       preLoaderRoute: typeof AppResidentsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/reports': {
+      id: '/app/reports'
+      path: '/reports'
+      fullPath: '/app/reports'
+      preLoaderRoute: typeof AppReportsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/records': {
+      id: '/app/records'
+      path: '/records'
+      fullPath: '/app/records'
+      preLoaderRoute: typeof AppRecordsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/reception': {
+      id: '/app/reception'
+      path: '/reception'
+      fullPath: '/app/reception'
+      preLoaderRoute: typeof AppReceptionRouteImport
       parentRoute: typeof AppRoute
     }
     '/app/quality': {
@@ -1024,6 +1439,34 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppProfileRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/patients': {
+      id: '/app/patients'
+      path: '/patients'
+      fullPath: '/app/patients'
+      preLoaderRoute: typeof AppPatientsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/patient-portal': {
+      id: '/app/patient-portal'
+      path: '/patient-portal'
+      fullPath: '/app/patient-portal'
+      preLoaderRoute: typeof AppPatientPortalRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/origins': {
+      id: '/app/origins'
+      path: '/origins'
+      fullPath: '/app/origins'
+      preLoaderRoute: typeof AppOriginsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/orders': {
+      id: '/app/orders'
+      path: '/orders'
+      fullPath: '/app/orders'
+      preLoaderRoute: typeof AppOrdersRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/app/notifications': {
       id: '/app/notifications'
       path: '/notifications'
@@ -1036,6 +1479,13 @@ declare module '@tanstack/react-router' {
       path: '/memory'
       fullPath: '/app/memory'
       preLoaderRoute: typeof AppMemoryRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/medications': {
+      id: '/app/medications'
+      path: '/medications'
+      fullPath: '/app/medications'
+      preLoaderRoute: typeof AppMedicationsRouteImport
       parentRoute: typeof AppRoute
     }
     '/app/medical': {
@@ -1059,6 +1509,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppLongevityRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/lab-dashboard': {
+      id: '/app/lab-dashboard'
+      path: '/lab-dashboard'
+      fullPath: '/app/lab-dashboard'
+      preLoaderRoute: typeof AppLabDashboardRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/lab': {
+      id: '/app/lab'
+      path: '/lab'
+      fullPath: '/app/lab'
+      preLoaderRoute: typeof AppLabRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/inventory': {
+      id: '/app/inventory'
+      path: '/inventory'
+      fullPath: '/app/inventory'
+      preLoaderRoute: typeof AppInventoryRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/app/inbox': {
       id: '/app/inbox'
       path: '/inbox'
@@ -1071,6 +1542,48 @@ declare module '@tanstack/react-router' {
       path: '/identity'
       fullPath: '/app/identity'
       preLoaderRoute: typeof AppIdentityRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/home-collection': {
+      id: '/app/home-collection'
+      path: '/home-collection'
+      fullPath: '/app/home-collection'
+      preLoaderRoute: typeof AppHomeCollectionRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/geriatrics': {
+      id: '/app/geriatrics'
+      path: '/geriatrics'
+      fullPath: '/app/geriatrics'
+      preLoaderRoute: typeof AppGeriatricsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/genetics': {
+      id: '/app/genetics'
+      path: '/genetics'
+      fullPath: '/app/genetics'
+      preLoaderRoute: typeof AppGeneticsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/finance': {
+      id: '/app/finance'
+      path: '/finance'
+      fullPath: '/app/finance'
+      preLoaderRoute: typeof AppFinanceRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/exams': {
+      id: '/app/exams'
+      path: '/exams'
+      fullPath: '/app/exams'
+      preLoaderRoute: typeof AppExamsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/equipment': {
+      id: '/app/equipment'
+      path: '/equipment'
+      fullPath: '/app/equipment'
+      preLoaderRoute: typeof AppEquipmentRouteImport
       parentRoute: typeof AppRoute
     }
     '/app/emergency': {
@@ -1094,11 +1607,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppDocumentsRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/doctor': {
+      id: '/app/doctor'
+      path: '/doctor'
+      fullPath: '/app/doctor'
+      preLoaderRoute: typeof AppDoctorRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/app/contracts': {
       id: '/app/contracts'
       path: '/contracts'
       fullPath: '/app/contracts'
       preLoaderRoute: typeof AppContractsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/companies': {
+      id: '/app/companies'
+      path: '/companies'
+      fullPath: '/app/companies'
+      preLoaderRoute: typeof AppCompaniesRouteImport
       parentRoute: typeof AppRoute
     }
     '/app/command': {
@@ -1113,6 +1640,20 @@ declare module '@tanstack/react-router' {
       path: '/cognitive'
       fullPath: '/app/cognitive'
       preLoaderRoute: typeof AppCognitiveRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/cms': {
+      id: '/app/cms'
+      path: '/cms'
+      fullPath: '/app/cms'
+      preLoaderRoute: typeof AppCmsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/catalog': {
+      id: '/app/catalog'
+      path: '/catalog'
+      fullPath: '/app/catalog'
+      preLoaderRoute: typeof AppCatalogRouteImport
       parentRoute: typeof AppRoute
     }
     '/app/caregiver': {
@@ -1136,11 +1677,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppBillingRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/bi': {
+      id: '/app/bi'
+      path: '/bi'
+      fullPath: '/app/bi'
+      preLoaderRoute: typeof AppBiRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/app/approvals': {
       id: '/app/approvals'
       path: '/approvals'
       fullPath: '/app/approvals'
       preLoaderRoute: typeof AppApprovalsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/ancestry-studio': {
+      id: '/app/ancestry-studio'
+      path: '/ancestry-studio'
+      fullPath: '/app/ancestry-studio'
+      preLoaderRoute: typeof AppAncestryStudioRouteImport
       parentRoute: typeof AppRoute
     }
     '/app/alerts': {
@@ -1215,31 +1770,56 @@ interface AppRouteChildren {
   AppAgentsRoute: typeof AppAgentsRouteWithChildren
   AppAiRoute: typeof AppAiRoute
   AppAlertsRoute: typeof AppAlertsRoute
+  AppAncestryStudioRoute: typeof AppAncestryStudioRoute
   AppApprovalsRoute: typeof AppApprovalsRoute
+  AppBiRoute: typeof AppBiRoute
   AppBillingRoute: typeof AppBillingRoute
   AppCarePlanRoute: typeof AppCarePlanRoute
   AppCaregiverRoute: typeof AppCaregiverRoute
+  AppCatalogRoute: typeof AppCatalogRoute
+  AppCmsRoute: typeof AppCmsRoute
   AppCognitiveRoute: typeof AppCognitiveRoute
   AppCommandRoute: typeof AppCommandRoute
+  AppCompaniesRoute: typeof AppCompaniesRoute
   AppContractsRoute: typeof AppContractsRoute
+  AppDoctorRoute: typeof AppDoctorRoute
   AppDocumentsRoute: typeof AppDocumentsRoute
   AppEmailMarketingRoute: typeof AppEmailMarketingRoute
   AppEmergencyRoute: typeof AppEmergencyRoute
+  AppEquipmentRoute: typeof AppEquipmentRoute
+  AppExamsRoute: typeof AppExamsRoute
+  AppFinanceRoute: typeof AppFinanceRoute
+  AppGeneticsRoute: typeof AppGeneticsRoute
+  AppGeriatricsRoute: typeof AppGeriatricsRoute
+  AppHomeCollectionRoute: typeof AppHomeCollectionRoute
   AppIdentityRoute: typeof AppIdentityRoute
   AppInboxRoute: typeof AppInboxRoute
+  AppInventoryRoute: typeof AppInventoryRoute
+  AppLabRoute: typeof AppLabRoute
+  AppLabDashboardRoute: typeof AppLabDashboardRoute
   AppLongevityRoute: typeof AppLongevityRoute
   AppMarketplaceRoute: typeof AppMarketplaceRoute
   AppMedicalRoute: typeof AppMedicalRoute
+  AppMedicationsRoute: typeof AppMedicationsRoute
   AppMemoryRoute: typeof AppMemoryRoute
   AppNotificationsRoute: typeof AppNotificationsRoute
+  AppOrdersRoute: typeof AppOrdersRoute
+  AppOriginsRoute: typeof AppOriginsRoute
+  AppPatientPortalRoute: typeof AppPatientPortalRoute
+  AppPatientsRoute: typeof AppPatientsRoute
   AppProfileRoute: typeof AppProfileRoute
   AppQualityRoute: typeof AppQualityRoute
+  AppReceptionRoute: typeof AppReceptionRoute
+  AppRecordsRoute: typeof AppRecordsRoute
+  AppReportsRoute: typeof AppReportsRoute
   AppResidentsRoute: typeof AppResidentsRoute
+  AppScheduleRoute: typeof AppScheduleRoute
   AppSmartHomeRoute: typeof AppSmartHomeRoute
   AppTelemedicineRoute: typeof AppTelemedicineRoute
   AppTenantsRoute: typeof AppTenantsRoute
   AppTimelineRoute: typeof AppTimelineRoute
   AppTwinRoute: typeof AppTwinRoute
+  AppUnitsRoute: typeof AppUnitsRoute
   AppWorkflowsRoute: typeof AppWorkflowsRoute
   AppIndexRoute: typeof AppIndexRoute
 }
@@ -1250,31 +1830,56 @@ const AppRouteChildren: AppRouteChildren = {
   AppAgentsRoute: AppAgentsRouteWithChildren,
   AppAiRoute: AppAiRoute,
   AppAlertsRoute: AppAlertsRoute,
+  AppAncestryStudioRoute: AppAncestryStudioRoute,
   AppApprovalsRoute: AppApprovalsRoute,
+  AppBiRoute: AppBiRoute,
   AppBillingRoute: AppBillingRoute,
   AppCarePlanRoute: AppCarePlanRoute,
   AppCaregiverRoute: AppCaregiverRoute,
+  AppCatalogRoute: AppCatalogRoute,
+  AppCmsRoute: AppCmsRoute,
   AppCognitiveRoute: AppCognitiveRoute,
   AppCommandRoute: AppCommandRoute,
+  AppCompaniesRoute: AppCompaniesRoute,
   AppContractsRoute: AppContractsRoute,
+  AppDoctorRoute: AppDoctorRoute,
   AppDocumentsRoute: AppDocumentsRoute,
   AppEmailMarketingRoute: AppEmailMarketingRoute,
   AppEmergencyRoute: AppEmergencyRoute,
+  AppEquipmentRoute: AppEquipmentRoute,
+  AppExamsRoute: AppExamsRoute,
+  AppFinanceRoute: AppFinanceRoute,
+  AppGeneticsRoute: AppGeneticsRoute,
+  AppGeriatricsRoute: AppGeriatricsRoute,
+  AppHomeCollectionRoute: AppHomeCollectionRoute,
   AppIdentityRoute: AppIdentityRoute,
   AppInboxRoute: AppInboxRoute,
+  AppInventoryRoute: AppInventoryRoute,
+  AppLabRoute: AppLabRoute,
+  AppLabDashboardRoute: AppLabDashboardRoute,
   AppLongevityRoute: AppLongevityRoute,
   AppMarketplaceRoute: AppMarketplaceRoute,
   AppMedicalRoute: AppMedicalRoute,
+  AppMedicationsRoute: AppMedicationsRoute,
   AppMemoryRoute: AppMemoryRoute,
   AppNotificationsRoute: AppNotificationsRoute,
+  AppOrdersRoute: AppOrdersRoute,
+  AppOriginsRoute: AppOriginsRoute,
+  AppPatientPortalRoute: AppPatientPortalRoute,
+  AppPatientsRoute: AppPatientsRoute,
   AppProfileRoute: AppProfileRoute,
   AppQualityRoute: AppQualityRoute,
+  AppReceptionRoute: AppReceptionRoute,
+  AppRecordsRoute: AppRecordsRoute,
+  AppReportsRoute: AppReportsRoute,
   AppResidentsRoute: AppResidentsRoute,
+  AppScheduleRoute: AppScheduleRoute,
   AppSmartHomeRoute: AppSmartHomeRoute,
   AppTelemedicineRoute: AppTelemedicineRoute,
   AppTenantsRoute: AppTenantsRoute,
   AppTimelineRoute: AppTimelineRoute,
   AppTwinRoute: AppTwinRoute,
+  AppUnitsRoute: AppUnitsRoute,
   AppWorkflowsRoute: AppWorkflowsRoute,
   AppIndexRoute: AppIndexRoute,
 }
@@ -1323,6 +1928,10 @@ const rootRouteChildren: RootRouteChildren = {
   SolutionsRoute: SolutionsRouteWithChildren,
   TelemedicineRoute: TelemedicineRoute,
   TermsRoute: TermsRoute,
+  ExamesSlugRoute: ExamesSlugRoute,
+  OrigensTokenRoute: OrigensTokenRoute,
+  PSlugRoute: PSlugRoute,
+  ExamesIndexRoute: ExamesIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

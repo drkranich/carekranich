@@ -8,7 +8,7 @@ import { AncestryMap, regionLabel, regionPath, type AncestryRegion } from "@/com
 import { AncestryReveal } from "@/components/app/AncestryReveal";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
-import { downloadPdf } from "@/lib/pdf";
+import { downloadAncestryPdf } from "@/lib/ancestryPdf";
 
 export const Route = createFileRoute("/app/origins")({ component: Origins });
 
@@ -164,30 +164,43 @@ function Origins() {
 
   const exportPdf = () => {
     if (!result.data) return;
-    downloadPdf(`minhas-origens-${selectedPatient?.full_name ?? "paciente"}.pdf`, "Minhas Origens — Atlas Ancestral", [
-      `Titular: ${selectedPatient?.social_name || selectedPatient?.full_name}`,
-      `Versão do resultado: ${result.data.version} · publicado em ${result.data.published_at ? new Date(result.data.published_at).toLocaleDateString("pt-BR") : "-"}`,
-      `Laboratório: ${result.data.lab_name ?? "-"} · algoritmo ${result.data.algorithm_version ?? "-"}`,
-      `População de referência: ${result.data.reference_population ?? "-"}`,
-      "",
-      "Composição ancestral:",
-      ...list.map(
-        (r) =>
-          `- ${regionLabel(r)}: ${Number(r.percentage).toFixed(1)}%${r.range_min ? ` (faixa ${r.range_min}–${r.range_max}%)` : ""} · ${CONFIDENCE_LABEL[r.confidence ?? "moderada"]}`,
-      ),
-      "",
-      "Detalhamento das origens:",
-      ...list.flatMap((r) => [
-        `${regionLabel(r)} — ${regionPath(r)}`,
-        r.summary ? `  ${r.summary}` : "",
-        r.historical_text ? `  ${r.historical_text}` : "",
-        r.limitations ? `  Limitações: ${r.limitations}` : "",
-      ]),
-      "",
-      "Estes percentuais representam estimativas construídas a partir da comparação entre seu DNA e grupos",
-      "populacionais de referência. Semelhança genética com uma região não determina pertencimento cultural,",
-      "e predisposição não significa diagnóstico.",
-    ].filter((l) => l !== ""));
+    const name = selectedPatient?.social_name || selectedPatient?.full_name || "Paciente";
+    downloadAncestryPdf(`minhas-origens-${name}.pdf`, {
+      patientName: name,
+      version: result.data.version,
+      publishedAt: result.data.published_at,
+      labName: result.data.lab_name,
+      algorithm: result.data.algorithm_version,
+      referencePopulation: result.data.reference_population,
+      processedAt: result.data.processed_at,
+      technicalLead: result.data.technical_lead,
+      regions: list.map((r) => ({
+        label: regionLabel(r),
+        path: regionPath(r),
+        percentage: Number(r.percentage ?? 0),
+        rangeMin: r.range_min !== null && r.range_min !== undefined ? Number(r.range_min) : null,
+        rangeMax: r.range_max !== null && r.range_max !== undefined ? Number(r.range_max) : null,
+        confidence: CONFIDENCE_LABEL[r.confidence ?? "moderada"] ?? "Confiança moderada",
+        color: r.color ?? "#c98a3a",
+        latitude: r.latitude !== null && r.latitude !== undefined ? Number(r.latitude) : null,
+        longitude: r.longitude !== null && r.longitude !== undefined ? Number(r.longitude) : null,
+        populationGroup: r.population_group,
+        summary: r.summary,
+        fullText: r.full_text,
+        historicalText: r.historical_text,
+        limitations: r.limitations,
+      })),
+      routes: (routes.data ?? []).map((r: any) => ({
+        label: r.label,
+        period: r.period,
+        description: r.description,
+      })),
+      timeline: (timeline.data ?? []).map((t: any) => ({
+        period: t.period,
+        title: t.title,
+        description: t.description,
+      })),
+    });
   };
 
   if (myPatients.isLoading || result.isLoading) {
@@ -233,6 +246,15 @@ function Origins() {
           <div className="flex flex-wrap gap-2">
             <button onClick={journey} className="inline-flex items-center gap-1.5 rounded-full bg-olive px-4 py-2 text-xs font-medium text-ivory">
               <Play className="h-3.5 w-3.5" /> Assistir à minha jornada
+            </button>
+            <button
+              onClick={() => {
+                setActiveId(null);
+                setRevealed(false);
+              }}
+              className="rounded-full border border-border bg-white/55 px-4 py-2 text-xs"
+            >
+              Rever a revelação
             </button>
             <button onClick={exportPdf} className="inline-flex items-center gap-1.5 rounded-full border border-border bg-white/55 px-4 py-2 text-xs">
               <FileDown className="h-3.5 w-3.5" /> Relatório em PDF
