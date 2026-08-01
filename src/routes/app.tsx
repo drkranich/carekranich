@@ -161,6 +161,13 @@ const ALL_SECTIONS: NavSection[] = [
         userKinds: ["clinic", "staff"],
       },
       {
+        to: "/app/genetics",
+        label: "Genética (kits)",
+        icon: "M4 2c0 5 3 6 8 10s8 5 8 10 M20 2c0 5-3 6-8 10S4 17 4 22 M6 5h12 M6 19h12 M8.5 9h7 M8.5 15h7",
+        roles: ["doctor", "clinic_admin", "super_admin"],
+        userKinds: ["clinic", "staff"],
+      },
+      {
         to: "/app/doctor",
         label: "Portal do médico",
         icon: "M4.8 2.3A.3.3 0 1 0 5 2.6a.3.3 0 0 0-.2-.3 M8 2a2 2 0 0 1 2 2v5a6 6 0 0 1-12 0V4a2 2 0 0 1 2-2 M2 2v2 M8 15a6 6 0 0 0 12 0v-3 M20 8a2 2 0 1 0 0 4 2 2 0 0 0 0-4z",
