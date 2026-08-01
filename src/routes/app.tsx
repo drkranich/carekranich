@@ -128,6 +128,13 @@ const ALL_SECTIONS: NavSection[] = [
         userKinds: ["clinic", "staff"],
       },
       {
+        to: "/app/inventory",
+        label: "Estoque e insumos",
+        icon: "M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z M3.3 7l8.7 5 8.7-5 M12 22V12",
+        roles: ["nurse", "doctor", "clinic_admin", "super_admin"],
+        userKinds: ["clinic", "staff"],
+      },
+      {
         to: "/app/equipment",
         label: "Equipamentos",
         icon: "M14.7 6.3a5 5 0 0 0-6.8 6.6l-5.6 5.6a2 2 0 1 0 2.8 2.8l5.6-5.6a5 5 0 0 0 6.6-6.8l-3 3-2.8-2.8z",
