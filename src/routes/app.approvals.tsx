@@ -14,20 +14,20 @@ const roleOptions: AppRole[] = ["family", "caregiver", "nurse", "doctor", "clini
 const accountStatusOptions = ["all", "pending", "active", "suspended", "rejected"];
 const userKindOptions = ["all", "family", "clinic", "service_provider", "staff"];
 const userKindLabels: Record<string, string> = {
-  family: "Familia",
-  clinic: "Clinica",
-  service_provider: "Prestador de servicos",
-  staff: "Funcionario",
+  family: "Família",
+  clinic: "Clínica",
+  service_provider: "Prestador de serviços",
+  staff: "Funcionário",
 };
 
 const accessRoutes = [
-  { route: "/app", label: "Visao geral", group: "Base" },
+  { route: "/app", label: "Visão geral", group: "Base" },
   { route: "/app/profile", label: "Perfil", group: "Base" },
-  { route: "/app/notifications", label: "Notificacoes", group: "Base" },
+  { route: "/app/notifications", label: "Notificações", group: "Base" },
   { route: "/app/residents", label: "Residentes", group: "Cuidado" },
   { route: "/app/timeline", label: "Timeline", group: "Cuidado" },
   { route: "/app/care-plan", label: "Plano de cuidado", group: "Cuidado" },
-  { route: "/app/memory", label: "Memoria e legado", group: "Cuidado" },
+  { route: "/app/memory", label: "Memória e legado", group: "Cuidado" },
   { route: "/app/emergency", label: "SOS", group: "Cuidado" },
   { route: "/app/caregiver", label: "App cuidador", group: "Equipe" },
   { route: "/app/quality", label: "Qualidade", group: "Equipe" },
@@ -172,7 +172,7 @@ function Approvals() {
       qc.invalidateQueries({ queryKey: ["platform-staff-access-profiles-admin"] });
       qc.invalidateQueries({ queryKey: ["platform-staff-access-profiles"] });
     },
-    onError: (error: any) => toast.error(error.message ?? "Nao foi possivel salvar os acessos"),
+    onError: (error: any) => toast.error(error.message ?? "Não foi possível salvar os acessos"),
   });
 
   const addRole = async (userId: string, tenantId: string | null, role: AppRole) => {
