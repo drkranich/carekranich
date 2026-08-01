@@ -8,7 +8,7 @@ import { AncestryMap, regionLabel, regionPath, type AncestryRegion } from "@/com
 import { AncestryReveal } from "@/components/app/AncestryReveal";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
-import { downloadPdf } from "@/lib/pdf";
+import { downloadAncestryPdf } from "@/lib/ancestryPdf";
 
 export const Route = createFileRoute("/app/origins")({ component: Origins });
 
@@ -165,112 +165,42 @@ function Origins() {
   const exportPdf = () => {
     if (!result.data) return;
     const name = selectedPatient?.social_name || selectedPatient?.full_name || "Paciente";
-    const lines: string[] = [
-      "RELATORIO DE ANCESTRALIDADE GENETICA",
-      "",
-      `Titular: ${name}`,
-      `Emitido em: ${new Date().toLocaleString("pt-BR")}`,
-      `Versao do resultado: ${result.data.version}${result.data.published_at ? ` · publicado em ${new Date(result.data.published_at).toLocaleDateString("pt-BR")}` : ""}`,
-      "",
-      "-------------------------------------------------------------",
-      "1. COMPOSICAO ANCESTRAL",
-      "-------------------------------------------------------------",
-      "",
-      ...list.map((r) => {
-        const pct = Number(r.percentage).toFixed(1);
-        const bar = "#".repeat(Math.max(1, Math.round(Number(r.percentage) / 2)));
-        return `${pct.padStart(5)}%  ${bar}  ${regionLabel(r)}`;
-      }),
-      "",
-      ...list.map(
-        (r) =>
-          `${regionLabel(r)} — faixa estimada ${r.range_min ?? "-"}–${r.range_max ?? "-"}% · ${CONFIDENCE_LABEL[r.confidence ?? "moderada"]}`,
-      ),
-      "",
-      "-------------------------------------------------------------",
-      "2. DETALHAMENTO DAS ORIGENS",
-      "-------------------------------------------------------------",
-      "",
-      ...list.flatMap((r) => {
-        const block: string[] = [
-          `${regionLabel(r)} — ${Number(r.percentage).toFixed(1)}%`,
-          `Hierarquia: ${regionPath(r)}`,
-        ];
-        if (r.population_group) block.push(`Grupo populacional: ${r.population_group}`);
-        if (r.summary) block.push(`Resumo: ${r.summary}`);
-        if (r.full_text) block.push(`Contexto: ${r.full_text}`);
-        if (r.historical_text) block.push(`Historia e migracoes: ${r.historical_text}`);
-        if (r.limitations) block.push(`Limitacoes: ${r.limitations}`);
-        block.push("");
-        return block;
-      }),
-    ];
-
-    const routeList = routes.data ?? [];
-    if (routeList.length) {
-      lines.push(
-        "-------------------------------------------------------------",
-        "3. ROTAS MIGRATORIAS DE REFERENCIA",
-        "-------------------------------------------------------------",
-        "",
-        ...routeList.map((r: any) => `- ${r.label}${r.period ? ` (${r.period})` : ""}${r.description ? `: ${r.description}` : ""}`),
-        "",
-        "As rotas representam movimentos populacionais historicos conhecidos e nao a reconstrucao",
-        "exata da genealogia individual do titular.",
-        "",
-      );
-    }
-
-    const events = timeline.data ?? [];
-    if (events.length) {
-      lines.push(
-        "-------------------------------------------------------------",
-        "4. LINHA DO TEMPO",
-        "-------------------------------------------------------------",
-        "",
-        ...events.map((t: any) => `${t.period} — ${t.title}${t.description ? `: ${t.description}` : ""}`),
-        "",
-      );
-    }
-
-    lines.push(
-      "-------------------------------------------------------------",
-      "5. METODOLOGIA",
-      "-------------------------------------------------------------",
-      "",
-      `Laboratorio responsavel: ${result.data.lab_name ?? "nao informado"}`,
-      `Versao do algoritmo: ${result.data.algorithm_version ?? "nao informada"}`,
-      `Populacao de referencia: ${result.data.reference_population ?? "nao informada"}`,
-      `Data de processamento: ${result.data.processed_at ? new Date(result.data.processed_at + "T00:00:00").toLocaleDateString("pt-BR") : "nao informada"}`,
-      result.data.technical_lead ? `Responsavel tecnico: ${result.data.technical_lead}` : "",
-      "",
-      "Os percentuais sao estimativas obtidas pela comparacao do DNA do titular com grupos populacionais",
-      "de referencia. Resultados podem mudar quando novos paineis de referencia forem incorporados; nesse",
-      "caso uma nova versao sera gerada e o titular podera comparar com a versao anterior.",
-      "",
-      "-------------------------------------------------------------",
-      "6. LIMITACOES E PRIVACIDADE",
-      "-------------------------------------------------------------",
-      "",
-      "- Semelhanca genetica com uma regiao nao determina pertencimento cultural, nacionalidade ou identidade.",
-      "- Predisposicao genetica nao significa diagnostico.",
-      "- Este relatorio tem carater educativo e nao substitui avaliacao medica ou aconselhamento genetico.",
-      "- Dados geneticos sao sensiveis: o compartilhamento depende de autorizacao expressa do titular e pode",
-      "  ser revogado a qualquer momento.",
-      "",
-      "-------------------------------------------------------------",
-      "GLOSSARIO",
-      "-------------------------------------------------------------",
-      "",
-      "Regiao genetica: agrupamento de populacoes com perfis geneticos semelhantes, nem sempre coincidente",
-      "com fronteiras politicas atuais.",
-      "Faixa estimada: intervalo dentro do qual o percentual real provavelmente se encontra.",
-      "Nivel de confianca: grau de certeza estatistica da atribuicao daquela origem.",
-      "",
-      "Care Kranich · Minhas Origens · Atlas Ancestral",
-    );
-
-    downloadPdf(`minhas-origens-${name}.pdf`, "Minhas Origens — Atlas Ancestral", lines.filter((l) => l !== ""));
+    downloadAncestryPdf(`minhas-origens-${name}.pdf`, {
+      patientName: name,
+      version: result.data.version,
+      publishedAt: result.data.published_at,
+      labName: result.data.lab_name,
+      algorithm: result.data.algorithm_version,
+      referencePopulation: result.data.reference_population,
+      processedAt: result.data.processed_at,
+      technicalLead: result.data.technical_lead,
+      regions: list.map((r) => ({
+        label: regionLabel(r),
+        path: regionPath(r),
+        percentage: Number(r.percentage ?? 0),
+        rangeMin: r.range_min !== null && r.range_min !== undefined ? Number(r.range_min) : null,
+        rangeMax: r.range_max !== null && r.range_max !== undefined ? Number(r.range_max) : null,
+        confidence: CONFIDENCE_LABEL[r.confidence ?? "moderada"] ?? "Confiança moderada",
+        color: r.color ?? "#c98a3a",
+        latitude: r.latitude !== null && r.latitude !== undefined ? Number(r.latitude) : null,
+        longitude: r.longitude !== null && r.longitude !== undefined ? Number(r.longitude) : null,
+        populationGroup: r.population_group,
+        summary: r.summary,
+        fullText: r.full_text,
+        historicalText: r.historical_text,
+        limitations: r.limitations,
+      })),
+      routes: (routes.data ?? []).map((r: any) => ({
+        label: r.label,
+        period: r.period,
+        description: r.description,
+      })),
+      timeline: (timeline.data ?? []).map((t: any) => ({
+        period: t.period,
+        title: t.title,
+        description: t.description,
+      })),
+    });
   };
 
   if (myPatients.isLoading || result.isLoading) {
