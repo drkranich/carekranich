@@ -109,9 +109,9 @@ const SOURCE_OPTIONS = [
   { value: "manual", label: "Manual" },
   { value: "caregiver", label: "Cuidador" },
   { value: "nurse", label: "Enfermagem" },
-  { value: "doctor", label: "Medico" },
+  { value: "doctor", label: "Médico" },
   { value: "device", label: "Dispositivo" },
-  { value: "family", label: "Familia" },
+  { value: "family", label: "Família" },
 ];
 
 function TwinPage() {
