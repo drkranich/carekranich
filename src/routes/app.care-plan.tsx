@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { Card, PageHeader, Pill } from "@/components/app/primitives";
 import { GlassSelect } from "@/components/app/GlassSelect";
+import { GlassDatePicker } from "@/components/app/GlassDatePicker";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/app/care-plan")({ component: CarePlanPage });
@@ -327,16 +328,8 @@ function CarePlanPage() {
                       className="flex-1"
                       options={PRIORITIES}
                     />
-                    <input
-                      type="date"
-                      name="start_date"
-                      className="rounded-lg border border-border bg-card px-2 py-1.5 text-sm"
-                    />
-                    <input
-                      type="date"
-                      name="end_date"
-                      className="rounded-lg border border-border bg-card px-2 py-1.5 text-sm"
-                    />
+                    <GlassDatePicker name="start_date" />
+                    <GlassDatePicker name="end_date" />
                   </div>
                   <button
                     disabled={createPlan.isPending}
