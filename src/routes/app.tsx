@@ -243,6 +243,13 @@ const ALL_SECTIONS: NavSection[] = [
         userKinds: ["clinic", "staff"],
       },
       {
+        to: "/app/pos",
+        label: "Point of sale",
+        icon: "M4 4h16v4H4z M6 8v12h12V8 M8 12h8 M8 16h3 M14 16h2",
+        roles: ["clinic_admin", "super_admin"],
+        userKinds: ["clinic", "staff"],
+      },
+      {
         to: "/app/reception",
         label: "Reception and check-in",
         icon: "M4 21V8a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v13 M4 21h16 M9 6V4h6v2 M9 11h6 M9 15h4",

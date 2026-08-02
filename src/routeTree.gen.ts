@@ -54,6 +54,7 @@ import { Route as AppRecordsRouteImport } from './routes/app.records'
 import { Route as AppReceptionRouteImport } from './routes/app.reception'
 import { Route as AppQualityRouteImport } from './routes/app.quality'
 import { Route as AppProfileRouteImport } from './routes/app.profile'
+import { Route as AppPosRouteImport } from './routes/app.pos'
 import { Route as AppPatientsRouteImport } from './routes/app.patients'
 import { Route as AppPatientPortalRouteImport } from './routes/app.patient-portal'
 import { Route as AppOriginsRouteImport } from './routes/app.origins'
@@ -322,6 +323,11 @@ const AppQualityRoute = AppQualityRouteImport.update({
 const AppProfileRoute = AppProfileRouteImport.update({
   id: '/profile',
   path: '/profile',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppPosRoute = AppPosRouteImport.update({
+  id: '/pos',
+  path: '/pos',
   getParentRoute: () => AppRoute,
 } as any)
 const AppPatientsRoute = AppPatientsRouteImport.update({
@@ -610,6 +616,7 @@ export interface FileRoutesByFullPath {
   '/app/origins': typeof AppOriginsRoute
   '/app/patient-portal': typeof AppPatientPortalRoute
   '/app/patients': typeof AppPatientsRoute
+  '/app/pos': typeof AppPosRoute
   '/app/profile': typeof AppProfileRoute
   '/app/quality': typeof AppQualityRoute
   '/app/reception': typeof AppReceptionRoute
@@ -700,6 +707,7 @@ export interface FileRoutesByTo {
   '/app/origins': typeof AppOriginsRoute
   '/app/patient-portal': typeof AppPatientPortalRoute
   '/app/patients': typeof AppPatientsRoute
+  '/app/pos': typeof AppPosRoute
   '/app/profile': typeof AppProfileRoute
   '/app/quality': typeof AppQualityRoute
   '/app/reception': typeof AppReceptionRoute
@@ -792,6 +800,7 @@ export interface FileRoutesById {
   '/app/origins': typeof AppOriginsRoute
   '/app/patient-portal': typeof AppPatientPortalRoute
   '/app/patients': typeof AppPatientsRoute
+  '/app/pos': typeof AppPosRoute
   '/app/profile': typeof AppProfileRoute
   '/app/quality': typeof AppQualityRoute
   '/app/reception': typeof AppReceptionRoute
@@ -885,6 +894,7 @@ export interface FileRouteTypes {
     | '/app/origins'
     | '/app/patient-portal'
     | '/app/patients'
+    | '/app/pos'
     | '/app/profile'
     | '/app/quality'
     | '/app/reception'
@@ -975,6 +985,7 @@ export interface FileRouteTypes {
     | '/app/origins'
     | '/app/patient-portal'
     | '/app/patients'
+    | '/app/pos'
     | '/app/profile'
     | '/app/quality'
     | '/app/reception'
@@ -1066,6 +1077,7 @@ export interface FileRouteTypes {
     | '/app/origins'
     | '/app/patient-portal'
     | '/app/patients'
+    | '/app/pos'
     | '/app/profile'
     | '/app/quality'
     | '/app/reception'
@@ -1439,6 +1451,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppProfileRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/pos': {
+      id: '/app/pos'
+      path: '/pos'
+      fullPath: '/app/pos'
+      preLoaderRoute: typeof AppPosRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/app/patients': {
       id: '/app/patients'
       path: '/patients'
@@ -1807,6 +1826,7 @@ interface AppRouteChildren {
   AppOriginsRoute: typeof AppOriginsRoute
   AppPatientPortalRoute: typeof AppPatientPortalRoute
   AppPatientsRoute: typeof AppPatientsRoute
+  AppPosRoute: typeof AppPosRoute
   AppProfileRoute: typeof AppProfileRoute
   AppQualityRoute: typeof AppQualityRoute
   AppReceptionRoute: typeof AppReceptionRoute
@@ -1867,6 +1887,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppOriginsRoute: AppOriginsRoute,
   AppPatientPortalRoute: AppPatientPortalRoute,
   AppPatientsRoute: AppPatientsRoute,
+  AppPosRoute: AppPosRoute,
   AppProfileRoute: AppProfileRoute,
   AppQualityRoute: AppQualityRoute,
   AppReceptionRoute: AppReceptionRoute,
