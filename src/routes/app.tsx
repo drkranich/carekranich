@@ -243,6 +243,13 @@ const ALL_SECTIONS: NavSection[] = [
         userKinds: ["clinic", "staff"],
       },
       {
+        to: "/app/exam-quotes",
+        label: "Exam quotes",
+        icon: "M4 5h16v14H4z M8 9h8 M8 13h5 M15 17l2 2 4-4",
+        roles: ["clinic_admin", "super_admin"],
+        userKinds: ["clinic", "staff"],
+      },
+      {
         to: "/app/pos",
         label: "Point of sale",
         icon: "M4 4h16v4H4z M6 8v12h12V8 M8 12h8 M8 16h3 M14 16h2",
@@ -397,6 +404,12 @@ const ALL_SECTIONS: NavSection[] = [
         label: "Plans & billing",
         icon: "M3 7h18v10H3z M7 15h.01 M11 15h4",
         roles: ["clinic_admin", "super_admin"],
+      },
+      {
+        to: "/app/saas-quotes",
+        label: "SaaS quotes",
+        icon: "M4 5h16v14H4z M8 9h8 M8 13h8 M8 17h5",
+        roles: ["super_admin"],
       },
       {
         to: "/app/inbox",

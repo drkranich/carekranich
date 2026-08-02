@@ -48,6 +48,7 @@ import { Route as AppTenantsRouteImport } from './routes/app.tenants'
 import { Route as AppTelemedicineRouteImport } from './routes/app.telemedicine'
 import { Route as AppSmartHomeRouteImport } from './routes/app.smart-home'
 import { Route as AppScheduleRouteImport } from './routes/app.schedule'
+import { Route as AppSaasQuotesRouteImport } from './routes/app.saas-quotes'
 import { Route as AppResidentsRouteImport } from './routes/app.residents'
 import { Route as AppReportsRouteImport } from './routes/app.reports'
 import { Route as AppRecordsRouteImport } from './routes/app.records'
@@ -75,6 +76,7 @@ import { Route as AppGeriatricsRouteImport } from './routes/app.geriatrics'
 import { Route as AppGeneticsRouteImport } from './routes/app.genetics'
 import { Route as AppFinanceRouteImport } from './routes/app.finance'
 import { Route as AppExamsRouteImport } from './routes/app.exams'
+import { Route as AppExamQuotesRouteImport } from './routes/app.exam-quotes'
 import { Route as AppEquipmentRouteImport } from './routes/app.equipment'
 import { Route as AppEmergencyRouteImport } from './routes/app.emergency'
 import { Route as AppEmailMarketingRouteImport } from './routes/app.email-marketing'
@@ -295,6 +297,11 @@ const AppScheduleRoute = AppScheduleRouteImport.update({
   path: '/schedule',
   getParentRoute: () => AppRoute,
 } as any)
+const AppSaasQuotesRoute = AppSaasQuotesRouteImport.update({
+  id: '/saas-quotes',
+  path: '/saas-quotes',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppResidentsRoute = AppResidentsRouteImport.update({
   id: '/residents',
   path: '/residents',
@@ -428,6 +435,11 @@ const AppFinanceRoute = AppFinanceRouteImport.update({
 const AppExamsRoute = AppExamsRouteImport.update({
   id: '/exams',
   path: '/exams',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppExamQuotesRoute = AppExamQuotesRouteImport.update({
+  id: '/exam-quotes',
+  path: '/exam-quotes',
   getParentRoute: () => AppRoute,
 } as any)
 const AppEquipmentRoute = AppEquipmentRouteImport.update({
@@ -596,6 +608,7 @@ export interface FileRoutesByFullPath {
   '/app/email-marketing': typeof AppEmailMarketingRoute
   '/app/emergency': typeof AppEmergencyRoute
   '/app/equipment': typeof AppEquipmentRoute
+  '/app/exam-quotes': typeof AppExamQuotesRoute
   '/app/exams': typeof AppExamsRoute
   '/app/finance': typeof AppFinanceRoute
   '/app/genetics': typeof AppGeneticsRoute
@@ -623,6 +636,7 @@ export interface FileRoutesByFullPath {
   '/app/records': typeof AppRecordsRoute
   '/app/reports': typeof AppReportsRoute
   '/app/residents': typeof AppResidentsRoute
+  '/app/saas-quotes': typeof AppSaasQuotesRoute
   '/app/schedule': typeof AppScheduleRoute
   '/app/smart-home': typeof AppSmartHomeRoute
   '/app/telemedicine': typeof AppTelemedicineRoute
@@ -687,6 +701,7 @@ export interface FileRoutesByTo {
   '/app/email-marketing': typeof AppEmailMarketingRoute
   '/app/emergency': typeof AppEmergencyRoute
   '/app/equipment': typeof AppEquipmentRoute
+  '/app/exam-quotes': typeof AppExamQuotesRoute
   '/app/exams': typeof AppExamsRoute
   '/app/finance': typeof AppFinanceRoute
   '/app/genetics': typeof AppGeneticsRoute
@@ -714,6 +729,7 @@ export interface FileRoutesByTo {
   '/app/records': typeof AppRecordsRoute
   '/app/reports': typeof AppReportsRoute
   '/app/residents': typeof AppResidentsRoute
+  '/app/saas-quotes': typeof AppSaasQuotesRoute
   '/app/schedule': typeof AppScheduleRoute
   '/app/smart-home': typeof AppSmartHomeRoute
   '/app/telemedicine': typeof AppTelemedicineRoute
@@ -780,6 +796,7 @@ export interface FileRoutesById {
   '/app/email-marketing': typeof AppEmailMarketingRoute
   '/app/emergency': typeof AppEmergencyRoute
   '/app/equipment': typeof AppEquipmentRoute
+  '/app/exam-quotes': typeof AppExamQuotesRoute
   '/app/exams': typeof AppExamsRoute
   '/app/finance': typeof AppFinanceRoute
   '/app/genetics': typeof AppGeneticsRoute
@@ -807,6 +824,7 @@ export interface FileRoutesById {
   '/app/records': typeof AppRecordsRoute
   '/app/reports': typeof AppReportsRoute
   '/app/residents': typeof AppResidentsRoute
+  '/app/saas-quotes': typeof AppSaasQuotesRoute
   '/app/schedule': typeof AppScheduleRoute
   '/app/smart-home': typeof AppSmartHomeRoute
   '/app/telemedicine': typeof AppTelemedicineRoute
@@ -874,6 +892,7 @@ export interface FileRouteTypes {
     | '/app/email-marketing'
     | '/app/emergency'
     | '/app/equipment'
+    | '/app/exam-quotes'
     | '/app/exams'
     | '/app/finance'
     | '/app/genetics'
@@ -901,6 +920,7 @@ export interface FileRouteTypes {
     | '/app/records'
     | '/app/reports'
     | '/app/residents'
+    | '/app/saas-quotes'
     | '/app/schedule'
     | '/app/smart-home'
     | '/app/telemedicine'
@@ -965,6 +985,7 @@ export interface FileRouteTypes {
     | '/app/email-marketing'
     | '/app/emergency'
     | '/app/equipment'
+    | '/app/exam-quotes'
     | '/app/exams'
     | '/app/finance'
     | '/app/genetics'
@@ -992,6 +1013,7 @@ export interface FileRouteTypes {
     | '/app/records'
     | '/app/reports'
     | '/app/residents'
+    | '/app/saas-quotes'
     | '/app/schedule'
     | '/app/smart-home'
     | '/app/telemedicine'
@@ -1057,6 +1079,7 @@ export interface FileRouteTypes {
     | '/app/email-marketing'
     | '/app/emergency'
     | '/app/equipment'
+    | '/app/exam-quotes'
     | '/app/exams'
     | '/app/finance'
     | '/app/genetics'
@@ -1084,6 +1107,7 @@ export interface FileRouteTypes {
     | '/app/records'
     | '/app/reports'
     | '/app/residents'
+    | '/app/saas-quotes'
     | '/app/schedule'
     | '/app/smart-home'
     | '/app/telemedicine'
@@ -1409,6 +1433,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppScheduleRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/saas-quotes': {
+      id: '/app/saas-quotes'
+      path: '/saas-quotes'
+      fullPath: '/app/saas-quotes'
+      preLoaderRoute: typeof AppSaasQuotesRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/app/residents': {
       id: '/app/residents'
       path: '/residents'
@@ -1596,6 +1627,13 @@ declare module '@tanstack/react-router' {
       path: '/exams'
       fullPath: '/app/exams'
       preLoaderRoute: typeof AppExamsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/exam-quotes': {
+      id: '/app/exam-quotes'
+      path: '/exam-quotes'
+      fullPath: '/app/exam-quotes'
+      preLoaderRoute: typeof AppExamQuotesRouteImport
       parentRoute: typeof AppRoute
     }
     '/app/equipment': {
@@ -1806,6 +1844,7 @@ interface AppRouteChildren {
   AppEmailMarketingRoute: typeof AppEmailMarketingRoute
   AppEmergencyRoute: typeof AppEmergencyRoute
   AppEquipmentRoute: typeof AppEquipmentRoute
+  AppExamQuotesRoute: typeof AppExamQuotesRoute
   AppExamsRoute: typeof AppExamsRoute
   AppFinanceRoute: typeof AppFinanceRoute
   AppGeneticsRoute: typeof AppGeneticsRoute
@@ -1833,6 +1872,7 @@ interface AppRouteChildren {
   AppRecordsRoute: typeof AppRecordsRoute
   AppReportsRoute: typeof AppReportsRoute
   AppResidentsRoute: typeof AppResidentsRoute
+  AppSaasQuotesRoute: typeof AppSaasQuotesRoute
   AppScheduleRoute: typeof AppScheduleRoute
   AppSmartHomeRoute: typeof AppSmartHomeRoute
   AppTelemedicineRoute: typeof AppTelemedicineRoute
@@ -1867,6 +1907,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppEmailMarketingRoute: AppEmailMarketingRoute,
   AppEmergencyRoute: AppEmergencyRoute,
   AppEquipmentRoute: AppEquipmentRoute,
+  AppExamQuotesRoute: AppExamQuotesRoute,
   AppExamsRoute: AppExamsRoute,
   AppFinanceRoute: AppFinanceRoute,
   AppGeneticsRoute: AppGeneticsRoute,
@@ -1894,6 +1935,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppRecordsRoute: AppRecordsRoute,
   AppReportsRoute: AppReportsRoute,
   AppResidentsRoute: AppResidentsRoute,
+  AppSaasQuotesRoute: AppSaasQuotesRoute,
   AppScheduleRoute: AppScheduleRoute,
   AppSmartHomeRoute: AppSmartHomeRoute,
   AppTelemedicineRoute: AppTelemedicineRoute,
